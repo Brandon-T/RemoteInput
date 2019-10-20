@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="RemoteInput" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/RemoteInput" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-m32" />
+					<Add option="-g" />
+					<Add option="-DBUILD_DLL" />
+				</Compiler>
+				<Linker>
+					<Add option="-static-libstdc++" />
+					<Add option="-static-libgcc" />
+					<Add option="-static" />
+					<Add option="-m32" />
+					<Add option="RemoteInput/RemoteInput.def" />
+					<Add library="user32" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/RemoteInput" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-DBUILD_DLL" />
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="user32" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-m32" />
+			<Add directory="C:/Program Files/Java/jdk1.8.0_73/include" />
+			<Add directory="C:/Program Files/Java/jdk1.8.0_73/include/win32" />
+		</Compiler>
+		<Linker>
+			<Add option="-m32" />
+			<Add option="-static" />
+			<Add option="-static-libgcc" />
+			<Add option="-static-libstdc++" />
+		</Linker>
+		<Unit filename="RemoteInput/EIOS.cxx" />
+		<Unit filename="RemoteInput/EIOS.hxx" />
+		<Unit filename="RemoteInput/Echo/MemoryMap.hxx" />
+		<Unit filename="RemoteInput/Echo/Module.cxx" />
+		<Unit filename="RemoteInput/Echo/Module.hxx" />
+		<Unit filename="RemoteInput/Echo/SharedEvent.cxx" />
+		<Unit filename="RemoteInput/Echo/SharedEvent.hxx" />
+		<Unit filename="RemoteInput/Echo/Time.cxx" />
+		<Unit filename="RemoteInput/Echo/Time.hxx" />
+		<Unit filename="RemoteInput/Info.plist" />
+		<Unit filename="RemoteInput/JVM.cxx" />
+		<Unit filename="RemoteInput/JVM.hxx" />
+		<Unit filename="RemoteInput/Platform/DebugConsole.cxx" />
+		<Unit filename="RemoteInput/Platform/DebugConsole.hxx" />
+		<Unit filename="RemoteInput/Platform/Detour.cxx" />
+		<Unit filename="RemoteInput/Platform/Detour.hxx" />
+		<Unit filename="RemoteInput/Platform/JavaInternal.hxx" />
+		<Unit filename="RemoteInput/Platform/NativeHooks.hxx" />
+		<Unit filename="RemoteInput/Platform/Platform.hxx" />
+		<Unit filename="RemoteInput/Platform/Platform_Darwin.cxx" />
+		<Unit filename="RemoteInput/Platform/Platform_Linux.cxx" />
+		<Unit filename="RemoteInput/Platform/Platform_Windows.cxx" />
+		<Unit filename="RemoteInput/Plugin/SimbaPlugin.cxx" />
+		<Unit filename="RemoteInput/Plugin/SimbaPlugin.hxx" />
+		<Unit filename="RemoteInput/Plugin/TMemoryManager.hxx" />
+		<Unit filename="RemoteInput/Reflection.cxx" />
+		<Unit filename="RemoteInput/Reflection.hxx" />
+		<Unit filename="RemoteInput/RemoteInput.h" />
+		<Unit filename="RemoteInput/SHMAllocator.hxx" />
+		<Unit filename="RemoteInput/SHMVector.hxx" />
+		<Unit filename="RemoteInput/ThreadPool.cxx" />
+		<Unit filename="RemoteInput/ThreadPool.hxx" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

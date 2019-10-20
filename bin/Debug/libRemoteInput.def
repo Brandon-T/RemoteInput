@@ -1,0 +1,24 @@
+EXPORTS
+    DllMain@12 @1
+    EIOS_GetImageBuffer = EIOS_GetImageBuffer@4 @2
+    EIOS_GetMousePosition = EIOS_GetMousePosition@12 @3
+    EIOS_GetTargetDimensions = EIOS_GetTargetDimensions@12 @4
+    EIOS_HoldKey = EIOS_HoldKey@8 @5
+    EIOS_HoldMouse = EIOS_HoldMouse@16 @6
+    EIOS_IsKeyHeld = EIOS_IsKeyHeld@8 @7
+    EIOS_IsMouseHeld = EIOS_IsMouseHeld@8 @8
+    EIOS_MoveMouse = EIOS_MoveMouse@12 @9
+    EIOS_ReleaseKey = EIOS_ReleaseKey@8 @10
+    EIOS_ReleaseMouse = EIOS_ReleaseMouse@16 @11
+    EIOS_ReleaseTarget = EIOS_ReleaseTarget@4 @12
+    EIOS_RequestTarget = EIOS_RequestTarget@4 @13
+    EIOS_SendString = EIOS_SendString@16 @14
+    EIOS_UpdateImageBuffer = EIOS_UpdateImageBuffer@4 @15
+    GetFunctionCount @16
+    GetFunctionInfo @17
+    GetPluginABIVersion @18
+    GetTypeCount @19
+    GetTypeInfo @20
+    OnAttach @21
+    OnDetach @22
+    SetPluginMemManager @23

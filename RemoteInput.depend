@@ -1,0 +1,167 @@
+# depslib dependency file v1.0
+1570072764 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.cxx
+	"Module.hxx"
+
+1570072764 c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.hxx
+	<windows.h>
+	<dlfcn.h>
+	<string>
+	<stdexcept>
+	<locale>
+	<codecvt>
+
+1570072764 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\time.cxx
+	"Time.hxx"
+
+1570072764 c:\users\brandon\desktop\remoteinput\remoteinput\echo\time.hxx
+	<windows.h>
+	<sys/time.h>
+	<ctime>
+	<cstdint>
+
+1570973748 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.cxx
+	"DebugConsole.hxx"
+	<iostream>
+
+1570972414 c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.hxx
+	<fstream>
+	<streambuf>
+
+1570993320 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\detour.cxx
+	"Detour.hxx"
+
+1570993520 c:\users\brandon\desktop\remoteinput\remoteinput\platform\detour.hxx
+	<cstdint>
+	<windows.h>
+
+1570920448 source:c:\users\brandon\desktop\remoteinput\remoteinput\jvm.cxx
+	"JVM.hxx"
+
+1570919970 c:\users\brandon\desktop\remoteinput\remoteinput\jvm.hxx
+	<jni.h>
+	<windows.h>
+	<dlfcn.h>
+	<stdexcept>
+	<vector>
+	<string>
+
+1566286641 c:\program files\java\jdk-12.0.2\include\jni.h
+	<stdio.h>
+	<stdarg.h>
+	"jni_md.h"
+
+1566286641 c:\program files\java\jdk-12.0.2\include\win32\jni_md.h
+
+1570941482 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_darwin.cxx
+	"Platform.hxx"
+	<Foundation/Foundation.h>
+	<UIKit/UIKit.h>
+
+1570941430 c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform.hxx
+	"../Reflection.hxx"
+
+1570974790 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
+	<string>
+	<memory>
+	<functional>
+	<jni.h>
+	"JVM.hxx"
+
+1570918636 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_linux.cxx
+	"Platform.hxx"
+	<X11/Xlib.h>
+
+1571001228 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_windows.cxx
+	"Platform.hxx"
+	<string>
+	<windows.h>
+
+1570974838 source:c:\users\brandon\desktop\remoteinput\remoteinput\reflection.cxx
+	"Reflection.hxx"
+
+1570919576 source:c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.cxx
+	"ThreadPool.hxx"
+
+1570919232 c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.hxx
+	<thread>
+	<future>
+	<mutex>
+	<atomic>
+	<queue>
+	<functional>
+	<condition_variable>
+	<stdexcept>
+	<vector>
+
+1571601700 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.cxx
+	"SharedEvent.hxx"
+
+1571612032 c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.hxx
+	<pthread.h>
+	<windows.h>
+	<pthread.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<sys/mman.h>
+	<fcntl.h>
+	<errno.h>
+	<ctime>
+	<cstdint>
+	<string>
+	<chrono>
+	"Time.hxx"
+
+1571601980 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+	"SimbaPlugin.hxx"
+	<memory>
+	"../Echo/MemoryMap.hxx"
+	"../Echo/SharedEvent.hxx"
+	"../Platform/Platform.hxx"
+	"../Platform/NativeHooks.hxx"
+
+1571032260 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
+	<cstdint>
+	<cstdio>
+	<new>
+	"../EIOS.hxx"
+	"TMemoryManager.hxx"
+	<windows.h>
+
+1571114048 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+	<cstdint>
+	<stdint.h>
+	"Echo/SharedEvent.hxx"
+	"SHMAllocator.hxx"
+
+1570072764 c:\users\brandon\desktop\remoteinput\remoteinput\shmallocator.hxx
+	<cmath>
+	<memory>
+
+1570076456 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\tmemorymanager.hxx
+
+1571112374 c:\users\brandon\desktop\remoteinput\remoteinput\echo\memorymap.hxx
+	<windows.h>
+	<sys/types.h>
+	<sys/mman.h>
+	<fcntl.h>
+	<unistd.h>
+	<istream>
+
+1571035132 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
+	<windows.h>
+	<memory>
+	<thread>
+	"JavaInternal.hxx"
+	"../EIOS.hxx"
+
+1570997272 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
+
+1571602225 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+	"EIOS.hxx"
+	<cstdio>
+	<unordered_map>
+	<memory>
+	"Echo/MemoryMap.hxx"
+	"Echo/SharedEvent.hxx"
+	"Reflection.hxx"
+
