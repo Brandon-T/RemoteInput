@@ -48,14 +48,14 @@
 		</Build>
 		<Compiler>
 			<Add option="-m32" />
-			<Add directory="C:/Program Files/Java/jdk1.8.0_73/include" />
-			<Add directory="C:/Program Files/Java/jdk1.8.0_73/include/win32" />
+			<Add directory="C:/Program Files/Java/jdk-12.0.2/include" />
+			<Add directory="C:/Program Files/Java/jdk-12.0.2/include/win32" />
 		</Compiler>
 		<Linker>
-			<Add option="-m32" />
-			<Add option="-static" />
-			<Add option="-static-libgcc" />
 			<Add option="-static-libstdc++" />
+			<Add option="-static-libgcc" />
+			<Add option="-static" />
+			<Add option="-m32" />
 		</Linker>
 		<Unit filename="RemoteInput/EIOS.cxx" />
 		<Unit filename="RemoteInput/EIOS.hxx" />
