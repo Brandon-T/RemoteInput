@@ -10,9 +10,8 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
-#endif
-
 extern HMODULE module;
+#endif
 
 //extern TMemoryManager PLUGIN_MEMORY_MANAGER;
 

@@ -128,7 +128,6 @@ public:
      *
      * @param func void* - Address of the function to be called.
      * @param args Args... - Arguments to pass to the function pointer.
-     * @return void
      *
      * Uses the __stdcall convention!
      *
@@ -172,13 +171,21 @@ bool Module::AddressOf(T &Definition, const std::string &Name)
 template<typename... Args>
 void Module::Call(void* func, Args... args)
 {
+	#if defined(_WIN32)
     return reinterpret_cast<void (__stdcall *)(Args...)>(func)(std::forward<Args>(args)...);
+	#else
+	return reinterpret_cast<void (*)(Args...)>(func)(std::forward<Args>(args)...);
+	#endif
 }
 
 template<typename R, typename... Args>
 R Module::Call(void* func, Args... args)
 {
+	#if defined(_WIN32)
     return reinterpret_cast<R(__stdcall *)(Args...)>(func)(std::forward<Args>(args)...);
+	#else
+	return reinterpret_cast<R(*)(Args...)>(func)(std::forward<Args>(args)...);
+	#endif
 }
 
 #endif /* MODULE_HXX_INCLUDED */

@@ -1,10 +1,14 @@
 #include "SimbaPlugin.hxx"
 #include <memory>
+
 #include "../Echo/MemoryMap.hxx"
 #include "../Echo/SharedEvent.hxx"
 #include "../Platform/Platform.hxx"
 
+#if defined(_WIN32) || defined(_WIN64)
 HMODULE module = nullptr;
+#endif
+
 TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
 extern std::unique_ptr<MemoryMap<char>> globalMap;
 extern std::unique_ptr<Mutex> globalEvent;
@@ -112,7 +116,7 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
 
         std::size_t new_size = (size * element_size) + sizeof(FPCAnsiString);
         FPCAnsiString* ptr = static_cast<FPCAnsiString*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size + 1));
-        ptr->codePage = CP_ACP;
+        ptr->codePage = 0; //CP_ACP
         ptr->elementSize = element_size;
         ptr->refCount = 1;
         ptr->length = size;
@@ -144,7 +148,7 @@ bool InitializeSharedMemory(pid_t pid)
 
     char mapName[256] = {0};
     std::int32_t map_size = (1024 * sizeof(std::int32_t)) + image_size;
-    sprintf_s(mapName, sizeof(mapName), "Local\\RemoteInput_%d", pid);
+    sprintf(mapName, "Local\\RemoteInput_%d", pid);
 
     // Open first..
     globalMap.reset(new MemoryMap<char>{mapName, std::ios::in | std::ios::out});
@@ -166,7 +170,7 @@ bool InitializeSharedMemory(pid_t pid)
 bool InitializeLocks(pid_t pid)
 {
     char lockName[256] = {0};
-    sprintf_s(lockName, sizeof(lockName), "Local\\RemoteInput_%d", pid);
+    sprintf(lockName, "Local\\RemoteInput_%d", pid);
     globalEvent.reset(new Mutex(lockName));
     return true;
 }
@@ -227,7 +231,7 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
     return TRUE; // succesful
 }
 #else
-__attribute__((constructor)) void __load() [[constructor]]
+[[gnu::constructor]] void __load()
 {
     if (InitializeSharedMemory(getpid()))
     {
@@ -236,7 +240,7 @@ __attribute__((constructor)) void __load() [[constructor]]
     globalReflector.reset(GetNativeReflector());
 }
 
-__attribute__((destructor)) void __unload() [[destructor]
+[[gnu::destructor]] void __unload()
 {
     globalReflector.reset();
 

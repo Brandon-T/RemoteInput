@@ -19,6 +19,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 #endif
 
 #include <ctime>
@@ -34,6 +35,7 @@ private:
     #if defined(_WIN32) || defined(_WIN64)
     HANDLE hMutex;
     #else
+	bool shared;
     pthread_mutex_t* mutex;
     std::int32_t* ref;
     std::string name;
@@ -73,6 +75,7 @@ private:
     #if defined(_WIN32) || defined(_WIN64)
     HANDLE hSemaphore;
     #else
+	bool shared;
     pthread_mutex_t* mutex;
     pthread_cond_t* condition;
     std::int32_t* sem_count;

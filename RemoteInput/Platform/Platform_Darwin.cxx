@@ -1,16 +1,24 @@
 #include "Platform.hxx"
 
 #if defined(__APPLE__)
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <Foundation/Foundation.h>
-#include <UIKit/UIKit.h>
+#include <Cocoa/Cocoa.h>
+
+#if defined(__cplusplus)
+}
+#endif
 #endif // defined
 
 #if defined(__APPLE__)
 void GetDesktopResolution(int &width, int &height)
 {
     NSRect frame = [[NSScreen mainScreen] frame];
-    width = reinterpret_cast<int>(frame.size.width);
-    height = reinterpret_cast<int>(frame.size.height);
+    width = static_cast<int>(frame.size.width);
+    height = static_cast<int>(frame.size.height);
 }
 #endif // defined
 
@@ -42,7 +50,7 @@ Reflection* GetNativeReflector()
 		}
     }
 
-    delete Reflection;
+    delete reflection;
     return nullptr;
 }
 #endif // defined

@@ -46,20 +46,37 @@ typedef struct EIOS {
 extern "C" {
 #endif
 
-EIOS* __stdcall EIOS_RequestTarget(const char* initargs);
-void __stdcall EIOS_ReleaseTarget(EIOS* eios);
-void __stdcall EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height);
-std::uint8_t* __stdcall EIOS_GetImageBuffer(EIOS* eios);
-void __stdcall EIOS_UpdateImageBuffer(EIOS* eios);
-void __stdcall EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
-void __stdcall EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);
-void __stdcall EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
-void __stdcall EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
-bool __stdcall EIOS_IsMouseHeld(EIOS* eios, std::int32_t button);
-void __stdcall EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait);
-void __stdcall EIOS_HoldKey(EIOS* eios, std::int32_t key);
-void __stdcall EIOS_ReleaseKey(EIOS* eios, std::int32_t key);
-bool __stdcall EIOS_IsKeyHeld(EIOS* eios, std::int32_t key);
+#if defined(_WIN32)
+[[gnu::stdcall]] EIOS* EIOS_RequestTarget(const char* initargs);
+[[gnu::stdcall]] void EIOS_ReleaseTarget(EIOS* eios);
+[[gnu::stdcall]] void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height);
+[[gnu::stdcall]] std::uint8_t* EIOS_GetImageBuffer(EIOS* eios);
+[[gnu::stdcall]] void EIOS_UpdateImageBuffer(EIOS* eios);
+[[gnu::stdcall]] void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
+[[gnu::stdcall]] void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);
+[[gnu::stdcall]] void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
+[[gnu::stdcall]] void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
+[[gnu::stdcall]] bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button);
+[[gnu::stdcall]] void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait);
+[[gnu::stdcall]] void EIOS_HoldKey(EIOS* eios, std::int32_t key);
+[[gnu::stdcall]] void EIOS_ReleaseKey(EIOS* eios, std::int32_t key);
+[[gnu::stdcall]] bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key);
+#else
+EIOS* EIOS_RequestTarget(const char* initargs);
+void EIOS_ReleaseTarget(EIOS* eios);
+void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height);
+std::uint8_t* EIOS_GetImageBuffer(EIOS* eios);
+void EIOS_UpdateImageBuffer(EIOS* eios);
+void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
+void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);
+void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
+void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
+bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button);
+void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait);
+void EIOS_HoldKey(EIOS* eios, std::int32_t key);
+void EIOS_ReleaseKey(EIOS* eios, std::int32_t key);
+bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key);
+#endif
 
 #ifdef __cplusplus
 }

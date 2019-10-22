@@ -34,12 +34,12 @@ EIOS* EIOS_RequestTarget(const char* initargs)
         globalMap.reset();
 
         char mapName[256] = {0};
-        sprintf_s(mapName, sizeof(mapName), "Local\\RemoteInput_%d", pid);
+        sprintf(mapName, "Local\\RemoteInput_%d", pid);
         MemoryMap<char>* memory = new MemoryMap<char>{mapName, std::ios::in | std::ios::out};
         if (memory->open() && memory->map())
         {
             char lockName[256] = {0};
-            sprintf_s(lockName, sizeof(lockName), "Local\\RemoteInput_%d", pid);
+            sprintf(lockName, "Local\\RemoteInput_%d", pid);
             globalEvent.reset(new Mutex(lockName));
 
             EIOS* eios = new EIOS();
@@ -49,7 +49,7 @@ EIOS* EIOS_RequestTarget(const char* initargs)
             eios->imageData->imgoff = sizeof(ImageData);
 
             globalEvent->lock();
-            eios->imageData->parentId = GetCurrentProcessId();
+            eios->imageData->parentId = getpid();
             globalEvent->unlock();
             clients[pid] = eios;
             return eios;

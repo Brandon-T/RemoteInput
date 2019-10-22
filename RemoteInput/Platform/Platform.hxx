@@ -1,5 +1,5 @@
 #ifndef PLATFORM_HXX_INCLUDED
-#define PLATFORM_WINDOWS_HXX_INCLUDED
+#define PLATFORM_HXX_INCLUDED
 
 #include "../Reflection.hxx"
 

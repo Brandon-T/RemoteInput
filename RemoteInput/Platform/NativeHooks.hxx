@@ -1,7 +1,10 @@
 #ifndef NATIVEHOOKS_HXX_INCLUDED
 #define NATIVEHOOKS_HXX_INCLUDED
 
+#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#endif
+
 #include <memory>
 #include <thread>
 #include "JavaInternal.hxx"
@@ -9,9 +12,24 @@
 
 void InitialiseHooks();
 
+
+#if defined(_WIN32) || defined(_WIN64)
 typedef void (__stdcall *JavaNativeBlit_t)(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut);
 
 JavaNativeBlit_t o_JavaNativeBlit;
+
+#elif defined(__APPLE__)
+
+typedef void (__stdcall *JavaNativeBlit_t)(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2);
+
+JavaNativeBlit_t o_JavaNativeBlit;
+
+#else
+#error "NO SUPPORT FOR LINUX YET"
+#endif
+
+
+#if defined(_WIN32) || defined(_WIN64)
 void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut)
 {
     //Hook..
@@ -72,6 +90,70 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
     o_JavaNativeBlit(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
 }
 
+#elif defined(__APPLE__)
+
+void __stdcall JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2)
+{
+	jint width = sx2 - sx1;
+	jint height = sy2 - sy1;
+	SurfaceDataOps *srcOps = (SurfaceDataOps *)pSrcOps;
+	
+	if (!srcOps || width <= 0 || height <= 0)
+	{
+		return;
+	}
+	
+	SurfaceDataRasInfo srcInfo = {0};
+	srcInfo.bounds.x1 = sx1;
+	srcInfo.bounds.y1 = sy1;
+	srcInfo.bounds.x2 = sx2;
+	srcInfo.bounds.y2 = sy2;
+	
+	if (srcOps->Lock(env, srcOps, &srcInfo, SD_LOCK_READ) == SD_SUCCESS)
+	{
+		srcOps->GetRasInfo(env, srcOps, &srcInfo);
+		if (srcInfo.rasBase)
+		{
+			void *rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
+			bool isRasterAligned = srcInfo.scanStride % srcInfo.pixelStride == 0; //!(srcInfo.scanStride & 0x03);
+
+            extern std::unique_ptr<MemoryMap<char>> globalMap;
+            ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
+            std::uint8_t* dest = reinterpret_cast<std::uint8_t*>(info) + info->imgoff;
+			
+			if (isRasterAligned)
+			{
+				memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+			}
+			else
+			{
+				for (int i = 0; i < height; ++i)
+				{
+					int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
+					memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+					rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+				}
+			}
+
+			if (srcOps->Release)
+			{
+				srcOps->Release(env, srcOps, &srcInfo);
+			}
+		}
+		
+		if (srcOps->Unlock)
+		{
+			srcOps->Unlock(env, srcOps, &srcInfo);
+		}
+	}
+
+	return o_JavaNativeBlit(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
+}
+
+#else
+#error "NO SUPPORT FOR LINUX YET"
+#endif
+
 void StartHook()
 {
     InitialiseHooks();
@@ -79,7 +161,8 @@ void StartHook()
 
 void InitialiseHooks()
 {
-    //std::thread([]{
+	#if defined(_WIN32) || defined(_WIN64)
+    std::thread([]{
         while(!GetModuleHandle("awt.dll"))
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -100,7 +183,11 @@ void InitialiseHooks()
         initialize();
         hook((void*)original, (void*)&JavaNativeBlit, (void**)&o_JavaNativeBlit);
         enable((void*)original);
-    //}).detach();
+    }).detach();
+	#elif defined(__APPLE__)
+	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
+	rd_route(blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
+	#endif
 }
 
 #endif // NATIVEHOOKS_HXX_INCLUDED

@@ -7,6 +7,7 @@
 //
 
 #include "SharedEvent.hxx"
+#include <tuple>
 
 #if !defined(_WIN32) && !defined(_WIN64)
 int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
@@ -69,32 +70,32 @@ T* Mutex::mutex_cast(void* &ptr)
 	return result;
 }
 
-Mutex::Mutex() : mutex(nullptr), ref(nullptr), name("\0"), shm_fd(-1)
+Mutex::Mutex() : shared(false), mutex(nullptr), ref(nullptr), name("\0"), shm_fd(-1)
 {
     pthread_mutexattr_t attributes;
-    pthread_mutex_t mutex;
     if (pthread_mutexattr_init(&attributes))
     {
         return;
     }
 
-    if (pthread_mutexattr_setpshared(&attributes, PTHREAD_PROCESS_SHARED))
+    if (pthread_mutexattr_setpshared(&attributes, PTHREAD_PROCESS_PRIVATE))
     {
         pthread_mutexattr_destroy(&attributes);
         return;
     }
 
-    if (pthread_mutex_init(&mutex, &attributes))
+	mutex = new pthread_mutex_t();
+    if (pthread_mutex_init(mutex, &attributes))
     {
         pthread_mutexattr_destroy(&attributes);
+		delete mutex;
         return;
     }
 
     pthread_mutexattr_destroy(&attributes);
-    this->mutex = mutex;
 }
 
-Mutex::Mutex(std::string name) : mutex(nullptr), ref(nullptr), name(name), shm_fd(-1)
+Mutex::Mutex(std::string name) : shared(true), mutex(nullptr), ref(nullptr), name(name), shm_fd(-1)
 {
     bool created = false;
 	shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU); //0660 -> S_IRWXU
@@ -170,7 +171,7 @@ Mutex::Mutex(std::string name) : mutex(nullptr), ref(nullptr), name(name), shm_f
 
 Mutex::~Mutex()
 {
-    if (mutex)
+    if (mutex && shared)
     {
         void* data = static_cast<void*>(mutex);
         pthread_mutex_t* mutex = mutex_cast<pthread_mutex_t>(data);
@@ -184,6 +185,12 @@ Mutex::~Mutex()
         }
         munmap(mutex, sizeof(*this));
     }
+	
+	if (mutex && !shared)
+	{
+		pthread_mutex_destroy(mutex);
+		delete mutex;
+	}
 
     if (shm_fd != -1)
     {
@@ -309,16 +316,65 @@ T* Semaphore::semaphore_cast(void* &ptr)
 	return result;
 }
 
-Semaphore::Semaphore(std::int32_t count)
+Semaphore::Semaphore(std::int32_t count) : shared(false), mutex(nullptr), condition(nullptr), sem_count(nullptr), ref(nullptr), name("\0"), shm_fd(-1)
 {
-    hSemaphore = OpenSemaphore(nullptr, false, nullptr);
-    if (hSemaphore == INVALID_HANDLE_VALUE)
-    {
-        hSemaphore = CreateSemaphore(nullptr, count, count + 1, nullptr);
-    }
+	pthread_mutexattr_t mutex_attributes;
+	if (pthread_mutexattr_init(&mutex_attributes))
+	{
+		return;
+	}
+
+	if (pthread_mutexattr_setpshared(&mutex_attributes, PTHREAD_PROCESS_PRIVATE))
+	{
+		pthread_mutexattr_destroy(&mutex_attributes);
+		return;
+	}
+
+	mutex = new pthread_mutex_t();
+	if (pthread_mutex_init(mutex, &mutex_attributes))
+	{
+		pthread_mutexattr_destroy(&mutex_attributes);
+		delete mutex;
+		return;
+	}
+
+	pthread_condattr_t condition_attributes;
+	if (pthread_condattr_init(&condition_attributes))
+	{
+		pthread_mutexattr_destroy(&mutex_attributes);
+		pthread_mutex_destroy(mutex);
+		delete mutex;
+		return;
+	}
+
+	if (pthread_condattr_setpshared(&condition_attributes, PTHREAD_PROCESS_PRIVATE))
+	{
+		pthread_mutexattr_destroy(&mutex_attributes);
+		pthread_mutex_destroy(mutex);
+		pthread_condattr_destroy(&condition_attributes);
+		delete mutex;
+		return;
+	}
+
+	condition = new pthread_cond_t();
+	if (pthread_cond_init(condition, &condition_attributes))
+	{
+		pthread_mutexattr_destroy(&mutex_attributes);
+		pthread_mutex_destroy(mutex);
+		pthread_condattr_destroy(&condition_attributes);
+		delete condition;
+		delete mutex;
+		return;
+	}
+
+	pthread_mutexattr_destroy(&mutex_attributes);
+	pthread_condattr_destroy(&condition_attributes);
+
+	sem_count = new std::int32_t();
+	*sem_count = count;
 }
 
-Semaphore::Semaphore(std::string name, std::int32_t count) : mutex(nullptr), condition(nullptr), sem_count(nullptr), ref(nullptr), name("\0"), shm_fd(-1)
+Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex(nullptr), condition(nullptr), sem_count(nullptr), ref(nullptr), name("\0"), shm_fd(-1)
 {
     bool created = false;
 	shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU); //0660 -> S_IRWXU
@@ -432,12 +488,12 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : mutex(nullptr), con
 
 Semaphore::~Semaphore()
 {
-    if (mutex)
+    if (mutex && condition && shared)
 	{
 		void* data = static_cast<void*>(mutex);
 		pthread_mutex_t* mutex = semaphore_cast<pthread_mutex_t>(data);
 		pthread_cond_t* condition = semaphore_cast<pthread_cond_t>(data);
-		std::int32_t* sem_count = semaphore_cast<std::int32_t>(data);
+		std::ignore = semaphore_cast<std::int32_t>(data);
 		std::int32_t* ref = semaphore_cast<std::int32_t>(data);
 		*ref -= 1;
 
@@ -448,6 +504,15 @@ Semaphore::~Semaphore()
 			shm_unlink(name.c_str());
 		}
 		munmap(mutex, sizeof(*this));
+	}
+	
+	if (mutex && condition && !shared)
+	{
+		pthread_cond_destroy(condition);
+		pthread_mutex_destroy(mutex);
+		delete condition;
+		delete mutex;
+		delete sem_count;
 	}
 
 	if (shm_fd != -1)
