@@ -71,8 +71,6 @@
 		<Unit filename="RemoteInput/JVM.hxx" />
 		<Unit filename="RemoteInput/Platform/DebugConsole.cxx" />
 		<Unit filename="RemoteInput/Platform/DebugConsole.hxx" />
-		<Unit filename="RemoteInput/Platform/Detour.cxx" />
-		<Unit filename="RemoteInput/Platform/Detour.hxx" />
 		<Unit filename="RemoteInput/Platform/JavaInternal.hxx" />
 		<Unit filename="RemoteInput/Platform/NativeHooks.hxx" />
 		<Unit filename="RemoteInput/Platform/Platform.hxx" />

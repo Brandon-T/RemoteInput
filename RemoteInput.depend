@@ -2,7 +2,7 @@
 1570072764 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.cxx
 	"Module.hxx"
 
-1570072764 c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.hxx
+1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.hxx
 	<windows.h>
 	<dlfcn.h>
 	<string>
@@ -23,7 +23,7 @@
 	"DebugConsole.hxx"
 	<iostream>
 
-1570972414 c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.hxx
+1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.hxx
 	<fstream>
 	<streambuf>
 
@@ -52,12 +52,12 @@
 
 1566286641 c:\program files\java\jdk-12.0.2\include\win32\jni_md.h
 
-1570941482 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_darwin.cxx
+1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_darwin.cxx
 	"Platform.hxx"
 	<Foundation/Foundation.h>
-	<UIKit/UIKit.h>
+	<Cocoa/Cocoa.h>
 
-1570941430 c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform.hxx
+1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform.hxx
 	"../Reflection.hxx"
 
 1570974790 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
@@ -93,10 +93,11 @@
 	<stdexcept>
 	<vector>
 
-1571601700 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.cxx
+1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.cxx
 	"SharedEvent.hxx"
+	<tuple>
 
-1571612032 c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.hxx
+1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.hxx
 	<pthread.h>
 	<windows.h>
 	<pthread.h>
@@ -105,13 +106,14 @@
 	<sys/mman.h>
 	<fcntl.h>
 	<errno.h>
+	<unistd.h>
 	<ctime>
 	<cstdint>
 	<string>
 	<chrono>
 	"Time.hxx"
 
-1571601980 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
 	"SimbaPlugin.hxx"
 	<memory>
 	"../Echo/MemoryMap.hxx"
@@ -119,7 +121,7 @@
 	"../Platform/Platform.hxx"
 	"../Platform/NativeHooks.hxx"
 
-1571032260 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
+1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
 	<cstdint>
 	<cstdio>
 	<new>
@@ -127,7 +129,7 @@
 	"TMemoryManager.hxx"
 	<windows.h>
 
-1571114048 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
 	<cstdint>
 	<stdint.h>
 	"Echo/SharedEvent.hxx"
@@ -147,7 +149,7 @@
 	<unistd.h>
 	<istream>
 
-1571035132 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
+1572585603 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
 	<windows.h>
 	<memory>
 	<thread>
@@ -156,7 +158,7 @@
 
 1570997272 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
 
-1571602225 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
 	"EIOS.hxx"
 	<cstdio>
 	<unordered_map>

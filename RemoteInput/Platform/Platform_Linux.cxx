@@ -13,4 +13,6 @@ void GetDesktopResolution(int &width, int &height)
     height = screen->height;
     XCloseDisplay(display);
 }
+
+#error "No Window Reflector Implementation"
 #endif // defined

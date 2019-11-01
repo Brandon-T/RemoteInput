@@ -15,17 +15,16 @@ void InitialiseHooks();
 
 #if defined(_WIN32) || defined(_WIN64)
 typedef void (__stdcall *JavaNativeBlit_t)(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut);
-
 JavaNativeBlit_t o_JavaNativeBlit;
 
 #elif defined(__APPLE__)
 
-typedef void (__stdcall *JavaNativeBlit_t)(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2);
-
+typedef void (*JavaNativeBlit_t)(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2);
 JavaNativeBlit_t o_JavaNativeBlit;
 
 #else
-#error "NO SUPPORT FOR LINUX YET"
+typedef void (*JavaNativeBlit_t)(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height);
+JavaNativeBlit_t o_JavaNativeBlit;
 #endif
 
 
@@ -97,18 +96,18 @@ void __stdcall JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDst
 	jint width = sx2 - sx1;
 	jint height = sy2 - sy1;
 	SurfaceDataOps *srcOps = (SurfaceDataOps *)pSrcOps;
-	
+
 	if (!srcOps || width <= 0 || height <= 0)
 	{
 		return;
 	}
-	
+
 	SurfaceDataRasInfo srcInfo = {0};
 	srcInfo.bounds.x1 = sx1;
 	srcInfo.bounds.y1 = sy1;
 	srcInfo.bounds.x2 = sx2;
 	srcInfo.bounds.y2 = sy2;
-	
+
 	if (srcOps->Lock(env, srcOps, &srcInfo, SD_LOCK_READ) == SD_SUCCESS)
 	{
 		srcOps->GetRasInfo(env, srcOps, &srcInfo);
@@ -120,7 +119,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDst
             extern std::unique_ptr<MemoryMap<char>> globalMap;
             ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
             std::uint8_t* dest = reinterpret_cast<std::uint8_t*>(info) + info->imgoff;
-			
+
 			if (isRasterAligned)
 			{
 				memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
@@ -140,7 +139,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDst
 				srcOps->Release(env, srcOps, &srcInfo);
 			}
 		}
-		
+
 		if (srcOps->Unlock)
 		{
 			srcOps->Unlock(env, srcOps, &srcInfo);
@@ -151,7 +150,30 @@ void __stdcall JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDst
 }
 
 #else
-#error "NO SUPPORT FOR LINUX YET"
+
+Bool XShmPutImage(Display *display, Drawable d, GC gc, XImage *image, int src_x, int src_y, int dest_x, int dest_y, unsigned int width, unsigned int height, bool send_event)
+{
+    int bytes_per_pixel = image->bits_per_pixel / 8;
+    int stride = width * bytes_per_pixel;
+    void *rasBase = reinterpret_cast<std::uint8_t*>(image->data) + (stride * src_y) + (bytes_per_pixel * src_x);
+
+    extern std::unique_ptr<MemoryMap<char>> globalMap;
+    ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
+    std::uint8_t* dest = reinterpret_cast<std::uint8_t*>(info) + info->imgoff;
+
+    for (std::size_t i = 0; i < image->height; ++i)
+    {
+        for (std::size_t j = 0; j < image->width; ++j)
+        {
+            std::uint8_t pixel = image->data[i * image->width + (image->height - j - 1)];
+            *dest++ = pixel;
+        }
+    }
+
+    typedef Bool (*XShmPutImage_t*)(Display*, Drawable, GC, XImage*, int, int, int, int, unsigned int, unsigned int, bool)
+    static XShmPutImage_t o_XShmPutImage = reinterpret_cast<XShmPutImage_t>(dlsym(RTLD_NEXT, "XShmPutImage"));
+    return o_XShmPutImage(display, d, gc, image, src_x, src_y, dest_x, dest_y, width, height, send_event);
+}
 #endif
 
 void StartHook()
@@ -187,6 +209,8 @@ void InitialiseHooks()
 	#elif defined(__APPLE__)
 	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
 	rd_route(blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
+	#else
+    #warning "FIX LINUX HOOKS"
 	#endif
 }
 
