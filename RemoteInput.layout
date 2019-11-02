@@ -2,49 +2,14 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
-	<File name="RemoteInput\EIOS.hxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="RemoteInput\Platform\Platform_Windows.cxx" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="0" topLine="10" />
-		</Cursor>
-	</File>
-	<File name="RemoteInput\Platform\Platform_Linux.cxx" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="432" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="RemoteInput\Echo\MemoryMap.hxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="0" topLine="150" />
+			<Cursor1 position="1188" topLine="23" />
 		</Cursor>
 	</File>
 	<File name="RemoteInput\JVM.cxx" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="0" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="RemoteInput\ThreadPool.cxx" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="0" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="RemoteInput\Platform\Platform_Darwin.cxx" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="0" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="RemoteInput\Echo\SharedEvent.hxx" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="0" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="RemoteInput\Echo\SharedEvent.cxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="17570" topLine="615" />
-		</Cursor>
-	</File>
-	<File name="RemoteInput\Platform\NativeHooks.hxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="5581" topLine="124" />
+			<Cursor1 position="24" topLine="132" />
 		</Cursor>
 	</File>
 	<File name="RemoteInput\Plugin\SimbaPlugin.cxx" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -52,9 +17,59 @@
 			<Cursor1 position="0" topLine="190" />
 		</Cursor>
 	</File>
+	<File name="RemoteInput\Echo\SharedEvent.hxx" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\EIOS.hxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="10" />
+		</Cursor>
+	</File>
 	<File name="RemoteInput\EIOS.cxx" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="0" topLine="9" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\Echo\MemoryMap.hxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="150" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\Reflection.cxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1401" topLine="9" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\ThreadPool.cxx" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\JVM.hxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="641" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\Echo\SharedEvent.cxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="17570" topLine="615" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\Platform\Platform_Darwin.cxx" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1269" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\Platform\NativeHooks.hxx" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5581" topLine="124" />
+		</Cursor>
+	</File>
+	<File name="RemoteInput\Platform\Platform_Linux.cxx" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4464" topLine="148" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
