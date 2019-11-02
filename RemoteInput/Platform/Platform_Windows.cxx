@@ -21,7 +21,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
     DWORD pid = 0;
     GetWindowThreadProcessId(hwnd, &pid);
-    if (pid == GetCurrentProcessId())
+    if (pid == GetCurrentProcessId() && lParam)
     {
         char className[MAX_PATH] = {0};
         int result = GetClassName(hwnd, className, sizeof(className));

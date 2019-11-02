@@ -39,6 +39,8 @@ bool Reflection::Initialize(jobject awtFrame)
         jclass cls = jvm->GetObjectClass(component);
         jmethodID mid = jvm->GetMethodID(cls, "getComponents", "()[Ljava/awt/Component;");
 
+        //TODO: Should validate that it's actually a java.awt.Frame so I can call `getComponents`
+
         if (mid) {
             jobjectArray components = (jobjectArray)jvm->CallObjectMethod(component, mid);
 

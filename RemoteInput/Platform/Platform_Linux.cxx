@@ -3,6 +3,9 @@
 #if defined(__linux__)
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+
+#include <functional>
+#include <cstring>
 #endif // defined
 
 #if defined(__linux__)
@@ -14,9 +17,16 @@ void GetDesktopResolution(int &width, int &height)
     height = screen->height;
     XCloseDisplay(display);
 }
+#endif
 
-std::string GetClassName(Display* display, Window window)
+#if defined(__linux__)
+int GetClassName(Display* display, Window window, char* lpClassName, int nMaxCount)
 {
+    if (!lpClassName || !nMaxCount)
+    {
+        return 0;
+    }
+
     XClassHint hint;
     if (XGetClassHint(display, window, &hint))
     {
@@ -27,43 +37,66 @@ std::string GetClassName(Display* display, Window window)
 
         if (hint.res_class)
         {
-            std::string wm_class = hint.res_class;
+            memset(lpClassName, 0, nMaxCount * sizeof(char));
+
+            int length = strlen(hint.res_class);
+            int max_copy = (nMaxCount < length ? nMaxCount - 1 : length);
+            strncpy(lpClassName, hint.res_class, max_copy);
             XFree(hint.res_class);
-            return wm_class;
+            return max_copy;
         }
     }
-
-    return "";
+    return 0;
 }
 
-std::string GetWindowName(Display* display, Window window)
+int GetWindowText(Display* display, Window window, char* lpString, int nMaxCount)
 {
+    if (!lpString || !nMaxCount)
+    {
+        return 0;
+    }
+
     char* name = nullptr;
     if (XFetchName(display, window, &name) > 0)
     {
-        return name;
+        memset(lpString, 0, nMaxCount * sizeof(char));
+
+        int length = strlen(name);
+        int max_copy = (nMaxCount < length ? nMaxCount - 1 : length);
+        strncpy(lpString, name, max_copy);
         XFree(name);
+        return max_copy;
     }
-    return "";
+    return 0;
 }
 
-bool EnumWindows(Display* display, bool (*EnumWindowsProc)(Display*, Window, void*), void* other)
+void EnumWindows(Display* display, bool (*EnumWindowsProc)(Display*, Window, void*), void* other)
 {
-    Window root_return;
-    Window parent_return;
-    Window* children_return;
-    unsigned int nchildren_return;
-
-    if (XQueryTree(display, XDefaultRootWindow(display), &root_return, &parent_return, &children_return, &nchildren_return))
+    if (!EnumWindowsProc)
     {
-        for (unsigned int i = 0; i < nchildren_return; ++i)
+        return;
+    }
+
+    Atom atomList = XInternAtom(display, "_NET_CLIENT_LIST", true);
+    Atom type = None;
+    int format = 0;
+    unsigned long nItems = 0;
+    unsigned long bytesAfter = 0;
+    unsigned char* property = nullptr;
+    if (XGetWindowProperty(display, XDefaultRootWindow(display), atomList, 0L, ~0L, false, AnyPropertyType, &type, &format, &nItems, &bytesAfter, &property) == Success)
+    {
+        if (property)
         {
-            if (!EnumWindowsProc(display, children_return[i], other))
+            for (unsigned int i = 0; i < nItems; ++i)
             {
-                break;
+                Window* windows = reinterpret_cast<Window*>(property);
+                if (!EnumWindowsProc(display, windows[i], other))
+                {
+                    break;
+                }
             }
+            XFree(property);
         }
-        XFree(children_return);
     }
 }
 
@@ -170,39 +203,54 @@ std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid)
     GetWindowsFromPIDInternal(display, XDefaultRootWindow(display), atomPID, pid, windows);
     return windows;
 }
+#endif
 
-bool EnumChildWindowsProc(Display* display, Window window, void* other)
+#if defined(__linux__)
+bool EnumWindowsProc(Display* display, Window window, void* other)
 {
     pid_t pid = 0;
     GetWindowThreadProcessId(display, window, &pid);
     if (pid == getpid() && other)
     {
-        std::vector<Window>* results = reinterpret_cast<std;:vector<Window>*>(other);
-        results->push_back(window);
+        char className[256] = {0};
+        int result = GetClassName(display, window, className, sizeof(className));
+        if (result != 0 && std::string(className) == "jagexappletviewer")  //Need a better way to check the class..
+        {
+            *reinterpret_cast<Window*>(other) = window;
+            return false;
+        }
     }
     return true;
 }
 
 Reflection* GetNativeReflector()
 {
-    Reflection* reflection = new Reflection();
-
-    for (NSWindow* window in NSApplication.sharedApplication.windows)
+    auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_NEXT, "awt_GetComponent"));
+    if (!awt_GetComponent)
     {
-        if ([window isKindOfClass:NSClassFromString(@"AWTWindow_Normal")] && [window.contentView isKindOfClass:NSClassFromString(@"AWTView")])
-		{
-			NSView* view = window.contentView;
-			if (reflection->Attach())
-			{
-				jobject object = [view awtComponent:reflection->getEnv()];  //java.awt.Frame
-				if (reflection->Initialize(object))
-				{
-				    reflection->Detach();
-				    return reflection;
-				}
-				reflection->Detach();
-			}
-		}
+        return nullptr;
+    }
+
+    Display* display = XOpenDisplay(nullptr);
+    Window windowFrame = 0;
+    EnumWindows(display, EnumWindowsProc, &windowFrame);
+    XCloseDisplay(display);
+
+    if (!windowFrame)
+    {
+        return nullptr;
+    }
+
+    Reflection* reflection = new Reflection();
+    if (reflection->Attach())
+    {
+        jobject object = awt_GetComponent(reflection->getEnv(), reinterpret_cast<void*>(windowFrame));  //java.awt.Frame
+        if (reflection->Initialize(object))
+        {
+            reflection->Detach();
+            return reflection;
+        }
+        reflection->Detach();
     }
 
     delete reflection;
