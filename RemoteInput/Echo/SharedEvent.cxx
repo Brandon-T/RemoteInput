@@ -49,7 +49,7 @@ Mutex::Mutex() : hMutex(INVALID_HANDLE_VALUE)
 Mutex::Mutex(std::string name) : hMutex(INVALID_HANDLE_VALUE)
 {
     hMutex = OpenMutex(0, false, name.c_str());
-    if (hMutex == INVALID_HANDLE_VALUE)
+    if (!hMutex)
     {
         hMutex = CreateMutex(0, false, name.c_str());
     }
@@ -57,7 +57,7 @@ Mutex::Mutex(std::string name) : hMutex(INVALID_HANDLE_VALUE)
 
 Mutex::~Mutex()
 {
-    ReleaseMutex(hMutex);
+    //ReleaseMutex(hMutex);
     CloseHandle(hMutex);
 }
 #else
@@ -185,7 +185,7 @@ Mutex::~Mutex()
         }
         munmap(mutex, sizeof(*this));
     }
-	
+
 	if (mutex && !shared)
 	{
 		pthread_mutex_destroy(mutex);
@@ -286,24 +286,24 @@ bool Mutex::unlock()
 Semaphore::Semaphore(std::int32_t count)
 {
     hSemaphore = OpenSemaphore(0, false, nullptr);
-    if (hSemaphore == INVALID_HANDLE_VALUE)
+    if (!hSemaphore)
     {
-        hSemaphore = CreateSemaphore(0, count, count + 1, nullptr);
+        hSemaphore = CreateSemaphore(nullptr, count, count + 1, nullptr);
     }
 }
 
 Semaphore::Semaphore(std::string name, std::int32_t count)
 {
     hSemaphore = OpenSemaphore(0, false, name.c_str());
-    if (hSemaphore == INVALID_HANDLE_VALUE)
+    if (!hSemaphore)
     {
-        hSemaphore = CreateSemaphore(0, count, count + 1, name.c_str());
+        hSemaphore = CreateSemaphore(nullptr, count, count + 1, name.c_str());
     }
 }
 
 Semaphore::~Semaphore()
 {
-    ReleaseSemaphore(hSemaphore, 1, nullptr);
+    //ReleaseSemaphore(hSemaphore, 1, nullptr);
     CloseHandle(hSemaphore);
 }
 #else
@@ -505,7 +505,7 @@ Semaphore::~Semaphore()
 		}
 		munmap(mutex, sizeof(*this));
 	}
-	
+
 	if (mutex && condition && !shared)
 	{
 		pthread_cond_destroy(condition);

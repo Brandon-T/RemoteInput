@@ -10,18 +10,38 @@
 #include <cstdio>
 #include <unordered_map>
 #include <memory>
+#include <atomic>
 #include "Echo/MemoryMap.hxx"
 #include "Echo/SharedEvent.hxx"
 #include "Reflection.hxx"
 
 std::unordered_map<std::int32_t, EIOS*> clients;
 std::unique_ptr<MemoryMap<char>> globalMap;
-std::unique_ptr<Mutex> globalEvent;
+std::unique_ptr<Mutex> globalLock;
+std::unique_ptr<Semaphore> commandSignal;
+std::unique_ptr<Semaphore> responseSignal;
 std::unique_ptr<Reflection> globalReflector;
+
+#include "Plugin/CommandThread.hxx"
+extern ResponsiveThread* thread;
+
+template<typename T>
+T& EIOS_Cast(void* ptr, std::intptr_t offset)
+{
+    return *reinterpret_cast<T*>(static_cast<std::uint8_t*>(ptr) + offset);
+}
+
+template<typename T>
+void EIOS_Write(void* &ptr, T value)
+{
+    *static_cast<T*>(ptr) = value;
+    ptr = static_cast<T*>(ptr) + 1;
+}
 
 EIOS* EIOS_RequestTarget(const char* initargs)
 {
     printf("%s\n", __FUNCTION__);
+
     std::size_t pos = 0;
     std::int32_t pid = std::stoi(initargs, &pos);
     if (pos == std::string(initargs).length())
@@ -32,15 +52,24 @@ EIOS* EIOS_RequestTarget(const char* initargs)
         }
 
         globalMap.reset();
+        globalLock.reset();
+        commandSignal.reset();
+        responseSignal.reset();
 
         char mapName[256] = {0};
         sprintf(mapName, "Local\\RemoteInput_%d", pid);
         MemoryMap<char>* memory = new MemoryMap<char>{mapName, std::ios::in | std::ios::out};
         if (memory->open() && memory->map())
         {
-            char lockName[256] = {0};
-            sprintf(lockName, "Local\\RemoteInput_%d", pid);
-            globalEvent.reset(new Mutex(lockName));
+            char buffer[256] = {0};
+            sprintf(buffer, "Local\\RemoteInput_Lock_%d", pid);
+            globalLock.reset(new Mutex(buffer));
+
+            sprintf(buffer, "Local\\RemoteInput_EventRead_%d", pid);
+            commandSignal.reset(new Semaphore(buffer));
+
+            sprintf(buffer, "Local\\RemoteInput_EventWrite_%d", pid);
+            responseSignal.reset(new Semaphore(buffer));
 
             EIOS* eios = new EIOS();
             eios->pid = pid;
@@ -48,9 +77,9 @@ EIOS* EIOS_RequestTarget(const char* initargs)
             eios->imageData = reinterpret_cast<ImageData*>(memory->data());
             eios->imageData->imgoff = sizeof(ImageData);
 
-            globalEvent->lock();
+            globalLock->lock();
             eios->imageData->parentId = getpid();
-            globalEvent->unlock();
+            globalLock->unlock();
             clients[pid] = eios;
             return eios;
         }
@@ -66,16 +95,15 @@ void EIOS_ReleaseTarget(EIOS* eios)
     {
         clients.erase(eios->pid);
 
-        globalEvent->lock();
-        MemoryMap<char>* memory = reinterpret_cast<MemoryMap<char>*>(eios->memoryMap);
+        /*globalLock->lock();
         eios->imageData->parentId = -1;
-        memory->unmap();
-        memory->close();
-        delete memory;
+        eios->memoryMap->unmap();
+        eios->memoryMap->close();
+        delete eios->memoryMap;
         delete eios;
 
-        globalEvent->unlock();
-        globalEvent.reset();
+        globalLock->unlock();
+        globalLock.reset();*/
     }
 }
 
@@ -114,6 +142,16 @@ void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y)
 {
     printf("%s\n", __FUNCTION__);
+
+    globalLock->lock();
+    void* args = eios->imageData->args;
+    eios->imageData->command = EIOS_MOVE_MOUSE;
+    EIOS_Write(args, x);
+    EIOS_Write(args, y);
+    globalLock->unlock();
+
+    commandSignal->signal();
+    responseSignal->wait();
 }
 
 void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button)

@@ -22,25 +22,36 @@
 #endif
 
 #include "Echo/SharedEvent.hxx"
+#include "Echo/MemoryMap.hxx"
 #include "SHMAllocator.hxx"
 
-typedef struct ImageData {
-    std::uintptr_t mutex;
-
+typedef struct ImageData
+{
     int parentId;
     int width;
     int height;
     int imgoff;
+    int command;
     uint8_t args[4096];
 } ImageData;
 
-typedef struct EIOS {
+typedef struct EIOS
+{
     int pid;
     void* memoryMap;
     int width;
     int height;
     ImageData* imageData;
 } EIOS;
+
+enum EIOSCommand
+{
+    EIOS_COMMAND_NONE,
+    EIOS_MOVE_MOUSE,
+    EIOS_HOLD_MOUSE,
+    EIOS_RELEASE_MOUSE,
+    EIOS_IS_MOUSE_HELD
+};
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,9 +1,12 @@
 #include "SimbaPlugin.hxx"
 #include <memory>
+#include <atomic>
 
 #include "../Echo/MemoryMap.hxx"
 #include "../Echo/SharedEvent.hxx"
 #include "../Platform/Platform.hxx"
+#include "../Platform/NativeHooks.hxx"
+#include "CommandThread.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 HMODULE module = nullptr;
@@ -11,8 +14,11 @@ HMODULE module = nullptr;
 
 TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
 extern std::unique_ptr<MemoryMap<char>> globalMap;
-extern std::unique_ptr<Mutex> globalEvent;
+extern std::unique_ptr<Mutex> globalLock;
+extern std::unique_ptr<Semaphore> commandSignal;
+extern std::unique_ptr<Semaphore> responseSignal;
 extern std::unique_ptr<Reflection> globalReflector;
+std::unique_ptr<ResponsiveThread> commandThread;
 
 int GetPluginABIVersion()
 {
@@ -62,6 +68,7 @@ void SetPluginMemManager(TMemoryManager MemMgr)
 
 void OnAttach(void* info)
 {
+    //commandThread.reset();
 }
 
 void OnDetach()
@@ -170,12 +177,30 @@ bool InitializeSharedMemory(pid_t pid)
 bool InitializeLocks(pid_t pid)
 {
     char lockName[256] = {0};
-    sprintf(lockName, "Local\\RemoteInput_%d", pid);
-    globalEvent.reset(new Mutex(lockName));
+    sprintf(lockName, "Local\\RemoteInput_Lock_%d", pid);
+    globalLock.reset(new Mutex(lockName));
     return true;
 }
 
-#include "../Platform/NativeHooks.hxx"
+bool InitializeSignals(pid_t pid)
+{
+    char signalName[256] = {0};
+    sprintf(signalName, "Local\\RemoteInput_EventRead_%d", pid);
+    commandSignal.reset(new Semaphore(signalName));
+
+    sprintf(signalName, "Local\\RemoteInput_EventWrite_%d", pid);
+    responseSignal.reset(new Semaphore(signalName));
+    return true;
+}
+
+template<typename T>
+T EIOS_Read(void*& ptr)
+{
+    T result = *static_cast<T*>(ptr);
+    ptr = static_cast<T*>(ptr) + 1;
+    return result;
+}
+
 #if defined(_WIN32) || defined(_WIN64)
 extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -189,14 +214,15 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
             if (InitializeSharedMemory(getpid()))
             {
                 InitializeLocks(getpid());
+                InitializeSignals(getpid());
 
-                globalEvent->lock();
+                globalLock->lock();
                 ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
                 info->parentId = -1;
                 info->width = 765;
                 info->height = 553;
                 info->imgoff = sizeof(ImageData);
-                globalEvent->unlock();
+                globalLock->unlock();
             }
 
             globalReflector.reset(GetNativeReflector());
@@ -205,27 +231,76 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
             {
                 StartHook();
             }
+
+            commandThread.reset(new ResponsiveThread([&](ResponsiveThread* thread){
+                while(thread && !thread->stopped()) {
+                    if (!commandSignal || !globalLock || !responseSignal || !globalMap)
+                    {
+                        return;
+                    }
+
+                    commandSignal->wait();
+                    if (!thread || thread->stopped())
+                    {
+                        return;
+                    }
+
+                    globalLock->lock();
+                    ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
+                    int command = info->command;
+                    void* args = info->args;
+
+                    if (command != EIOS_COMMAND_NONE)
+                    {
+                        switch(command)
+                        {
+                        case EIOS_MOVE_MOUSE:
+                            std::int32_t x = EIOS_Read<std::int32_t>(args);
+                            std::int32_t y = EIOS_Read<std::int32_t>(args);
+
+                            char buff[48];
+                            sprintf(buff, "(%d, %d)", x, y);
+                            MessageBox(NULL, buff, NULL, 0);
+                            break;
+                        }
+                    }
+                    globalLock->unlock();
+                    responseSignal->signal();
+                }
+            }, [&]{
+                if (commandSignal)
+                {
+                    commandSignal->signal();
+                }
+            }));
         }
             break;
 
         case DLL_PROCESS_DETACH:
         {
+            commandThread.reset();
             globalReflector.reset();
 
-            globalEvent->unlock();
-            globalEvent.reset();
+            if (globalLock)
+            {
+                globalLock->unlock();
+            }
+            globalLock.reset();
 
-            globalMap->unmap();
-            globalMap->close();
+            if (globalMap)
+            {
+                globalMap->unmap();
+                globalMap->close();
+            }
         }
             break;
 
         case DLL_THREAD_ATTACH:
-            // attach to thread
+            printf("ATTACHED\n");
             break;
 
         case DLL_THREAD_DETACH:
-            // detach from thread
+            printf("DETACHED\n");
             break;
     }
     return TRUE; // succesful
@@ -236,6 +311,7 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
     if (InitializeSharedMemory(getpid()))
     {
         InitializeLocks(getpid());
+        InitializeSignals(getpid());
     }
     globalReflector.reset(GetNativeReflector());
 }
@@ -244,8 +320,8 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
 {
     globalReflector.reset();
 
-    globalEvent->unlock();
-    globalEvent.reset();
+    globalLock->unlock();
+    globalLock.reset();
 
     globalMap->unmap();
     globalMap->close();

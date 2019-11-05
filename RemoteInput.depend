@@ -1,8 +1,8 @@
 # depslib dependency file v1.0
-1570072764 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.cxx
+1570069164 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.cxx
 	"Module.hxx"
 
-1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.hxx
+1571810452 c:\users\brandon\desktop\remoteinput\remoteinput\echo\module.hxx
 	<windows.h>
 	<dlfcn.h>
 	<string>
@@ -10,20 +10,20 @@
 	<locale>
 	<codecvt>
 
-1570072764 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\time.cxx
+1570069164 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\time.cxx
 	"Time.hxx"
 
-1570072764 c:\users\brandon\desktop\remoteinput\remoteinput\echo\time.hxx
+1570069164 c:\users\brandon\desktop\remoteinput\remoteinput\echo\time.hxx
 	<windows.h>
 	<sys/time.h>
 	<ctime>
 	<cstdint>
 
-1570973748 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.cxx
+1570970148 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.cxx
 	"DebugConsole.hxx"
 	<iostream>
 
-1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.hxx
+1571810452 c:\users\brandon\desktop\remoteinput\remoteinput\platform\debugconsole.hxx
 	<fstream>
 	<streambuf>
 
@@ -34,10 +34,10 @@
 	<cstdint>
 	<windows.h>
 
-1570920448 source:c:\users\brandon\desktop\remoteinput\remoteinput\jvm.cxx
+1570916848 source:c:\users\brandon\desktop\remoteinput\remoteinput\jvm.cxx
 	"JVM.hxx"
 
-1570919970 c:\users\brandon\desktop\remoteinput\remoteinput\jvm.hxx
+1570916370 c:\users\brandon\desktop\remoteinput\remoteinput\jvm.hxx
 	<jni.h>
 	<windows.h>
 	<dlfcn.h>
@@ -45,44 +45,47 @@
 	<vector>
 	<string>
 
-1566286641 c:\program files\java\jdk-12.0.2\include\jni.h
+1566283041 c:\program files\java\jdk-12.0.2\include\jni.h
 	<stdio.h>
 	<stdarg.h>
 	"jni_md.h"
 
-1566286641 c:\program files\java\jdk-12.0.2\include\win32\jni_md.h
+1566283041 c:\program files\java\jdk-12.0.2\include\win32\jni_md.h
 
-1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_darwin.cxx
+1571810452 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_darwin.cxx
 	"Platform.hxx"
 	<Foundation/Foundation.h>
 	<Cocoa/Cocoa.h>
 
-1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform.hxx
+1571810452 c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform.hxx
 	"../Reflection.hxx"
 
-1570974790 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
+1570971190 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
 	<string>
 	<memory>
 	<functional>
 	<jni.h>
 	"JVM.hxx"
 
-1570918636 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_linux.cxx
+1572709907 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_linux.cxx
 	"Platform.hxx"
 	<X11/Xlib.h>
+	<X11/Xatom.h>
+	<functional>
+	<cstring>
 
-1571001228 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_windows.cxx
+1572708095 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_windows.cxx
 	"Platform.hxx"
 	<string>
 	<windows.h>
 
-1570974838 source:c:\users\brandon\desktop\remoteinput\remoteinput\reflection.cxx
+1572709950 source:c:\users\brandon\desktop\remoteinput\remoteinput\reflection.cxx
 	"Reflection.hxx"
 
-1570919576 source:c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.cxx
+1572838938 source:c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.cxx
 	"ThreadPool.hxx"
 
-1570919232 c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.hxx
+1572831581 c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.hxx
 	<thread>
 	<future>
 	<mutex>
@@ -93,11 +96,11 @@
 	<stdexcept>
 	<vector>
 
-1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.cxx
+1572838922 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.cxx
 	"SharedEvent.hxx"
 	<tuple>
 
-1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.hxx
+1571810452 c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.hxx
 	<pthread.h>
 	<windows.h>
 	<pthread.h>
@@ -113,15 +116,17 @@
 	<chrono>
 	"Time.hxx"
 
-1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+1572923333 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
 	"SimbaPlugin.hxx"
 	<memory>
+	<atomic>
 	"../Echo/MemoryMap.hxx"
 	"../Echo/SharedEvent.hxx"
 	"../Platform/Platform.hxx"
 	"../Platform/NativeHooks.hxx"
+	"CommandThread.hxx"
 
-1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
+1571810452 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
 	<cstdint>
 	<cstdio>
 	<new>
@@ -129,19 +134,20 @@
 	"TMemoryManager.hxx"
 	<windows.h>
 
-1571814052 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+1572913070 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
 	<cstdint>
 	<stdint.h>
 	"Echo/SharedEvent.hxx"
+	"Echo/MemoryMap.hxx"
 	"SHMAllocator.hxx"
 
-1570072764 c:\users\brandon\desktop\remoteinput\remoteinput\shmallocator.hxx
+1570069164 c:\users\brandon\desktop\remoteinput\remoteinput\shmallocator.hxx
 	<cmath>
 	<memory>
 
-1570076456 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\tmemorymanager.hxx
+1570072856 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\tmemorymanager.hxx
 
-1571112374 c:\users\brandon\desktop\remoteinput\remoteinput\echo\memorymap.hxx
+1571108774 c:\users\brandon\desktop\remoteinput\remoteinput\echo\memorymap.hxx
 	<windows.h>
 	<sys/types.h>
 	<sys/mman.h>
@@ -149,21 +155,37 @@
 	<unistd.h>
 	<istream>
 
-1572585603 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
+1572582031 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
 	<windows.h>
 	<memory>
 	<thread>
 	"JavaInternal.hxx"
 	"../EIOS.hxx"
 
-1570997272 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
+1570993672 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
 
-1571814052 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+1572835105 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
 	"EIOS.hxx"
 	<cstdio>
 	<unordered_map>
 	<memory>
+	<atomic>
 	"Echo/MemoryMap.hxx"
 	"Echo/SharedEvent.hxx"
 	"Reflection.hxx"
+	"Plugin/CommandThread.hxx"
+
+1572918827 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\commandthread.cxx
+	"CommandThread.hxx"
+
+1572913992 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\commandthread.hxx
+	<thread>
+	<atomic>
+	<queue>
+	<mutex>
+	<functional>
+	<condition_variable>
+	<stdexcept>
+	<vector>
+	"../Echo/SharedEvent.hxx"
 
