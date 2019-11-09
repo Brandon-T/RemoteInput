@@ -1,6 +1,8 @@
 #ifndef JAVAINTERNAL_HXX_INCLUDED
 #define JAVAINTERNAL_HXX_INCLUDED
 
+#include <jni.h>
+
 typedef struct {
     jint x1;
     jint y1;

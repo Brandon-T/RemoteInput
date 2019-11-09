@@ -21,37 +21,42 @@
 #define EXPORT
 #endif
 
-#include "Echo/SharedEvent.hxx"
-#include "Echo/MemoryMap.hxx"
-#include "SHMAllocator.hxx"
+#include "ControlCenter.hxx"
+
+
+enum class EIOSCommand: std::uint32_t
+{
+    COMMAND_NONE,
+	GET_TARGET_DIMENSIONS,
+	GET_MOUSE,
+    MOVE_MOUSE,
+    HOLD_MOUSE,
+    RELEASE_MOUSE,
+    IS_MOUSE_HELD,
+	SEND_STRING,
+	HOLD_KEY,
+	RELEASE_KEY,
+	IS_KEY_HELD,
+	
+	REFLECT
+};
 
 typedef struct ImageData
 {
-    int parentId;
-    int width;
-    int height;
-    int imgoff;
-    int command;
-    uint8_t args[4096];
+    std::int32_t parentId;
+    std::int32_t width;
+    std::int32_t height;
+    EIOSCommand command;
+    std::uint8_t args[4096];
 } ImageData;
 
 typedef struct EIOS
 {
-    int pid;
-    void* memoryMap;
-    int width;
-    int height;
-    ImageData* imageData;
+    std::int32_t pid;
+	std::int32_t width;
+    std::int32_t height;
+    std::unique_ptr<ControlCenter> control_center;
 } EIOS;
-
-enum EIOSCommand
-{
-    EIOS_COMMAND_NONE,
-    EIOS_MOVE_MOUSE,
-    EIOS_HOLD_MOUSE,
-    EIOS_RELEASE_MOUSE,
-    EIOS_IS_MOUSE_HELD
-};
 
 #ifdef __cplusplus
 extern "C" {
