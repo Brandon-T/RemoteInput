@@ -1,6 +1,8 @@
 #include "NativeHooks.hxx"
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#elif defined(__APPLE__)
+#include "rd_route.h"
 #endif
 
 #include <memory>
@@ -201,7 +203,7 @@ void InitialiseHooks()
     }).detach();
 	#elif defined(__APPLE__)
 	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
-	//rd_route(blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
+	rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
 	#else
     #warning "FIX LINUX HOOKS"
 	#endif

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5E07A6C02378B1B100EB4CDF /* Graphics.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */; };
+		5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */; };
 		5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
 		5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
 		5E7B128A237737FE00300E6D /* NativeHooks.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E7B1289237737FE00300E6D /* NativeHooks.cxx */; };
@@ -45,6 +47,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Graphics.cxx; sourceTree = "<group>"; };
+		5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Graphics.hxx; sourceTree = "<group>"; };
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
 		5E7B1289237737FE00300E6D /* NativeHooks.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks.cxx; sourceTree = "<group>"; };
@@ -121,6 +125,8 @@
 				5EBD66A9235CF15400D183B1 /* TMemoryManager.hxx */,
 				5E5FC029237264840048997B /* ControlCenter.cxx */,
 				5E5FC02A237264840048997B /* ControlCenter.hxx */,
+				5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */,
+				5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */,
 			);
 			path = Plugin;
 			sourceTree = "<group>";
@@ -198,6 +204,7 @@
 				5EBD66C4235CF15400D183B1 /* Reflection.hxx in Headers */,
 				5EBD66C7235CF15400D183B1 /* EIOS.hxx in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
+				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
 				5EBD66C2235CF15400D183B1 /* JavaInternal.hxx in Headers */,
 				5EBD66D3235CF15400D183B1 /* MemoryMap.hxx in Headers */,
@@ -298,6 +305,7 @@
 				5EBD66D2235CF15400D183B1 /* SharedEvent.cxx in Sources */,
 				5EBD66CF235CF15400D183B1 /* ThreadPool.cxx in Sources */,
 				5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */,
+				5E07A6C02378B1B100EB4CDF /* Graphics.cxx in Sources */,
 				5EBD66C3235CF15400D183B1 /* Platform_Windows.cxx in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

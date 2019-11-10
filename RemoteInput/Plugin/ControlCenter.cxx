@@ -3,26 +3,7 @@
 #include "EIOS.hxx"
 #include "Platform.hxx"
 #include "NativeHooks.hxx"
-
-
-/*void circle(int centerx, int centery, int radius)
-{
-   int x = 0;
-   int d = (1 - radius) << 1;
-
-   while (radius >= 0)
-   {
-	  setPixel(centerx + x, centery + radius);
-	  setPixel(centerx + x, centery - radius);
-	  setPixel(centerx - x, centery + radius);
-	  setPixel(centerx - x, centery - radius);
-
-	  if ((d + radius) > 0)
-		 d -= ((--radius) << 1) - 1;
-	  if (x > d)
-		 d += ((++x) << 1) + 1;
-   }
-}*/
+#include "Graphics.hxx"
 
 template<typename T>
 T EIOS_Read(void* &ptr)
