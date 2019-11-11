@@ -21,6 +21,7 @@
 #define EXPORT
 #endif
 
+
 #include "ControlCenter.hxx"
 
 
@@ -37,7 +38,7 @@ enum class EIOSCommand: std::uint32_t
 	HOLD_KEY,
 	RELEASE_KEY,
 	IS_KEY_HELD,
-	
+
 	REFLECT
 };
 

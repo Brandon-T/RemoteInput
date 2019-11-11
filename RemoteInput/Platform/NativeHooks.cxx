@@ -8,7 +8,8 @@
 #include <memory>
 #include <thread>
 #include "JavaInternal.hxx"
-#include "../EIOS.hxx"
+#include "EIOS.hxx"
+#include "Graphics.hxx"
 
 
 #if defined(_WIN32) || defined(_WIN64)

@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <new>
 
-#include "../EIOS.hxx"
+#include "EIOS.hxx"
 #include "TMemoryManager.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)

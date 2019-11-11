@@ -26,22 +26,22 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 	{
 		throw std::runtime_error("Invalid Process ID");
 	}
-	
+
 	if (!init_maps())
 	{
 		throw std::runtime_error("Cannot Initialize Maps");
 	}
-	
+
 	if (!init_locks())
 	{
 		throw std::runtime_error("Cannot Initialize Locks");
 	}
-	
+
 	if (!init_signals())
 	{
 		throw std::runtime_error("Cannot Initialize Signals");
 	}
-	
+
 	if (!is_controller)
 	{
 		std::thread thread = std::thread([&]{
@@ -63,7 +63,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 				response_signal->signal();
 			}
 		});
-		
+
 		thread.detach();
 	}
 }
@@ -71,7 +71,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 ControlCenter::~ControlCenter()
 {
 	terminate();
-	
+
 	reflector.reset();
 
 	if (map_lock)
@@ -92,7 +92,7 @@ void ControlCenter::terminate()
 	if (!stopped)
 	{
 		stopped = true;
-		
+
 		if (command_signal)
 		{
 			command_signal->signal();
@@ -110,28 +110,31 @@ void ControlCenter::process_command()
 	{
 		case EIOSCommand::COMMAND_NONE:
 			break;
-			
+
 		case EIOSCommand::GET_TARGET_DIMENSIONS:
 		{
 			EIOS_Write<std::int32_t>(arguments, 0);
 			EIOS_Write<std::int32_t>(arguments, 0);
 		}
 			break;
-			
+
 		case EIOSCommand::GET_MOUSE:
 		{
 			EIOS_Write<std::int32_t>(arguments, 0);
 			EIOS_Write<std::int32_t>(arguments, 0);
 		}
 			break;
-			
+
 		case EIOSCommand::MOVE_MOUSE:
 		{
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
+
+			mouse_x = x;
+			mouse_y = y;
 		}
 			break;
-			
+
 		case EIOSCommand::HOLD_MOUSE:
 		{
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
@@ -139,7 +142,7 @@ void ControlCenter::process_command()
 			std::int32_t button = EIOS_Read<std::int32_t>(arguments);
 		}
 			break;
-			
+
 		case EIOSCommand::RELEASE_MOUSE:
 		{
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
@@ -147,22 +150,22 @@ void ControlCenter::process_command()
 			std::int32_t button = EIOS_Read<std::int32_t>(arguments);
 		}
 			break;
-			
+
 		case EIOSCommand::IS_MOUSE_HELD:
 			break;
-			
+
 		case EIOSCommand::SEND_STRING:
 			break;
-			
+
 		case EIOSCommand::HOLD_KEY:
 			break;
-			
+
 		case EIOSCommand::RELEASE_KEY:
 			break;
-			
+
 		case EIOSCommand::IS_KEY_HELD:
 			break;
-			
+
 		case EIOSCommand::REFLECT:
 			break;
 	}
@@ -173,7 +176,7 @@ bool ControlCenter::init_maps()
     char mapName[256] = {0};
     sprintf(mapName, "Local\\RemoteInput_%d", pid);
 
-    if (!is_controller)
+    if (is_controller)
 	{
 		//Open only..
 		memory_map = std::make_unique<MemoryMap<char>>(mapName, std::ios::in | std::ios::out);
@@ -250,7 +253,7 @@ void ControlCenter::set_parent(pid_t pid)
 void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* height)
 {
 	ImageData* image_data = get_image_data();
-	
+
 	map_lock->lock();
 	image_data->command = EIOSCommand::GET_TARGET_DIMENSIONS;
 	map_lock->unlock();
@@ -268,7 +271,7 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 {
 	ImageData* image_data = get_image_data();
-	
+
 	map_lock->lock();
 	image_data->command = EIOSCommand::GET_MOUSE;
 	map_lock->unlock();
@@ -287,7 +290,7 @@ void ControlCenter::move_mouse(std::int32_t x, std::int32_t y)
 {
 	ImageData* image_data = get_image_data();
 	void* arguments = image_data->args;
-	
+
 	map_lock->lock();
 	image_data->command = EIOSCommand::MOVE_MOUSE;
 	EIOS_Write<std::int32_t>(arguments, x);
@@ -301,7 +304,7 @@ void ControlCenter::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t butt
 {
 	ImageData* image_data = get_image_data();
 	void* arguments = image_data->args;
-	
+
 	map_lock->lock();
 	image_data->command = EIOSCommand::HOLD_MOUSE;
 	EIOS_Write<std::int32_t>(arguments, x);
@@ -316,7 +319,7 @@ void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t b
 {
 	ImageData* image_data = get_image_data();
 	void* arguments = image_data->args;
-	
+
 	map_lock->lock();
 	image_data->command = EIOSCommand::RELEASE_MOUSE;
 	EIOS_Write<std::int32_t>(arguments, x);

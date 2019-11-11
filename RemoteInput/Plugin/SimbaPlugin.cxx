@@ -2,10 +2,10 @@
 #include <memory>
 #include <atomic>
 
-#include "../Echo/MemoryMap.hxx"
-#include "../Echo/SharedEvent.hxx"
-#include "../Platform/Platform.hxx"
-#include "../Platform/NativeHooks.hxx"
+#include "MemoryMap.hxx"
+#include "SharedEvent.hxx"
+#include "Platform.hxx"
+#include "NativeHooks.hxx"
 #include "ControlCenter.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -152,13 +152,13 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
         {
             module = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
-			
-			controlCenter = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-			if (controlCenter && controlCenter->hasReflector() && GetModuleHandle("awt.dll"))
+
+			control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
+			if (control_center && control_center->hasReflector())
 			{
 				StartHook();
 			}
-			
+
 			/*globalLock->lock();
 			ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
 			info->parentId = -1;
@@ -171,7 +171,7 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
 
         case DLL_PROCESS_DETACH:
         {
-			controlCenter.reset();
+			control_center.reset();
         }
             break;
 
@@ -202,8 +202,8 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
 #else
 [[gnu::constructor]] void __load()
 {
-	controlCenter = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-	if (controlCenter && controlCenter->hasReflector() && dlopen("libawt_lwawt.so", RTLD_NOLOAD))
+	control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
+	if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.so", RTLD_NOLOAD))
 	{
 		StartHook();
 	}
@@ -211,6 +211,6 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
 
 [[gnu::destructor]] void __unload()
 {
-	controlCenter.reset();
+	control_center.reset();
 }
 #endif // defined
