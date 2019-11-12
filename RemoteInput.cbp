@@ -45,6 +45,10 @@
 			<Add option="-m32" />
 			<Add directory="C:/Program Files/Java/jdk-12.0.2/include" />
 			<Add directory="C:/Program Files/Java/jdk-12.0.2/include/win32" />
+			<Add directory="RemoteInput" />
+			<Add directory="RemoteInput/Echo" />
+			<Add directory="RemoteInput/Platform" />
+			<Add directory="RemoteInput/Plugin" />
 		</Compiler>
 		<Linker>
 			<Add option="-static-libstdc++" />
@@ -67,13 +71,16 @@
 		<Unit filename="RemoteInput/Platform/DebugConsole.cxx" />
 		<Unit filename="RemoteInput/Platform/DebugConsole.hxx" />
 		<Unit filename="RemoteInput/Platform/JavaInternal.hxx" />
+		<Unit filename="RemoteInput/Platform/NativeHooks.cxx" />
 		<Unit filename="RemoteInput/Platform/NativeHooks.hxx" />
 		<Unit filename="RemoteInput/Platform/Platform.hxx" />
 		<Unit filename="RemoteInput/Platform/Platform_Darwin.cxx" />
 		<Unit filename="RemoteInput/Platform/Platform_Linux.cxx" />
 		<Unit filename="RemoteInput/Platform/Platform_Windows.cxx" />
-		<Unit filename="RemoteInput/Plugin/CommandThread.cxx" />
-		<Unit filename="RemoteInput/Plugin/CommandThread.hxx" />
+		<Unit filename="RemoteInput/Plugin/ControlCenter.cxx" />
+		<Unit filename="RemoteInput/Plugin/ControlCenter.hxx" />
+		<Unit filename="RemoteInput/Plugin/Graphics.cxx" />
+		<Unit filename="RemoteInput/Plugin/Graphics.hxx" />
 		<Unit filename="RemoteInput/Plugin/SimbaPlugin.cxx" />
 		<Unit filename="RemoteInput/Plugin/SimbaPlugin.hxx" />
 		<Unit filename="RemoteInput/Plugin/TMemoryManager.hxx" />

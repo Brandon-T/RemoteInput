@@ -48,6 +48,14 @@ public:
 
 	int mouse_x = 100;
 	int mouse_y = 100;
+	int w = 0;
+	int h = 0;
+
+	void update(int x, int y)
+	{
+	    w = x;
+	    h = y;
+	}
 };
 
 #endif /* ControlCenter_HXX_INCLUDED */

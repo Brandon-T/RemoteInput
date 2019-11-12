@@ -60,6 +60,9 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 				if (isRasterAligned)
 				{
 					memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+
+					control_center->update(width, height);
+					draw_circle(control_center->mouse_x, control_center->mouse_y, 4, rasBase, width, height, srcInfo.pixelStride, true);
 				}
 				else
 				{

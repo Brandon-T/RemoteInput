@@ -113,15 +113,15 @@ void ControlCenter::process_command()
 
 		case EIOSCommand::GET_TARGET_DIMENSIONS:
 		{
-			EIOS_Write<std::int32_t>(arguments, 0);
-			EIOS_Write<std::int32_t>(arguments, 0);
+			EIOS_Write<std::int32_t>(arguments, w);
+			EIOS_Write<std::int32_t>(arguments, h);
 		}
 			break;
 
 		case EIOSCommand::GET_MOUSE:
 		{
-			EIOS_Write<std::int32_t>(arguments, 0);
-			EIOS_Write<std::int32_t>(arguments, 0);
+			EIOS_Write<std::int32_t>(arguments, mouse_x);
+			EIOS_Write<std::int32_t>(arguments, mouse_y);
 		}
 			break;
 
@@ -189,7 +189,8 @@ bool ControlCenter::init_maps()
     GetDesktopResolution(width, height); //TODO: Change to Target Window size..
 
     int image_size = width * height * 4 * sizeof(std::uint8_t);
-	std::int32_t map_size = (1024 * sizeof(std::int32_t)) + image_size;
+    int extra_size = (1024 * sizeof(std::int32_t));
+	std::int32_t map_size = sizeof(ImageData) + image_size + extra_size;
 	memory_map = std::make_unique<MemoryMap<char>>(mapName, map_size, std::ios::in | std::ios::out);
 	return memory_map && memory_map->open() && memory_map->map();
 }

@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <memory>
 #include <atomic>
-#include "Echo/MemoryMap.hxx"
-#include "Echo/SharedEvent.hxx"
+#include "MemoryMap.hxx"
+#include "SharedEvent.hxx"
 #include "Reflection.hxx"
 
 std::unordered_map<std::int32_t, EIOS*> clients;
@@ -29,7 +29,7 @@ EIOS* EIOS_RequestTarget(const char* initargs)
         {
             return clients[pid];
         }
-		
+
 		std::unique_ptr<ControlCenter> control_center = std::make_unique<ControlCenter>(pid, true, nullptr);
         if (control_center)
         {
@@ -87,7 +87,7 @@ void EIOS_UpdateImageBuffer(EIOS* eios)
 void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 {
     printf("%s\n", __FUNCTION__);
-	
+
 	if (eios)
 	{
 		eios->control_center->get_mouse_position(x, y);
@@ -97,7 +97,7 @@ void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y)
 {
     printf("%s\n", __FUNCTION__);
-	
+
 	if (eios)
 	{
 		eios->control_center->move_mouse(x, y);
@@ -107,7 +107,7 @@ void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y)
 void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button)
 {
     printf("%s\n", __FUNCTION__);
-	
+
 	if (eios)
 	{
 		eios->control_center->hold_mouse(x, y, button);
@@ -117,7 +117,7 @@ void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t but
 void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button)
 {
     printf("%s\n", __FUNCTION__);
-	
+
 	if (eios)
 	{
 		eios->control_center->release_mouse(x, y, button);

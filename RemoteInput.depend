@@ -57,7 +57,7 @@
 	<Foundation/Foundation.h>
 	<Cocoa/Cocoa.h>
 
-1573450650 c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform.hxx
+1573527119 c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform.hxx
 	"Reflection.hxx"
 
 1570971190 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
@@ -116,7 +116,7 @@
 	<chrono>
 	"Time.hxx"
 
-1573452500 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+1573527094 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
 	"SimbaPlugin.hxx"
 	<memory>
 	<atomic>
@@ -126,7 +126,7 @@
 	"NativeHooks.hxx"
 	"ControlCenter.hxx"
 
-1573450661 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
+1573527150 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
 	<cstdint>
 	<cstdio>
 	<new>
@@ -134,7 +134,7 @@
 	"TMemoryManager.hxx"
 	<windows.h>
 
-1573450345 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+1573527187 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
 	<cstdint>
 	<stdint.h>
 	"ControlCenter.hxx"
@@ -153,19 +153,19 @@
 	<unistd.h>
 	<istream>
 
-1573448344 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
+1573453164 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
 
-1573448344 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
+1573453164 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
 	<jni.h>
 
-1573448344 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+1573527205 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
 	"EIOS.hxx"
 	<cstdio>
 	<unordered_map>
 	<memory>
 	<atomic>
-	"Echo/MemoryMap.hxx"
-	"Echo/SharedEvent.hxx"
+	"MemoryMap.hxx"
+	"SharedEvent.hxx"
 	"Reflection.hxx"
 
 1572918827 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\commandthread.cxx
@@ -182,19 +182,19 @@
 	<vector>
 	"../Echo/SharedEvent.hxx"
 
-1573448344 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.cxx
+1573453164 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.cxx
 	"Graphics.hxx"
 
-1573448344 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
+1573453164 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
 	<cstdint>
 
-1573451321 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
+1573528200 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
 	<atomic>
 	"SharedEvent.hxx"
 	"Reflection.hxx"
 	"MemoryMap.hxx"
 
-1573452657 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.cxx
+1573527112 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.cxx
 	"NativeHooks.hxx"
 	<windows.h>
 	"rd_route.h"
@@ -204,7 +204,7 @@
 	"EIOS.hxx"
 	"Graphics.hxx"
 
-1573451138 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+1573527514 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
 	"ControlCenter.hxx"
 	<thread>
 	"EIOS.hxx"
