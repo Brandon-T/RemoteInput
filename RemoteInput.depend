@@ -153,7 +153,11 @@
 	<unistd.h>
 	<istream>
 
-1573453164 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
+1573795620 c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.hxx
+	<chrono>
+	<ratio>
+	<thread>
+	<cstdint>
 
 1573453164 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
 	<jni.h>
@@ -188,7 +192,7 @@
 1573453164 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
 	<cstdint>
 
-1573528200 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
+1574023039 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
 	<atomic>
 	"SharedEvent.hxx"
 	"Reflection.hxx"
@@ -204,11 +208,39 @@
 	"EIOS.hxx"
 	"Graphics.hxx"
 
-1573527514 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+1573528215 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
 	"ControlCenter.hxx"
 	<thread>
 	"EIOS.hxx"
 	"Platform.hxx"
 	"NativeHooks.hxx"
 	"Graphics.hxx"
+
+1573795871 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_darwin.cxx
+	"NativeHooks.hxx"
+	"rd_route.h"
+	<memory>
+	<thread>
+	"JavaInternal.hxx"
+	"EIOS.hxx"
+	"Graphics.hxx"
+
+1573795786 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_linux.cxx
+	"NativeHooks.hxx"
+	<memory>
+	<thread>
+	"JavaInternal.hxx"
+	"EIOS.hxx"
+	"Graphics.hxx"
+
+1574022911 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_windows.cxx
+	"NativeHooks.hxx"
+	<windows.h>
+	<memory>
+	<thread>
+	"JavaInternal.hxx"
+	"EIOS.hxx"
+	"Graphics.hxx"
+	<gl/glext.h>
+	<d3d9.h>
 

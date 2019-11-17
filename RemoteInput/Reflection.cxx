@@ -14,11 +14,15 @@ Reflection::~Reflection()
 {
     jvm->DeleteGlobalRef(this->client);
     jvm->DeleteGlobalRef(this->classLoader);
+    jvm->DeleteGlobalRef(this->frame);
     delete jvm;
+    jvm = nullptr;
 }
 
 bool Reflection::Initialize(jobject awtFrame)
 {
+    this->frame = jvm->NewGlobalRef(awtFrame);
+
 	std::function<std::string(jobject)> getClassName = [&](jobject component) {
 		jclass cls = jvm->GetObjectClass(component);
 		jmethodID mid = jvm->GetMethodID(cls, "getClass", "()Ljava/lang/Class;");

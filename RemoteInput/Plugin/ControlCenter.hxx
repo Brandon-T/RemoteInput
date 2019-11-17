@@ -45,17 +45,6 @@ public:
 	void move_mouse(std::int32_t x, std::int32_t y);
 	void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
-
-	int mouse_x = 100;
-	int mouse_y = 100;
-	int w = 0;
-	int h = 0;
-
-	void update(int x, int y)
-	{
-	    w = x;
-	    h = y;
-	}
 };
 
 #endif /* ControlCenter_HXX_INCLUDED */

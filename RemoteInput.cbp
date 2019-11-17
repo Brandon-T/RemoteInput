@@ -71,8 +71,10 @@
 		<Unit filename="RemoteInput/Platform/DebugConsole.cxx" />
 		<Unit filename="RemoteInput/Platform/DebugConsole.hxx" />
 		<Unit filename="RemoteInput/Platform/JavaInternal.hxx" />
-		<Unit filename="RemoteInput/Platform/NativeHooks.cxx" />
 		<Unit filename="RemoteInput/Platform/NativeHooks.hxx" />
+		<Unit filename="RemoteInput/Platform/NativeHooks_Darwin.cxx" />
+		<Unit filename="RemoteInput/Platform/NativeHooks_Linux.cxx" />
+		<Unit filename="RemoteInput/Platform/NativeHooks_Windows.cxx" />
 		<Unit filename="RemoteInput/Platform/Platform.hxx" />
 		<Unit filename="RemoteInput/Platform/Platform_Darwin.cxx" />
 		<Unit filename="RemoteInput/Platform/Platform_Linux.cxx" />
@@ -87,8 +89,6 @@
 		<Unit filename="RemoteInput/Reflection.cxx" />
 		<Unit filename="RemoteInput/Reflection.hxx" />
 		<Unit filename="RemoteInput/RemoteInput.h" />
-		<Unit filename="RemoteInput/SHMAllocator.hxx" />
-		<Unit filename="RemoteInput/SHMVector.hxx" />
 		<Unit filename="RemoteInput/ThreadPool.cxx" />
 		<Unit filename="RemoteInput/ThreadPool.hxx" />
 		<Extensions>
