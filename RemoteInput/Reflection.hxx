@@ -47,32 +47,7 @@ public:
     bool Detach();
 
     jclass LoadClass(const char* clsToLoad);
-
     JNIEnv* getEnv();
-
-    std::unique_ptr<jobject, std::function<void(jobject)>> getCanvas()
-    {
-        if (client)
-        {
-            auto getComponentCount = [&](jobject object) {
-                jclass cls = jvm->GetObjectClass(object);
-                jmethodID mid = jvm->GetMethodID(cls, "getComponentCount", "()I;");
-                return jvm->CallIntMethod(object, mid);
-            };
-
-            for(int i = 0; i < 10 && getComponentCount(client) < 1; ++i)
-            {
-                std::this_thread::yield();
-            }
-
-            if (getComponentCount(client) > 0)
-            {
-                return nullptr;
-            }
-        }
-
-        return nullptr;
-    }
 
     template<typename T>
     typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
