@@ -74,6 +74,138 @@ void OnDetach()
 	control_center.reset();
 }
 
+jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_object(hook);
+	}
+	return nullptr;
+}
+
+void Reflect_Release_Object(EIOS* eios, jobject object)
+{
+	if (eios)
+	{
+		eios->control_center->reflect_release_object(object);
+	}
+}
+
+char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_char(hook);
+	}
+	return '\0';
+}
+
+std::uint8_t Reflect_Byte(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_byte(hook);
+	}
+	return 0;
+}
+
+std::int16_t Reflect_Short(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_short(hook);
+	}
+	return -1;
+}
+
+std::int32_t Reflect_Int(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_int(hook);
+	}
+	return -1;
+}
+
+std::int64_t Reflect_Long(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_long(hook);
+	}
+	return -1;
+}
+
+float Reflect_Float(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_float(hook);
+	}
+	return -1.0;
+}
+
+double Reflect_Double(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_double(hook);
+	}
+	return -1.0;
+}
+
+void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc, char* output, std::size_t output_size)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		std::string result = eios->control_center->reflect_string(hook);
+		std::size_t length = std::min(result.length(), output_size);
+		std::memcpy(output, &result[0], length);
+	}
+}
+
+void* Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+	if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_array(hook);
+	}
+	return nullptr;
+}
+
+std::size_t Reflect_Array_Size(EIOS* eios, void* objectArray)
+{
+	if (eios)
+	{
+		return eios->control_center->reflect_array_size(static_cast<jobjectArray>(objectArray));
+	}
+	return 0;
+}
+
+void* Reflect_Array_Index(EIOS* eios, void* objectArray, std::size_t index)
+{
+	if (eios)
+	{
+		return eios->control_center->reflect_array_index(static_cast<jobjectArray>(objectArray), index);
+	}
+	return nullptr;
+}
+
+
+
+
+
+
 template<typename T>
 int PascalHigh(T* Arr)
 {

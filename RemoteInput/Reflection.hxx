@@ -6,14 +6,7 @@
 #include <functional>
 #include <jni.h>
 #include "JVM.hxx"
-
-struct Hook
-{
-    std::string cls;
-    std::string field;
-    std::string desc;
-    std::uint64_t multiplier;
-};
+#include "ReflectionHook.hxx"
 
 class Reflection final
 {
@@ -51,43 +44,47 @@ public:
 
     template<typename T>
     typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jobject object, Hook hook);
+    getField(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jobject object, Hook hook);
+    getField(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>>::type
-    getFieldSafe(jobject object, Hook hook);
+    getFieldSafe(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<std::is_same<jint, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, Hook hook);
+    getPrimitive(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<std::is_same<jlong, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, Hook hook);
+    getPrimitive(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<std::is_same<jboolean, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, Hook hook);
+    getPrimitive(jobject object, ReflectionHook hook);
+	
+	template<typename T>
+    typename std::enable_if<std::is_same<jbyte, typename std::remove_cv<T>::type>::value, T>::type
+    getPrimitive(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<std::is_same<jchar, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, Hook hook);
+    getPrimitive(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<std::is_same<jshort, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, Hook hook);
+    getPrimitive(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<std::is_same<jfloat, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, Hook hook);
+    getPrimitive(jobject object, ReflectionHook hook);
 
     template<typename T>
     typename std::enable_if<std::is_same<jdouble, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, Hook hook);
+    getPrimitive(jobject object, ReflectionHook hook);
 };
 
 
@@ -95,7 +92,7 @@ public:
 
 template<typename T>
 typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jobject object, Hook hook)
+Reflection::getField(jobject object, ReflectionHook hook)
 {
     if (!object)
     {
@@ -130,7 +127,7 @@ Reflection::getField(jobject object, Hook hook)
 
 template<typename T>
 typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jobject object, Hook hook)
+Reflection::getField(jobject object, ReflectionHook hook)
 {
     if (!object)
     {
@@ -146,7 +143,7 @@ Reflection::getField(jobject object, Hook hook)
 
 template<typename T>
 typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>>::type
-Reflection::getFieldSafe(jobject object, Hook hook)
+Reflection::getFieldSafe(jobject object, ReflectionHook hook)
 {
     if (!object)
     {
@@ -162,39 +159,39 @@ Reflection::getFieldSafe(jobject object, Hook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jint, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, Hook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
         jclass cls = this->LoadClass(hook.cls.c_str());
         jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
-        return jvm->GetIntField(object, field) * static_cast<std::int32_t>(hook.multiplier);
+		return jvm->GetIntField(object, field); //* static_cast<std::int32_t>(hook.multiplier);
     }
 
     jclass cls = this->LoadClass(hook.cls.c_str());
     jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
-    return jvm->GetStaticIntField(cls, field) * static_cast<std::int32_t>(hook.multiplier);
+	return jvm->GetStaticIntField(cls, field); // * static_cast<std::int32_t>(hook.multiplier);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jlong, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, Hook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
         jclass cls = this->LoadClass(hook.cls.c_str());
         jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
-        return jvm->GetLongField(object, field) * static_cast<std::int64_t>(hook.multiplier);
+		return jvm->GetLongField(object, field); // * static_cast<std::int64_t>(hook.multiplier);
     }
 
     jclass cls = this->LoadClass(hook.cls.c_str());
     jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
-    return jvm->GetStaticLongField(cls, field) * static_cast<std::int64_t>(hook.multiplier);
+	return jvm->GetStaticLongField(cls, field); // * static_cast<std::int64_t>(hook.multiplier);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jboolean, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, Hook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
@@ -209,8 +206,24 @@ Reflection::getPrimitive(jobject object, Hook hook)
 }
 
 template<typename T>
+typename std::enable_if<std::is_same<jbyte, typename std::remove_cv<T>::type>::value, T>::type
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
+{
+    if (object)
+    {
+        jclass cls = this->LoadClass(hook.cls.c_str());
+        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        return jvm->GetByteField(object, field);
+    }
+
+    jclass cls = this->LoadClass(hook.cls.c_str());
+    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    return jvm->GetStaticByteField(cls, field);
+}
+
+template<typename T>
 typename std::enable_if<std::is_same<jchar, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, Hook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
@@ -226,7 +239,7 @@ Reflection::getPrimitive(jobject object, Hook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jshort, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, Hook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
@@ -242,7 +255,7 @@ Reflection::getPrimitive(jobject object, Hook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jfloat, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, Hook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
@@ -258,7 +271,7 @@ Reflection::getPrimitive(jobject object, Hook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jdouble, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, Hook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {

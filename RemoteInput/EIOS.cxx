@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <memory>
 #include <atomic>
+#include <cstring>
 #include "MemoryMap.hxx"
 #include "SharedEvent.hxx"
 #include "Reflection.hxx"

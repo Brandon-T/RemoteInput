@@ -18,7 +18,7 @@
 #if defined(_WIN32) || defined (_WIN64)
 #define EXPORT __declspec(dllexport)
 #else
-#define EXPORT
+#define EXPORT [[gnu::visibility("default")]]
 #endif
 
 
@@ -39,7 +39,20 @@ enum class EIOSCommand: std::uint32_t
 	RELEASE_KEY,
 	IS_KEY_HELD,
 
-	REFLECT
+	REFLECT_OBJECT,
+	REFLECT_RELEASE_OBJECT,
+	REFLECT_CHAR,
+	REFLECT_BYTE,
+	REFLECT_BOOLEAN,
+	REFLECT_SHORT,
+	REFLECT_INT,
+	REFLECT_LONG,
+	REFLECT_FLOAT,
+	REFLECT_DOUBLE,
+	REFLECT_STRING,
+	REFLECT_ARRAY,
+	REFLECT_ARRAY_SIZE,
+	REFLECT_ARRAY_INDEX
 };
 
 typedef struct ImageData

@@ -4,6 +4,7 @@
 #include "Platform.hxx"
 #include "NativeHooks.hxx"
 #include "Graphics.hxx"
+#include "ReflectionHook.hxx"
 
 template<typename T>
 T EIOS_Read(void* &ptr)
@@ -13,11 +14,34 @@ T EIOS_Read(void* &ptr)
 	return result;
 }
 
+std::string EIOS_Read(void* &ptr)
+{
+	std::size_t length = *static_cast<std::size_t*>(ptr);
+	ptr = static_cast<std::size_t*>(ptr) + 1;
+	
+	std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
+	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
+	ptr = static_cast<char*>(ptr) + 1;
+	return result;
+}
+
 template<typename T>
 void EIOS_Write(void* &ptr, T result)
 {
 	*static_cast<T*>(ptr) = result;
 	ptr = static_cast<T*>(ptr) + 1;
+}
+
+void EIOS_Write(void* &ptr, const std::string &result)
+{
+	*static_cast<std::size_t*>(ptr) = result.length();
+	ptr = static_cast<std::size_t*>(ptr) + 1;
+	
+	memcpy(ptr, &result[0], result.length() * sizeof(char));
+	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
+	
+	*static_cast<char*>(ptr) = '\0';
+	ptr = static_cast<char*>(ptr) + 1;
 }
 
 ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid),  is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), reflector(std::move(reflector))
@@ -44,6 +68,8 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 	if (!is_controller)
 	{
+		reflector->Attach();
+		
 		std::thread thread = std::thread([&]{
 			while(!stopped) {
 				if (!command_signal || !map_lock || !response_signal || !memory_map)
@@ -72,6 +98,7 @@ ControlCenter::~ControlCenter()
 {
 	terminate();
 
+	reflector->Detach();
 	reflector.reset();
 
 	if (map_lock)
@@ -105,6 +132,7 @@ void ControlCenter::process_command()
 	ImageData* info = reinterpret_cast<ImageData*>(memory_map->data());
 	EIOSCommand command = info->command;
 	void* arguments = info->args;
+	void* response = info->args;
 
 	switch(command)
 	{
@@ -113,25 +141,25 @@ void ControlCenter::process_command()
 
 		case EIOSCommand::GET_TARGET_DIMENSIONS:
 		{
-			EIOS_Write<std::int32_t>(arguments, w);
-			EIOS_Write<std::int32_t>(arguments, h);
+//			EIOS_Write<std::int32_t>(arguments, w);
+//			EIOS_Write<std::int32_t>(arguments, h);
 		}
 			break;
 
 		case EIOSCommand::GET_MOUSE:
 		{
-			EIOS_Write<std::int32_t>(arguments, mouse_x);
-			EIOS_Write<std::int32_t>(arguments, mouse_y);
+//			EIOS_Write<std::int32_t>(arguments, mouse_x);
+//			EIOS_Write<std::int32_t>(arguments, mouse_y);
 		}
 			break;
 
 		case EIOSCommand::MOVE_MOUSE:
 		{
-			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
-			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
-
-			mouse_x = x;
-			mouse_y = y;
+//			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
+//			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
+//
+//			mouse_x = x;
+//			mouse_y = y;
 		}
 			break;
 
@@ -166,7 +194,141 @@ void ControlCenter::process_command()
 		case EIOSCommand::IS_KEY_HELD:
 			break;
 
-		case EIOSCommand::REFLECT:
+		case EIOSCommand::REFLECT_OBJECT:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->jvm->NewGlobalRef(reflector->getField<jobject>(hook.object, hook));
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_RELEASE_OBJECT:
+		{
+			jobject object = EIOS_Read<jobject>(arguments);
+			if (object)
+			{
+				reflector->jvm->DeleteGlobalRef(object);
+			}
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_CHAR:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jchar>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_BYTE:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jbyte>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_BOOLEAN:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jboolean>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_SHORT:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jshort>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_INT:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jint>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_LONG:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jlong>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_FLOAT:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jfloat>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_DOUBLE:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getPrimitive<jdouble>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_STRING:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getField<std::string>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_ARRAY:
+		{
+			ReflectionHook hook;
+			hook.read(arguments);
+			
+			auto result = reflector->getField<jobjectArray>(hook.object, hook);
+			EIOS_Write(response, result);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_ARRAY_SIZE:
+		{
+			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
+			jsize length = reflector->jvm->GetArrayLength(array);
+			EIOS_Write(response, length);
+		}
+			break;
+			
+		case EIOSCommand::REFLECT_ARRAY_INDEX:
+		{
+			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
+			jsize index = EIOS_Read<jsize>(arguments);
+			jobject object = reflector->jvm->NewGlobalRef(reflector->jvm->GetObjectArrayElement(array, index));
+			EIOS_Write(response, object);
+		}
 			break;
 	}
 }
@@ -225,6 +387,15 @@ ImageData* ControlCenter::get_image_data() const
 	return static_cast<ImageData*>(memory_map->data());
 }
 
+bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
+{
+	map_lock->lock();
+	writer(get_image_data());
+	map_lock->unlock();
+	command_signal->signal();
+	return response_signal->timed_wait(10);
+}
+
 std::int32_t ControlCenter::parent_id() const
 {
 	return get_image_data()->parentId;
@@ -253,16 +424,14 @@ void ControlCenter::set_parent(pid_t pid)
 
 void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* height)
 {
-	ImageData* image_data = get_image_data();
+	auto result = send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::GET_TARGET_DIMENSIONS;
+	});
 
-	map_lock->lock();
-	image_data->command = EIOSCommand::GET_TARGET_DIMENSIONS;
-	map_lock->unlock();
-	command_signal->signal();
-	if (response_signal->timed_wait(10))
+	if (result)
 	{
 		map_lock->lock();
-		void* arguments = image_data->args;
+		void* arguments = get_image_data()->args;
 		*width = EIOS_Read<std::int32_t>(arguments);
 		*height = EIOS_Read<std::int32_t>(arguments);
 		map_lock->unlock();
@@ -271,16 +440,14 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 {
-	ImageData* image_data = get_image_data();
-
-	map_lock->lock();
-	image_data->command = EIOSCommand::GET_MOUSE;
-	map_lock->unlock();
-	command_signal->signal();
-	if (response_signal->timed_wait(10))
+	auto result = send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::GET_MOUSE;
+	});
+	
+	if (result)
 	{
 		map_lock->lock();
-		void* arguments = image_data->args;
+		void* arguments = get_image_data()->args;
 		*x = EIOS_Read<std::int32_t>(arguments);
 		*y = EIOS_Read<std::int32_t>(arguments);
 		map_lock->unlock();
@@ -289,44 +456,302 @@ void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 
 void ControlCenter::move_mouse(std::int32_t x, std::int32_t y)
 {
-	ImageData* image_data = get_image_data();
-	void* arguments = image_data->args;
-
-	map_lock->lock();
-	image_data->command = EIOSCommand::MOVE_MOUSE;
-	EIOS_Write<std::int32_t>(arguments, x);
-	EIOS_Write<std::int32_t>(arguments, y);
-	map_lock->unlock();
-	command_signal->signal();
-	response_signal->timed_wait(10);
+	send_command([x, y](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::MOVE_MOUSE;
+		EIOS_Write<std::int32_t>(arguments, x);
+		EIOS_Write<std::int32_t>(arguments, y);
+	});
 }
 
 void ControlCenter::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
 {
-	ImageData* image_data = get_image_data();
-	void* arguments = image_data->args;
-
-	map_lock->lock();
-	image_data->command = EIOSCommand::HOLD_MOUSE;
-	EIOS_Write<std::int32_t>(arguments, x);
-	EIOS_Write<std::int32_t>(arguments, y);
-	EIOS_Write<std::int32_t>(arguments, button);
-	map_lock->unlock();
-	command_signal->signal();
-	response_signal->timed_wait(10);
+	send_command([x, y, button](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::HOLD_MOUSE;
+		EIOS_Write<std::int32_t>(arguments, x);
+		EIOS_Write<std::int32_t>(arguments, y);
+		EIOS_Write<std::int32_t>(arguments, button);
+	});
 }
 
 void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
 {
-	ImageData* image_data = get_image_data();
-	void* arguments = image_data->args;
+	send_command([x, y, button](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::RELEASE_MOUSE;
+		EIOS_Write<std::int32_t>(arguments, x);
+		EIOS_Write<std::int32_t>(arguments, y);
+		EIOS_Write<std::int32_t>(arguments, button);
+	});
+}
 
-	map_lock->lock();
-	image_data->command = EIOSCommand::RELEASE_MOUSE;
-	EIOS_Write<std::int32_t>(arguments, x);
-	EIOS_Write<std::int32_t>(arguments, y);
-	EIOS_Write<std::int32_t>(arguments, button);
-	map_lock->unlock();
-	command_signal->signal();
-	response_signal->timed_wait(10);
+jobject ControlCenter::reflect_object(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_OBJECT;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jobject object = EIOS_Read<jobject>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return nullptr;
+}
+
+void ControlCenter::reflect_release_object(const jobject object)
+{
+	send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_RELEASE_OBJECT;
+		EIOS_Write(arguments, object);
+	});
+}
+
+char ControlCenter::reflect_char(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_CHAR;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jchar object = EIOS_Read<jchar>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return '\0';
+}
+
+std::uint8_t ControlCenter::reflect_byte(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_BYTE;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jbyte object = EIOS_Read<jbyte>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return 0;
+}
+
+bool ControlCenter::reflect_boolean(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_BOOLEAN;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jboolean object = EIOS_Read<jboolean>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return false;
+}
+
+std::int16_t ControlCenter::reflect_short(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_SHORT;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jshort object = EIOS_Read<jshort>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return -1;
+}
+
+std::int32_t ControlCenter::reflect_int(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_INT;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jint object = EIOS_Read<jint>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return -1;
+}
+
+std::int64_t ControlCenter::reflect_long(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_LONG;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jlong object = EIOS_Read<jlong>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return -1;
+}
+
+float ControlCenter::reflect_float(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_FLOAT;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jfloat object = EIOS_Read<jfloat>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return -1;
+}
+
+double ControlCenter::reflect_double(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_DOUBLE;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jdouble object = EIOS_Read<jdouble>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return -1;
+}
+
+std::string ControlCenter::reflect_string(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_STRING;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		std::string object = EIOS_Read(response);
+		map_lock->unlock();
+		return object;
+	}
+	return "";
+}
+
+jobjectArray ControlCenter::reflect_array(const ReflectionHook &hook)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_ARRAY;
+		hook.write(arguments);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jobjectArray object = EIOS_Read<jobjectArray>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return nullptr;
+}
+
+std::size_t ControlCenter::reflect_array_size(const jobjectArray array)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_ARRAY_SIZE;
+		EIOS_Write(arguments, array);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jsize object = EIOS_Read<jsize>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return 0;
+}
+
+jobject ControlCenter::reflect_array_index(const jobjectArray array, std::size_t index)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX;
+		EIOS_Write(arguments, array);
+		EIOS_Write(arguments, static_cast<jsize>(index));
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		
+		map_lock->lock();
+		jobject object = EIOS_Read<jobject>(response);
+		map_lock->unlock();
+		return object;
+	}
+	return nullptr;
 }

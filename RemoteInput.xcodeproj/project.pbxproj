@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		5E07A6C02378B1B100EB4CDF /* Graphics.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */; };
 		5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */; };
+		5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */; };
+		5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
 		5E4CDC1D2381F40700A05869 /* NativeHooks_Darwin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1A2381F40700A05869 /* NativeHooks_Darwin.cxx */; };
 		5E4CDC1E2381F40700A05869 /* NativeHooks_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1B2381F40700A05869 /* NativeHooks_Linux.cxx */; };
 		5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */; };
@@ -51,6 +53,8 @@
 /* Begin PBXFileReference section */
 		5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Graphics.cxx; sourceTree = "<group>"; };
 		5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Graphics.hxx; sourceTree = "<group>"; };
+		5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ReflectionHook.cxx; sourceTree = "<group>"; };
+		5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ReflectionHook.hxx; sourceTree = "<group>"; };
 		5E4CDC1A2381F40700A05869 /* NativeHooks_Darwin.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Darwin.cxx; sourceTree = "<group>"; };
 		5E4CDC1B2381F40700A05869 /* NativeHooks_Linux.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Linux.cxx; sourceTree = "<group>"; };
 		5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Windows.cxx; sourceTree = "<group>"; };
@@ -196,6 +200,8 @@
 				5EC5950B232D956B00922111 /* Info.plist */,
 				5E4CDC20238214B200A05869 /* InputEvents.cxx */,
 				5E4CDC21238214B200A05869 /* InputEvents.hxx */,
+				5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */,
+				5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */,
 			);
 			path = RemoteInput;
 			sourceTree = "<group>";
@@ -213,6 +219,7 @@
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
 				5EBD66C2235CF15400D183B1 /* JavaInternal.hxx in Headers */,
+				5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */,
 				5EBD66D3235CF15400D183B1 /* MemoryMap.hxx in Headers */,
 				5EBD66CA235CF15400D183B1 /* TMemoryManager.hxx in Headers */,
 				5EBD66CC235CF15400D183B1 /* JVM.hxx in Headers */,
@@ -310,6 +317,7 @@
 				5EBD66C9235CF15400D183B1 /* SimbaPlugin.cxx in Sources */,
 				5EBD66C6235CF15400D183B1 /* Reflection.cxx in Sources */,
 				5E4CDC1D2381F40700A05869 /* NativeHooks_Darwin.cxx in Sources */,
+				5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */,
 				5EBD66D2235CF15400D183B1 /* SharedEvent.cxx in Sources */,
 				5EBD66CF235CF15400D183B1 /* ThreadPool.cxx in Sources */,
 				5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */,
@@ -456,6 +464,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
+				OTHER_CFLAGS = "-fvisibility=hidden";
 				PRODUCT_BUNDLE_IDENTIFIER = XIO.RemoteInput;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -482,6 +491,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
+				OTHER_CFLAGS = "-fvisibility=hidden";
 				PRODUCT_BUNDLE_IDENTIFIER = XIO.RemoteInput;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
