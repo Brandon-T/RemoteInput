@@ -9,7 +9,7 @@
 #include "SharedEvent.hxx"
 #include <tuple>
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !(_POSIX_TIMEOUTS >= 200112L)
 int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
 {
     int retcode = 0;
@@ -36,6 +36,76 @@ int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeo
     }
 
     return retcode;
+}
+#endif
+
+#if defined(_SYSTEM_V_SEMAPHORES) && !(_POSIX_C_SOURCE >= 200112L)
+int semtimedop(int handle, struct sembuf* operations, size_t operation_count, struct timespec* timeout)
+{
+	if (!timeout)
+	{
+		return semop(handle, operations, operation_count);
+	}
+	
+	int retcode = 0;
+	struct timespec sleeptime;
+	sleeptime.tv_sec = 0;
+	sleeptime.tv_nsec = 1000000; //1ms
+	sleeptime.tv_nsec *= 5; //5ms
+
+	while ((retcode = semop(handle, operations, operation_count)) != 0)
+	{
+		//clock_gettime(CLOCK_REALTIME, &now); gettimeofday(&now, nullptr); timespec_get(&now, UTC_TIME)
+		auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
+		auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+		auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+		struct timespec now = { seconds.count(), nanoseconds.count() };
+		if (now.tv_sec >= timeout->tv_sec && now.tv_nsec >= timeout->tv_nsec)
+		{
+			errno = EAGAIN;
+			return -1;
+		}
+
+		nanosleep (&sleeptime, nullptr);
+	}
+
+	return retcode;
+}
+#endif
+
+#if defined(_POSIX_SEMAPHORES) && !(_POSIX_C_SOURCE >= 200112L)
+int sem_timedwait(sem_t* sem, const struct timespec* abs_timeout)
+{
+	if (!abs_timeout)
+	{
+		return sem_wait(sem);
+	}
+	
+	int retcode = 0;
+	struct timespec sleeptime;
+	sleeptime.tv_sec = 0;
+	sleeptime.tv_nsec = 1000000; //1ms
+	sleeptime.tv_nsec *= 5; //5ms
+
+	while ((retcode = sem_trywait(sem)) != 0)
+	{
+		//clock_gettime(CLOCK_REALTIME, &now); gettimeofday(&now, nullptr); timespec_get(&now, UTC_TIME)
+		auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
+		auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+		auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+		struct timespec now = { seconds.count(), nanoseconds.count() };
+		if (now.tv_sec >= abs_timeout->tv_sec && now.tv_nsec >= abs_timeout->tv_nsec)
+		{
+			errno = EAGAIN;
+			return -1;
+		}
+
+		nanosleep (&sleeptime, nullptr);
+	}
+
+	return retcode;
 }
 #endif
 
@@ -327,6 +397,138 @@ Semaphore::~Semaphore()
     //ReleaseSemaphore(hSemaphore, 1, nullptr);
     CloseHandle(hSemaphore);
 }
+#elif defined(_POSIX_SEMAPHORES)
+template<typename T>
+T* Semaphore::semaphore_cast(void* &ptr)
+{
+	std::uint8_t* it = static_cast<std::uint8_t*>(ptr);
+	T* result = static_cast<T*>(ptr);
+	ptr = (it + sizeof(T));
+	return result;
+}
+
+Semaphore::Semaphore(std::int32_t count) : shared(false), hSem(SEM_FAILED), name("\0")
+{
+	hSem = sem_open(nullptr, O_CREAT | O_EXCL | O_RDWR, S_IRWXU, 0); //sem_init with `pshared = 0`
+	if (hSem == SEM_FAILED && errno == EEXIST)
+	{
+		hSem = sem_open(nullptr, O_RDWR, S_IRWXU, 0);
+	}
+	
+	if (hSem == SEM_FAILED)
+	{
+		throw std::runtime_error("Cannot create or open semaphore");
+	}
+}
+
+Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), hSem(SEM_FAILED), name(name)
+{
+	hSem = sem_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU, 0);
+	if (hSem == SEM_FAILED && errno == EEXIST)
+	{
+		hSem = sem_open(name.c_str(), O_RDWR, S_IRWXU, 0);
+	}
+	
+	if (hSem == SEM_FAILED)
+	{
+		throw std::runtime_error("Cannot create or open semaphore");
+	}
+}
+
+Semaphore::~Semaphore()
+{
+	if (hSem != SEM_FAILED)
+	{
+		sem_close(hSem);
+		hSem = SEM_FAILED;
+	}
+}
+#elif defined(_SYSTEM_V_SEMAPHORES)
+template<typename T>
+T* Semaphore::semaphore_cast(void* &ptr)
+{
+	std::uint8_t* it = static_cast<std::uint8_t*>(ptr);
+	T* result = static_cast<T*>(ptr);
+	ptr = (it + sizeof(T));
+	return result;
+}
+
+Semaphore::Semaphore(std::int32_t count) : shared(false), id(IPC_PRIVATE), handle(-1), name("\0")
+{
+	union semun {
+		int val;
+		struct semid_ds* buf;
+		unsigned short* array;
+		
+		#if defined(__linux__)
+		struct seminfo* info;
+		#endif
+	} argument;
+	
+	handle = semget(id, 1, IPC_CREAT | IPC_EXCL | IPC_R | IPC_W | IPC_M);
+	if (handle == -1 && errno == EEXIST)
+	{
+		handle = semget(id, 1, IPC_R | IPC_W | IPC_M);
+	}
+	
+	if (handle == -1)
+	{
+		throw std::runtime_error("Cannot create or open semaphore");
+	}
+	
+	argument.val = count;
+	if (semctl(handle, 0, SETVAL, argument) == -1)
+	{
+		semctl(handle, 0, IPC_RMID);
+		handle = -1;
+		
+		throw std::runtime_error("Cannot set semaphore attributes");
+	}
+}
+
+Semaphore::Semaphore(std::string name, std::int32_t count) : shared(false), id(IPC_PRIVATE), handle(-1), name(name)
+{
+	union semun {
+		int val;
+		struct semid_ds* buf;
+		unsigned short* array;
+		
+		#if defined(__linux__)
+		struct seminfo* info;
+		#endif
+	} argument;
+	
+	id = std::hash<std::string>{}(name);
+	handle = semget(id, 1, IPC_CREAT | IPC_EXCL | IPC_R | IPC_W | IPC_M);
+	if (handle == -1 && errno == EEXIST)
+	{
+		handle = semget(id, 1, IPC_R | IPC_W | IPC_M);
+	}
+	
+	if (handle == -1)
+	{
+		throw std::runtime_error("Cannot create or open semaphore");
+	}
+	
+	argument.val = count;
+	if (semctl(handle, 0, SETVAL, argument) == -1)
+	{
+		semctl(handle, 0, IPC_RMID);
+		handle = -1;
+		
+		throw std::runtime_error("Cannot set semaphore attributes");
+	}
+}
+
+Semaphore::~Semaphore()
+{
+	if (handle != -1)
+	{
+		semctl(handle, 0, IPC_RMID);
+		handle = -1;
+		id = -1;
+	}
+}
 #else
 template<typename T>
 T* Semaphore::semaphore_cast(void* &ptr)
@@ -555,8 +757,19 @@ Semaphore::~Semaphore()
 bool Semaphore::wait()
 {
     #if defined(_WIN32) || defined(_WIN64)
+	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, INFINITE) == WAIT_OBJECT_0;
-    #else
+	#elif defined(_POSIX_SEMAPHORES)
+	if (hSem == SEM_FAILED) { return false; }
+	return !sem_wait(hSem);
+    #elif defined(_SYSTEM_V_SEMAPHORES)
+	if (handle == -1) { return false; }
+	struct sembuf operations[1];
+	operations[0].sem_num = 0;
+	operations[0].sem_op = -1;
+	operations[0].sem_flg = 0;
+	return !semop(handle, operations, 1);
+	#else
     if (!mutex || !condition) { return false; }
 
     int res = pthread_mutex_lock(mutex);
@@ -579,8 +792,19 @@ bool Semaphore::wait()
 bool Semaphore::try_wait()
 {
     #if defined(_WIN32) || defined(_WIN64)
+	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, 0) == WAIT_OBJECT_0;
-    #else
+    #elif defined(_POSIX_SEMAPHORES)
+	if (hSem == SEM_FAILED) { return false; }
+	return !sem_trywait(hSem);
+    #elif defined(_SYSTEM_V_SEMAPHORES)
+	if (handle == -1) { return false; }
+	struct sembuf operations[1];
+	operations[0].sem_num = 0;
+	operations[0].sem_op = -1;
+	operations[0].sem_flg = IPC_NOWAIT;
+	return !semop(handle, operations, 1);
+	#else
     if (!mutex || !condition) { return false; }
 
     int res = 0;
@@ -623,9 +847,30 @@ template<typename Duration>
 bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time)
 {
     #if defined(_WIN32) || defined(_WIN64)
+	if (!hSemaphore) { return false; }
+	
     std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
     return WaitForSingleObject(hSemaphore, msec.time_since_epoch().count()) == WAIT_OBJECT_0;
-    #else
+    #elif defined(_POSIX_SEMAPHORES)
+	if (hSem == SEM_FAILED) { return false; }
+	
+	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
+    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
+    
+	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
+	return !sem_timedwait(hSem, &ts);
+    #elif defined(_SYSTEM_V_SEMAPHORES)
+	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
+    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
+    
+	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
+	
+	struct sembuf operations[1];
+	operations[0].sem_num = 0;
+	operations[0].sem_op = -1;
+	operations[0].sem_flg = IPC_NOWAIT;
+	return !semtimedop(handle, operations, 1, &ts);
+	#else
     if (!mutex || !condition) { return false; }
 
     std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
@@ -669,8 +914,32 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
     }
 
     #if defined(_WIN32) || defined(_WIN64)
+	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, milliseconds) == WAIT_OBJECT_0;
-    #else
+    #elif defined(_POSIX_SEMAPHORES)
+	if (hSem == SEM_FAILED) { return false; }
+	
+	auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+	
+	struct timespec ts = { seconds.count(), nanoseconds.count() };
+	return !sem_timedwait(hSem, &ts);
+    #elif defined(_SYSTEM_V_SEMAPHORES)
+	if (handle == -1) { return false; }
+	
+	auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+	
+	struct timespec ts = { seconds.count(), nanoseconds.count() };
+	
+	struct sembuf operations[1];
+	operations[0].sem_num = 0;
+	operations[0].sem_op = -1;
+	operations[0].sem_flg = IPC_NOWAIT;
+	return !semtimedop(handle, operations, 1, &ts);
+	#else
 	if (!mutex || !condition) { return false; }
 	
     auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
@@ -704,8 +973,19 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
 bool Semaphore::signal()
 {
     #if defined(_WIN32) || defined(_WIN64)
+	if (!hSemaphore) { return false; }
     return ReleaseSemaphore(hSemaphore, 1, nullptr);
-    #else
+    #elif defined(_POSIX_SEMAPHORES)
+	if (hSem == SEM_FAILED) { return false; }
+	return !sem_post(hSem);
+    #elif defined(_SYSTEM_V_SEMAPHORES)
+	if (handle == -1) { return false; }
+	struct sembuf operations[1];
+	operations[0].sem_num = 0;
+	operations[0].sem_op = 1;
+	operations[0].sem_flg = 0;
+	return !semop(handle, operations, 1);
+	#else
     if (!mutex || !condition) { return false; }
 
     int res = pthread_mutex_lock(mutex);

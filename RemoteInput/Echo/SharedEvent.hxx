@@ -9,9 +9,37 @@
 #ifndef SHAREDEVENT_HXX_INCLUDED
 #define SHAREDEVENT_HXX_INCLUDED
 
+#define _POSIX_SEMAPHORES
+
+#include <ctime>
+#include <cstdint>
+#include <string>
+#include <chrono>
+#include "Time.hxx"
+
 #if defined(_WIN32) || defined(_WIN64)
-#include <pthread.h>
 #include <windows.h>
+#endif
+
+#if defined(_POSIX_SEMAPHORES)
+#include <pthread.h>
+#include <semaphore.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#elif defined(_SYSTEM_V_SEMAPHORES)
+#include <pthread.h>
+#include <sys/sem.h>
+#include <sys/ipc.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
 #else
 #include <pthread.h>
 #include <sys/types.h>
@@ -21,13 +49,6 @@
 #include <errno.h>
 #include <unistd.h>
 #endif
-
-#include <ctime>
-#include <cstdint>
-#include <string>
-#include <chrono>
-
-#include "Time.hxx"
 
 class Mutex
 {
@@ -74,7 +95,16 @@ class Semaphore
 private:
     #if defined(_WIN32) || defined(_WIN64)
     HANDLE hSemaphore;
-    #else
+    #elif defined(_POSIX_SEMAPHORES)
+	bool shared;
+	sem_t* hSem;
+	std::string name;
+	#elif defined(_SYSTEM_V_SEMAPHORES)
+	bool shared;
+	key_t id;
+	int handle;
+	std::string name;
+	#else
 	bool shared;
     pthread_mutex_t* mutex;
     pthread_cond_t* condition;
@@ -82,10 +112,12 @@ private:
     std::int32_t* ref;
     std::string name;
     int shm_fd;
-
-    template<typename T>
-    T* semaphore_cast(void* &ptr);
     #endif
+	
+	#if !defined(_WIN32) && !defined(_WIN64)
+	template<typename T>
+    T* semaphore_cast(void* &ptr);
+	#endif
 
 public:
     Semaphore(std::int32_t count = 0);
