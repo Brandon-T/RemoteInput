@@ -32,6 +32,7 @@ private:
     int hFile;
     bool physical;
     #endif
+	bool owner;
     std::basic_string<char_type> path;
     void* pData;
     std::size_t pSize;
@@ -51,21 +52,22 @@ public:
     bool is_mapped() const;
     std::size_t size() const;
     void* data() const;
+	void flush() const;
     std::size_t granularity() const;
 };
 
 #if defined(_WIN32) || defined(_WIN64)
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), path(path), pData(nullptr), pSize(0), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
 
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), path(path), pData(nullptr), pSize(size), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
 #else
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) : hFile(0), physical(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
 
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) : hFile(0), physical(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
 #endif
 
 template<typename char_type>
@@ -84,32 +86,52 @@ bool MemoryMap<char_type>::open()
 
     if(dwCreation == CREATE_ALWAYS)
     {
+		owner = true
         hMap = std::is_same<char_type, wchar_t>::value ? CreateFileMappingW(hFile, nullptr, dwAccess, 0, pSize, reinterpret_cast<const wchar_t*>(path.c_str())) : CreateFileMappingA(hFile, nullptr, dwAccess, 0, pSize, reinterpret_cast<const char*>(path.c_str()));
         return hMap != nullptr;
     }
 
+	owner = false
     hMap = std::is_same<char_type, wchar_t>::value ? OpenFileMappingW(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const wchar_t*>(path.c_str())) : OpenFileMappingA(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const char*>(path.c_str()));
     return hMap != nullptr;
     #else
+	owner = (!read_only && pSize > 0);
     int dwFlags = read_only ? O_RDONLY : O_RDWR;
-    dwFlags |= (!read_only && pSize > 0) ? (O_CREAT | O_TRUNC) : 0;
+    dwFlags |= (!read_only && pSize > 0) ? (O_CREAT | O_EXCL | O_TRUNC) : 0;
     hFile = shm_open(path.c_str(), dwFlags, S_IRWXU);
+	if(hFile == -1)
+	{
+		if (errno == EEXIST)
+		{
+			owner = false;
+			hFile = shm_open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
+		}
+	}
+	
     if(hFile != -1)
     {
         if(pSize <= 0)
         {
             struct stat info = {0};
-            if(fstat(hFile, &info) != -1)
+            if (fstat(hFile, &info) != -1)
             {
                 pSize = info.st_size;
             }
         }
 
-        if(!read_only && pSize > 0 && ftruncate(hFile, pSize) != -1)
+        if(!read_only && pSize > 0)
         {
-            struct stat info = {0};
-            return fstat(hFile, &info) != -1 ? pSize == info.st_size : false;
+			if (owner)
+			{
+				if (ftruncate(hFile, pSize) != -1)
+				{
+					struct stat info = {0};
+					return fstat(hFile, &info) != -1 ? info.st_size >= pSize : false;
+				}
+				return false;
+			}
         }
+		return true;
     }
     #endif
     return false;
@@ -123,7 +145,8 @@ bool MemoryMap<char_type>::open_file()
     DWORD dwAccess = read_only ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE);
     DWORD dwCreation = (!read_only && pSize > 0) ? CREATE_ALWAYS : OPEN_EXISTING;
     DWORD dwAttributes = read_only ? FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_TEMPORARY;
-
+	owner = dwCreation != OPEN_EXISTING;
+	
     hFile = std::is_same<char_type, wchar_t>::value ? CreateFileW(reinterpret_cast<const wchar_t*>(path.c_str()), dwAccess, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, dwCreation, dwAttributes, nullptr) : CreateFileA(reinterpret_cast<const char*>(path.c_str()), dwAccess, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, dwCreation, dwAttributes, nullptr);
 
     if(hFile != INVALID_HANDLE_VALUE)
@@ -172,9 +195,16 @@ bool MemoryMap<char_type>::open_file()
     }
     #else
     physical = true;
+	owner = true;
     int dwFlags = read_only ? O_RDONLY : O_RDWR;
-    dwFlags |= (!read_only && pSize > 0) ? (O_CREAT | O_TRUNC) : 0;
+    dwFlags |= (!read_only && pSize > 0) ? (O_CREAT | O_EXCL | O_TRUNC) : 0;
     hFile = ::open(path.c_str(), dwFlags, S_IRWXU);
+	if(hFile == -1 && errno == EEXIST)
+	{
+		owner = false;
+		hFile = ::open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
+	}
+	
     if(hFile != -1)
     {
         if(!read_only && pSize > 0 && ftruncate(hFile, pSize) != -1)
@@ -233,8 +263,18 @@ bool MemoryMap<char_type>::close()
     result = CloseHandle(hFile) && result;
     hFile = INVALID_HANDLE_VALUE;
     #else
-    result = (physical ? ::close(hFile) != -1 : !shm_unlink(path.c_str())) && result;
+	if (physical || !owner)
+	{
+		result = ::close(hFile) != -1 && result;
+	}
+	
+	if (!physical && owner)
+	{
+		result = !shm_unlink(path.c_str()) && result;
+		result = ::close(hFile) != -1 && result;
+	}
     physical = false;
+	owner = false;
     #endif
     return result;
 }
@@ -265,6 +305,12 @@ template<typename char_type>
 void* MemoryMap<char_type>::data() const
 {
     return pData;
+}
+
+template<typename char_type>
+void MemoryMap<char_type>::flush() const
+{
+	msync(pData, pSize, MS_SYNC);
 }
 
 template<typename char_type>

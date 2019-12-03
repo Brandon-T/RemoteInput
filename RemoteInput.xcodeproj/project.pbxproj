@@ -18,6 +18,46 @@
 		5E4CDC23238214B200A05869 /* InputEvents.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E4CDC21238214B200A05869 /* InputEvents.hxx */; };
 		5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
 		5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
+		5E6B9A002394C57600E6720C /* Time.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B1235CF15400D183B1 /* Time.cxx */; };
+		5E6B9A012394C57600E6720C /* SharedEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B2235CF15400D183B1 /* SharedEvent.cxx */; };
+		5E6B9A022394C57600E6720C /* MemoryMap.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B3235CF15400D183B1 /* MemoryMap.hxx */; };
+		5E6B9A032394C57600E6720C /* Module.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B4235CF15400D183B1 /* Module.hxx */; };
+		5E6B9A042394C57600E6720C /* Module.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B5235CF15400D183B1 /* Module.cxx */; };
+		5E6B9A052394C57600E6720C /* Time.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B6235CF15400D183B1 /* Time.hxx */; };
+		5E6B9A062394C57600E6720C /* SharedEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B7235CF15400D183B1 /* SharedEvent.hxx */; };
+		5E6B9A072394C57600E6720C /* EIOS.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66AD235CF15400D183B1 /* EIOS.cxx */; };
+		5E6B9A082394C57600E6720C /* EIOS.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66A5235CF15400D183B1 /* EIOS.hxx */; };
+		5E6B9A092394C57600E6720C /* JVM.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66AF235CF15400D183B1 /* JVM.cxx */; };
+		5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66AB235CF15400D183B1 /* JVM.hxx */; };
+		5E6B9A0B2394C57A00E6720C /* NativeHooks_Darwin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1A2381F40700A05869 /* NativeHooks_Darwin.cxx */; };
+		5E6B9A0C2394C57A00E6720C /* NativeHooks_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1B2381F40700A05869 /* NativeHooks_Linux.cxx */; };
+		5E6B9A0D2394C57A00E6720C /* NativeHooks_Windows.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */; };
+		5E6B9A0E2394C57A00E6720C /* DebugConsole.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD6697235CF15400D183B1 /* DebugConsole.hxx */; };
+		5E6B9A0F2394C57A00E6720C /* Platform_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */; };
+		5E6B9A102394C57A00E6720C /* Platform.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD669A235CF15400D183B1 /* Platform.hxx */; };
+		5E6B9A112394C57A00E6720C /* NativeHooks.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD669B235CF15400D183B1 /* NativeHooks.hxx */; };
+		5E6B9A122394C57A00E6720C /* Platform_Darwin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD669C235CF15400D183B1 /* Platform_Darwin.cxx */; };
+		5E6B9A132394C57A00E6720C /* DebugConsole.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD669F235CF15400D183B1 /* DebugConsole.cxx */; };
+		5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66A0235CF15400D183B1 /* JavaInternal.hxx */; };
+		5E6B9A152394C57A00E6720C /* Platform_Windows.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66A1235CF15400D183B1 /* Platform_Windows.cxx */; };
+		5E6B9A162394C58500E6720C /* SimbaPlugin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66A8235CF15400D183B1 /* SimbaPlugin.cxx */; };
+		5E6B9A172394C58500E6720C /* SimbaPlugin.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66AA235CF15400D183B1 /* SimbaPlugin.hxx */; };
+		5E6B9A182394C58500E6720C /* TMemoryManager.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66A9235CF15400D183B1 /* TMemoryManager.hxx */; };
+		5E6B9A192394C58500E6720C /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
+		5E6B9A1A2394C58500E6720C /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
+		5E6B9A1B2394C58500E6720C /* Graphics.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */; };
+		5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */; };
+		5E6B9A1D2394C59400E6720C /* Reflection.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66A4235CF15400D183B1 /* Reflection.cxx */; };
+		5E6B9A1E2394C59400E6720C /* Reflection.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66A2235CF15400D183B1 /* Reflection.hxx */; };
+		5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66AE235CF15400D183B1 /* ThreadPool.cxx */; };
+		5E6B9A202394C59700E6720C /* ThreadPool.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B8235CF15400D183B1 /* ThreadPool.hxx */; };
+		5E6B9A212394C59700E6720C /* RemoteInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EC5950A232D956B00922111 /* RemoteInput.h */; };
+		5E6B9A222394C59C00E6720C /* InputEvents.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC20238214B200A05869 /* InputEvents.cxx */; };
+		5E6B9A232394C59C00E6720C /* InputEvents.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E4CDC21238214B200A05869 /* InputEvents.hxx */; };
+		5E6B9A242394C59C00E6720C /* ReflectionHook.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */; };
+		5E6B9A252394C59C00E6720C /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
+		5E6B9A262394C60A00E6720C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DC235D041D00D183B1 /* Foundation.framework */; };
+		5E6B9A272394C61200E6720C /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DA235D041600D183B1 /* Cocoa.framework */; };
 		5EBD66B9235CF15400D183B1 /* DebugConsole.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD6697235CF15400D183B1 /* DebugConsole.hxx */; };
 		5EBD66BA235CF15400D183B1 /* Platform_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */; };
 		5EBD66BC235CF15400D183B1 /* Platform.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD669A235CF15400D183B1 /* Platform.hxx */; };
@@ -62,6 +102,7 @@
 		5E4CDC21238214B200A05869 /* InputEvents.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = InputEvents.hxx; sourceTree = "<group>"; };
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
+		5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibRemoteInput.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EBD6697235CF15400D183B1 /* DebugConsole.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DebugConsole.hxx; sourceTree = "<group>"; };
 		5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Platform_Linux.cxx; sourceTree = "<group>"; };
 		5EBD669A235CF15400D183B1 /* Platform.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Platform.hxx; sourceTree = "<group>"; };
@@ -97,6 +138,15 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		5E6B99FA2394C4F200E6720C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5E6B9A272394C61200E6720C /* Cocoa.framework in Frameworks */,
+				5E6B9A262394C60A00E6720C /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5EC59504232D956B00922111 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -146,11 +196,11 @@
 			children = (
 				5EBD66B1235CF15400D183B1 /* Time.cxx */,
 				5EBD66B2235CF15400D183B1 /* SharedEvent.cxx */,
+				5EBD66B7235CF15400D183B1 /* SharedEvent.hxx */,
 				5EBD66B3235CF15400D183B1 /* MemoryMap.hxx */,
 				5EBD66B4235CF15400D183B1 /* Module.hxx */,
 				5EBD66B5235CF15400D183B1 /* Module.cxx */,
 				5EBD66B6235CF15400D183B1 /* Time.hxx */,
-				5EBD66B7235CF15400D183B1 /* SharedEvent.hxx */,
 			);
 			path = Echo;
 			sourceTree = "<group>";
@@ -177,6 +227,7 @@
 			isa = PBXGroup;
 			children = (
 				5EC59507232D956B00922111 /* RemoteInput.framework */,
+				5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -209,6 +260,32 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		5E6B99F82394C4F200E6720C /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */,
+				5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */,
+				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
+				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
+				5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */,
+				5E6B9A182394C58500E6720C /* TMemoryManager.hxx in Headers */,
+				5E6B9A202394C59700E6720C /* ThreadPool.hxx in Headers */,
+				5E6B9A082394C57600E6720C /* EIOS.hxx in Headers */,
+				5E6B9A062394C57600E6720C /* SharedEvent.hxx in Headers */,
+				5E6B9A1A2394C58500E6720C /* ControlCenter.hxx in Headers */,
+				5E6B9A172394C58500E6720C /* SimbaPlugin.hxx in Headers */,
+				5E6B9A252394C59C00E6720C /* ReflectionHook.hxx in Headers */,
+				5E6B9A022394C57600E6720C /* MemoryMap.hxx in Headers */,
+				5E6B9A0E2394C57A00E6720C /* DebugConsole.hxx in Headers */,
+				5E6B9A112394C57A00E6720C /* NativeHooks.hxx in Headers */,
+				5E6B9A232394C59C00E6720C /* InputEvents.hxx in Headers */,
+				5E6B9A102394C57A00E6720C /* Platform.hxx in Headers */,
+				5E6B9A212394C59700E6720C /* RemoteInput.h in Headers */,
+				5E6B9A1E2394C59400E6720C /* Reflection.hxx in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5EC59502232D956B00922111 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -238,6 +315,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		5E6B99FB2394C4F200E6720C /* libRemoteInput */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E6B99FD2394C4F200E6720C /* Build configuration list for PBXNativeTarget "libRemoteInput" */;
+			buildPhases = (
+				5E6B99F82394C4F200E6720C /* Headers */,
+				5E6B99F92394C4F200E6720C /* Sources */,
+				5E6B99FA2394C4F200E6720C /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = libRemoteInput;
+			productName = libRemoteInput;
+			productReference = 5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
 		5EC59506232D956B00922111 /* RemoteInput */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5EC5950F232D956B00922111 /* Build configuration list for PBXNativeTarget "RemoteInput" */;
@@ -265,6 +359,9 @@
 				LastUpgradeCheck = 1100;
 				ORGANIZATIONNAME = XIO;
 				TargetAttributes = {
+					5E6B99FB2394C4F200E6720C = {
+						CreatedOnToolsVersion = 11.2.1;
+					};
 					5EC59506232D956B00922111 = {
 						CreatedOnToolsVersion = 11.0;
 					};
@@ -284,6 +381,7 @@
 			projectRoot = "";
 			targets = (
 				5EC59506232D956B00922111 /* RemoteInput */,
+				5E6B99FB2394C4F200E6720C /* libRemoteInput */,
 			);
 		};
 /* End PBXProject section */
@@ -300,6 +398,32 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		5E6B99F92394C4F200E6720C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5E6B9A192394C58500E6720C /* ControlCenter.cxx in Sources */,
+				5E6B9A1B2394C58500E6720C /* Graphics.cxx in Sources */,
+				5E6B9A0B2394C57A00E6720C /* NativeHooks_Darwin.cxx in Sources */,
+				5E6B9A162394C58500E6720C /* SimbaPlugin.cxx in Sources */,
+				5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */,
+				5E6B9A222394C59C00E6720C /* InputEvents.cxx in Sources */,
+				5E6B9A002394C57600E6720C /* Time.cxx in Sources */,
+				5E6B9A092394C57600E6720C /* JVM.cxx in Sources */,
+				5E6B9A122394C57A00E6720C /* Platform_Darwin.cxx in Sources */,
+				5E6B9A152394C57A00E6720C /* Platform_Windows.cxx in Sources */,
+				5E6B9A132394C57A00E6720C /* DebugConsole.cxx in Sources */,
+				5E6B9A0C2394C57A00E6720C /* NativeHooks_Linux.cxx in Sources */,
+				5E6B9A1D2394C59400E6720C /* Reflection.cxx in Sources */,
+				5E6B9A072394C57600E6720C /* EIOS.cxx in Sources */,
+				5E6B9A0F2394C57A00E6720C /* Platform_Linux.cxx in Sources */,
+				5E6B9A0D2394C57A00E6720C /* NativeHooks_Windows.cxx in Sources */,
+				5E6B9A042394C57600E6720C /* Module.cxx in Sources */,
+				5E6B9A012394C57600E6720C /* SharedEvent.cxx in Sources */,
+				5E6B9A242394C59C00E6720C /* ReflectionHook.cxx in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5EC59503232D956B00922111 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -329,6 +453,44 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		5E6B99FE2394C4F200E6720C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = YTT3U95S25;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include",
+					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include/darwin",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				OTHER_CFLAGS = "-fvisibility=hidden";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		5E6B99FF2394C4F200E6720C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = YTT3U95S25;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include",
+					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include/darwin",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				OTHER_CFLAGS = "-fvisibility=hidden";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		5EC5950D232D956B00922111 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -501,6 +663,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5E6B99FD2394C4F200E6720C /* Build configuration list for PBXNativeTarget "libRemoteInput" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5E6B99FE2394C4F200E6720C /* Debug */,
+				5E6B99FF2394C4F200E6720C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		5EC59501232D956B00922111 /* Build configuration list for PBXProject "RemoteInput" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

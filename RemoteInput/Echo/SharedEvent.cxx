@@ -44,6 +44,11 @@ int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeo
 Mutex::Mutex() : hMutex(INVALID_HANDLE_VALUE)
 {
     hMutex = CreateMutex(0, false, nullptr);
+	
+	if (!hMutex)
+	{
+		throw std::runtime_error("Cannot create mutex");
+	}
 }
 
 Mutex::Mutex(std::string name) : hMutex(INVALID_HANDLE_VALUE)
@@ -53,6 +58,11 @@ Mutex::Mutex(std::string name) : hMutex(INVALID_HANDLE_VALUE)
     {
         hMutex = CreateMutex(0, false, name.c_str());
     }
+	
+	if (!hMutex)
+	{
+		throw std::runtime_error("Cannot create mutex");
+	}
 }
 
 Mutex::~Mutex()
@@ -75,13 +85,13 @@ Mutex::Mutex() : shared(false), mutex(nullptr), ref(nullptr), name("\0"), shm_fd
     pthread_mutexattr_t attributes;
     if (pthread_mutexattr_init(&attributes))
     {
-        return;
+		throw std::runtime_error("Cannot allocated mutex");
     }
 
     if (pthread_mutexattr_setpshared(&attributes, PTHREAD_PROCESS_PRIVATE))
     {
         pthread_mutexattr_destroy(&attributes);
-        return;
+        throw std::runtime_error("Cannot set mutex private attributes");
     }
 
 	mutex = new pthread_mutex_t();
@@ -89,7 +99,7 @@ Mutex::Mutex() : shared(false), mutex(nullptr), ref(nullptr), name("\0"), shm_fd
     {
         pthread_mutexattr_destroy(&attributes);
 		delete mutex;
-        return;
+        throw std::runtime_error("Cannot create mutex");
     }
 
     pthread_mutexattr_destroy(&attributes);
@@ -97,27 +107,28 @@ Mutex::Mutex() : shared(false), mutex(nullptr), ref(nullptr), name("\0"), shm_fd
 
 Mutex::Mutex(std::string name) : shared(true), mutex(nullptr), ref(nullptr), name(name), shm_fd(-1)
 {
-    bool created = false;
-	shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU); //0660 -> S_IRWXU
-	if (errno == ENOENT)
+	bool created = true;
+	shm_fd = shm_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU); //0660 -> S_IRWXU
+	if (shm_fd == -1)
 	{
-		shm_fd = shm_open(name.c_str(), O_CREAT | O_RDWR, S_IRWXU);
-		created = true;
+		if (errno == EEXIST)
+		{
+			created = false;
+			shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU);
+		}
 	}
 
 	if (shm_fd == -1)
 	{
-		return;
+		perror(strerror(errno));
+		throw std::runtime_error("Cannot create or open memory map");
 	}
 
-	if (ftruncate(shm_fd, sizeof(*this)))
+	if (created && ftruncate(shm_fd, sizeof(*this)) == -1)
 	{
-		if (created)
-		{
-			shm_unlink(name.c_str());
-		}
+		shm_unlink(name.c_str());
 		shm_fd = -1;
-		return;
+		throw std::runtime_error("Cannot truncate memory map");
 	}
 
 	void* mapping = mmap(nullptr, sizeof(*this), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
@@ -128,7 +139,7 @@ Mutex::Mutex(std::string name) : shared(true), mutex(nullptr), ref(nullptr), nam
 			shm_unlink(name.c_str());
 		}
 		shm_fd = -1;
-		return;
+		throw std::runtime_error("Mapping into process memory failed");
 	}
 
 	void* data = mapping;
@@ -142,7 +153,7 @@ Mutex::Mutex(std::string name) : shared(true), mutex(nullptr), ref(nullptr), nam
 		{
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot create mutex attributes");
 		}
 
 		if (pthread_mutexattr_setpshared(&attributes, PTHREAD_PROCESS_SHARED))
@@ -150,7 +161,7 @@ Mutex::Mutex(std::string name) : shared(true), mutex(nullptr), ref(nullptr), nam
 			pthread_mutexattr_destroy(&attributes);
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot set mutex shared attributes");
 		}
 
 		if (pthread_mutex_init(mutex, &attributes))
@@ -158,7 +169,7 @@ Mutex::Mutex(std::string name) : shared(true), mutex(nullptr), ref(nullptr), nam
 			pthread_mutexattr_destroy(&attributes);
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot create mutex");
 		}
 
 		pthread_mutexattr_destroy(&attributes);
@@ -290,6 +301,11 @@ Semaphore::Semaphore(std::int32_t count)
     {
         hSemaphore = CreateSemaphore(nullptr, count, count + 1, nullptr);
     }
+	
+	if (!hSemaphore)
+	{
+		throw std::runtime_error("Cannot create semaphore");
+	}
 }
 
 Semaphore::Semaphore(std::string name, std::int32_t count)
@@ -299,6 +315,11 @@ Semaphore::Semaphore(std::string name, std::int32_t count)
     {
         hSemaphore = CreateSemaphore(nullptr, count, count + 1, name.c_str());
     }
+	
+	if (!hSemaphore)
+	{
+		throw std::runtime_error("Cannot create semaphore");
+	}
 }
 
 Semaphore::~Semaphore()
@@ -321,13 +342,13 @@ Semaphore::Semaphore(std::int32_t count) : shared(false), mutex(nullptr), condit
 	pthread_mutexattr_t mutex_attributes;
 	if (pthread_mutexattr_init(&mutex_attributes))
 	{
-		return;
+		throw std::runtime_error("Cannot create semaphore attributes");
 	}
 
 	if (pthread_mutexattr_setpshared(&mutex_attributes, PTHREAD_PROCESS_PRIVATE))
 	{
 		pthread_mutexattr_destroy(&mutex_attributes);
-		return;
+		throw std::runtime_error("Cannot set semaphore private attributes");
 	}
 
 	mutex = new pthread_mutex_t();
@@ -335,7 +356,7 @@ Semaphore::Semaphore(std::int32_t count) : shared(false), mutex(nullptr), condit
 	{
 		pthread_mutexattr_destroy(&mutex_attributes);
 		delete mutex;
-		return;
+		throw std::runtime_error("Cannot create semaphore");
 	}
 
 	pthread_condattr_t condition_attributes;
@@ -344,7 +365,7 @@ Semaphore::Semaphore(std::int32_t count) : shared(false), mutex(nullptr), condit
 		pthread_mutexattr_destroy(&mutex_attributes);
 		pthread_mutex_destroy(mutex);
 		delete mutex;
-		return;
+		throw std::runtime_error("Cannot create semaphore conditions");
 	}
 
 	if (pthread_condattr_setpshared(&condition_attributes, PTHREAD_PROCESS_PRIVATE))
@@ -353,7 +374,7 @@ Semaphore::Semaphore(std::int32_t count) : shared(false), mutex(nullptr), condit
 		pthread_mutex_destroy(mutex);
 		pthread_condattr_destroy(&condition_attributes);
 		delete mutex;
-		return;
+		throw std::runtime_error("Cannot set semaphore conditions private attributes");
 	}
 
 	condition = new pthread_cond_t();
@@ -364,7 +385,7 @@ Semaphore::Semaphore(std::int32_t count) : shared(false), mutex(nullptr), condit
 		pthread_condattr_destroy(&condition_attributes);
 		delete condition;
 		delete mutex;
-		return;
+		throw std::runtime_error("Cannot create semaphore conditions");
 	}
 
 	pthread_mutexattr_destroy(&mutex_attributes);
@@ -376,28 +397,29 @@ Semaphore::Semaphore(std::int32_t count) : shared(false), mutex(nullptr), condit
 
 Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex(nullptr), condition(nullptr), sem_count(nullptr), ref(nullptr), name("\0"), shm_fd(-1)
 {
-    bool created = false;
-	shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU); //0660 -> S_IRWXU
-	if (errno == ENOENT)
+    bool created = true;
+	shm_fd = shm_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU); //0660 -> S_IRWXU
+	if (shm_fd == -1)
 	{
-		shm_fd = shm_open(name.c_str(), O_CREAT | O_RDWR, S_IRWXU);
-		created = true;
+		if (errno == EEXIST)
+		{
+			created = false;
+			shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU);
+		}
 	}
 
 	if (shm_fd == -1)
 	{
-		return;
+		perror(strerror(errno));
+		throw std::runtime_error("Cannot create or open memory map");
 	}
 
-	if (ftruncate(shm_fd, sizeof(*this)))
+	if (created && ftruncate(shm_fd, sizeof(*this)) == -1)
 	{
 		perror(strerror(errno));
-		if (created)
-		{
-			shm_unlink(name.c_str());
-		}
+		shm_unlink(name.c_str());
 		shm_fd = -1;
-		return;
+		throw std::runtime_error("Cannot truncate memory map");
 	}
 
 	void* mapping = mmap(nullptr, sizeof(*this), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
@@ -408,7 +430,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 			shm_unlink(name.c_str());
 		}
 		shm_fd = -1;
-		return;
+		throw std::runtime_error("Mapping into process memory failed");
 	}
 
 	void* data = mapping;
@@ -424,7 +446,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 		{
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot create semaphore attributes");
 		}
 
 		if (pthread_mutexattr_setpshared(&mutex_attributes, PTHREAD_PROCESS_SHARED))
@@ -432,7 +454,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 			pthread_mutexattr_destroy(&mutex_attributes);
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot set semaphore shared attributes");
 		}
 
 		if (pthread_mutex_init(mutex, &mutex_attributes))
@@ -440,7 +462,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 			pthread_mutexattr_destroy(&mutex_attributes);
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot create semaphore");
 		}
 
 		pthread_condattr_t condition_attributes;
@@ -450,7 +472,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 			pthread_mutex_destroy(mutex);
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot create semaphore condition attributes");
 		}
 
 		if (pthread_condattr_setpshared(&condition_attributes, PTHREAD_PROCESS_SHARED))
@@ -460,7 +482,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 			pthread_condattr_destroy(&condition_attributes);
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot set semaphore condition shared attributes");
 		}
 
 		if (pthread_cond_init(condition, &condition_attributes))
@@ -470,7 +492,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 			pthread_condattr_destroy(&condition_attributes);
 			shm_unlink(name.c_str());
 			shm_fd = -1;
-			return;
+			throw std::runtime_error("Cannot create semaphore conditions");
 		}
 
 		pthread_mutexattr_destroy(&mutex_attributes);
@@ -484,6 +506,7 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), mutex
 	this->condition = condition;
 	this->sem_count = sem_count;
 	this->ref = ref;
+	msync(mapping, sizeof(*this), MS_SYNC);
 }
 
 Semaphore::~Semaphore()
@@ -503,6 +526,8 @@ Semaphore::~Semaphore()
 			pthread_mutex_destroy(mutex);
 			shm_unlink(name.c_str());
 		}
+		
+		msync(mutex, sizeof(*this), MS_SYNC);
 		munmap(mutex, sizeof(*this));
 	}
 
@@ -543,6 +568,7 @@ bool Semaphore::wait()
         }
 
 		*sem_count -= 1;
+		msync(mutex, sizeof(*this), MS_SYNC);
         pthread_mutex_unlock(mutex);
         return true;
     }
@@ -572,6 +598,7 @@ bool Semaphore::try_wait()
         }
 
         *sem_count -= 1;
+		msync(mutex, sizeof(*this), MS_SYNC);
         pthread_mutex_unlock(mutex);
         return true;
     }
@@ -619,6 +646,7 @@ bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_r
             }
 
             *sem_count -= 1;
+			msync(mutex, sizeof(*this), MS_SYNC);
             pthread_mutex_unlock(mutex);
             return true;
         }
@@ -643,6 +671,8 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
     #if defined(_WIN32) || defined(_WIN64)
     return WaitForSingleObject(hSemaphore, milliseconds) == WAIT_OBJECT_0;
     #else
+	if (!mutex || !condition) { return false; }
+	
     auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
 	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
 	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
@@ -662,6 +692,7 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
             }
 
             *sem_count -= 1;
+			msync(mutex, sizeof(*this), MS_SYNC);
             pthread_mutex_unlock(mutex);
             return true;
         }
@@ -681,6 +712,7 @@ bool Semaphore::signal()
     if (!res && res != EBUSY && res != EDEADLK)
     {
 		*sem_count += 1;
+		msync(mutex, sizeof(*this), MS_SYNC);
         pthread_cond_signal(condition);
         pthread_mutex_unlock(mutex);
         return true;

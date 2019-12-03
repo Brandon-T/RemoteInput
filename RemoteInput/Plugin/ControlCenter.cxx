@@ -68,8 +68,6 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 	if (!is_controller)
 	{
-		reflector->Attach();
-		
 		std::thread thread = std::thread([&]{
 			while(!stopped) {
 				if (!command_signal || !map_lock || !response_signal || !memory_map)
@@ -85,6 +83,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 				map_lock->lock();
 				process_command();
+				memory_map->flush();
 				map_lock->unlock();
 				response_signal->signal();
 			}
@@ -97,15 +96,13 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 ControlCenter::~ControlCenter()
 {
 	terminate();
-
-	reflector->Detach();
 	reflector.reset();
 
 	if (map_lock)
 	{
 		map_lock->unlock();
+		map_lock.reset();
 	}
-	map_lock.reset();
 
 	if (memory_map)
 	{
@@ -199,8 +196,10 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 			
-			auto result = reflector->jvm->NewGlobalRef(reflector->getField<jobject>(hook.object, hook));
+			reflector->Attach();
+			auto result = reflector->getField<jobject>(hook.object, hook);
 			EIOS_Write(response, result);
+			reflector->Detach();
 		}
 			break;
 			
@@ -209,7 +208,9 @@ void ControlCenter::process_command()
 			jobject object = EIOS_Read<jobject>(arguments);
 			if (object)
 			{
-				reflector->jvm->DeleteGlobalRef(object);
+				reflector->Attach();
+				reflector->getEnv()->DeleteGlobalRef(object);
+				reflector->Detach();
 			}
 		}
 			break;
@@ -299,7 +300,9 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 			
+			reflector->Attach();
 			auto result = reflector->getField<std::string>(hook.object, hook);
+			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -317,7 +320,7 @@ void ControlCenter::process_command()
 		case EIOSCommand::REFLECT_ARRAY_SIZE:
 		{
 			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
-			jsize length = reflector->jvm->GetArrayLength(array);
+			jsize length = reflector->getEnv()->GetArrayLength(array);
 			EIOS_Write(response, length);
 		}
 			break;
@@ -326,7 +329,7 @@ void ControlCenter::process_command()
 		{
 			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
 			jsize index = EIOS_Read<jsize>(arguments);
-			jobject object = reflector->jvm->NewGlobalRef(reflector->jvm->GetObjectArrayElement(array, index));
+			jobject object = reflector->getEnv()->NewGlobalRef(reflector->getEnv()->GetObjectArrayElement(array, index));
 			EIOS_Write(response, object);
 		}
 			break;
@@ -336,7 +339,11 @@ void ControlCenter::process_command()
 bool ControlCenter::init_maps()
 {
     char mapName[256] = {0};
+	#if defined(_WIN32) || defined(_WIN64)
     sprintf(mapName, "Local\\RemoteInput_%d", pid);
+	#else
+	sprintf(mapName, "RemoteInput_%d", pid);
+	#endif
 
     if (is_controller)
 	{
@@ -360,20 +367,42 @@ bool ControlCenter::init_maps()
 
 bool ControlCenter::init_locks()
 {
-    char lockName[256] = {0};
-    sprintf(lockName, "Local\\RemoteInput_Lock_%d", pid);
+	#if defined(_WIN32) || defined(_WIN64)
+	char lockName[256] = {0};
+	sprintf(lockName, "Local\\RemoteInput_Lock_%d", pid);
+	#elif defined(__linux__)
+	char lockName[256] = {0};
+	sprintf(lockName, "/RemoteInput_Lock_%d", pid);
+	#else
+	char lockName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
+	sprintf(lockName, "/RemoteInput_Lock_%d", pid);
+	#endif
+	
 	map_lock = std::make_unique<Mutex>(lockName);
     return map_lock != nullptr;
 }
 
 bool ControlCenter::init_signals()
 {
-    char signalName[256] = {0};
-    sprintf(signalName, "Local\\RemoteInput_ControlCenter_EventRead_%d", pid);
-	command_signal = std::make_unique<Semaphore>(signalName);
+	#if defined(_WIN32) || defined(_WIN64)
+	char readName[256] = {0};
+	char writeName[256] = {0};
+	sprintf(readName, "Local\\RemoteInput_ControlCenter_EventRead_%d", pid);
+	sprintf(writeName, "Local\\RemoteInput_ControlCenter_EventWrite_%d", pid);
+	#elif defined(__linux__)
+	char readName[256] = {0};
+	char writeName[256] = {0};
+	sprintf(readName, "/RemoteInput_ControlCenter_EventRead_%d", pid);
+	sprintf(writeName, "/RemoteInput_ControlCenter_EventWrite_%d", pid);
+	#else
+	char readName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
+	char writeName[31] = {0};
+	sprintf(readName, "/RI_CC_EventRead_%d", pid);
+	sprintf(writeName, "/RI_CC_EventWrite_%d", pid);
+	#endif
 
-    sprintf(signalName, "Local\\RemoteInput_ControlCenter_EventWrite_%d", pid);
-    response_signal = std::make_unique<Semaphore>(signalName);
+	command_signal = std::make_unique<Semaphore>(readName);
+    response_signal = std::make_unique<Semaphore>(writeName);
     return command_signal && response_signal;
 }
 
@@ -391,9 +420,10 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 {
 	map_lock->lock();
 	writer(get_image_data());
+	memory_map->flush();
 	map_lock->unlock();
 	command_signal->signal();
-	return response_signal->timed_wait(10);
+	return response_signal->wait();
 }
 
 std::int32_t ControlCenter::parent_id() const

@@ -21,7 +21,6 @@ private:
         return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
     }
 
-public:
     JVM* jvm;
     jobject frame;
     jobject client;
@@ -33,13 +32,16 @@ public:
     Reflection();
     Reflection(JNIEnv* env);
     ~Reflection();
-
+	
     bool Initialize(jobject awtFrame);
 
     bool Attach();
+	bool AttachAsDaemon();
     bool Detach();
 
     jclass LoadClass(const char* clsToLoad);
+	
+	JVM* getVM();
     JNIEnv* getEnv();
 
     template<typename T>

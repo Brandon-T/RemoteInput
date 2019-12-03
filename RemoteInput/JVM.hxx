@@ -44,6 +44,7 @@ public:
 
 
     jint AttachCurrentThread();
+	jint AttachCurrentThreadAsDaemon();
     jint DetachCurrentThread();
     jint GetEnv(void **penv, jint version);
 

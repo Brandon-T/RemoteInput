@@ -320,11 +320,17 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
 #elif defined(__APPLE__)
 [[gnu::constructor]] void __load()
 {
-	control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-	if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
-	{
-		StartHook();
-	}
+	std::thread([&] {
+		std::this_thread::sleep_for(std::chrono::seconds(10));
+		
+		control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
+		if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
+		{
+			StartHook();
+		}
+		
+		printf("ATTACHED TO: %d\n", getpid());
+	}).detach();
 }
 
 [[gnu::destructor]] void __unload()

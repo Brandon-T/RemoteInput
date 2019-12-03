@@ -24,7 +24,7 @@ struct ReflectionHook
 	void read(void* input)
 	{
 		std::uint8_t* ptr = static_cast<std::uint8_t*>(input);
-		object = *reinterpret_cast<jobject*>(ptr);
+		memcpy(&object, ptr, sizeof(jobject));
 		ptr += sizeof(jobject);
 		
 		read_string(ptr, cls);
@@ -35,7 +35,7 @@ struct ReflectionHook
 	void write(void* output) const
 	{
 		std::uint8_t* ptr = static_cast<std::uint8_t*>(output);
-		*reinterpret_cast<jobject*>(ptr) = object;
+		memcpy(ptr, &object, sizeof(jobject));
 		ptr += sizeof(jobject);
 		
 		write_string(ptr, cls);
@@ -44,24 +44,25 @@ struct ReflectionHook
 	}
 	
 private:
-	void read_string(std::uint8_t* &input, std::string &string)
+	void read_string(std::uint8_t* &ptr, std::string &string)
 	{
-		std::size_t length = *reinterpret_cast<std::size_t*>(input);
-		input += sizeof(std::size_t);
+		std::size_t length = 0;
+		memcpy(&length, ptr, sizeof(length));
+		ptr += sizeof(length);
 		
-		string = std::string(reinterpret_cast<const char*>(input), length);
-		input += length * sizeof(char);
-		++input;
+		string.resize(length, '\0');
+		memcpy(&string[0], ptr, length * sizeof(char));
+		ptr += length * sizeof(char);
 	}
 	
-	void write_string(std::uint8_t* &output, const std::string &string) const
+	void write_string(std::uint8_t* &ptr, const std::string &string) const
 	{
-		*reinterpret_cast<std::size_t*>(output) = string.length();
-		output += sizeof(std::size_t);
+		std::size_t length = string.length();
+		memcpy(ptr, &length, sizeof(length));
+		ptr += sizeof(length);
 		
-		memcpy(output, &string[0], string.length() * sizeof(char));
-		output += string.length() * sizeof(char);
-		*output++ = '\0';
+		memcpy(ptr, &string[0], length * sizeof(char));
+		ptr += length * sizeof(char);
 	}
 };
 

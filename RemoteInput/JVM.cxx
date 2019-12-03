@@ -170,6 +170,11 @@ jint JVM::AttachCurrentThread()
     return this->vm->AttachCurrentThread(reinterpret_cast<void**>(&this->env), nullptr);
 }
 
+jint JVM::AttachCurrentThreadAsDaemon()
+{
+	return this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&this->env), nullptr);
+}
+
 jint JVM::DetachCurrentThread()
 {
     this->env = nullptr;

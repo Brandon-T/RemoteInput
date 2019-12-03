@@ -1,20 +1,26 @@
 #include "Reflection.hxx"
 
-Reflection::Reflection()
+Reflection::Reflection() : jvm(new JVM()), frame(nullptr), client(nullptr), classLoader(nullptr)
 {
-    this->jvm = new JVM();
 }
 
-Reflection::Reflection(JNIEnv* env)
+Reflection::Reflection(JNIEnv* env) : jvm(new JVM(env)), frame(nullptr), client(nullptr), classLoader(nullptr)
 {
-    this->jvm = new JVM(env);
 }
 
 Reflection::~Reflection()
 {
-    jvm->DeleteGlobalRef(this->client);
-    jvm->DeleteGlobalRef(this->classLoader);
-    jvm->DeleteGlobalRef(this->frame);
+	#if defined(__APPLE__)
+	printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
+	#else
+	if (this->jvm->getENV() || this->Attach())
+	{
+		jvm->DeleteGlobalRef(this->client);
+		jvm->DeleteGlobalRef(this->classLoader);
+		jvm->DeleteGlobalRef(this->frame);
+		this->Detach();
+	}
+	#endif
     delete jvm;
     jvm = nullptr;
 }
@@ -39,23 +45,23 @@ bool Reflection::Initialize(jobject awtFrame)
 	};
 
     std::function<jobject(jobject)> findClient = [&](jobject component) {
-        jobject result = nullptr;
+		jobject result = nullptr;
         jclass cls = jvm->GetObjectClass(component);
         jmethodID mid = jvm->GetMethodID(cls, "getComponents", "()[Ljava/awt/Component;");
 
         //TODO: Should validate that it's actually a java.awt.Frame so I can call `getComponents`
 
-        if (mid) {
-            jobjectArray components = (jobjectArray)jvm->CallObjectMethod(component, mid);
+        if (mid)
+		{
+            jobjectArray components = static_cast<jobjectArray>(jvm->CallObjectMethod(component, mid));
+            jint len = jvm->GetArrayLength(components);
 
-            int len = jvm->GetArrayLength(components);
-
-            for (int i = 0; i < len; ++i) {
+            for (jint i = 0; i < len; ++i)
+			{
                 jobject component = jvm->GetObjectArrayElement(components, i); //Some java.awt.Panel.
-
 				if (jvm->IsInstanceOf(component, jvm->FindClass("java/applet/Applet")))
 				{
-					return jvm->NewGlobalRef(component);
+					return component;
 				}
 
                 /*if (getClassName(component) == "client")
@@ -63,7 +69,12 @@ bool Reflection::Initialize(jobject awtFrame)
                     return jvm->NewGlobalRef(component);
                 }*/
 
+				jvm->DeleteLocalRef(cls);
                 result = findClient(component);
+				if (result)
+				{
+					return result;
+				}
             }
         }
 
@@ -71,7 +82,7 @@ bool Reflection::Initialize(jobject awtFrame)
     };
 
     //Find Client Class.
-    this->client = findClient(awtFrame);
+    this->client = jvm->NewGlobalRef(findClient(awtFrame));
 
     if (this->client)
     {
@@ -92,6 +103,12 @@ bool Reflection::Initialize(jobject awtFrame)
 bool Reflection::Attach()
 {
     return this->jvm->AttachCurrentThread() == JNI_OK;
+}
+
+bool Reflection::AttachAsDaemon()
+{
+	//JVM can shut down without waiting for our thread to detach..
+	return this->jvm->AttachCurrentThreadAsDaemon() == JNI_OK;
 }
 
 bool Reflection::Detach()
@@ -136,7 +153,12 @@ jclass Reflection::LoadClass(const char* clsToLoad)
 {
     jclass cls = jvm->GetObjectClass(classLoader);
     jmethodID loadClass = jvm->GetMethodID(cls, "loadClass", "(Ljava/lang/String;Z)Ljava/lang/Class;");
-    return static_cast<jclass>(jvm->NewGlobalRef(jvm->CallObjectMethod(classLoader, loadClass, jvm->NewStringUTF(clsToLoad), true)));
+    return static_cast<jclass>(jvm->CallObjectMethod(classLoader, loadClass, jvm->NewStringUTF(clsToLoad), true));
+}
+
+JVM* Reflection::getVM()
+{
+	return this->jvm;
 }
 
 JNIEnv* Reflection::getEnv()
