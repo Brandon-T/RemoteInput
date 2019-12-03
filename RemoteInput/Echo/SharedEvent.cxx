@@ -407,26 +407,44 @@ T* Semaphore::semaphore_cast(void* &ptr)
 	return result;
 }
 
-Semaphore::Semaphore(std::int32_t count) : shared(false), hSem(SEM_FAILED), name("\0")
+Semaphore::Semaphore(std::int32_t count) : shared(false), owned(true), hSem(SEM_FAILED), name("\0")
 {
-	hSem = sem_open(nullptr, O_CREAT | O_EXCL | O_RDWR, S_IRWXU, 0); //sem_init with `pshared = 0`
+	#if defined(__APPLE__)
+	hSem = dispatch_semaphore_create(count);
+	if (hSem == nullptr)
+	{
+		throw std::runtime_error("Cannot create or open semaphore");
+	}
+	#else
+	hSem = sem_open(nullptr, O_CREAT | O_EXCL | O_RDWR, S_IRWXU, count); //sem_init with `pshared = 0`
 	if (hSem == SEM_FAILED && errno == EEXIST)
 	{
-		hSem = sem_open(nullptr, O_RDWR, S_IRWXU, 0);
+		owned = false;
+		hSem = sem_open(nullptr, O_RDWR, S_IRWXU, count);
+	}
+	
+	if (hSem != SEM_FAILED)
+	{
+		if (sem_init(static_cast<sem_t*>(hSem), false, count) == -1)
+		{
+			throw std::runtime_error("Cannot initialize semaphore");
+		}
 	}
 	
 	if (hSem == SEM_FAILED)
 	{
 		throw std::runtime_error("Cannot create or open semaphore");
 	}
+	#endif
 }
 
-Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), hSem(SEM_FAILED), name(name)
+Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), owned(true), hSem(SEM_FAILED), name(name)
 {
-	hSem = sem_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU, 0);
+	hSem = sem_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU, count);
 	if (hSem == SEM_FAILED && errno == EEXIST)
 	{
-		hSem = sem_open(name.c_str(), O_RDWR, S_IRWXU, 0);
+		owned = false;
+		hSem = sem_open(name.c_str(), O_RDWR, S_IRWXU, count);
 	}
 	
 	if (hSem == SEM_FAILED)
@@ -437,11 +455,46 @@ Semaphore::Semaphore(std::string name, std::int32_t count) : shared(true), hSem(
 
 Semaphore::~Semaphore()
 {
+	#if defined(__APPLE__)
+	if (owned && !shared && hSem != nullptr)
+	{
+		dispatch_release(static_cast<dispatch_semaphore_t>(hSem));
+	}
+	else if (hSem != SEM_FAILED)
+	{
+		if (shared && name != "\0")
+		{
+			sem_close(static_cast<sem_t*>(hSem));
+			hSem = SEM_FAILED;
+		}
+		
+		if (owned && shared && name != "\0")
+		{
+			sem_unlink(name.c_str());
+			name = "\0";
+		}
+	}
+	#else
 	if (hSem != SEM_FAILED)
 	{
-		sem_close(hSem);
-		hSem = SEM_FAILED;
+		if (!shared && name == "\0")
+		{
+			sem_destroy(static_cast<sem_t*>(hSem));
+			hSem = SEM_FAILED;
+		}
+		else if (shared && name != "\0")
+		{
+			sem_close(static_cast<sem_t*>(hSem));
+			hSem = SEM_FAILED;
+		}
+		
+		if (owned && shared && name != "\0")
+		{
+			sem_unlink(name.c_str());
+			name = "\0";
+		}
 	}
+	#endif
 }
 #elif defined(_SYSTEM_V_SEMAPHORES)
 template<typename T>
@@ -760,8 +813,18 @@ bool Semaphore::wait()
 	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, INFINITE) == WAIT_OBJECT_0;
 	#elif defined(_POSIX_SEMAPHORES)
+	#if defined(__APPLE__)
+	if (owned && !shared)
+	{
+		if (hSem == nullptr) { return false; }
+		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), DISPATCH_TIME_FOREVER);
+	}
+	if (hSem == SEM_FAILED) { return false; }
+	return !sem_wait(static_cast<sem_t*>(hSem));
+	#else
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_wait(hSem);
+	#endif
     #elif defined(_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
@@ -795,8 +858,18 @@ bool Semaphore::try_wait()
 	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, 0) == WAIT_OBJECT_0;
     #elif defined(_POSIX_SEMAPHORES)
+	#if defined(__APPLE__)
+	if (owned && !shared)
+	{
+		if (hSem == nullptr) { return false; }
+		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), DISPATCH_TIME_NOW);
+	}
+	if (hSem == SEM_FAILED) { return false; }
+	return !sem_trywait(static_cast<sem_t*>(hSem));
+	#else
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_trywait(hSem);
+	#endif
     #elif defined(_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
@@ -852,6 +925,23 @@ bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_r
     std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
     return WaitForSingleObject(hSemaphore, msec.time_since_epoch().count()) == WAIT_OBJECT_0;
     #elif defined(_POSIX_SEMAPHORES)
+	#if defined(__APPLE__)
+	if (owned && !shared)
+	{
+		if (hSem == nullptr) { return false; }
+		
+		std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::nanoseconds> now = std::chrono::high_resolution_clock::now();
+		dispatch_time_t time_out = dispatch_time(DISPATCH_TIME_NOW, (absolute_time - now).count());
+		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), time_out);
+	}
+	
+	if (hSem == SEM_FAILED) { return false; }
+	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
+    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
+    
+	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
+	return !sem_timedwait(static_cast<sem_t*>(hSem), &ts);
+	#else
 	if (hSem == SEM_FAILED) { return false; }
 	
 	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
@@ -859,6 +949,7 @@ bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_r
     
 	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
 	return !sem_timedwait(hSem, &ts);
+	#endif
     #elif defined(_SYSTEM_V_SEMAPHORES)
 	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
     std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
@@ -917,14 +1008,22 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
 	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, milliseconds) == WAIT_OBJECT_0;
     #elif defined(_POSIX_SEMAPHORES)
+	#if defined(__APPLE__)
+	if (owned && !shared)
+	{
+		if (hSem == nullptr) { return false; }
+		auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(milliseconds));
+		dispatch_time_t time_out = dispatch_time(DISPATCH_TIME_NOW, duration.count());
+		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), time_out);
+	}
 	if (hSem == SEM_FAILED) { return false; }
-	
 	auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
 	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
 	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 	
 	struct timespec ts = { seconds.count(), nanoseconds.count() };
-	return !sem_timedwait(hSem, &ts);
+	return !sem_timedwait(static_cast<sem_t*>(hSem), &ts);
+	#endif
     #elif defined(_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	
@@ -976,8 +1075,15 @@ bool Semaphore::signal()
 	if (!hSemaphore) { return false; }
     return ReleaseSemaphore(hSemaphore, 1, nullptr);
     #elif defined(_POSIX_SEMAPHORES)
+	#if defined(__APPLE__)
+	if (owned && !shared)
+	{
+		if (hSem == nullptr) { return false; }
+		return !dispatch_semaphore_signal(static_cast<dispatch_semaphore_t>(hSem));
+	}
 	if (hSem == SEM_FAILED) { return false; }
-	return !sem_post(hSem);
+	return !sem_post(static_cast<sem_t*>(hSem));
+	#endif
     #elif defined(_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];

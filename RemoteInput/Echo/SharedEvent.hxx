@@ -30,6 +30,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#if defined(__APPLE__)
+	#include <dispatch/dispatch.h>
+#endif
 #elif defined(_SYSTEM_V_SEMAPHORES)
 #include <pthread.h>
 #include <sys/sem.h>
@@ -97,7 +100,8 @@ private:
     HANDLE hSemaphore;
     #elif defined(_POSIX_SEMAPHORES)
 	bool shared;
-	sem_t* hSem;
+	bool owned;
+	void* hSem;
 	std::string name;
 	#elif defined(_SYSTEM_V_SEMAPHORES)
 	bool shared;
