@@ -9,7 +9,9 @@
 #ifndef SHAREDEVENT_HXX_INCLUDED
 #define SHAREDEVENT_HXX_INCLUDED
 
+#if !defined(_WIN32) && !defined(_WIN64)
 #define _POSIX_SEMAPHORES
+#endif
 
 #include <ctime>
 #include <cstdint>
