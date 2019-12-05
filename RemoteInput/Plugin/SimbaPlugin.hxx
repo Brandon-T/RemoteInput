@@ -79,9 +79,9 @@ EXPORT std::int64_t Reflect_Long(EIOS* eios, jobject object, const char* cls, co
 EXPORT float Reflect_Float(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT double Reflect_Double(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc, char* output, std::size_t output_size);
-EXPORT void* Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
-EXPORT std::size_t Reflect_Array_Size(EIOS* eios, void* objectArray);
-EXPORT void* Reflect_Array_Index(EIOS* eios, void* objectArray, std::size_t index);
+EXPORT jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
+EXPORT std::size_t Reflect_Array_Size(EIOS* eios, jarray array);
+EXPORT void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length);
 
 #ifdef __cplusplus
 }

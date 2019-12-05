@@ -9,6 +9,19 @@
 
 struct ImageData;
 
+enum class ReflectionArrayType: std::uint8_t
+{
+	CHAR,
+	BYTE,
+	BOOL,
+	SHORT,
+	INT,
+	LONG,
+	FLOAT,
+	DOUBLE,
+	OBJECT
+};
+
 class ControlCenter final {
 private:
 	pid_t pid;
@@ -27,6 +40,7 @@ private:
 
 	ImageData* get_image_data() const;
 	bool send_command(std::function<void(ImageData*)> &&writer);
+	void process_reflect_array_index(jarray array, void* arguments, void* response, int dimensions);
 
 public:
 	ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector);
@@ -58,9 +72,14 @@ public:
 	float reflect_float(const ReflectionHook &hook);
 	double reflect_double(const ReflectionHook &hook);
 	std::string reflect_string(const ReflectionHook &hook);
-	jobjectArray reflect_array(const ReflectionHook &hook);
-	std::size_t reflect_array_size(const jobjectArray array);
-	jobject reflect_array_index(const jobjectArray array, std::size_t index);
+	jarray reflect_array(const ReflectionHook &hook);
+	std::size_t reflect_array_size(const jarray array);
+	void* reflect_array_index(const jarray array, ReflectionArrayType type, std::size_t index, std::size_t length);
+	void* reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y);
+	void* reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z);
+	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
+	
+	void reflect_array_type(const ReflectionHook &hook, ReflectionArrayType type, void* output);
 };
 
 #endif /* ControlCenter_HXX_INCLUDED */

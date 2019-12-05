@@ -173,7 +173,7 @@ void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* fie
 	}
 }
 
-void* Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
 {
 	if (eios)
 	{
@@ -183,25 +183,50 @@ void* Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* fie
 	return nullptr;
 }
 
-std::size_t Reflect_Array_Size(EIOS* eios, void* objectArray)
+std::size_t Reflect_Array_Size(EIOS* eios, jarray array)
 {
 	if (eios)
 	{
-		return eios->control_center->reflect_array_size(static_cast<jobjectArray>(objectArray));
+		return eios->control_center->reflect_array_size(array);
 	}
 	return 0;
 }
 
-void* Reflect_Array_Index(EIOS* eios, void* objectArray, std::size_t index)
+void Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length, void* buffer)
 {
 	if (eios)
 	{
-		return eios->control_center->reflect_array_index(static_cast<jobjectArray>(objectArray), index);
+		void* result = eios->control_center->reflect_array_index(array, type, index, length);
+		std::memcpy(buffer, result, length);
 	}
-	return nullptr;
 }
 
+void Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, void* buffer)
+{
+	if (eios)
+	{
+		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
+		std::memcpy(buffer, result, length);
+	}
+}
 
+void Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, void* buffer)
+{
+	if (eios)
+	{
+		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
+		std::memcpy(buffer, result, length);
+	}
+}
+
+void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w, void* buffer)
+{
+	if (eios)
+	{
+		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
+		std::memcpy(buffer, result, length);
+	}
+}
 
 
 
