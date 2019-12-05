@@ -383,65 +383,49 @@ void ControlCenter::process_reflect_array_index(jarray array, void* arguments, v
 		switch (type) {
 			case ReflectionArrayType::CHAR:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetCharArrayRegion(static_cast<jcharArray>(array), index, length, static_cast<jchar*>(response));
-				reflector->Detach();
 			}
 				break;
 				
 			case ReflectionArrayType::BYTE:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetByteArrayRegion(static_cast<jbyteArray>(array), index, length, static_cast<jbyte*>(response));
-				reflector->Detach();
 			}
 				break;
 			
 			case ReflectionArrayType::BOOL:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetBooleanArrayRegion(static_cast<jbooleanArray>(array), index, length, static_cast<jboolean*>(response));
-				reflector->Detach();
 			}
 				break;
 				
 			case ReflectionArrayType::SHORT:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetShortArrayRegion(static_cast<jshortArray>(array), index, length, static_cast<jshort*>(response));
-				reflector->Detach();
 			}
 				break;
 				
 			case ReflectionArrayType::INT:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetIntArrayRegion(static_cast<jintArray>(array), index, length, static_cast<jint*>(response));
-				reflector->Detach();
 			}
 				break;
 				
 			case ReflectionArrayType::LONG:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetLongArrayRegion(static_cast<jlongArray>(array), index, length, static_cast<jlong*>(response));
-				reflector->Detach();
 			}
 				break;
 				
 			case ReflectionArrayType::FLOAT:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetFloatArrayRegion(static_cast<jfloatArray>(array), index, length, static_cast<jfloat*>(response));
-				reflector->Detach();
 			}
 				break;
 				
 			case ReflectionArrayType::DOUBLE:
 			{
-				reflector->Attach();
 				reflector->getEnv()->GetDoubleArrayRegion(static_cast<jdoubleArray>(array), index, length, static_cast<jdouble*>(response));
-				reflector->Detach();
 			}
 				break;
 				
@@ -449,13 +433,11 @@ void ControlCenter::process_reflect_array_index(jarray array, void* arguments, v
 			{
 				if (length > 1)
 				{
-					reflector->Attach();
 					for (jsize i = 0; i < length; ++i)
 					{
 						auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
 						EIOS_Write(response, reflector->getEnv()->NewGlobalRef(result));
 					}
-					reflector->Detach();
 				}
 				else
 				{
@@ -472,11 +454,15 @@ void ControlCenter::process_reflect_array_index(jarray array, void* arguments, v
 		ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
 		jsize index = EIOS_Read<jsize>(arguments);
 		jsize length = EIOS_Read<jsize>(arguments);
-		return write_result(array, type, index, length, response);
+		reflector->Attach();
+		write_result(array, type, index, length, response);
+		reflector->Detach();
+		return;
 	}
 	
 	ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
 	
+	reflector->Attach();
 	for (int i = 0; i < dimensions - 1; ++i)
 	{
 		jsize index = EIOS_Read<jsize>(arguments);
@@ -485,7 +471,8 @@ void ControlCenter::process_reflect_array_index(jarray array, void* arguments, v
 	
 	jsize index = EIOS_Read<jsize>(arguments);
 	jsize length = EIOS_Read<jsize>(arguments);
-	return write_result(array, type, index, length, response);
+	write_result(array, type, index, length, response);
+	reflector->Detach();
 }
 
 bool ControlCenter::init_maps()
