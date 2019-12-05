@@ -40,7 +40,7 @@ private:
 
 	ImageData* get_image_data() const;
 	bool send_command(std::function<void(ImageData*)> &&writer);
-	void process_reflect_array_index(jarray array, void* arguments, void* response, int dimensions);
+	void process_reflect_array_index(jarray array, void* &arguments, void* &response, int dimensions);
 
 public:
 	ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector);
@@ -63,6 +63,7 @@ public:
 	
 	jobject reflect_object(const ReflectionHook &hook);
 	void reflect_release_object(const jobject object);
+	void reflect_release_objects(const jobject* array, std::size_t length);
 	char reflect_char(const ReflectionHook &hook);
 	std::uint8_t reflect_byte(const ReflectionHook &hook);
 	bool reflect_boolean(const ReflectionHook &hook);
@@ -79,7 +80,7 @@ public:
 	void* reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z);
 	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
 	
-	void reflect_array_type(const ReflectionHook &hook, ReflectionArrayType type, void* output);
+	static std::size_t reflect_size_for_type(ReflectionArrayType type);
 };
 
 #endif /* ControlCenter_HXX_INCLUDED */

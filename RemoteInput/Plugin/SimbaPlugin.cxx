@@ -92,6 +92,14 @@ void Reflect_Release_Object(EIOS* eios, jobject object)
 	}
 }
 
+void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount)
+{
+	if (eios)
+	{
+		eios->control_center->reflect_release_objects(objects, amount);
+	}
+}
+
 char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
 {
 	if (eios)
@@ -197,7 +205,7 @@ void Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std
 	if (eios)
 	{
 		void* result = eios->control_center->reflect_array_index(array, type, index, length);
-		std::memcpy(buffer, result, length);
+		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
 	}
 }
 
@@ -206,7 +214,7 @@ void Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, s
 	if (eios)
 	{
 		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
-		std::memcpy(buffer, result, length);
+		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
 	}
 }
 
@@ -215,7 +223,7 @@ void Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, s
 	if (eios)
 	{
 		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
-		std::memcpy(buffer, result, length);
+		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
 	}
 }
 
@@ -224,7 +232,7 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 	if (eios)
 	{
 		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
-		std::memcpy(buffer, result, length);
+		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
 	}
 }
 

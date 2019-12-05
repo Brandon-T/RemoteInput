@@ -1,5 +1,6 @@
 #include "ControlCenter.hxx"
 #include <thread>
+#include <unordered_map>
 #include "EIOS.hxx"
 #include "Platform.hxx"
 #include "NativeHooks.hxx"
@@ -215,6 +216,22 @@ void ControlCenter::process_command()
 		}
 			break;
 			
+		case EIOSCommand::REFLECT_RELEASE_OBJECTS:
+		{
+			jsize size = EIOS_Read<jsize>(arguments);
+			reflector->Attach();
+			for (jsize i = 0; i < size; ++i)
+			{
+				jobject object = EIOS_Read<jobject>(arguments);
+				if (object)
+				{
+					reflector->getEnv()->DeleteGlobalRef(object);
+				}
+			}
+			reflector->Detach();
+		}
+			break;
+			
 		case EIOSCommand::REFLECT_CHAR:
 		{
 			ReflectionHook hook;
@@ -376,9 +393,14 @@ void ControlCenter::process_command()
 	}
 }
 
-void ControlCenter::process_reflect_array_index(jarray array, void* arguments, void* response, int dimensions)
+void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, void* &response, int dimensions)
 {
-	auto write_result = [this](jarray array, ReflectionArrayType type, int index, int length, void* response) -> void {
+	auto write_result = [this](jarray array, ReflectionArrayType type, jsize index, jsize length, void* &response) -> void {
+		if (!array)
+		{
+			return EIOS_Write(response, nullptr);
+		}
+		
 		//Maybe better to use GetPrimitiveArrayCritical + memcpy
 		switch (type) {
 			case ReflectionArrayType::CHAR:
@@ -435,14 +457,14 @@ void ControlCenter::process_reflect_array_index(jarray array, void* arguments, v
 				{
 					for (jsize i = 0; i < length; ++i)
 					{
-						auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
-						EIOS_Write(response, reflector->getEnv()->NewGlobalRef(result));
+						auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
+						EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
 					}
 				}
 				else
 				{
 					auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
-					EIOS_Write(response, reflector->getEnv()->NewGlobalRef(result));
+					EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
 				}
 			}
 				break;
@@ -466,7 +488,11 @@ void ControlCenter::process_reflect_array_index(jarray array, void* arguments, v
 	for (int i = 0; i < dimensions - 1; ++i)
 	{
 		jsize index = EIOS_Read<jsize>(arguments);
-		array = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index));
+		
+		if (array)
+		{
+			array = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index));
+		}
 	}
 	
 	jsize index = EIOS_Read<jsize>(arguments);
@@ -681,6 +707,16 @@ void ControlCenter::reflect_release_object(const jobject object)
 		void* arguments = image_data->args;
 		image_data->command = EIOSCommand::REFLECT_RELEASE_OBJECT;
 		EIOS_Write(arguments, object);
+	});
+}
+
+void ControlCenter::reflect_release_objects(const jobject* array, std::size_t length)
+{
+	send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_RELEASE_OBJECTS;
+		EIOS_Write(arguments, static_cast<jsize>(length));
+		std::memcpy(arguments, array, ControlCenter::reflect_size_for_type(ReflectionArrayType::OBJECT) * length);
 	});
 }
 
@@ -980,4 +1016,21 @@ void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayTy
 		return get_image_data()->args;
 	}
 	return nullptr;
+}
+
+std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
+{
+	static std::unordered_map<ReflectionArrayType, std::size_t> mapping = {
+		{ReflectionArrayType::CHAR, sizeof(jchar)},
+		{ReflectionArrayType::BYTE, sizeof(jbyte)},
+		{ReflectionArrayType::BOOL, sizeof(jboolean)},
+		{ReflectionArrayType::SHORT, sizeof(jshort)},
+		{ReflectionArrayType::INT, sizeof(jint)},
+		{ReflectionArrayType::LONG, sizeof(jlong)},
+		{ReflectionArrayType::FLOAT, sizeof(jfloat)},
+		{ReflectionArrayType::DOUBLE, sizeof(jdouble)},
+		{ReflectionArrayType::OBJECT, sizeof(jobject)}
+	};
+	
+	return mapping[type];
 }
