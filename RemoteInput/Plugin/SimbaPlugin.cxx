@@ -1,6 +1,8 @@
 #include "SimbaPlugin.hxx"
 #include <memory>
 #include <atomic>
+#include <cstring>
+#include <unordered_map>
 
 #include "MemoryMap.hxx"
 #include "SharedEvent.hxx"
@@ -72,6 +74,16 @@ void OnAttach(void* info)
 void OnDetach()
 {
 	control_center.reset();
+}
+
+EIOS* Reflect_GetEIOS(std::int32_t pid)
+{
+    extern std::unordered_map<std::int32_t, EIOS*> clients;
+    if (clients.count(pid))
+    {
+        return clients[pid];
+    }
+    return nullptr;
 }
 
 jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
@@ -355,13 +367,13 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
 {
 	std::thread([&] {
 		std::this_thread::sleep_for(std::chrono::seconds(10));
-		
+
 		control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
 		if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
 		{
 			StartHook();
 		}
-		
+
 		printf("ATTACHED TO: %d\n", getpid());
 	}).detach();
 }

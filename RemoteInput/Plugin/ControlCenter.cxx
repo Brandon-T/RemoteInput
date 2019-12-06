@@ -1,6 +1,7 @@
 #include "ControlCenter.hxx"
 #include <thread>
 #include <unordered_map>
+#include <cstring>
 #include "EIOS.hxx"
 #include "Platform.hxx"
 #include "NativeHooks.hxx"
@@ -19,7 +20,7 @@ std::string EIOS_Read(void* &ptr)
 {
 	std::size_t length = *static_cast<std::size_t*>(ptr);
 	ptr = static_cast<std::size_t*>(ptr) + 1;
-	
+
 	std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
 	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
 	ptr = static_cast<char*>(ptr) + 1;
@@ -37,10 +38,10 @@ void EIOS_Write(void* &ptr, const std::string &result)
 {
 	*static_cast<std::size_t*>(ptr) = result.length();
 	ptr = static_cast<std::size_t*>(ptr) + 1;
-	
+
 	memcpy(ptr, &result[0], result.length() * sizeof(char));
 	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
-	
+
 	*static_cast<char*>(ptr) = '\0';
 	ptr = static_cast<char*>(ptr) + 1;
 }
@@ -196,14 +197,14 @@ void ControlCenter::process_command()
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getField<jobject>(hook.object, hook);
 			EIOS_Write(response, result);
 			reflector->Detach();
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_RELEASE_OBJECT:
 		{
 			jobject object = EIOS_Read<jobject>(arguments);
@@ -215,7 +216,7 @@ void ControlCenter::process_command()
 			}
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_RELEASE_OBJECTS:
 		{
 			jsize size = EIOS_Read<jsize>(arguments);
@@ -231,159 +232,159 @@ void ControlCenter::process_command()
 			reflector->Detach();
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_CHAR:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jchar>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_BYTE:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jbyte>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_BOOLEAN:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jboolean>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_SHORT:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jshort>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_INT:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jint>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_LONG:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jlong>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_FLOAT:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jfloat>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_DOUBLE:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getPrimitive<jdouble>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_STRING:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getField<std::string>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_ARRAY:
 		{
 			ReflectionHook hook;
 			hook.read(arguments);
-			
+
 			reflector->Attach();
 			auto result = reflector->getField<jarray>(hook.object, hook);
 			reflector->Detach();
 			EIOS_Write(arguments, result);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_ARRAY_SIZE:
 		{
 			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
-			
+
 			reflector->Attach();
 			jsize length = reflector->getEnv()->GetArrayLength(array);
 			reflector->Detach();
 			EIOS_Write(response, length);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_ARRAY_INDEX:
 		{
 			jarray array = EIOS_Read<jarray>(arguments);
 			process_reflect_array_index(array, arguments, response, 1);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_ARRAY_INDEX2D:
 		{
 			jarray array = EIOS_Read<jarray>(arguments);
 			process_reflect_array_index(array, arguments, response, 2);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_ARRAY_INDEX3D:
 		{
 			jarray array = EIOS_Read<jarray>(arguments);
 			process_reflect_array_index(array, arguments, response, 3);
 		}
 			break;
-			
+
 		case EIOSCommand::REFLECT_ARRAY_INDEX4D:
 		{
 			jarray array = EIOS_Read<jarray>(arguments);
@@ -400,7 +401,7 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 		{
 			return EIOS_Write(response, nullptr);
 		}
-		
+
 		//Maybe better to use GetPrimitiveArrayCritical + memcpy
 		switch (type) {
 			case ReflectionArrayType::CHAR:
@@ -408,49 +409,49 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 				reflector->getEnv()->GetCharArrayRegion(static_cast<jcharArray>(array), index, length, static_cast<jchar*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::BYTE:
 			{
 				reflector->getEnv()->GetByteArrayRegion(static_cast<jbyteArray>(array), index, length, static_cast<jbyte*>(response));
 			}
 				break;
-			
+
 			case ReflectionArrayType::BOOL:
 			{
 				reflector->getEnv()->GetBooleanArrayRegion(static_cast<jbooleanArray>(array), index, length, static_cast<jboolean*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::SHORT:
 			{
 				reflector->getEnv()->GetShortArrayRegion(static_cast<jshortArray>(array), index, length, static_cast<jshort*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::INT:
 			{
 				reflector->getEnv()->GetIntArrayRegion(static_cast<jintArray>(array), index, length, static_cast<jint*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::LONG:
 			{
 				reflector->getEnv()->GetLongArrayRegion(static_cast<jlongArray>(array), index, length, static_cast<jlong*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::FLOAT:
 			{
 				reflector->getEnv()->GetFloatArrayRegion(static_cast<jfloatArray>(array), index, length, static_cast<jfloat*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::DOUBLE:
 			{
 				reflector->getEnv()->GetDoubleArrayRegion(static_cast<jdoubleArray>(array), index, length, static_cast<jdouble*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::OBJECT:
 			{
 				if (length > 1)
@@ -470,7 +471,7 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 				break;
 		}
 	};
-	
+
 	if (dimensions == 1)
 	{
 		ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
@@ -481,20 +482,20 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 		reflector->Detach();
 		return;
 	}
-	
+
 	ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
-	
+
 	reflector->Attach();
 	for (int i = 0; i < dimensions - 1; ++i)
 	{
 		jsize index = EIOS_Read<jsize>(arguments);
-		
+
 		if (array)
 		{
 			array = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index));
 		}
 	}
-	
+
 	jsize index = EIOS_Read<jsize>(arguments);
 	jsize length = EIOS_Read<jsize>(arguments);
 	write_result(array, type, index, length, response);
@@ -542,7 +543,7 @@ bool ControlCenter::init_locks()
 	char lockName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
 	sprintf(lockName, "/RemoteInput_Lock_%d", pid);
 	#endif
-	
+
 	map_lock = std::make_unique<Mutex>(lockName);
     return map_lock != nullptr;
 }
@@ -638,7 +639,7 @@ void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 	auto result = send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::GET_MOUSE;
 	});
-	
+
 	if (result)
 	{
 		map_lock->lock();
@@ -688,11 +689,11 @@ jobject ControlCenter::reflect_object(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_OBJECT;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jobject object = EIOS_Read<jobject>(response);
 		map_lock->unlock();
@@ -727,11 +728,11 @@ char ControlCenter::reflect_char(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_CHAR;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jchar object = EIOS_Read<jchar>(response);
 		map_lock->unlock();
@@ -747,11 +748,11 @@ std::uint8_t ControlCenter::reflect_byte(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_BYTE;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jbyte object = EIOS_Read<jbyte>(response);
 		map_lock->unlock();
@@ -767,11 +768,11 @@ bool ControlCenter::reflect_boolean(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_BOOLEAN;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jboolean object = EIOS_Read<jboolean>(response);
 		map_lock->unlock();
@@ -787,11 +788,11 @@ std::int16_t ControlCenter::reflect_short(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_SHORT;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jshort object = EIOS_Read<jshort>(response);
 		map_lock->unlock();
@@ -807,11 +808,11 @@ std::int32_t ControlCenter::reflect_int(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_INT;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jint object = EIOS_Read<jint>(response);
 		map_lock->unlock();
@@ -827,11 +828,11 @@ std::int64_t ControlCenter::reflect_long(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_LONG;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jlong object = EIOS_Read<jlong>(response);
 		map_lock->unlock();
@@ -847,11 +848,11 @@ float ControlCenter::reflect_float(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_FLOAT;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jfloat object = EIOS_Read<jfloat>(response);
 		map_lock->unlock();
@@ -867,11 +868,11 @@ double ControlCenter::reflect_double(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_DOUBLE;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jdouble object = EIOS_Read<jdouble>(response);
 		map_lock->unlock();
@@ -887,11 +888,11 @@ std::string ControlCenter::reflect_string(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_STRING;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		std::string object = EIOS_Read(response);
 		map_lock->unlock();
@@ -907,11 +908,11 @@ jarray ControlCenter::reflect_array(const ReflectionHook &hook)
 		image_data->command = EIOSCommand::REFLECT_ARRAY;
 		hook.write(arguments);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jarray object = EIOS_Read<jarray>(response);
 		map_lock->unlock();
@@ -927,11 +928,11 @@ std::size_t ControlCenter::reflect_array_size(const jarray array)
 		image_data->command = EIOSCommand::REFLECT_ARRAY_SIZE;
 		EIOS_Write(arguments, array);
 	});
-	
+
 	if (result)
 	{
 		void* response = get_image_data()->args;
-		
+
 		map_lock->lock();
 		jsize object = EIOS_Read<jsize>(response);
 		map_lock->unlock();
@@ -950,7 +951,7 @@ void* ControlCenter::reflect_array_index(const jarray array, ReflectionArrayType
 		EIOS_Write(arguments, static_cast<jsize>(index));
 		EIOS_Write(arguments, static_cast<jsize>(length));
 	});
-	
+
 	if (result)
 	{
 		return get_image_data()->args;
@@ -969,7 +970,7 @@ void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayTy
 		EIOS_Write(arguments, static_cast<jsize>(y));
 		EIOS_Write(arguments, static_cast<jsize>(length));
 	});
-	
+
 	if (result)
 	{
 		return get_image_data()->args;
@@ -989,7 +990,7 @@ void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayTy
 		EIOS_Write(arguments, static_cast<jsize>(z));
 		EIOS_Write(arguments, static_cast<jsize>(length));
 	});
-	
+
 	if (result)
 	{
 		return get_image_data()->args;
@@ -1010,7 +1011,7 @@ void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayTy
 		EIOS_Write(arguments, static_cast<jsize>(w));
 		EIOS_Write(arguments, static_cast<jsize>(length));
 	});
-	
+
 	if (result)
 	{
 		return get_image_data()->args;
@@ -1031,6 +1032,6 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
 		{ReflectionArrayType::DOUBLE, sizeof(jdouble)},
 		{ReflectionArrayType::OBJECT, sizeof(jobject)}
 	};
-	
+
 	return mapping[type];
 }

@@ -19,8 +19,8 @@
 					<Add option="-DBUILD_DLL" />
 				</Compiler>
 				<Linker>
-					<Add option="RemoteInput/RemoteInput.def" />
 					<Add library="user32" />
+					<Add library="opengl32" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -31,20 +31,21 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
+					<Add option="-O3" />
 					<Add option="-Wall" />
 					<Add option="-DBUILD_DLL" />
-					<Add option="-O2" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add library="user32" />
+					<Add library="opengl32" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-m32" />
-			<Add directory="C:/Program Files/Java/jdk-12.0.2/include" />
-			<Add directory="C:/Program Files/Java/jdk-12.0.2/include/win32" />
+			<Add directory="C:/Program Files/Java/jdk1.8.0_73/include" />
+			<Add directory="C:/Program Files/Java/jdk1.8.0_73/include/win32" />
 			<Add directory="RemoteInput" />
 			<Add directory="RemoteInput/Echo" />
 			<Add directory="RemoteInput/Platform" />
@@ -55,6 +56,7 @@
 			<Add option="-static-libgcc" />
 			<Add option="-static" />
 			<Add option="-m32" />
+			<Add option="RemoteInput/RemoteInput.def" />
 		</Linker>
 		<Unit filename="RemoteInput/EIOS.cxx" />
 		<Unit filename="RemoteInput/EIOS.hxx" />

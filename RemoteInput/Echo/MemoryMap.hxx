@@ -26,8 +26,8 @@ class MemoryMap
 {
 private:
     #if defined(_WIN32) || defined(_WIN64)
-    void* hFile;
-    void* hMap;
+    HANDLE hFile;
+    HANDLE hMap;
     #else
     int hFile;
     bool physical;
@@ -86,12 +86,14 @@ bool MemoryMap<char_type>::open()
 
     if(dwCreation == CREATE_ALWAYS)
     {
-		owner = true
+        printf("CREATING\n");
+		owner = true;
         hMap = std::is_same<char_type, wchar_t>::value ? CreateFileMappingW(hFile, nullptr, dwAccess, 0, pSize, reinterpret_cast<const wchar_t*>(path.c_str())) : CreateFileMappingA(hFile, nullptr, dwAccess, 0, pSize, reinterpret_cast<const char*>(path.c_str()));
         return hMap != nullptr;
     }
 
-	owner = false
+    printf("OPENING\n");
+	owner = false;
     hMap = std::is_same<char_type, wchar_t>::value ? OpenFileMappingW(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const wchar_t*>(path.c_str())) : OpenFileMappingA(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const char*>(path.c_str()));
     return hMap != nullptr;
     #else
@@ -107,7 +109,7 @@ bool MemoryMap<char_type>::open()
 			hFile = shm_open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
 		}
 	}
-	
+
     if(hFile != -1)
     {
         if(pSize <= 0)
@@ -146,7 +148,7 @@ bool MemoryMap<char_type>::open_file()
     DWORD dwCreation = (!read_only && pSize > 0) ? CREATE_ALWAYS : OPEN_EXISTING;
     DWORD dwAttributes = read_only ? FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_TEMPORARY;
 	owner = dwCreation != OPEN_EXISTING;
-	
+
     hFile = std::is_same<char_type, wchar_t>::value ? CreateFileW(reinterpret_cast<const wchar_t*>(path.c_str()), dwAccess, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, dwCreation, dwAttributes, nullptr) : CreateFileA(reinterpret_cast<const char*>(path.c_str()), dwAccess, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, dwCreation, dwAttributes, nullptr);
 
     if(hFile != INVALID_HANDLE_VALUE)
@@ -204,7 +206,7 @@ bool MemoryMap<char_type>::open_file()
 		owner = false;
 		hFile = ::open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
 	}
-	
+
     if(hFile != -1)
     {
         if(!read_only && pSize > 0 && ftruncate(hFile, pSize) != -1)
@@ -230,6 +232,7 @@ bool MemoryMap<char_type>::map()
 {
     bool read_only = !(mode & std::ios::out);
     #if defined(_WIN32) || defined(_WIN64)
+    printf("MAPPING VIEW\n");
     DWORD dwAccess = read_only ? FILE_MAP_READ : FILE_MAP_READ | FILE_MAP_WRITE;
     pData = MapViewOfFile(hMap, dwAccess, 0, 0, pSize);
     return pData != nullptr;
@@ -245,9 +248,9 @@ bool MemoryMap<char_type>::unmap()
 {
     bool result = true;
     #if defined(_WIN32) || defined(_WIN64)
-    result = UnmapViewOfFile(pData) && result;
-    result = CloseHandle(hMap) && result;
-    hMap = pData = nullptr;
+    printf("UNMAPPING\n");
+    result = UnmapViewOfFile(pData);
+    pData = nullptr;
     #else
     result = !munmap(pData, pSize);
     pData = nullptr;
@@ -260,14 +263,23 @@ bool MemoryMap<char_type>::close()
 {
     bool result = unmap();
     #if defined(_WIN32) || defined(_WIN64)
-    result = CloseHandle(hFile) && result;
-    hFile = INVALID_HANDLE_VALUE;
+    result = CloseHandle(hMap) && result;
+    hMap = nullptr;
+
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        printf("CLOSING FILE\n");
+        result = CloseHandle(hFile) && result;
+        hFile = INVALID_HANDLE_VALUE;
+    }
+
+    printf("CLOSING\n");
     #else
 	if (physical || !owner)
 	{
 		result = ::close(hFile) != -1 && result;
 	}
-	
+
 	if (!physical && owner)
 	{
 		result = !shm_unlink(path.c_str()) && result;
@@ -310,7 +322,11 @@ void* MemoryMap<char_type>::data() const
 template<typename char_type>
 void MemoryMap<char_type>::flush() const
 {
+    #if defined(_WIN32) || defined(_WIN64)
+    FlushViewOfFile(pData, pSize);
+    #else
 	msync(pData, pSize, MS_SYNC);
+	#endif
 }
 
 template<typename char_type>

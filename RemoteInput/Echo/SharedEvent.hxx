@@ -9,10 +9,6 @@
 #ifndef SHAREDEVENT_HXX_INCLUDED
 #define SHAREDEVENT_HXX_INCLUDED
 
-#if !defined(_WIN32) && !defined(_WIN64)
-#define _POSIX_SEMAPHORES
-#endif
-
 #include <ctime>
 #include <cstdint>
 #include <string>
@@ -28,10 +24,12 @@
 #include <semaphore.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <sys/mman.h>
+#endif
 #if defined(__APPLE__)
 	#include <dispatch/dispatch.h>
 #endif
@@ -119,7 +117,7 @@ private:
     std::string name;
     int shm_fd;
     #endif
-	
+
 	#if !defined(_WIN32) && !defined(_WIN64)
 	template<typename T>
     T* semaphore_cast(void* &ptr);

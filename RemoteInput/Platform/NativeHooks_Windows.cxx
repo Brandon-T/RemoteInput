@@ -4,9 +4,11 @@
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glext.h>
+#include <GL/wglext.h>
 
 #include <memory>
 #include <thread>
+#include <mutex>
 #include "JavaInternal.hxx"
 #include "EIOS.hxx"
 #include "Graphics.hxx"
@@ -82,15 +84,36 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
+BOOL (__stdcall *o_SwapBuffers)(HDC ctx);
+void (__stdcall *glGenBuffers) (GLsizei n, GLuint *buffers);
+void (__stdcall *glDeleteBuffers) (GLsizei n,  const GLuint* buffers);
+void (__stdcall *glBindBuffer) (GLenum target, GLuint buffer);
+void (__stdcall *glBufferData) (GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
+void* (__stdcall *glMapBuffer)(GLenum target, GLenum access);
+GLboolean (__stdcall *glUnmapBuffer)(GLenum target);
+
+void LoadOpenGLExtensions()
+{
+    static std::once_flag token = {};
+    std::call_once(token, [&]{
+        glGenBuffers = reinterpret_cast<decltype(glGenBuffers)>(wglGetProcAddress("glGenBuffers"));
+        glDeleteBuffers = reinterpret_cast<decltype(glDeleteBuffers)>(wglGetProcAddress("glDeleteBuffers"));
+        glBindBuffer = reinterpret_cast<decltype(glBindBuffer)>(wglGetProcAddress("glBindBuffer"));
+        glBufferData = reinterpret_cast<decltype(glBufferData)>(wglGetProcAddress("glBufferData"));
+        glMapBuffer = reinterpret_cast<decltype(glMapBuffer)>(wglGetProcAddress("glMapBuffer"));
+        glUnmapBuffer = reinterpret_cast<decltype(glUnmapBuffer)>(wglGetProcAddress("glUnmapBuffer"));
+    });
+}
+
 void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
 {
 	static int w = 0;
 	static int h = 0;
-	
+
 	#if defined(__APPLE__)
 	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
 	#endif
-	
+
 	//Buffer size changed
 	if (w != width && h != height)
 	{
@@ -99,7 +122,7 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 		{
 			glDeleteBuffers(2, pbo);
 		}
-		
+
 		//Generate buffers
 		glGenBuffers(2, pbo);
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
@@ -115,15 +138,15 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 {
 	static int index = 0;
 	static int nextIndex = 0;
-	
+
 	#if defined(__APPLE__)
 	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
 	#endif
-	
+
 	//Swap indices
 	index = (index + 1) % 2;
 	nextIndex = (index + 1) % 2;
-	
+
 	//read back-buffer.
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
@@ -146,26 +169,27 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
-void wglSwapBuffers(HDC hdc)
+BOOL __stdcall mSwapBuffers(HDC hdc)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
-	
+
 	if (control_center)
 	{
 		static GLint ViewPort[4] = {0};
 		static GLuint pbo[2] = {0};
-		
+
 		glGetIntegerv(GL_VIEWPORT, ViewPort);
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
-		
+
 		std::uint8_t* dest = control_center->get_image();
-		GeneratePixelBuffers(ctx, pbo, width, height, 4);
-		ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+		LoadOpenGLExtensions();
+		GeneratePixelBuffers(hdc, pbo, width, height, 4);
+		ReadPixelBuffers(hdc, dest, pbo, width, height, 4);
 	}
-	
-	decltype(wglSwapBuffers)* o_wglSwapBuffers = reinterpret_cast<decltype(wglSwapBuffers)*>(dlsym(RTLD_NEXT, "wglSwapBuffers"));
-	return o_wglSwapBuffers(hdc);
+
+	//Original
+	return o_SwapBuffers(hdc);
 }
 #endif // defined
 
