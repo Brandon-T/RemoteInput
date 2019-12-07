@@ -15,6 +15,10 @@
 #include <chrono>
 #include "Time.hxx"
 
+#if !defined(_WIN32) && !defined(_WIN64)
+#define _POSIX_SEMAPHORES
+#endif
+
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif

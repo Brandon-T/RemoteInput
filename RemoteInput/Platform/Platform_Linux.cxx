@@ -225,6 +225,31 @@ bool EnumWindowsProc(Display* display, Window window, void* other)
 
 Reflection* GetNativeReflector()
 {
+	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> Reflection* {
+        auto start = std::chrono::high_resolution_clock::now();
+        while(reflection && reflection->GetClassType(object) != "java.awt.Frame")
+        {
+            if (elapsed_time<std::chrono::seconds>(start) >= 20)
+            {
+                return nullptr;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        return reflection;
+    };
+	
+	auto start = std::chrono::high_resolution_clock::now();
+	while(!dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
+	{
+		if (elapsed_time<std::chrono::seconds>(start) >= 20)
+		{
+			return nullptr;
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+	
     auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_NEXT, "awt_GetComponent"));
     if (!awt_GetComponent)
     {
@@ -245,7 +270,7 @@ Reflection* GetNativeReflector()
     if (reflection->Attach())
     {
         jobject object = awt_GetComponent(reflection->getEnv(), reinterpret_cast<void*>(windowFrame));  //java.awt.Frame
-        if (reflection->Initialize(object))
+        if (IsValidFrame(reflection, object) && reflection->Initialize(object))
         {
             reflection->Detach();
             return reflection;

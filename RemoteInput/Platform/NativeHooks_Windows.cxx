@@ -258,6 +258,11 @@ void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLen
 void InitialiseHooks()
 {
     std::thread([]{
+		if (!GetModuleHandle("awt.dll"))
+		{
+			return;
+		}
+		
         typedef int __stdcall (*MH_Initialize)(void);
         typedef int __stdcall (*MH_CreateHook)(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOriginal);
         typedef int __stdcall (*MH_EnableHook)(LPVOID pTarget);

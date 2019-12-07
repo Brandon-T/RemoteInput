@@ -330,7 +330,7 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-            if (control_center && control_center->hasReflector() && GetModuleHandle("awt.dll"))
+            if (control_center && control_center->hasReflector())
             {
                 StartHook();
 
@@ -357,7 +357,7 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
 
 	std::thread([&] {
 		control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-		if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
+		if (control_center && control_center->hasReflector())
 		{
 			StartHook();
 		}
