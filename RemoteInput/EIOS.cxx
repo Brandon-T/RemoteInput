@@ -31,18 +31,24 @@ EIOS* EIOS_RequestTarget(const char* initargs)
             return clients[pid];
         }
 
-		std::unique_ptr<ControlCenter> control_center = std::make_unique<ControlCenter>(pid, true, nullptr);
-        if (control_center)
-        {
-			EIOS* eios = new EIOS();
-			eios->pid = pid;
-			eios->width = control_center->get_width();
-			eios->height = control_center->get_height();
-			eios->control_center = std::move(control_center);
-			eios->control_center->set_parent(getpid());
+        try {
+            std::unique_ptr<ControlCenter> control_center = std::make_unique<ControlCenter>(pid, true, nullptr);
+            if (control_center)
+            {
+                EIOS* eios = new EIOS();
+                eios->pid = pid;
+                eios->width = control_center->get_width();
+                eios->height = control_center->get_height();
+                eios->control_center = std::move(control_center);
+                eios->control_center->set_parent(getpid());
 
-            clients[pid] = eios;
-            return eios;
+                clients[pid] = eios;
+                return eios;
+            }
+        }
+        catch(std::exception& e)
+        {
+            printf("%s\n", e.what());
         }
     }
 	return nullptr;

@@ -321,60 +321,46 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
 }
 
 #if defined(_WIN32) || defined(_WIN64)
-extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+[[gnu::stdcall]] void __load()
 {
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
+    printf("ATTACHED TO: %d\n", getpid());
+
+    std::thread([&]{
+        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+        if (reflector)
         {
-            module = hinstDLL;
-            DisableThreadLibraryCalls(hinstDLL);
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+            if (control_center && control_center->hasReflector() && GetModuleHandle("awt.dll"))
+            {
+                StartHook();
 
-			control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-			if (control_center && control_center->hasReflector())
-			{
-				StartHook();
-			}
-
-			/*globalLock->lock();
-			ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
-			info->parentId = -1;
-			info->width = 765;
-			info->height = 553;
-			info->imgoff = sizeof(ImageData);
-			globalLock->unlock();*/
+                /*globalLock->lock();
+                ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
+                info->parentId = -1;
+                info->width = 765;
+                info->height = 553;
+                info->imgoff = sizeof(ImageData);
+                globalLock->unlock();*/
+            }
         }
-            break;
+    }).detach();
+}
 
-        case DLL_PROCESS_DETACH:
-        {
-			control_center.reset();
-        }
-            break;
-
-        case DLL_THREAD_ATTACH:
-            printf("ATTACHED\n");
-            break;
-
-        case DLL_THREAD_DETACH:
-            printf("DETACHED\n");
-            break;
-    }
-    return TRUE; // succesful
+[[gnu::stdcall]] void __unload()
+{
+    control_center.reset();
 }
 #elif defined(__APPLE__)
 [[gnu::constructor]] void __load()
 {
-	std::thread([&] {
-		std::this_thread::sleep_for(std::chrono::seconds(10));
+    printf("ATTACHED TO: %d\n", getpid());
 
+	std::thread([&] {
 		control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
 		if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
 		{
 			StartHook();
 		}
-
-		printf("ATTACHED TO: %d\n", getpid());
 	}).detach();
 }
 
@@ -385,15 +371,52 @@ extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPV
 #else
 [[gnu::constructor]] void __load()
 {
-	control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-	if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.so", RTLD_NOLOAD))
-	{
-		StartHook();
-	}
+    printf("ATTACHED TO: %d\n", getpid());
+
+    std::thread([&]{
+        control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
+        if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.so", RTLD_NOLOAD))
+        {
+            StartHook();
+        }
+    }).detach();
 }
 
 [[gnu::destructor]] void __unload()
 {
 	control_center.reset();
+}
+#endif // defined
+
+
+#if defined(_WIN32) || defined(_WIN64)
+extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    switch (fdwReason)
+    {
+        case DLL_PROCESS_ATTACH:
+        {
+            module = hinstDLL;
+            DisableThreadLibraryCalls(hinstDLL);
+
+            __load();
+        }
+            break;
+
+        case DLL_PROCESS_DETACH:
+        {
+			__unload();
+        }
+            break;
+
+        case DLL_THREAD_ATTACH:
+            //printf("ATTACHED\n");
+            break;
+
+        case DLL_THREAD_DETACH:
+            //printf("DETACHED\n");
+            break;
+    }
+    return TRUE; // succesful
 }
 #endif // defined

@@ -1,5 +1,6 @@
 #include "Platform.hxx"
 #include <string>
+#include <chrono>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -36,10 +37,30 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 Reflection* GetNativeReflector()
 {
-    HMODULE awt = GetModuleHandle("awt.dll");
-    if (!awt)
+    auto IsValidFrame = [&](Reflection* reflection, jobject object) -> Reflection* {
+        auto start = std::chrono::high_resolution_clock::now();
+        while(reflection && reflection->GetClassType(object) != "java.awt.Frame")
+        {
+            if (elapsed_time<std::chrono::seconds>(start) >= 20)
+            {
+                return nullptr;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        return reflection;
+    };
+
+    HMODULE awt = nullptr;
+    auto start = std::chrono::high_resolution_clock::now();
+    while(!(awt = GetModuleHandle("awt.dll")))
     {
-        return nullptr;
+        if (elapsed_time<std::chrono::seconds>(start) >= 20)
+        {
+            return nullptr;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     HWND windowFrame = nullptr;
@@ -72,7 +93,7 @@ Reflection* GetNativeReflector()
     if (reflection->Attach())
     {
         jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
-        if (reflection->Initialize(object))
+        if (IsValidFrame(reflection, object) && reflection->Initialize(object))
         {
             reflection->Detach();
             return reflection;

@@ -258,17 +258,6 @@ void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLen
 void InitialiseHooks()
 {
     std::thread([]{
-        auto start = std::chrono::high_resolution_clock::now();
-        while(!GetModuleHandle("awt.dll"))
-        {
-            if (elapsed_time<std::chrono::milliseconds>(start) >= 10)
-            {
-                return;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-
         typedef int __stdcall (*MH_Initialize)(void);
         typedef int __stdcall (*MH_CreateHook)(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOriginal);
         typedef int __stdcall (*MH_EnableHook)(LPVOID pTarget);

@@ -1,0 +1,56 @@
+EXPORTS
+    DllMain@12 @1
+    EIOS_GetImageBuffer = EIOS_GetImageBuffer@4 @2
+    EIOS_GetImageBuffer@4 @3
+    EIOS_GetMousePosition = EIOS_GetMousePosition@12 @4
+    EIOS_GetMousePosition@12 @5
+    EIOS_GetTargetDimensions = EIOS_GetTargetDimensions@12 @6
+    EIOS_GetTargetDimensions@12 @7
+    EIOS_HoldKey = EIOS_HoldKey@8 @8
+    EIOS_HoldKey@8 @9
+    EIOS_HoldMouse = EIOS_HoldMouse@16 @10
+    EIOS_HoldMouse@16 @11
+    EIOS_IsKeyHeld = EIOS_IsKeyHeld@8 @12
+    EIOS_IsKeyHeld@8 @13
+    EIOS_IsMouseHeld = EIOS_IsMouseHeld@8 @14
+    EIOS_IsMouseHeld@8 @15
+    EIOS_MoveMouse = EIOS_MoveMouse@12 @16
+    EIOS_MoveMouse@12 @17
+    EIOS_ReleaseKey = EIOS_ReleaseKey@8 @18
+    EIOS_ReleaseKey@8 @19
+    EIOS_ReleaseMouse = EIOS_ReleaseMouse@16 @20
+    EIOS_ReleaseMouse@16 @21
+    EIOS_ReleaseTarget = EIOS_ReleaseTarget@4 @22
+    EIOS_ReleaseTarget@4 @23
+    EIOS_RequestTarget = EIOS_RequestTarget@4 @24
+    EIOS_RequestTarget@4 @25
+    EIOS_SendString = EIOS_SendString@16 @26
+    EIOS_SendString@16 @27
+    EIOS_UpdateImageBuffer = EIOS_UpdateImageBuffer@4 @28
+    EIOS_UpdateImageBuffer@4 @29
+    GetFunctionCount @30
+    GetFunctionInfo @31
+    GetPluginABIVersion @32
+    GetTypeCount @33
+    GetTypeInfo @34
+    OnAttach @35
+    OnDetach @36
+    Reflect_Array @37
+    Reflect_Array_Index @38
+    Reflect_Array_Index2D @39
+    Reflect_Array_Index3D @40
+    Reflect_Array_Index4D @41
+    Reflect_Array_Size @42
+    Reflect_Byte @43
+    Reflect_Char @44
+    Reflect_Double @45
+    Reflect_Float @46
+    Reflect_GetEIOS @47
+    Reflect_Int @48
+    Reflect_Long @49
+    Reflect_Object @50
+    Reflect_Release_Object @51
+    Reflect_Release_Objects @52
+    Reflect_Short @53
+    Reflect_String @54
+    SetPluginMemManager @55

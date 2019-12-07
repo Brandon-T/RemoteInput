@@ -28,22 +28,6 @@ Reflection::~Reflection()
 bool Reflection::Initialize(jobject awtFrame)
 {
     this->frame = jvm->NewGlobalRef(awtFrame);
-
-	std::function<std::string(jobject)> getClassName = [&](jobject component) {
-		jclass cls = jvm->GetObjectClass(component);
-		jmethodID mid = jvm->GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
-		jobject clsObj = jvm->CallObjectMethod(component, mid);
-
-		cls = jvm->GetObjectClass(clsObj);
-		mid = jvm->GetMethodID(cls, "getName", "()Ljava/lang/String;");
-		jstring strObj = static_cast<jstring>(jvm->CallObjectMethod(clsObj, mid));
-
-		const char* str = jvm->GetStringUTFChars(strObj, nullptr);
-		std::string class_name = str;
-		jvm->ReleaseStringUTFChars(strObj, str);
-		return class_name;
-	};
-
     std::function<jobject(jobject)> findClient = [&](jobject component) {
 		jobject result = nullptr;
         jclass cls = jvm->GetObjectClass(component);
@@ -129,24 +113,48 @@ void Reflection::PrintClasses()
         printf("LOADED CLASSES:\n");
         for (int i = 0; i < jvm->GetArrayLength(clses); ++i) {
             jobject clsObj = jvm->GetObjectArrayElement(clses, i);
-
-            jmethodID mid = jvm->GetMethodID(jvm->GetObjectClass(clsObj), "getName", "()Ljava/lang/String;");
-
-            // Call the getName() to get a jstring object back
-            jstring strObj = (jstring)jvm->CallObjectMethod(clsObj, mid);
-
-            // Now get the c string from the java jstring object
-            const char* str = jvm->GetStringUTFChars(strObj, NULL);
-
-            printf("%s\n", str);
-
-            // Release the memory pinned char array
-            jvm->ReleaseStringUTFChars(strObj, str);
+            std::string name = this->GetClassName(clsObj);
+            printf("%s\n", name.c_str());
         }
 
         printf("FINISHED\n");
         fflush(stdout);
     }
+}
+
+std::string Reflection::GetClassName(jobject object)
+{
+    std::function<std::string(jobject)> getClassName = [&](jobject object) {
+		jclass cls = jvm->GetObjectClass(object);
+		jmethodID mid = jvm->GetMethodID(cls, "getName", "()Ljava/lang/String;");
+		jstring strObj = static_cast<jstring>(jvm->CallObjectMethod(object, mid));
+
+		const char* str = jvm->GetStringUTFChars(strObj, nullptr);
+		std::string class_name = str;
+		jvm->ReleaseStringUTFChars(strObj, str);
+		return class_name;
+	};
+	return getClassName(object);
+}
+
+std::string Reflection::GetClassType(jobject object)
+{
+    std::function<std::string(jobject)> getClassType = [&](jobject component) {
+		jclass cls = jvm->GetObjectClass(component);
+		jmethodID mid = jvm->GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
+		jobject clsObj = jvm->CallObjectMethod(component, mid);
+
+		cls = jvm->GetObjectClass(clsObj);
+		mid = jvm->GetMethodID(cls, "getName", "()Ljava/lang/String;");
+		jstring strObj = static_cast<jstring>(jvm->CallObjectMethod(clsObj, mid));
+
+		const char* str = jvm->GetStringUTFChars(strObj, nullptr);
+		std::string class_name = str;
+		jvm->ReleaseStringUTFChars(strObj, str);
+		return class_name;
+	};
+
+	return getClassType(object);
 }
 
 jclass Reflection::LoadClass(const char* clsToLoad)

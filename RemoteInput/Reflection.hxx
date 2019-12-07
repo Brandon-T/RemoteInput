@@ -32,15 +32,17 @@ public:
     Reflection();
     Reflection(JNIEnv* env);
     ~Reflection();
-	
+
     bool Initialize(jobject awtFrame);
 
     bool Attach();
 	bool AttachAsDaemon();
     bool Detach();
 
+    std::string GetClassName(jobject object);
+    std::string GetClassType(jobject object);
     jclass LoadClass(const char* clsToLoad);
-	
+
 	JVM* getVM();
     JNIEnv* getEnv();
 
@@ -67,7 +69,7 @@ public:
     template<typename T>
     typename std::enable_if<std::is_same<jboolean, typename std::remove_cv<T>::type>::value, T>::type
     getPrimitive(jobject object, ReflectionHook hook);
-	
+
 	template<typename T>
     typename std::enable_if<std::is_same<jbyte, typename std::remove_cv<T>::type>::value, T>::type
     getPrimitive(jobject object, ReflectionHook hook);
