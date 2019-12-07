@@ -17,6 +17,12 @@
 #include "Graphics.hxx"
 #endif
 
+#if !__has_include("rd_route.h")
+#define DYLD_INTERPOSE(_replacment,_replacee) \
+__attribute__((used)) static struct{ const void* replacment; const void* replacee; } _interpose_##_replacee \
+__attribute__ ((section ("__DATA,__interpose"))) = { (const void*)(unsigned long)&_replacment, (const void*)(unsigned long)&_replacee };
+#endif
+
 #if defined(__APPLE__)
 typedef void (*JavaNativeBlit_t)(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2);
 JavaNativeBlit_t o_JavaNativeBlit;
@@ -149,6 +155,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
+#if __has_include("rd_route.h")
 CGLError CGLFlushDrawable(CGLContextObj ctx)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
@@ -172,6 +179,33 @@ CGLError CGLFlushDrawable(CGLContextObj ctx)
 	static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
 	return o_CGLFlushDrawable(ctx);
 }
+#else
+CGLError mCGLFlushDrawable(CGLContextObj ctx)
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	
+	if (control_center)
+	{
+		static GLint ViewPort[4] = {0};
+		static GLuint pbo[2] = {0};
+		CGLContextObj CGL_MACRO_CONTEXT = ctx;
+		
+		glGetIntegerv(GL_VIEWPORT, ViewPort);
+		GLint width = ViewPort[2] - ViewPort[0];
+		GLint height = ViewPort[3] - ViewPort[1];
+		
+		
+		std::uint8_t* dest = control_center->get_image();
+		GeneratePixelBuffers(ctx, pbo, width, height, 4);
+		ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+		
+		gl_draw_image(ctx, control_center->get_debug_image(), width, height, 4);
+	}
+	
+	static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
+	return o_CGLFlushDrawable(ctx);
+}
+#endif
 #endif
 
 #if defined(__APPLE__)
@@ -183,6 +217,8 @@ void InitialiseHooks()
 	{
 		rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
 	}
+	#else
+	DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
 	#endif
 }
 

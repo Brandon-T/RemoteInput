@@ -58,6 +58,7 @@
 		5E6B9A252394C59C00E6720C /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
 		5E6B9A262394C60A00E6720C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DC235D041D00D183B1 /* Foundation.framework */; };
 		5E6B9A272394C61200E6720C /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DA235D041600D183B1 /* Cocoa.framework */; };
+		5EB76181239B922500218452 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EB76180239B922500218452 /* OpenGL.framework */; };
 		5EBD66B9235CF15400D183B1 /* DebugConsole.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD6697235CF15400D183B1 /* DebugConsole.hxx */; };
 		5EBD66BA235CF15400D183B1 /* Platform_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */; };
 		5EBD66BC235CF15400D183B1 /* Platform.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD669A235CF15400D183B1 /* Platform.hxx */; };
@@ -103,6 +104,7 @@
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
 		5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibRemoteInput.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		5EB76180239B922500218452 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		5EBD6697235CF15400D183B1 /* DebugConsole.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DebugConsole.hxx; sourceTree = "<group>"; };
 		5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Platform_Linux.cxx; sourceTree = "<group>"; };
 		5EBD669A235CF15400D183B1 /* Platform.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Platform.hxx; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 			files = (
 				5E6B9A272394C61200E6720C /* Cocoa.framework in Frameworks */,
 				5E6B9A262394C60A00E6720C /* Foundation.framework in Frameworks */,
+				5EB76181239B922500218452 /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -208,6 +211,7 @@
 		5EBD66D9235D041600D183B1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5EB76180239B922500218452 /* OpenGL.framework */,
 				5EBD66DC235D041D00D183B1 /* Foundation.framework */,
 				5EBD66DA235D041600D183B1 /* Cocoa.framework */,
 			);

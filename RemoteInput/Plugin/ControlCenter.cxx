@@ -524,8 +524,9 @@ bool ControlCenter::init_maps()
     GetDesktopResolution(width, height); //TODO: Change to Target Window size..
 
     int image_size = width * height * 4 * sizeof(std::uint8_t);
+	int debug_size = width * height * 4 * sizeof(std::uint8_t);
     int extra_size = (1024 * sizeof(std::int32_t));
-	std::int32_t map_size = sizeof(ImageData) + image_size + extra_size;
+	std::int32_t map_size = sizeof(ImageData) + image_size + debug_size + extra_size;
 	memory_map = std::make_unique<MemoryMap<char>>(mapName, map_size, std::ios::in | std::ios::out);
 	return memory_map && memory_map->open() && memory_map->map();
 }
@@ -611,6 +612,11 @@ std::uint8_t* ControlCenter::get_image() const
 {
 	ImageData* image_data = get_image_data();
 	return reinterpret_cast<std::uint8_t*>(image_data) + sizeof(ImageData);
+}
+
+std::uint8_t* ControlCenter::get_debug_image() const
+{
+	return get_image() + (get_width() * get_height() * 4);
 }
 
 void ControlCenter::set_parent(pid_t pid)
