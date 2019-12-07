@@ -356,11 +356,13 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
     printf("ATTACHED TO: %d\n", getpid());
 
 	std::thread([&] {
-		control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-		if (control_center && control_center->hasReflector())
-		{
-			StartHook();
-		}
+		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+        if (reflector)
+        {
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+        }
+		
+		StartHook();
 	}).detach();
 }
 
@@ -374,10 +376,14 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
     printf("ATTACHED TO: %d\n", getpid());
 
     std::thread([&]{
-        control_center = std::make_unique<ControlCenter>(getpid(), false, std::unique_ptr<Reflection>(GetNativeReflector()));
-        if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.so", RTLD_NOLOAD))
+		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+        if (reflector)
         {
-            StartHook();
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+			if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.so", RTLD_NOLOAD))
+			{
+				StartHook();
+			}
         }
     }).detach();
 }

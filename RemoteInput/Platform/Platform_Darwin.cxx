@@ -41,58 +41,72 @@ void GetDesktopResolution(int &width, int &height)
 
 Reflection* GetNativeReflector()
 {
-	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> Reflection* {
-        auto start = std::chrono::high_resolution_clock::now();
-        while(reflection && reflection->GetClassType(object) != "java.awt.Frame")
+	auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
+		auto start = std::chrono::high_resolution_clock::now();
+		while(!run())
         {
-            if (elapsed_time<std::chrono::seconds>(start) >= 20)
+            if (elapsed_time<std::chrono::seconds>(start) >= time)
             {
-                return nullptr;
+                return false;
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        return reflection;
+		return true;
+	};
+	
+//	if (!TimeOut(20, []{ return dlopen("libawt_lwawt.dylib", RTLD_NOLOAD); })) {
+//		return nullptr;
+//	}
+	
+	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
+		return reflection->GetClassType(object) == "java.awt.Frame";
     };
 	
-	auto start = std::chrono::high_resolution_clock::now();
-	while(!dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
+	auto GetWindowViews = [&]() -> std::vector<NSView*> {
+		__block std::vector<NSView*> views;
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			for (NSWindow* window in NSApplication.sharedApplication.windows)
+			{
+				if ([window isKindOfClass:NSClassFromString(@"AWTWindow_Normal")] && [window.contentView isKindOfClass:NSClassFromString(@"AWTView")])
+				{
+					NSView* view = window.contentView;
+					views.push_back(view);
+				}
+			}
+		});
+		return views;
+	};
+	
+	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
 	{
-		if (elapsed_time<std::chrono::seconds>(start) >= 20)
-		{
-			return nullptr;
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		return nullptr;
 	}
 	
-	__block std::vector<NSView*> views;
-	dispatch_sync(dispatch_get_main_queue(), ^{
-		for (NSWindow* window in NSApplication.sharedApplication.windows)
-		{
-			if ([window isKindOfClass:NSClassFromString(@"AWTWindow_Normal")] && [window.contentView isKindOfClass:NSClassFromString(@"AWTView")])
-			{
-				NSView* view = window.contentView;
-				views.push_back(view);
-			}
-		}
-	});
-	
 	Reflection* reflection = new Reflection();
-
-	for (auto&& view : views)
+	
+	if (reflection->Attach())
 	{
-		if (reflection->Attach())
-		{
-			//TODO: Check if we can call "awt_GetComponent" from the JDK like on Linux
-			jobject object = [view awtComponent:reflection->getEnv()];  //java.awt.Frame
-			if (IsValidFrame(reflection, object) && reflection->Initialize(object))
+		auto hasReflection = TimeOut(20, [&]{
+			for (auto&& view : GetWindowViews())
 			{
-				reflection->Detach();
-				return reflection;
+				//TODO: Check if we can call "awt_GetComponent" from the JDK like on Linux
+				jobject object = [view awtComponent:reflection->getEnv()];  //java.awt.Frame
+				if (IsValidFrame(reflection, object) && reflection->Initialize(object))
+				{
+					return true;
+				}
 			}
+			return false;
+		});
+		
+		if (hasReflection)
+		{
 			reflection->Detach();
+			return reflection;
 		}
+		
+		reflection->Detach();
 	}
 
 	delete reflection;

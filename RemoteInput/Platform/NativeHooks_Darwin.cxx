@@ -179,7 +179,10 @@ void InitialiseHooks()
 {
 	#if __has_include("rd_route.h")
 	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
-	rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
+	if (blit)
+	{
+		rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
+	}
 	#endif
 }
 

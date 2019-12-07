@@ -37,38 +37,36 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 Reflection* GetNativeReflector()
 {
-    auto IsValidFrame = [&](Reflection* reflection, jobject object) -> Reflection* {
-        auto start = std::chrono::high_resolution_clock::now();
-        while(reflection && reflection->GetClassType(object) != "java.awt.Frame")
-        {
-            if (elapsed_time<std::chrono::seconds>(start) >= 20)
-            {
-                return nullptr;
-            }
+    auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
+		auto start = std::chrono::high_resolution_clock::now();
+		while(!run())
+		{
+			if (elapsed_time<std::chrono::seconds>(start) >= time)
+			{
+				return false;
+			}
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        return reflection;
-    };
-
-    HMODULE awt = nullptr;
-    auto start = std::chrono::high_resolution_clock::now();
-    while(!(awt = GetModuleHandle("awt.dll")))
-    {
-        if (elapsed_time<std::chrono::seconds>(start) >= 20)
-        {
-            return nullptr;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    HWND windowFrame = nullptr;
-    EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&windowFrame));
-    if (!windowFrame)
-    {
-        return nullptr;
-    }
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+		return true;
+	};
+	
+	auto GetMainWindow = [&] {
+		HWND windowFrame = nullptr;
+		EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&windowFrame));
+		return windowFrame;
+	};
+		
+	HMODULE awt = nullptr;
+	if (TimeOut(20, [&]{ return (awt = GetModuleHandle("awt.dll")); }))
+	{
+		return nullptr;
+	}
+	
+	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
+	{
+		return nullptr;
+	}
 
     auto DSGetComponent = reinterpret_cast<jobject __stdcall (*)(JNIEnv*, void*)>(GetProcAddress(awt, "DSGetComponent"));
     if (!DSGetComponent)
@@ -92,12 +90,22 @@ Reflection* GetNativeReflector()
 
     if (reflection->Attach())
     {
-        jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
-        if (IsValidFrame(reflection, object) && reflection->Initialize(object))
-        {
-            reflection->Detach();
-            return reflection;
-        }
+		auto hasReflection = TimeOut(20, [&]{
+			HWND windowFrame = GetMainWindow();
+			if (windowFrame)
+			{
+				jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+				return IsValidFrame(reflection, object) && reflection->Initialize(object);
+			}
+			return false;
+		});
+		
+		if (hasReflection)
+		{
+			reflection->Detach();
+			return reflection;
+		}
+        
         reflection->Detach();
     }
 

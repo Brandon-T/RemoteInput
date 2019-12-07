@@ -225,29 +225,31 @@ bool EnumWindowsProc(Display* display, Window window, void* other)
 
 Reflection* GetNativeReflector()
 {
-	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> Reflection* {
-        auto start = std::chrono::high_resolution_clock::now();
-        while(reflection && reflection->GetClassType(object) != "java.awt.Frame")
-        {
-            if (elapsed_time<std::chrono::seconds>(start) >= 20)
-            {
-                return nullptr;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        return reflection;
-    };
-	
-	auto start = std::chrono::high_resolution_clock::now();
-	while(!dlopen("libawt_lwawt.dylib", RTLD_NOLOAD))
-	{
-		if (elapsed_time<std::chrono::seconds>(start) >= 20)
+	auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
+		auto start = std::chrono::high_resolution_clock::now();
+		while(!run())
 		{
-			return nullptr;
-		}
+			if (elapsed_time<std::chrono::seconds>(start) >= time)
+			{
+				return false;
+			}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+		return true;
+	};
+	
+//	if (!TimeOut(20, []{ return dlopen("libawt_lwawt.so", RTLD_NOLOAD); })) {
+//		return nullptr;
+//	}
+	
+	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
+		return reflection->GetClassType(object) == "java.awt.Frame";
+	};
+	
+	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
+	{
+		return nullptr;
 	}
 	
     auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_NEXT, "awt_GetComponent"));
@@ -256,25 +258,33 @@ Reflection* GetNativeReflector()
         return nullptr;
     }
 
-    Display* display = XOpenDisplay(nullptr);
-    Window windowFrame = 0;
-    EnumWindows(display, EnumWindowsProc, &windowFrame);
-    XCloseDisplay(display);
-
-    if (!windowFrame)
-    {
-        return nullptr;
-    }
+	auto GetMainWindow = [&]() -> Window {
+		Display* display = XOpenDisplay(nullptr);
+		Window windowFrame = 0;
+		EnumWindows(display, EnumWindowsProc, &windowFrame);
+		XCloseDisplay(display);
+		return windowFrame;
+	};
 
     Reflection* reflection = new Reflection();
     if (reflection->Attach())
     {
-        jobject object = awt_GetComponent(reflection->getEnv(), reinterpret_cast<void*>(windowFrame));  //java.awt.Frame
-        if (IsValidFrame(reflection, object) && reflection->Initialize(object))
-        {
-            reflection->Detach();
-            return reflection;
-        }
+		auto hasReflection = TimeOut(20, [&]{
+			void* windowFrame = static_cast<void*>(GetMainWindow());
+			if (windowFrame)
+			{
+				jobject object = awt_GetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+				return IsValidFrame(reflection, object) && reflection->Initialize(object);
+			}
+			return false;
+		});
+		
+		if (hasReflection)
+		{
+			reflection->Detach();
+			return reflection;
+		}
+        
         reflection->Detach();
     }
 
