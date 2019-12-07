@@ -87,7 +87,7 @@ Reflection* GetNativeReflector()
 	
 	if (reflection->Attach())
 	{
-		auto hasReflection = TimeOut(60, [&]{
+		auto hasReflection = TimeOut(300, [&]{
 			for (auto&& view : GetWindowViews())
 			{
 				//TODO: Check if we can call "awt_GetComponent" from the JDK like on Linux

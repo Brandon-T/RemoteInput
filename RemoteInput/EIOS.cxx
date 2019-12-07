@@ -86,6 +86,16 @@ std::uint8_t* EIOS_GetImageBuffer(EIOS* eios)
     return nullptr;
 }
 
+std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios)
+{
+	printf("%s\n", __FUNCTION__);
+    if (eios)
+    {
+		return eios->control_center->get_debug_image();
+    }
+    return nullptr;
+}
+
 void EIOS_UpdateImageBuffer(EIOS* eios)
 {
     printf("%s\n", __FUNCTION__);

@@ -128,52 +128,26 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 		dest->r = source->r;
 		dest->a = (source->b == 0x00 && source->g == 0x00 && source->r == 0x00) ? 0x00 : 0xFF;
 		++source;
+		++dest;
 	}
 }
 
 void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride)
 {
+	#define GL_TEXTURE_RECTANGLE              0x84F5
+	
 	#if defined(__APPLE__)
 	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
 	#endif
 	
-	/*auto flip_in_place = [](std::uint8_t* data, std::int32_t width, std::int32_t height) {
-		struct bgra_t {
-			std::uint8_t b;
-			std::uint8_t g;
-			std::uint8_t r;
-			std::uint8_t a;
-		} bgra;
-		
-		for (int y = 0; y < height / 2; ++y)
-		{
-			for (int x = 0; x < width; ++x)
-			{
-				int top = (x + y * width) * sizeof(bgra_t);
-				int bottom = (x + (height - y - 1) * width) * sizeof(bgra_t);
-
-				std::memcpy(&rgb, data + top, sizeof(bgra_t));
-				std::memcpy(data + top, data + bottom, sizeof(bgra_t));
-				std::memcpy(data + bottom, &rgb, sizeof(bgra_t));
-			}
-		}
-	};*/
-	
-	auto flip_to_buffer = [](std::uint8_t* dest, std::uint8_t* source, std::int32_t width, std::int32_t height, std::int32_t stride) {
-		std::uint32_t chunk = width * stride;
-		std::uint8_t* ptr = source + chunk * (height - 1);
-
-	   while(ptr != source)
-	   {
-		  std::memcpy(dest, ptr, chunk);
-		  dest += chunk;
-		  ptr -= chunk;
-	   }
-	};
-	
 	//Backup
+	bool GLBlend = glIsEnabled(GL_BLEND);
 	bool GLTexture2D = glIsEnabled(GL_TEXTURE_2D);
+	bool GLRectangle = glIsEnabled(GL_TEXTURE_RECTANGLE);
     bool PointSmooth = glIsEnabled(GL_POINT_SMOOTH);
+	
+	glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_POINT_SMOOTH);
@@ -183,23 +157,15 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
     glLoadIdentity();
 	
 	//Load Texture
-	std::unique_ptr<std::uint8_t[]> px { new std::uint8_t[width * height * stride] };
-	flip_to_buffer(px.get(), static_cast<std::uint8_t*>(source_buffer), width, height, stride);
-	
-	for (std::int32_t i = 0; i < width * height * stride; i += stride)
-	{
-		std::uint8_t* source = px.get() + i;
-		std::uint8_t* ptr = px.get() + i + 3;
-		*ptr = (source[0] == 0x00 && source[1] == 0x00 && source[2] == 0x00) ? 0x00 : 0xFF;
-	}
+	draw_image(source_buffer, source_buffer, width, height, stride);
 
     GLuint ID = 0;
-	GLenum target = GL_TEXTURE_2D;
+	GLenum target = GL_TEXTURE_RECTANGLE;
 	
     glGenTextures(1, &ID);
     glBindTexture(target, ID);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-    glTexImage2D(target, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, px.get());
+    glTexImage2D(target, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, source_buffer);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     glTexParameteri(target, GL_TEXTURE_WRAP_S, target == GL_TEXTURE_2D ? GL_REPEAT : GL_CLAMP_TO_EDGE);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, target == GL_TEXTURE_2D ? GL_REPEAT : GL_CLAMP_TO_EDGE);
@@ -208,14 +174,15 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	
+	
+	float x1 = 0.0;
+	float y1 = 0.0;
+	float x2 = width;
+	float y2 = height;
 	width = target == GL_TEXTURE_2D ? 1 : width;
     height = target == GL_TEXTURE_2D ? 1 : height;
 
 	//Render Texture
-	float x1 = 0.0;
-	float y1 = 0.0;
-	float x2 = 1.0;
-	float y2 = 1.0;
 	
     glEnable(target);
     glBindTexture(target, ID);
@@ -235,9 +202,20 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
 	
 	//Restore
 	glPopMatrix();
+	
+	if (!GLBlend)
+	{
+		glDisable(GL_BLEND);
+	}
+	
     if (GLTexture2D)
 	{
 		glEnable(GL_TEXTURE_2D);
+	}
+	
+	if (GLRectangle)
+	{
+		glEnable(GL_TEXTURE_RECTANGLE);
 	}
 	
     if (!PointSmooth)

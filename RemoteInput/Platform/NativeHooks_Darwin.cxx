@@ -199,7 +199,11 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 		GeneratePixelBuffers(ctx, pbo, width, height, 4);
 		ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
 		
-		gl_draw_image(ctx, control_center->get_debug_image(), width, height, 4);
+		
+		std::uint8_t* src = control_center->get_debug_image();
+		//draw_circle(200, 200, 50, src, width, height, 4, true);
+		
+		gl_draw_image(ctx, src, width, height, 4);
 	}
 	
 	static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
