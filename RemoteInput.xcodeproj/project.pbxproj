@@ -16,6 +16,14 @@
 		5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */; };
 		5E4CDC22238214B200A05869 /* InputEvents.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC20238214B200A05869 /* InputEvents.cxx */; };
 		5E4CDC23238214B200A05869 /* InputEvents.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E4CDC21238214B200A05869 /* InputEvents.hxx */; };
+		5E5B3F86239D367F00F07DD1 /* Hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F84239D367F00F07DD1 /* Hooks.cpp */; };
+		5E5B3F87239D367F00F07DD1 /* Hooks.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 5E5B3F85239D367F00F07DD1 /* Hooks.hpp */; };
+		5E5B3F8A239D36A400F07DD1 /* ModelRendering.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */; };
+		5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */; };
+		5E5B3F8C239D39F200F07DD1 /* Hooks.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 5E5B3F85239D367F00F07DD1 /* Hooks.hpp */; };
+		5E5B3F8D239D39F700F07DD1 /* ModelRendering.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */; };
+		5E5B3F8E239D39FA00F07DD1 /* ModelRendering.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */; };
+		5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F84239D367F00F07DD1 /* Hooks.cpp */; };
 		5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
 		5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
 		5E6B9A002394C57600E6720C /* Time.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B1235CF15400D183B1 /* Time.cxx */; };
@@ -101,6 +109,10 @@
 		5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Windows.cxx; sourceTree = "<group>"; };
 		5E4CDC20238214B200A05869 /* InputEvents.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InputEvents.cxx; sourceTree = "<group>"; };
 		5E4CDC21238214B200A05869 /* InputEvents.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = InputEvents.hxx; sourceTree = "<group>"; };
+		5E5B3F84239D367F00F07DD1 /* Hooks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hooks.cpp; sourceTree = "<group>"; };
+		5E5B3F85239D367F00F07DD1 /* Hooks.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Hooks.hpp; sourceTree = "<group>"; };
+		5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ModelRendering.cpp; sourceTree = "<group>"; };
+		5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ModelRendering.hpp; sourceTree = "<group>"; };
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
 		5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibRemoteInput.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -162,6 +174,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5E5B3F83239D367000F07DD1 /* Hooks */ = {
+			isa = PBXGroup;
+			children = (
+				5E5B3F84239D367F00F07DD1 /* Hooks.cpp */,
+				5E5B3F85239D367F00F07DD1 /* Hooks.hpp */,
+				5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */,
+				5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */,
+			);
+			path = Hooks;
+			sourceTree = "<group>";
+		};
 		5EBD6696235CF15400D183B1 /* Platform */ = {
 			isa = PBXGroup;
 			children = (
@@ -239,6 +262,7 @@
 		5EC59509232D956B00922111 /* RemoteInput */ = {
 			isa = PBXGroup;
 			children = (
+				5E5B3F83239D367000F07DD1 /* Hooks */,
 				5EBD66B0235CF15400D183B1 /* Echo */,
 				5EBD66AD235CF15400D183B1 /* EIOS.cxx */,
 				5EBD66A5235CF15400D183B1 /* EIOS.hxx */,
@@ -270,6 +294,7 @@
 			files = (
 				5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */,
 				5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */,
+				5E5B3F8D239D39F700F07DD1 /* ModelRendering.hpp in Headers */,
 				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
 				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
 				5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */,
@@ -287,6 +312,7 @@
 				5E6B9A102394C57A00E6720C /* Platform.hxx in Headers */,
 				5E6B9A212394C59700E6720C /* RemoteInput.h in Headers */,
 				5E6B9A1E2394C59400E6720C /* Reflection.hxx in Headers */,
+				5E5B3F8C239D39F200F07DD1 /* Hooks.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,6 +322,7 @@
 			files = (
 				5EBD66C4235CF15400D183B1 /* Reflection.hxx in Headers */,
 				5EBD66C7235CF15400D183B1 /* EIOS.hxx in Headers */,
+				5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
@@ -313,6 +340,7 @@
 				5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */,
 				5EBD66BC235CF15400D183B1 /* Platform.hxx in Headers */,
 				5EBD66D7235CF15400D183B1 /* SharedEvent.hxx in Headers */,
+				5E5B3F87239D367F00F07DD1 /* Hooks.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -408,8 +436,10 @@
 			files = (
 				5E6B9A192394C58500E6720C /* ControlCenter.cxx in Sources */,
 				5E6B9A1B2394C58500E6720C /* Graphics.cxx in Sources */,
+				5E5B3F8E239D39FA00F07DD1 /* ModelRendering.cpp in Sources */,
 				5E6B9A0B2394C57A00E6720C /* NativeHooks_Darwin.cxx in Sources */,
 				5E6B9A162394C58500E6720C /* SimbaPlugin.cxx in Sources */,
+				5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */,
 				5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */,
 				5E6B9A222394C59C00E6720C /* InputEvents.cxx in Sources */,
 				5E6B9A002394C57600E6720C /* Time.cxx in Sources */,
@@ -436,6 +466,7 @@
 				5EBD66D5235CF15400D183B1 /* Module.cxx in Sources */,
 				5EBD66D1235CF15400D183B1 /* Time.cxx in Sources */,
 				5EBD66D0235CF15400D183B1 /* JVM.cxx in Sources */,
+				5E5B3F8A239D36A400F07DD1 /* ModelRendering.cpp in Sources */,
 				5EBD66CE235CF15400D183B1 /* EIOS.cxx in Sources */,
 				5E4CDC22238214B200A05869 /* InputEvents.cxx in Sources */,
 				5EBD66BE235CF15400D183B1 /* Platform_Darwin.cxx in Sources */,
@@ -446,6 +477,7 @@
 				5EBD66C6235CF15400D183B1 /* Reflection.cxx in Sources */,
 				5E4CDC1D2381F40700A05869 /* NativeHooks_Darwin.cxx in Sources */,
 				5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */,
+				5E5B3F86239D367F00F07DD1 /* Hooks.cpp in Sources */,
 				5EBD66D2235CF15400D183B1 /* SharedEvent.cxx in Sources */,
 				5EBD66CF235CF15400D183B1 /* ThreadPool.cxx in Sources */,
 				5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */,
@@ -465,6 +497,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXECUTABLE_PREFIX = lib;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				HEADER_SEARCH_PATHS = (
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include",
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include/darwin",

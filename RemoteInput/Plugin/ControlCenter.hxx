@@ -49,6 +49,7 @@ public:
 	void terminate();
 	bool hasReflector();
 	void set_parent(pid_t pid);
+	void update_dimensions(std::int32_t width, std::int32_t height);
 
 	std::int32_t parent_id() const;
 	std::int32_t get_width() const;
@@ -82,6 +83,11 @@ public:
 	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
 	
 	static std::size_t reflect_size_for_type(ReflectionArrayType type);
+	
+	Reflection* get_reflector()
+	{
+		return reflector.get();
+	}
 };
 
 #endif /* ControlCenter_HXX_INCLUDED */

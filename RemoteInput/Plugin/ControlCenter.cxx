@@ -140,8 +140,8 @@ void ControlCenter::process_command()
 
 		case EIOSCommand::GET_TARGET_DIMENSIONS:
 		{
-//			EIOS_Write<std::int32_t>(arguments, w);
-//			EIOS_Write<std::int32_t>(arguments, h);
+			EIOS_Write<std::int32_t>(arguments, get_width());
+			EIOS_Write<std::int32_t>(arguments, get_height());
 		}
 			break;
 
@@ -528,7 +528,12 @@ bool ControlCenter::init_maps()
     int extra_size = (1024 * sizeof(std::int32_t));
 	std::int32_t map_size = sizeof(ImageData) + image_size + debug_size + extra_size;
 	memory_map = std::make_unique<MemoryMap<char>>(mapName, map_size, std::ios::in | std::ios::out);
-	return memory_map && memory_map->open() && memory_map->map();
+	bool result = memory_map && memory_map->open() && memory_map->map();
+	if (result)
+	{
+		update_dimensions(width, height);
+	}
+	return result;
 }
 
 
@@ -624,9 +629,15 @@ void ControlCenter::set_parent(pid_t pid)
 	get_image_data()->parentId = pid;
 }
 
+void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height)
+{
+	get_image_data()->width = width;
+	get_image_data()->height = height;
+}
+
 void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* height)
 {
-	auto result = send_command([](ImageData* image_data) {
+	/*auto result = send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::GET_TARGET_DIMENSIONS;
 	});
 
@@ -637,7 +648,12 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 		*width = EIOS_Read<std::int32_t>(arguments);
 		*height = EIOS_Read<std::int32_t>(arguments);
 		map_lock->unlock();
-	}
+	}*/
+	
+	map_lock->lock();
+	*width = get_width();
+	*height = get_height();
+	map_lock->unlock();
 }
 
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
@@ -969,7 +985,7 @@ void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayTy
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
-		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX;
+		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX2D;
 		EIOS_Write(arguments, array);
 		EIOS_Write(arguments, type);
 		EIOS_Write(arguments, static_cast<jsize>(x));
@@ -988,7 +1004,7 @@ void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayTy
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
-		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX;
+		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX3D;
 		EIOS_Write(arguments, array);
 		EIOS_Write(arguments, type);
 		EIOS_Write(arguments, static_cast<jsize>(x));
@@ -1008,7 +1024,7 @@ void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayTy
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
-		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX;
+		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX4D;
 		EIOS_Write(arguments, array);
 		EIOS_Write(arguments, type);
 		EIOS_Write(arguments, static_cast<jsize>(x));

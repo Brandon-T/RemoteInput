@@ -1,10 +1,10 @@
 #include "Reflection.hxx"
 
-Reflection::Reflection() : jvm(new JVM()), frame(nullptr), client(nullptr), classLoader(nullptr)
+Reflection::Reflection() : jvm(new JVM()), frame(nullptr), applet(nullptr), classLoader(nullptr)
 {
 }
 
-Reflection::Reflection(JNIEnv* env) : jvm(new JVM(env)), frame(nullptr), client(nullptr), classLoader(nullptr)
+Reflection::Reflection(JNIEnv* env) : jvm(new JVM(env)), frame(nullptr), applet(nullptr), classLoader(nullptr)
 {
 }
 
@@ -66,13 +66,13 @@ bool Reflection::Initialize(jobject awtFrame)
     };
 
     //Find Client Class.
-    this->client = jvm->NewGlobalRef(findClient(awtFrame));
+    this->applet = jvm->NewGlobalRef(findClient(awtFrame));
 
-    if (this->client)
+    if (this->applet)
     {
-        jclass cls = jvm->GetObjectClass(this->client);
+        jclass cls = jvm->GetObjectClass(this->applet);
         jmethodID mid = jvm->GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
-        jobject clsObj = jvm->CallObjectMethod(this->client, mid);
+        jobject clsObj = jvm->CallObjectMethod(this->applet, mid);
         cls = jvm->GetObjectClass(clsObj);
 
         //Get Client's ClassLoader.

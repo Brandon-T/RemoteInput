@@ -157,22 +157,58 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
     glLoadIdentity();
 	
 	//Load Texture
-	draw_image(source_buffer, source_buffer, width, height, stride);
+	typedef struct bgra_t
+	{
+		std::uint8_t b;
+		std::uint8_t g;
+		std::uint8_t r;
+		std::uint8_t a;
+	} bgra;
+	
+	bgra* source = static_cast<bgra*>(source_buffer);
+	for (std::int32_t i = 0; i < width * height * stride; i += stride)
+	{
+		source->a = (source->b == 0x00 && source->g == 0x00 && source->r == 0x00) ? 0x00 : 0xFF;
+		++source;
+	}
 
-    GLuint ID = 0;
+    static GLuint ID = 0;
+	static std::int32_t w = 0;
+	static std::int32_t h = 0;
+	
 	GLenum target = GL_TEXTURE_RECTANGLE;
 	
-    glGenTextures(1, &ID);
-    glBindTexture(target, ID);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-    glTexImage2D(target, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, source_buffer);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, target == GL_TEXTURE_2D ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, target == GL_TEXTURE_2D ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	if (ID == 0 || w != width || h != height)
+	{
+		if (ID != 0)
+		{
+			glDeleteTextures(1, &ID);
+			ID = 0;
+		}
+		
+		w = width;
+		h = height;
+		
+		glGenTextures(1, &ID);
+		glBindTexture(target, ID);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+		glTexImage2D(target, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, source_buffer);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+		glTexParameteri(target, GL_TEXTURE_WRAP_S, target == GL_TEXTURE_2D ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		glTexParameteri(target, GL_TEXTURE_WRAP_T, target == GL_TEXTURE_2D ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+	else
+	{
+		glBindTexture(target, ID);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+		glTexSubImage2D(target, 0, 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, source_buffer);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+		glBindTexture(target, 0);
+	}
 	
 	
 	float x1 = 0.0;
@@ -197,8 +233,9 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
         glTexCoord2f(width, height);
         glVertex2f(x2, y1);
     glEnd();
+	glBindTexture(target, 0);
     glDisable(target);
-	glDeleteTextures(1, &ID);
+	
 	
 	//Restore
 	glPopMatrix();
