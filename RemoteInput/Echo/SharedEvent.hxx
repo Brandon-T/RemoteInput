@@ -16,14 +16,14 @@
 #include "Time.hxx"
 
 #if !defined(_WIN32) && !defined(_WIN64)
-#define _POSIX_SEMAPHORES
+#define _USE_POSIX_SEMAPHORES
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
 
-#if defined(_POSIX_SEMAPHORES)
+#if defined(_USE_POSIX_SEMAPHORES)
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/types.h>
@@ -102,7 +102,7 @@ class Semaphore
 private:
     #if defined(_WIN32) || defined(_WIN64)
     HANDLE hSemaphore;
-    #elif defined(_POSIX_SEMAPHORES)
+    #elif defined(_USE_POSIX_SEMAPHORES)
 	bool shared;
 	bool owned;
 	void* hSem;

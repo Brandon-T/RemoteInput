@@ -74,7 +74,7 @@ int semtimedop(int handle, struct sembuf* operations, size_t operation_count, st
 }
 #endif
 
-#if defined(_POSIX_SEMAPHORES) && !(_POSIX_TIMEOUTS >= 200112L) && !(_POSIX_C_SOURCE  >= 200112L)
+#if defined(_USE_POSIX_SEMAPHORES) && !(_POSIX_TIMEOUTS >= 200112L) && !(_POSIX_C_SOURCE  >= 200112L)
 int sem_timedwait(sem_t* sem, const struct timespec* abs_timeout)
 {
 	if (!abs_timeout)
@@ -397,7 +397,7 @@ Semaphore::~Semaphore()
     //ReleaseSemaphore(hSemaphore, 1, nullptr);
     CloseHandle(hSemaphore);
 }
-#elif defined(_POSIX_SEMAPHORES)
+#elif defined(_USE_POSIX_SEMAPHORES)
 template<typename T>
 T* Semaphore::semaphore_cast(void* &ptr)
 {
@@ -812,7 +812,7 @@ bool Semaphore::wait()
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, INFINITE) == WAIT_OBJECT_0;
-	#elif defined(_POSIX_SEMAPHORES)
+	#elif defined(_USE_POSIX_SEMAPHORES)
 	#if defined(__APPLE__)
 	if (owned && !shared)
 	{
@@ -857,7 +857,7 @@ bool Semaphore::try_wait()
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, 0) == WAIT_OBJECT_0;
-    #elif defined(_POSIX_SEMAPHORES)
+    #elif defined(_USE_POSIX_SEMAPHORES)
 	#if defined(__APPLE__)
 	if (owned && !shared)
 	{
@@ -924,7 +924,7 @@ bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_r
 
     std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
     return WaitForSingleObject(hSemaphore, msec.time_since_epoch().count()) == WAIT_OBJECT_0;
-    #elif defined(_POSIX_SEMAPHORES)
+    #elif defined(_USE_POSIX_SEMAPHORES)
 	#if defined(__APPLE__)
 	if (owned && !shared)
 	{
@@ -1007,7 +1007,7 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
     return WaitForSingleObject(hSemaphore, milliseconds) == WAIT_OBJECT_0;
-    #elif defined(_POSIX_SEMAPHORES)
+    #elif defined(_USE_POSIX_SEMAPHORES)
 	#if defined(__APPLE__)
 	if (owned && !shared)
 	{
@@ -1074,7 +1074,7 @@ bool Semaphore::signal()
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
     return ReleaseSemaphore(hSemaphore, 1, nullptr);
-    #elif defined(_POSIX_SEMAPHORES)
+    #elif defined(_USE_POSIX_SEMAPHORES)
 	#if defined(__APPLE__)
 	if (owned && !shared)
 	{

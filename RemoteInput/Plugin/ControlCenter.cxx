@@ -74,7 +74,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 			if (this->reflector->Attach())
 			{
 				while(!stopped) {
-					if (!command_signal || !map_lock || !response_signal || !memory_map)
+					if (!command_signal || /*!map_lock ||*/ !response_signal || !memory_map)
 					{
 						if (this->reflector)
 						{
