@@ -20,8 +20,6 @@ std::unordered_map<std::int32_t, EIOS*> clients;
 
 EIOS* EIOS_RequestTarget(const char* initargs)
 {
-    printf("%s\n", __FUNCTION__);
-
     std::size_t pos = 0;
     std::int32_t pid = std::stoi(initargs, &pos);
     if (pos == std::string(initargs).length())
@@ -56,7 +54,6 @@ EIOS* EIOS_RequestTarget(const char* initargs)
 
 void EIOS_ReleaseTarget(EIOS* eios)
 {
-    printf("%s\n", __FUNCTION__);
     if (eios)
     {
         clients.erase(eios->pid);
@@ -69,7 +66,6 @@ void EIOS_ReleaseTarget(EIOS* eios)
 
 void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height)
 {
-    printf("%s\n", __FUNCTION__);
     if (eios)
     {
 		eios->control_center->get_target_dimensions(width, height);
@@ -78,7 +74,6 @@ void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* hei
 
 std::uint8_t* EIOS_GetImageBuffer(EIOS* eios)
 {
-    printf("%s\n", __FUNCTION__);
     if (eios)
     {
 		return eios->control_center->get_image();
@@ -88,7 +83,6 @@ std::uint8_t* EIOS_GetImageBuffer(EIOS* eios)
 
 std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios)
 {
-	printf("%s\n", __FUNCTION__);
     if (eios)
     {
 		return eios->control_center->get_debug_image();
@@ -103,7 +97,6 @@ void EIOS_UpdateImageBuffer(EIOS* eios)
 
 void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 {
-    printf("%s\n", __FUNCTION__);
 
 	if (eios)
 	{
@@ -113,8 +106,6 @@ void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 
 void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y)
 {
-    printf("%s\n", __FUNCTION__);
-
 	if (eios)
 	{
 		eios->control_center->move_mouse(x, y);
@@ -123,8 +114,6 @@ void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y)
 
 void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button)
 {
-    printf("%s\n", __FUNCTION__);
-
 	if (eios)
 	{
 		eios->control_center->hold_mouse(x, y, button);
@@ -133,8 +122,6 @@ void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t but
 
 void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button)
 {
-    printf("%s\n", __FUNCTION__);
-
 	if (eios)
 	{
 		eios->control_center->release_mouse(x, y, button);

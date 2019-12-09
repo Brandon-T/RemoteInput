@@ -58,10 +58,10 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 		throw std::runtime_error("Cannot Initialize Maps");
 	}
 
-	if (!init_locks())
-	{
-		throw std::runtime_error("Cannot Initialize Locks");
-	}
+//	if (!init_locks())
+//	{
+//		throw std::runtime_error("Cannot Initialize Locks");
+//	}
 
 	if (!init_signals())
 	{
@@ -71,23 +71,31 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 	if (!is_controller)
 	{
 		std::thread thread = std::thread([&]{
-			while(!stopped) {
-				if (!command_signal || !map_lock || !response_signal || !memory_map)
-				{
-					return;
-				}
+			if (this->reflector->Attach())
+			{
+				while(!stopped) {
+					if (!command_signal || !map_lock || !response_signal || !memory_map)
+					{
+						if (this->reflector)
+						{
+							this->reflector->Detach();
+						}
+						return;
+					}
 
-				command_signal->wait();
-				if (stopped)
-				{
-					return;
-				}
+					command_signal->wait();
+					if (stopped)
+					{
+						if (this->reflector)
+						{
+							this->reflector->Detach();
+						}
+						return;
+					}
 
-				map_lock->lock();
-				process_command();
-				memory_map->flush();
-				map_lock->unlock();
-				response_signal->signal();
+					process_command();
+					response_signal->signal();
+				}
 			}
 		});
 
@@ -102,7 +110,6 @@ ControlCenter::~ControlCenter()
 
 	if (map_lock)
 	{
-		map_lock->unlock();
 		map_lock.reset();
 	}
 
@@ -198,10 +205,8 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getField<jobject>(hook.object, hook);
 			EIOS_Write(response, result);
-			reflector->Detach();
 		}
 			break;
 
@@ -210,9 +215,7 @@ void ControlCenter::process_command()
 			jobject object = EIOS_Read<jobject>(arguments);
 			if (object)
 			{
-				reflector->Attach();
 				reflector->getEnv()->DeleteGlobalRef(object);
-				reflector->Detach();
 			}
 		}
 			break;
@@ -220,7 +223,6 @@ void ControlCenter::process_command()
 		case EIOSCommand::REFLECT_RELEASE_OBJECTS:
 		{
 			jsize size = EIOS_Read<jsize>(arguments);
-			reflector->Attach();
 			for (jsize i = 0; i < size; ++i)
 			{
 				jobject object = EIOS_Read<jobject>(arguments);
@@ -229,7 +231,6 @@ void ControlCenter::process_command()
 					reflector->getEnv()->DeleteGlobalRef(object);
 				}
 			}
-			reflector->Detach();
 		}
 			break;
 
@@ -238,9 +239,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jchar>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -250,9 +249,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jbyte>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -262,9 +259,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jboolean>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -274,9 +269,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jshort>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -286,9 +279,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jint>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -298,9 +289,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jlong>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -310,9 +299,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jfloat>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -322,9 +309,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getPrimitive<jdouble>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -334,9 +319,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getField<std::string>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(response, result);
 		}
 			break;
@@ -346,9 +329,7 @@ void ControlCenter::process_command()
 			ReflectionHook hook;
 			hook.read(arguments);
 
-			reflector->Attach();
 			auto result = reflector->getField<jarray>(hook.object, hook);
-			reflector->Detach();
 			EIOS_Write(arguments, result);
 		}
 			break;
@@ -357,9 +338,7 @@ void ControlCenter::process_command()
 		{
 			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
 
-			reflector->Attach();
 			jsize length = reflector->getEnv()->GetArrayLength(array);
-			reflector->Detach();
 			EIOS_Write(response, length);
 		}
 			break;
@@ -471,21 +450,17 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 				break;
 		}
 	};
+	
+	ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
 
 	if (dimensions == 1)
 	{
-		ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
 		jsize index = EIOS_Read<jsize>(arguments);
 		jsize length = EIOS_Read<jsize>(arguments);
-		reflector->Attach();
 		write_result(array, type, index, length, response);
-		reflector->Detach();
 		return;
 	}
 
-	ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
-
-	reflector->Attach();
 	for (int i = 0; i < dimensions - 1; ++i)
 	{
 		jsize index = EIOS_Read<jsize>(arguments);
@@ -499,7 +474,6 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 	jsize index = EIOS_Read<jsize>(arguments);
 	jsize length = EIOS_Read<jsize>(arguments);
 	write_result(array, type, index, length, response);
-	reflector->Detach();
 }
 
 bool ControlCenter::init_maps()
@@ -590,10 +564,7 @@ ImageData* ControlCenter::get_image_data() const
 
 bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 {
-	map_lock->lock();
 	writer(get_image_data());
-	memory_map->flush();
-	map_lock->unlock();
 	command_signal->signal();
 	return response_signal->wait();
 }
@@ -643,17 +614,13 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 
 	if (result)
 	{
-		map_lock->lock();
 		void* arguments = get_image_data()->args;
 		*width = EIOS_Read<std::int32_t>(arguments);
 		*height = EIOS_Read<std::int32_t>(arguments);
-		map_lock->unlock();
 	}*/
 	
-	map_lock->lock();
 	*width = get_width();
 	*height = get_height();
-	map_lock->unlock();
 }
 
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
@@ -664,11 +631,9 @@ void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 
 	if (result)
 	{
-		map_lock->lock();
 		void* arguments = get_image_data()->args;
 		*x = EIOS_Read<std::int32_t>(arguments);
 		*y = EIOS_Read<std::int32_t>(arguments);
-		map_lock->unlock();
 	}
 }
 
@@ -715,10 +680,7 @@ jobject ControlCenter::reflect_object(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jobject object = EIOS_Read<jobject>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return nullptr;
@@ -754,10 +716,7 @@ char ControlCenter::reflect_char(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jchar object = EIOS_Read<jchar>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return '\0';
@@ -774,10 +733,7 @@ std::uint8_t ControlCenter::reflect_byte(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jbyte object = EIOS_Read<jbyte>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return 0;
@@ -794,10 +750,7 @@ bool ControlCenter::reflect_boolean(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jboolean object = EIOS_Read<jboolean>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return false;
@@ -814,10 +767,7 @@ std::int16_t ControlCenter::reflect_short(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jshort object = EIOS_Read<jshort>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return -1;
@@ -834,10 +784,7 @@ std::int32_t ControlCenter::reflect_int(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jint object = EIOS_Read<jint>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return -1;
@@ -854,10 +801,7 @@ std::int64_t ControlCenter::reflect_long(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jlong object = EIOS_Read<jlong>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return -1;
@@ -874,10 +818,7 @@ float ControlCenter::reflect_float(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jfloat object = EIOS_Read<jfloat>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return -1;
@@ -894,10 +835,7 @@ double ControlCenter::reflect_double(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jdouble object = EIOS_Read<jdouble>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return -1;
@@ -914,10 +852,7 @@ std::string ControlCenter::reflect_string(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		std::string object = EIOS_Read(response);
-		map_lock->unlock();
 		return object;
 	}
 	return "";
@@ -934,10 +869,7 @@ jarray ControlCenter::reflect_array(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jarray object = EIOS_Read<jarray>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return nullptr;
@@ -954,10 +886,7 @@ std::size_t ControlCenter::reflect_array_size(const jarray array)
 	if (result)
 	{
 		void* response = get_image_data()->args;
-
-		map_lock->lock();
 		jsize object = EIOS_Read<jsize>(response);
-		map_lock->unlock();
 		return object;
 	}
 	return 0;
@@ -1043,7 +972,18 @@ void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayTy
 
 std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
 {
-	static std::unordered_map<ReflectionArrayType, std::size_t> mapping = {
+	static std::size_t mapping[] = {
+		sizeof(jchar),
+		sizeof(jbyte),
+		sizeof(jboolean),
+		sizeof(jshort),
+		sizeof(jint),
+		sizeof(jlong),
+		sizeof(jfloat),
+		sizeof(jdouble),
+		sizeof(jobject)
+	};
+	/*static std::unordered_map<ReflectionArrayType, std::size_t> mapping = {
 		{ReflectionArrayType::CHAR, sizeof(jchar)},
 		{ReflectionArrayType::BYTE, sizeof(jbyte)},
 		{ReflectionArrayType::BOOL, sizeof(jboolean)},
@@ -1053,7 +993,7 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
 		{ReflectionArrayType::FLOAT, sizeof(jfloat)},
 		{ReflectionArrayType::DOUBLE, sizeof(jdouble)},
 		{ReflectionArrayType::OBJECT, sizeof(jobject)}
-	};
+	};*/
 
-	return mapping[type];
+	return mapping[static_cast<std::uint8_t>(type)];
 }
