@@ -50,6 +50,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 				void *rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
 				bool isRasterAligned = !(srcInfo.scanStride & 0x03);
 				std::uint8_t* dest = control_center->get_image();
+				control_center->update_dimensions(width, height);
 
 				if (isRasterAligned)
 				{
@@ -64,6 +65,10 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 						rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
 					}
 				}
+
+				rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+				dest = control_center->get_debug_image();
+				draw_image(rasBase, dest, width, height, srcInfo.pixelStride);
 
 				if (srcOps->Release)
 				{
@@ -262,7 +267,7 @@ void InitialiseHooks()
 		{
 			return;
 		}
-		
+
         typedef int __stdcall (*MH_Initialize)(void);
         typedef int __stdcall (*MH_CreateHook)(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOriginal);
         typedef int __stdcall (*MH_EnableHook)(LPVOID pTarget);

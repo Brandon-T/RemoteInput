@@ -62,7 +62,7 @@ Reflection* GetNativeReflector()
 	};
 
 	HMODULE awt = nullptr;
-	if (TimeOut(20, [&]{ return (awt = GetModuleHandle("awt.dll")); }))
+	if (!TimeOut(20, [&]{ return (awt = GetModuleHandle("awt.dll")); }))
 	{
 		return nullptr;
 	}

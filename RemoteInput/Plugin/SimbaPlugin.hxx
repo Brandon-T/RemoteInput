@@ -34,9 +34,9 @@ static const char* PascalExports[] =
     "Reflect_Array", "Function RIGetArray(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): Pointer;",
     "Reflect_Array_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer): PtrUInt;",
     "Reflect_Array_Index", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: PtrUInt; length: PtrUInt; buffer: Pointer);",
-    "Reflect_Array_Index2D", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: PtrUInt; length: PtrUInt; x: Int32; y: Int32; buffer: Pointer); overload;",
-    "Reflect_Array_Index3D", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: PtrUInt; length: PtrUInt; x: Int32; y: Int32; z: Int32; buffer: Pointer); overload;",
-    "Reflect_Array_Index4D", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: PtrUInt; length: PtrUInt; x: Int32; y: Int32; z: Int32; w: Int32; buffer: Pointer); overload;",
+    "Reflect_Array_Index2D", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: PtrUInt; x: Int32; y: Int32; buffer: Pointer); overload;",
+    "Reflect_Array_Index3D", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: PtrUInt; x: Int32; y: Int32; z: Int32; buffer: Pointer); overload;",
+    "Reflect_Array_Index4D", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: PtrUInt; x: Int32; y: Int32; z: Int32; w: Int32; buffer: Pointer); overload;",
 
     //"EIOS_RequestTarget", "Function EIOS_RequestTarget(initArgs: Pointer): Pointer;",
     //"EIOS_ReleaseTarget", "Procedure EIOS_ReleaseTarget(target: Pointer);",
@@ -52,6 +52,8 @@ static const char* PascalExports[] =
 	"EIOS_HoldKey", "Procedure EIOS_HoldKey(target: Pointer; Key: Int32);",
 	"EIOS_ReleaseKey", "Procedure EIOS_ReleaseKey(target: Pointer; Key: Int32);",
 	"EIOS_IsKeyHeld", "Function EIOS_IsKeyHeld(target: Pointer; Key: Int32): Boolean;"*/
+
+	"EIOS_GetDebugImageBufferEx", "Function EIOS_GetDebugImageBufferEx(eios: Pointer): ^UInt8",
 };
 
 static const char* PascalTypes[] =

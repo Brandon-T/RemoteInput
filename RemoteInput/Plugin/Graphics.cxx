@@ -22,7 +22,7 @@
 		std::uint8_t r;
 		std::uint8_t a;
 	} bgra;
-	
+
 	auto set_pixel = [&](int x, int y) {
 		std::uint8_t* ptr = static_cast<std::uint8_t*>(buffer);
 		bgra* pixel = reinterpret_cast<bgra*>(&ptr[(y * width + x) * stride]);
@@ -31,7 +31,7 @@
 		pixel->b = 0xFF;
 		pixel->a = 0xFF;
 	};
-	
+
 	int radiusSq = radius * radius;
 	for (int yy = -radius; yy <= radius; ++yy)
 	{
@@ -68,7 +68,7 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
 		std::uint8_t r;
 		std::uint8_t a;
 	} bgra;
-	
+
 	auto set_pixel = [&](int x, int y) {
 		std::uint8_t* ptr = static_cast<std::uint8_t*>(buffer);
 		bgra* pixel = reinterpret_cast<bgra*>(&ptr[(y * width + x) * stride]);
@@ -77,16 +77,16 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
 		pixel->b = 0xFF;
 		pixel->a = 0xFF;
 	};
-	
+
 	int radiusSq = radius * radius;
 	int area = (radiusSq << 2) + (radius << 2) + 1;
 	int rr = (radius << 1) + 1;
-	
+
 	for (int i = 0; i < area; ++i)
 	{
 		int xx = (i % rr) - radius;
 		int yy = (i / rr) - radius;
-		
+
 		//clamp
 		if (x + xx >= 0 && y + yy >= 0 && x + xx <= width && y + yy <= height)
 		{
@@ -117,16 +117,19 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 		std::uint8_t r;
 		std::uint8_t a;
 	} bgra;
-	
+
 	bgra* dest = static_cast<bgra*>(dest_buffer);
 	bgra* source = static_cast<bgra*>(source_buffer);
-	
+
 	for (std::int32_t i = 0; i < width * height * stride; i += stride)
 	{
-		dest->b = source->b;
-		dest->g = source->g;
-		dest->r = source->r;
-		dest->a = (source->b == 0x00 && source->g == 0x00 && source->r == 0x00) ? 0x00 : 0xFF;
+	    dest->a = (source->b == 0x00 && source->g == 0x00 && source->r == 0x00) ? 0x00 : 0xFF;
+	    if (dest->a != 0x00)
+        {
+            dest->b = source->b;
+            dest->g = source->g;
+            dest->r = source->r;
+        }
 		++source;
 		++dest;
 	}
@@ -135,17 +138,17 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride)
 {
 	#define GL_TEXTURE_RECTANGLE              0x84F5
-	
+
 	#if defined(__APPLE__)
 	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
 	#endif
-	
+
 	//Backup
 	bool GLBlend = glIsEnabled(GL_BLEND);
 	bool GLTexture2D = glIsEnabled(GL_TEXTURE_2D);
 	bool GLRectangle = glIsEnabled(GL_TEXTURE_RECTANGLE);
     bool PointSmooth = glIsEnabled(GL_POINT_SMOOTH);
-	
+
 	glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -155,7 +158,7 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
 
     glPushMatrix();
     glLoadIdentity();
-	
+
 	//Load Texture
 	typedef struct bgra_t
 	{
@@ -164,7 +167,7 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
 		std::uint8_t r;
 		std::uint8_t a;
 	} bgra;
-	
+
 	bgra* source = static_cast<bgra*>(source_buffer);
 	for (std::int32_t i = 0; i < width * height * stride; i += stride)
 	{
@@ -175,9 +178,9 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
     static GLuint ID = 0;
 	static std::int32_t w = 0;
 	static std::int32_t h = 0;
-	
+
 	GLenum target = GL_TEXTURE_RECTANGLE;
-	
+
 	if (ID == 0 || w != width || h != height)
 	{
 		if (ID != 0)
@@ -185,10 +188,10 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
 			glDeleteTextures(1, &ID);
 			ID = 0;
 		}
-		
+
 		w = width;
 		h = height;
-		
+
 		glGenTextures(1, &ID);
 		glBindTexture(target, ID);
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
@@ -209,8 +212,8 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		glBindTexture(target, 0);
 	}
-	
-	
+
+
 	float x1 = 0.0;
 	float y1 = 0.0;
 	float x2 = width;
@@ -219,7 +222,7 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
     height = target == GL_TEXTURE_2D ? 1 : height;
 
 	//Render Texture
-	
+
     glEnable(target);
     glBindTexture(target, ID);
     glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
@@ -235,26 +238,26 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
     glEnd();
 	glBindTexture(target, 0);
     glDisable(target);
-	
-	
+
+
 	//Restore
 	glPopMatrix();
-	
+
 	if (!GLBlend)
 	{
 		glDisable(GL_BLEND);
 	}
-	
+
     if (GLTexture2D)
 	{
 		glEnable(GL_TEXTURE_2D);
 	}
-	
+
 	if (GLRectangle)
 	{
 		glEnable(GL_TEXTURE_RECTANGLE);
 	}
-	
+
     if (!PointSmooth)
 	{
 		glDisable(GL_POINT_SMOOTH);

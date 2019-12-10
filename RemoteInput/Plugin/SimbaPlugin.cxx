@@ -325,25 +325,15 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
 {
     printf("ATTACHED TO: %d\n", getpid());
 
-    std::thread([&]{
-        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+	std::thread([&] {
+		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-            if (control_center && control_center->hasReflector())
-            {
-                StartHook();
-
-                /*globalLock->lock();
-                ImageData* info = reinterpret_cast<ImageData*>(globalMap->data());
-                info->parentId = -1;
-                info->width = 765;
-                info->height = 553;
-                info->imgoff = sizeof(ImageData);
-                globalLock->unlock();*/
-            }
         }
-    }).detach();
+
+		StartHook();
+	}).detach();
 }
 
 [[gnu::stdcall]] void __unload()
@@ -361,7 +351,7 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
         }
-		
+
 		StartHook();
 	}).detach();
 }
@@ -375,17 +365,15 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
 {
     printf("ATTACHED TO: %d\n", getpid());
 
-    std::thread([&]{
+	std::thread([&] {
 		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-			if (control_center && control_center->hasReflector() && dlopen("libawt_lwawt.so", RTLD_NOLOAD))
-			{
-				StartHook();
-			}
         }
-    }).detach();
+
+		StartHook();
+	}).detach();
 }
 
 [[gnu::destructor]] void __unload()
