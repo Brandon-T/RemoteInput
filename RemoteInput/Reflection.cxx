@@ -15,7 +15,7 @@ Reflection::~Reflection()
 	#else
 	if (this->jvm->getENV() || this->Attach())
 	{
-		jvm->DeleteGlobalRef(this->client);
+		jvm->DeleteGlobalRef(this->applet);
 		jvm->DeleteGlobalRef(this->classLoader);
 		jvm->DeleteGlobalRef(this->frame);
 		this->Detach();

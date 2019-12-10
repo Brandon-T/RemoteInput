@@ -39,7 +39,7 @@ int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeo
 }
 #endif
 
-#if defined(_SYSTEM_V_SEMAPHORES) && !(_POSIX_TIMEOUTS >= 200112L) && !(_POSIX_C_SOURCE  >= 200112L)
+#if defined(_USE_SYSTEM_V_SEMAPHORES) && !(_POSIX_TIMEOUTS >= 200112L) && !(_POSIX_C_SOURCE  >= 200112L)
 int semtimedop(int handle, struct sembuf* operations, size_t operation_count, struct timespec* timeout)
 {
 	if (!timeout)
@@ -496,7 +496,7 @@ Semaphore::~Semaphore()
 	}
 	#endif
 }
-#elif defined(_SYSTEM_V_SEMAPHORES)
+#elif defined(_USE_SYSTEM_V_SEMAPHORES)
 template<typename T>
 T* Semaphore::semaphore_cast(void* &ptr)
 {
@@ -825,7 +825,7 @@ bool Semaphore::wait()
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_wait(hSem);
 	#endif
-    #elif defined(_SYSTEM_V_SEMAPHORES)
+    #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
 	operations[0].sem_num = 0;
@@ -870,7 +870,7 @@ bool Semaphore::try_wait()
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_trywait(hSem);
 	#endif
-    #elif defined(_SYSTEM_V_SEMAPHORES)
+    #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
 	operations[0].sem_num = 0;
@@ -950,7 +950,7 @@ bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_r
 	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
 	return !sem_timedwait(hSem, &ts);
 	#endif
-    #elif defined(_SYSTEM_V_SEMAPHORES)
+    #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
     std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
 
@@ -1024,7 +1024,7 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
 	struct timespec ts = { seconds.count(), nanoseconds.count() };
 	return !sem_timedwait(static_cast<sem_t*>(hSem), &ts);
 	#endif
-    #elif defined(_SYSTEM_V_SEMAPHORES)
+    #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 
 	auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
@@ -1084,7 +1084,7 @@ bool Semaphore::signal()
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_post(static_cast<sem_t*>(hSem));
 	#endif
-    #elif defined(_SYSTEM_V_SEMAPHORES)
+    #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
 	operations[0].sem_num = 0;

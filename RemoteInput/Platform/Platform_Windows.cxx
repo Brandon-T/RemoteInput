@@ -50,19 +50,23 @@ Reflection* GetNativeReflector()
 		}
 		return true;
 	};
-	
+
+	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
+		return reflection->GetClassType(object) == "java.awt.Frame";
+    };
+
 	auto GetMainWindow = [&] {
 		HWND windowFrame = nullptr;
 		EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&windowFrame));
 		return windowFrame;
 	};
-		
+
 	HMODULE awt = nullptr;
 	if (TimeOut(20, [&]{ return (awt = GetModuleHandle("awt.dll")); }))
 	{
 		return nullptr;
 	}
-	
+
 	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
 	{
 		return nullptr;
@@ -99,13 +103,13 @@ Reflection* GetNativeReflector()
 			}
 			return false;
 		});
-		
+
 		if (hasReflection)
 		{
 			reflection->Detach();
 			return reflection;
 		}
-        
+
         reflection->Detach();
     }
 

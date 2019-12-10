@@ -35,9 +35,9 @@
 #include <sys/mman.h>
 #endif
 #if defined(__APPLE__)
-	#include <dispatch/dispatch.h>
+#include <dispatch/dispatch.h>
 #endif
-#elif defined(_SYSTEM_V_SEMAPHORES)
+#elif defined(_USE_SYSTEM_V_SEMAPHORES)
 #include <pthread.h>
 #include <sys/sem.h>
 #include <sys/ipc.h>
@@ -51,7 +51,9 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
@@ -107,7 +109,7 @@ private:
 	bool owned;
 	void* hSem;
 	std::string name;
-	#elif defined(_SYSTEM_V_SEMAPHORES)
+	#elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	bool shared;
 	key_t id;
 	int handle;

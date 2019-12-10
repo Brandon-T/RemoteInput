@@ -52,7 +52,7 @@
 
 1566283041 c:\program files\java\jdk-12.0.2\include\win32\jni_md.h
 
-1575590048 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_darwin.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_darwin.cxx
 	"Platform.hxx"
 	<Foundation/Foundation.h>
 	<Cocoa/Cocoa.h>
@@ -64,7 +64,7 @@
 	<cstdint>
 	"Reflection.hxx"
 
-1575680109 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
+1575940407 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
 	<string>
 	<memory>
 	<functional>
@@ -72,14 +72,14 @@
 	"JVM.hxx"
 	"ReflectionHook.hxx"
 
-1575590048 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_linux.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_linux.cxx
 	"Platform.hxx"
 	<X11/Xlib.h>
 	<X11/Xatom.h>
 	<functional>
 	<cstring>
 
-1575680199 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_windows.cxx
+1575940724 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\platform_windows.cxx
 	"Platform.hxx"
 	<string>
 	<chrono>
@@ -102,11 +102,11 @@
 	<stdexcept>
 	<vector>
 
-1575610291 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.cxx
+1575940598 source:c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.cxx
 	"SharedEvent.hxx"
 	<tuple>
 
-1575590767 c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.hxx
+1575940660 c:\users\brandon\desktop\remoteinput\remoteinput\echo\sharedevent.hxx
 	<ctime>
 	<cstdint>
 	<string>
@@ -139,7 +139,7 @@
 	<errno.h>
 	<unistd.h>
 
-1575680233 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
 	"SimbaPlugin.hxx"
 	<memory>
 	<atomic>
@@ -159,7 +159,7 @@
 	"TMemoryManager.hxx"
 	<windows.h>
 
-1575610300 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+1575940407 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
 	<cstdint>
 	<stdint.h>
 	"ControlCenter.hxx"
@@ -183,7 +183,7 @@
 1575590048 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
 	<jni.h>
 
-1575680322 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
 	"EIOS.hxx"
 	<cstdio>
 	<unordered_map>
@@ -208,13 +208,22 @@
 	<vector>
 	"../Echo/SharedEvent.hxx"
 
-1575590048 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.cxx
 	"Graphics.hxx"
+	<cstdint>
+	<cstring>
+	<memory>
+	<OpenGL/OpenGL.h>
+	<OpenGL/CGLMacro.h>
+	<OpenGL/gl.h>
+	<OpenGL/glext.h>
+	<gl/gl.h>
+	<gl/glext.h>
 
-1575590048 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
+1575940407 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
 	<cstdint>
 
-1575590048 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
+1575940407 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
 	<atomic>
 	"SharedEvent.hxx"
 	"Reflection.hxx"
@@ -230,7 +239,7 @@
 	"EIOS.hxx"
 	"Graphics.hxx"
 
-1575679271 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
 	"ControlCenter.hxx"
 	<thread>
 	<unordered_map>
@@ -241,7 +250,7 @@
 	"Graphics.hxx"
 	"ReflectionHook.hxx"
 
-1575590048 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_darwin.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_darwin.cxx
 	"NativeHooks.hxx"
 	"rd_route.h"
 	<OpenGL/OpenGL.h>
@@ -253,6 +262,7 @@
 	"JavaInternal.hxx"
 	"EIOS.hxx"
 	"Graphics.hxx"
+	"ModelRendering.hpp"
 
 1575590048 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_linux.cxx
 	"NativeHooks.hxx"
@@ -264,7 +274,7 @@
 	<gl/gl.h>
 	<gl/glext.h>
 
-1575676102 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_windows.cxx
+1575940407 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_windows.cxx
 	"NativeHooks.hxx"
 	<windows.h>
 	<gl/gl.h>
