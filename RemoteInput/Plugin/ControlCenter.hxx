@@ -62,7 +62,7 @@ public:
 	void move_mouse(std::int32_t x, std::int32_t y);
 	void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
-	
+
 	jobject reflect_object(const ReflectionHook &hook);
 	void reflect_release_object(const jobject object);
 	void reflect_release_objects(const jobject* array, std::size_t length);
@@ -76,14 +76,15 @@ public:
 	double reflect_double(const ReflectionHook &hook);
 	std::string reflect_string(const ReflectionHook &hook);
 	jarray reflect_array(const ReflectionHook &hook);
+	jarray reflect_array_with_size(const ReflectionHook &hook, std::size_t* output_size);
 	std::size_t reflect_array_size(const jarray array);
 	void* reflect_array_index(const jarray array, ReflectionArrayType type, std::size_t index, std::size_t length);
 	void* reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y);
 	void* reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z);
 	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
-	
+
 	static std::size_t reflect_size_for_type(ReflectionArrayType type);
-	
+
 	Reflection* get_reflector()
 	{
 		return reflector.get();

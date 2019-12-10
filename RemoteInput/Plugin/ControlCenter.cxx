@@ -334,6 +334,18 @@ void ControlCenter::process_command()
 		}
 			break;
 
+        case EIOSCommand::REFLECT_ARRAY_WITH_SIZE:
+        {
+            ReflectionHook hook;
+			hook.read(arguments);
+
+			auto result = reflector->getField<jarray>(hook.object, hook);
+			jsize length = reflector->getEnv()->GetArrayLength(result);
+			EIOS_Write(arguments, length);
+			EIOS_Write(arguments, result);
+        }
+            break;
+
 		case EIOSCommand::REFLECT_ARRAY_SIZE:
 		{
 			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
@@ -380,6 +392,11 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 		{
 			return EIOS_Write(response, nullptr);
 		}
+
+		if (length == 0)
+        {
+            length = reflector->getEnv()->GetArrayLength(array);
+        }
 
 		//Maybe better to use GetPrimitiveArrayCritical + memcpy
 		switch (type) {
@@ -441,7 +458,6 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 						EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
 					}
 				}
-				else
 				{
 					auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
 					EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
@@ -450,7 +466,7 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 				break;
 		}
 	};
-	
+
 	ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
 
 	if (dimensions == 1)
@@ -618,7 +634,7 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 		*width = EIOS_Read<std::int32_t>(arguments);
 		*height = EIOS_Read<std::int32_t>(arguments);
 	}*/
-	
+
 	*width = get_width();
 	*height = get_height();
 }
@@ -869,6 +885,24 @@ jarray ControlCenter::reflect_array(const ReflectionHook &hook)
 	if (result)
 	{
 		void* response = get_image_data()->args;
+		jarray object = EIOS_Read<jarray>(response);
+		return object;
+	}
+	return nullptr;
+}
+
+jarray ControlCenter::reflect_array_with_size(const ReflectionHook &hook, std::size_t* output_size)
+{
+    auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_ARRAY_WITH_SIZE;
+		hook.write(arguments);
+	});
+
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		*output_size = EIOS_Read<jsize>(response);
 		jarray object = EIOS_Read<jarray>(response);
 		return object;
 	}

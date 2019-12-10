@@ -66,9 +66,9 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 					}
 				}
 
-				rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-				dest = control_center->get_debug_image();
-				draw_image(rasBase, dest, width, height, srcInfo.pixelStride);
+				//rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+				//dest = control_center->get_debug_image();
+				//draw_image(rasBase, dest, width, height, srcInfo.pixelStride);
 
 				if (srcOps->Release)
 				{

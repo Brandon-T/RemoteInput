@@ -52,6 +52,7 @@ enum class EIOSCommand: std::uint32_t
 	REFLECT_DOUBLE,
 	REFLECT_STRING,
 	REFLECT_ARRAY,
+	REFLECT_ARRAY_WITH_SIZE,
 	REFLECT_ARRAY_SIZE,
 	REFLECT_ARRAY_INDEX,
 	REFLECT_ARRAY_INDEX2D,
@@ -65,7 +66,7 @@ typedef struct ImageData
     std::int32_t width;
     std::int32_t height;
     EIOSCommand command;
-    std::uint8_t args[4096];
+    std::uint8_t args[4096 * 8];
 } ImageData;
 
 typedef struct EIOS

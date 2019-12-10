@@ -203,6 +203,16 @@ jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* fi
 	return nullptr;
 }
 
+jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_size, const char* cls, const char* field, const char* desc)
+{
+    if (eios)
+	{
+		ReflectionHook hook{object, cls, field, desc};
+		return eios->control_center->reflect_array_with_size(hook, output_size);
+	}
+	return nullptr;
+}
+
 std::size_t Reflect_Array_Size(EIOS* eios, jarray array)
 {
 	if (eios)

@@ -32,6 +32,7 @@ static const char* PascalExports[] =
     "Reflect_Double", "Function RIGetDouble(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): Double;",
     "Reflect_String", "Procedure RIGetString(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String; output: Pointer; size: PtrUInt);",
     "Reflect_Array", "Function RIGetArray(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): Pointer;",
+    "Reflect_Array_With_Size", "Function RIGetArray(eios: Pointer; instance: Pointer; output_size: ^PtrUInt; cls: String; field: String; desc: String): Pointer; overload;",
     "Reflect_Array_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer): PtrUInt;",
     "Reflect_Array_Index", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: PtrUInt; length: PtrUInt; buffer: Pointer);",
     "Reflect_Array_Index2D", "Procedure RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: PtrUInt; x: Int32; y: Int32; buffer: Pointer); overload;",
@@ -104,6 +105,7 @@ EXPORT float Reflect_Float(EIOS* eios, jobject object, const char* cls, const ch
 EXPORT double Reflect_Double(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc, char* output, std::size_t output_size);
 EXPORT jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
+EXPORT jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_size, const char* cls, const char* field, const char* desc);
 EXPORT std::size_t Reflect_Array_Size(EIOS* eios, jarray array);
 
 EXPORT void Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length, void* buffer);
