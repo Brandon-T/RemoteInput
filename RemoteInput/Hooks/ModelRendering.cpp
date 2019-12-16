@@ -446,14 +446,56 @@ Polygon::Polygon(std::vector<std::int32_t> xpoints, std::vector<std::int32_t> yp
 
 std::uint8_t Client::getTileSettings(Reflector* eios, std::int32_t x, std::int32_t y, std::int32_t z)
 {
-	auto settings = eios->GetArray(nullptr, HOOK_CLIENT_TILESETTINGS);
-	return eios->GetArrayIndex3D<std::uint8_t>(settings.get(), 1, x, y, z)[0];
+	static std::once_flag flag;
+	static std::vector<std::vector<std::vector<std::uint8_t>>> result;
+	
+	std::call_once(flag, [&]{
+		auto settings = eios->GetArray(nullptr, HOOK_CLIENT_TILESETTINGS);
+		std::size_t size = eios->GetArraySize(settings.get());
+		result.reserve(size);
+		
+		auto jx = eios->GetArrayIndex<jobject>(settings.get(), 0, size);
+		for (auto& x : jx)
+		{
+			std::vector<std::vector<std::uint8_t>> inner;
+			auto jy = eios->GetArrayIndex<jobject>(x, 0, eios->GetArraySize(x));
+			for (auto& y : jy)
+			{
+				inner.push_back(eios->GetArrayIndex<std::uint8_t>(y, 0, eios->GetArraySize(y)));
+			}
+			result.push_back(inner);
+			eios->ReleaseObjects((void**)&jy[0], jy.size());
+		}
+		eios->ReleaseObjects((void**)&jx[0], jx.size());
+	});
+	return result[x][y][z];
 }
 
 std::int32_t Client::getTileHeights(Reflector* eios, std::int32_t x, std::int32_t y, std::int32_t z)
 {
-	auto settings = eios->GetArray(nullptr, HOOK_CLIENT_TILEHEIGHTS);
-	return eios->GetArrayIndex3D<std::int32_t>(settings.get(), 1, x, y, z)[0];
+	static std::once_flag flag;
+	static std::vector<std::vector<std::vector<std::int32_t>>> result;
+	
+	std::call_once(flag, [&]{
+		auto settings = eios->GetArray(nullptr, HOOK_CLIENT_TILEHEIGHTS);
+		std::size_t size = eios->GetArraySize(settings.get());
+		result.reserve(size);
+		
+		auto jx = eios->GetArrayIndex<jobject>(settings.get(), 0, size);
+		for (auto& x : jx)
+		{
+			std::vector<std::vector<std::int32_t>> inner;
+			auto jy = eios->GetArrayIndex<jobject>(x, 0, eios->GetArraySize(x));
+			for (auto& y : jy)
+			{
+				inner.push_back(eios->GetArrayIndex<std::int32_t>(y, 0, eios->GetArraySize(y)));
+			}
+			result.push_back(inner);
+			eios->ReleaseObjects((void**)&jy[0], jy.size());
+		}
+		eios->ReleaseObjects((void**)&jx[0], jx.size());
+	});
+	return result[x][y][z];
 }
 
 std::int32_t Client::plane(Reflector* eios)
@@ -532,18 +574,36 @@ std::int32_t Projector::getTileHeight(Reflector* eios, std::int32_t x, std::int3
 
 Point Projector::toScreen(Reflector* eios, Point p, std::int32_t localX, std::int32_t localY, std::int32_t plane)
 {
+	std::int32_t cameraX = Camera::getX(eios);
+	std::int32_t cameraY = Camera::getY(eios);
+	std::int32_t cameraZ = Camera::getZ(eios);
+	std::int32_t cameraPitch = Camera::pitch(eios);
+	std::int32_t cameraYaw = Camera::yaw(eios);
+	std::int32_t clientPlane = Client::plane(eios);
+	
+	std::int32_t viewPortWidth = Client::viewPortWidth(eios);
+	std::int32_t viewPortHeight = Client::viewPortHeight(eios);
+	std::int32_t viewPortScale = Client::viewPortScale(eios);
+	
+	return Projector::toScreen(eios, p, localX, localY, plane, cameraX, cameraY, cameraZ, cameraPitch, cameraYaw, clientPlane, viewPortWidth, viewPortHeight, viewPortScale);
+}
+
+Point Projector::toScreen(Reflector* eios, Point p, std::int32_t localX, std::int32_t localY, std::int32_t plane,
+					  std::int32_t cameraX, std::int32_t cameraY, std::int32_t cameraZ,
+					  std::int32_t cameraPitch, std::int32_t cameraYaw,
+					  std::int32_t clientPlane,
+					  std::int32_t viewPortWidth, std::int32_t viewPortHeight,
+					  std::int32_t viewPortScale)
+{
 	std::int32_t x = localX - p.x;
 	std::int32_t y = localY - p.z;
 
 	if (x >= 128 && y >= 128 && x <= 13056 && y <= 13056)
 	{
-		std::int32_t z = getTileHeight(eios, x, y, Client::plane(eios)) - plane;
-		x -= Camera::getX(eios);
-		y -= Camera::getY(eios);
-		z -= Camera::getZ(eios);
-
-		int cameraPitch = Camera::pitch(eios);
-		int cameraYaw = Camera::yaw(eios);
+		std::int32_t z = getTileHeight(eios, x, y, clientPlane) - plane;
+		x -= cameraX;
+		y -= cameraY;
+		z -= cameraZ;
 
 		int sinCurveY = SINE[cameraPitch];
 		int cosCurveY = COSINE[cameraPitch];
@@ -558,12 +618,10 @@ Point Projector::toScreen(Reflector* eios, Point p, std::int32_t localX, std::in
 
 		if (y >= 50)
 		{
-			int viewWidth = Client::viewPortWidth(eios);
-			int viewHeight = Client::viewPortHeight(eios);
-			int screenX = (x * Client::viewPortScale(eios) / y) + (viewWidth / 2);
-			int screenY = (z * Client::viewPortScale(eios) / y) + (viewHeight / 2);
+			int screenX = (x * viewPortScale / y) + (viewPortWidth / 2);
+			int screenY = (z * viewPortScale / y) + (viewPortHeight / 2);
 			
-			if (screenX < 0 || screenX > viewWidth || screenY < 0 || screenY > viewHeight)
+			if (screenX < 0 || screenX > viewPortWidth || screenY < 0 || screenY > viewPortHeight)
 			{
 				return Point(-1, -1, 0);
 			}
@@ -575,7 +633,6 @@ Point Projector::toScreen(Reflector* eios, Point p, std::int32_t localX, std::in
 	}
 
 	return Point(-1, -1, 0);
-
 }
 
 // MARK: - Model
@@ -626,7 +683,7 @@ std::vector<Point> Model::getVertices()
 	auto verticesZ = eios->GetArray(ref.get(), HOOK_MODEL_VERTICESZ);
 	
 	std::size_t size = eios->GetArraySize(verticesX.get());
-	result.reserve(size);
+	result.resize(size);
 	
 	auto x = eios->GetArrayIndex<std::int32_t>(verticesX.get(), 0, size);
 	auto y = eios->GetArrayIndex<std::int32_t>(verticesY.get(), 0, size);
@@ -634,7 +691,7 @@ std::vector<Point> Model::getVertices()
 	
 	for (std::size_t i = 0; i < size; ++i)
 	{
-		result.push_back(Point(x[i], y[i], z[i]));
+		result[i] = Point(x[i], y[i], z[i]);
 	}
 	return result;
 }
@@ -647,7 +704,7 @@ std::vector<Triangle> Model::getTriangles()
 	auto indicesZ = eios->GetArray(ref.get(), HOOK_MODEL_INDICESZ);
 	
 	std::int32_t size = eios->GetArraySize(indicesX.get());
-	result.reserve(size);
+	result.resize(size);
 	
 	auto x = eios->GetArrayIndex<std::int32_t>(indicesX.get(), 0, size);
 	auto y = eios->GetArrayIndex<std::int32_t>(indicesY.get(), 0, size);
@@ -658,7 +715,7 @@ std::vector<Triangle> Model::getTriangles()
 		Point a = this->vertices[x[i]];
 		Point b = this->vertices[y[i]];
 		Point c = this->vertices[z[i]];
-		result.push_back(Triangle(a, b, c));
+		result[i] = Triangle(a, b, c);
 	}
 	return result;
 }
@@ -720,13 +777,13 @@ std::vector<Node> HashTable::buckets()
 	std::vector<Node> result;
 	auto buckets = eios->GetArray(ref.get(), HOOK_HASHTABLE_CACHE_BUCKETS);
 	std::int32_t size = eios->GetArraySize(buckets.get());
-	result.reserve(size);
+	result.resize(size);
 	
 	auto buckets_array = eios->GetArrayIndex<jobject>(buckets.get(), 0, size);
 	
 	for (std::int32_t i = 0; i < size; ++i)
 	{
-		result.push_back(Node(eios, eios->make_safe(buckets_array[i])));
+		result[i] = Node(eios, eios->make_safe(buckets_array[i]));
 	}
 	
 	return result;
@@ -894,17 +951,21 @@ Model Player::model()
 	}
 	
 	std::vector<Node> buckets = hashTable.buckets();
+	std::vector<void*> objectsToRelease;
+	objectsToRelease.reserve(buckets.size());
 	
 	if (!buckets.empty())
 	{
 		std::int64_t index = (modelId & (hashTable.size() - 1));
-		Node head = std::move(buckets[index]);
+		Node& head = buckets[index];
 		Node current = head.next();
+		
 		while (head.uid() != current.uid())
 		{
 			std::int64_t uid = current.uid();
 			if (uid == modelId)
 			{
+				eios->ReleaseObjects(&objectsToRelease[0], objectsToRelease.size());
 				return Model(eios, current.getRef());
 			}
 
@@ -912,11 +973,40 @@ Model Player::model()
 			{
 				break;
 			}
-
-			current = current.next();
+			
+			Node next = current.next();
+			objectsToRelease.push_back(current.release());
+			current = std::move(next);
 		}
 	}
+	
+	eios->ReleaseObjects(&objectsToRelease[0], objectsToRelease.size());
 	return Model(eios, nullptr);
+	
+//	std::vector<Node> buckets = hashTable.buckets();
+//
+//	if (!buckets.empty())
+//	{
+//		std::int64_t index = (modelId & (hashTable.size() - 1));
+//		Node head = std::move(buckets[index]);
+//		Node current = head.next();
+//		while (head.uid() != current.uid())
+//		{
+//			std::int64_t uid = current.uid();
+//			if (uid == modelId)
+//			{
+//				return Model(eios, current.getRef());
+//			}
+//
+//			if (uid == -1)
+//			{
+//				break;
+//			}
+//
+//			current = current.next();
+//		}
+//	}
+//	return Model(eios, nullptr);
 }
 
 
@@ -1033,13 +1123,33 @@ void draw_polygon(std::uint8_t* dest, std::int32_t npoints, std::int32_t* xpoint
 void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t height)> renderer)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
-	
 	Reflector* eios = get_reflector(control_center->get_reflector());
-	if (control_center->get_reflector()->Attach())
+	
+	static bool isAttached = false;
+	if (!isAttached)
 	{
+		control_center->get_reflector()->AttachAsDaemon();
+	}
+	
+	//if (control_center->get_reflector()->Attach())
+	{
+		static int amount = 1;
+		static double time = 0.0f;
 		auto start = std::chrono::high_resolution_clock::now();
+		
 		std::vector<Player> players;
 		players.push_back(Player::localPlayer(eios));
+		
+		std::int32_t cameraX = Camera::getX(eios);
+		std::int32_t cameraY = Camera::getY(eios);
+		std::int32_t cameraZ = Camera::getZ(eios);
+		std::int32_t cameraPitch = Camera::pitch(eios);
+		std::int32_t cameraYaw = Camera::yaw(eios);
+		std::int32_t clientPlane = Client::plane(eios);
+		
+		std::int32_t viewPortWidth = Client::viewPortWidth(eios);
+		std::int32_t viewPortHeight = Client::viewPortHeight(eios);
+		std::int32_t viewPortScale = Client::viewPortScale(eios);
 		
 		for (auto& player : players)
 		{
@@ -1065,9 +1175,23 @@ void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t
 					Point vy = triangles[i].b;
 					Point vz = triangles[i].c;
 
-					Point a = Projector::toScreen(eios, vx, localX, localY, -vx.y);
-					Point b = Projector::toScreen(eios, vy, localX, localY, -vy.y);
-					Point c = Projector::toScreen(eios, vz, localX, localY, -vz.y);
+					Point a = Projector::toScreen(eios, vx, localX, localY, -vx.y,
+												  cameraX, cameraY, cameraZ, cameraPitch,
+												  cameraYaw, clientPlane,
+												  viewPortWidth, viewPortHeight,
+												  viewPortScale);
+					
+					Point b = Projector::toScreen(eios, vy, localX, localY, -vy.y,
+												  cameraX, cameraY, cameraZ, cameraPitch,
+												  cameraYaw, clientPlane,
+												  viewPortWidth, viewPortHeight,
+												  viewPortScale);
+					
+					Point c = Projector::toScreen(eios, vz, localX, localY, -vz.y,
+												  cameraX, cameraY, cameraZ, cameraPitch,
+												  cameraYaw, clientPlane,
+												  viewPortWidth, viewPortHeight,
+												  viewPortScale);
 					polygons.push_back(Polygon({a.x, b.x, c.x}, {a.y, b.y, c.y}, 3));
 				}
 				
@@ -1078,11 +1202,14 @@ void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t
 			}
 			
 			auto end = std::chrono::high_resolution_clock::now();
-			printf("TIME: %lld\n", std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count());
+			time += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+			
+			printf("TIME: %.2f\n", time / (double)amount);
+			++amount;
 		}
 		
 		players.clear();
 		
-		control_center->get_reflector()->Detach();
+		//control_center->get_reflector()->Detach();
 	}
 }

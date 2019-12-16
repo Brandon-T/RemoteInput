@@ -89,6 +89,13 @@ private:
 	
 public:
 	static Point toScreen(Reflector* eios, Point p, std::int32_t localX, std::int32_t localY, std::int32_t plane);
+	
+	static Point toScreen(Reflector* eios, Point p, std::int32_t localX, std::int32_t localY, std::int32_t plane,
+						  std::int32_t cameraX, std::int32_t cameraY, std::int32_t cameraZ,
+						  std::int32_t cameraPitch, std::int32_t cameraYaw,
+						  std::int32_t clientPlane,
+						  std::int32_t viewPortWidth, std::int32_t viewPortHeight,
+						  std::int32_t viewPortScale);
 };
 
 class Model
@@ -128,6 +135,7 @@ public:
 	
 	Node& operator = (Node&& other);
 	object getRef() { return std::move(ref); }
+	void* release() { return ref.release(); }
 	std::int64_t uid();
 	Node next();
 	

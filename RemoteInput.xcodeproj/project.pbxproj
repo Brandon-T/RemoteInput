@@ -97,6 +97,12 @@
 		5EBD66DB235D041600D183B1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DA235D041600D183B1 /* Cocoa.framework */; };
 		5EBD66DD235D041D00D183B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DC235D041D00D183B1 /* Foundation.framework */; };
 		5EC5950C232D956B00922111 /* RemoteInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EC5950A232D956B00922111 /* RemoteInput.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */; };
+		5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */; };
+		5EFF49BE23A703C700DC83D1 /* SpinLock.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EFF49BD23A703C700DC83D1 /* SpinLock.cxx */; };
+		5EFF49BF23A703C700DC83D1 /* SpinLock.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EFF49BD23A703C700DC83D1 /* SpinLock.cxx */; };
+		5EFF49C423A704DF00DC83D1 /* Signal.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49C123A704DF00DC83D1 /* Signal.hxx */; };
+		5EFF49C523A704DF00DC83D1 /* Signal.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49C123A704DF00DC83D1 /* Signal.hxx */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -149,6 +155,9 @@
 		5EC59507232D956B00922111 /* RemoteInput.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RemoteInput.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EC5950A232D956B00922111 /* RemoteInput.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RemoteInput.h; sourceTree = "<group>"; };
 		5EC5950B232D956B00922111 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SpinLock.hxx; sourceTree = "<group>"; };
+		5EFF49BD23A703C700DC83D1 /* SpinLock.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SpinLock.cxx; sourceTree = "<group>"; };
+		5EFF49C123A704DF00DC83D1 /* Signal.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Signal.hxx; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,6 +222,7 @@
 				5E5FC02A237264840048997B /* ControlCenter.hxx */,
 				5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */,
 				5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */,
+				5EFF49C123A704DF00DC83D1 /* Signal.hxx */,
 			);
 			path = Plugin;
 			sourceTree = "<group>";
@@ -227,6 +237,8 @@
 				5EBD66B4235CF15400D183B1 /* Module.hxx */,
 				5EBD66B5235CF15400D183B1 /* Module.cxx */,
 				5EBD66B6235CF15400D183B1 /* Time.hxx */,
+				5EFF49BD23A703C700DC83D1 /* SpinLock.cxx */,
+				5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */,
 			);
 			path = Echo;
 			sourceTree = "<group>";
@@ -295,12 +307,14 @@
 				5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */,
 				5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */,
 				5E5B3F8D239D39F700F07DD1 /* ModelRendering.hpp in Headers */,
+				5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */,
 				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
 				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
 				5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */,
 				5E6B9A182394C58500E6720C /* TMemoryManager.hxx in Headers */,
 				5E6B9A202394C59700E6720C /* ThreadPool.hxx in Headers */,
 				5E6B9A082394C57600E6720C /* EIOS.hxx in Headers */,
+				5EFF49C523A704DF00DC83D1 /* Signal.hxx in Headers */,
 				5E6B9A062394C57600E6720C /* SharedEvent.hxx in Headers */,
 				5E6B9A1A2394C58500E6720C /* ControlCenter.hxx in Headers */,
 				5E6B9A172394C58500E6720C /* SimbaPlugin.hxx in Headers */,
@@ -323,12 +337,14 @@
 				5EBD66C4235CF15400D183B1 /* Reflection.hxx in Headers */,
 				5EBD66C7235CF15400D183B1 /* EIOS.hxx in Headers */,
 				5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */,
+				5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
 				5EBD66C2235CF15400D183B1 /* JavaInternal.hxx in Headers */,
 				5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */,
 				5EBD66D3235CF15400D183B1 /* MemoryMap.hxx in Headers */,
+				5EFF49C423A704DF00DC83D1 /* Signal.hxx in Headers */,
 				5EBD66CA235CF15400D183B1 /* TMemoryManager.hxx in Headers */,
 				5EBD66CC235CF15400D183B1 /* JVM.hxx in Headers */,
 				5EBD66CB235CF15400D183B1 /* SimbaPlugin.hxx in Headers */,
@@ -444,6 +460,7 @@
 				5E6B9A222394C59C00E6720C /* InputEvents.cxx in Sources */,
 				5E6B9A002394C57600E6720C /* Time.cxx in Sources */,
 				5E6B9A092394C57600E6720C /* JVM.cxx in Sources */,
+				5EFF49BF23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E6B9A122394C57A00E6720C /* Platform_Darwin.cxx in Sources */,
 				5E6B9A152394C57A00E6720C /* Platform_Windows.cxx in Sources */,
 				5E6B9A132394C57A00E6720C /* DebugConsole.cxx in Sources */,
@@ -472,6 +489,7 @@
 				5EBD66BE235CF15400D183B1 /* Platform_Darwin.cxx in Sources */,
 				5EBD66BA235CF15400D183B1 /* Platform_Linux.cxx in Sources */,
 				5EBD66C1235CF15400D183B1 /* DebugConsole.cxx in Sources */,
+				5EFF49BE23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */,
 				5EBD66C9235CF15400D183B1 /* SimbaPlugin.cxx in Sources */,
 				5EBD66C6235CF15400D183B1 /* Reflection.cxx in Sources */,

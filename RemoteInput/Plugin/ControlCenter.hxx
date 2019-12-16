@@ -2,7 +2,7 @@
 #define ControlCenter_HXX_INCLUDED
 
 #include <atomic>
-#include "SharedEvent.hxx"
+#include "Signal.hxx"
 #include "Reflection.hxx"
 #include "MemoryMap.hxx"
 
@@ -24,12 +24,14 @@ enum class ReflectionArrayType: std::uint8_t
 
 class ControlCenter final {
 private:
+	using Signal = Signal<Semaphore>;
+	
 	pid_t pid;
 	bool is_controller;
 	std::atomic_bool stopped;
 	std::unique_ptr<Mutex> map_lock;
-	std::unique_ptr<Semaphore> command_signal;
-	std::unique_ptr<Semaphore> response_signal;
+	std::unique_ptr<Signal> command_signal;
+	std::unique_ptr<Signal> response_signal;
 	std::unique_ptr<Reflection> reflector;
 	std::unique_ptr<MemoryMap<char>> memory_map;
 

@@ -83,7 +83,14 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 						return;
 					}
 
-					command_signal->wait();
+//					command_signal->wait();
+					
+					while(!command_signal->try_wait())
+					{
+						usleep(1);
+						continue;
+					}
+					
 					if (stopped)
 					{
 						if (this->reflector)
@@ -563,8 +570,8 @@ bool ControlCenter::init_signals()
 	sprintf(writeName, "/RI_CC_EventWrite_%d", pid);
 	#endif
 
-	command_signal = std::make_unique<Semaphore>(readName);
-    response_signal = std::make_unique<Semaphore>(writeName);
+	command_signal = std::make_unique<Signal>(readName);
+    response_signal = std::make_unique<Signal>(writeName);
     return command_signal && response_signal;
 }
 
