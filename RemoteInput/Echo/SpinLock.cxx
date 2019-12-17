@@ -442,3 +442,220 @@ bool SpinningSemaphore::try_wait_until(const std::chrono::time_point<Clock, Dura
 {
 	return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
 }
+
+
+
+
+
+
+
+
+void spinning_signal_sleep(int* count)
+{
+	if (*count++ >= 500)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		auto end = start + std::chrono::nanoseconds(1);
+		do {
+			std::this_thread::yield();
+		} while (std::chrono::high_resolution_clock::now() < end);
+		*count = 0;
+	}
+	else
+	{
+		std::this_thread::yield();
+	}
+}
+
+bool spinning_signal_timedlock(std::atomic_bool* lock, const struct timespec* timeout)
+{
+	struct timespec sleeptime;
+	sleeptime.tv_sec = 0;
+	sleeptime.tv_nsec = 1000000; //1ms
+	sleeptime.tv_nsec *= 5; //5ms
+
+    while (lock->load(std::memory_order_acquire) != true)
+    {
+		auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
+		auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+		auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+		struct timespec now = { seconds.count(), nanoseconds.count() };
+		if (now.tv_sec >= timeout->tv_sec && now.tv_nsec >= timeout->tv_nsec)
+		{
+			errno = EAGAIN;
+			return false;
+		}
+
+		nanosleep (&sleeptime, nullptr);
+    }
+	return true;
+}
+
+template<typename T>
+T* spinning_variable_cast(void* &ptr)
+{
+	std::uint8_t* it = static_cast<std::uint8_t*>(ptr);
+	T* result = static_cast<T*>(ptr);
+	ptr = (it + sizeof(T));
+	return result;
+}
+
+SpinningSignal::SpinningSignal(std::int32_t count) : shared(false), lock(new std::atomic_bool(false)), ref(nullptr), name("\0"), shm_fd(-1)
+{
+	static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Atomic Bool is NOT Lock-Free");
+}
+
+SpinningSignal::SpinningSignal(std::string name, std::int32_t count) : shared(true), lock(nullptr), ref(nullptr), name(name), shm_fd(-1)
+{
+	static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Atomic Bool is NOT Lock-Free");
+	
+	bool created = true;
+	shm_fd = shm_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU); //0660 -> S_IRWXU
+	if (shm_fd == -1)
+	{
+		if (errno == EEXIST)
+		{
+			created = false;
+			shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU);
+		}
+	}
+
+	if (shm_fd == -1)
+	{
+		perror(strerror(errno));
+		throw std::runtime_error("Cannot create or open memory map");
+	}
+
+	if (created && ftruncate(shm_fd, sizeof(*this)) == -1)
+	{
+		shm_unlink(name.c_str());
+		shm_fd = -1;
+		throw std::runtime_error("Cannot truncate memory map");
+	}
+
+	void* mapping = mmap(nullptr, sizeof(*this), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (mapping == MAP_FAILED)
+	{
+		if (created)
+		{
+			shm_unlink(name.c_str());
+		}
+		shm_fd = -1;
+		throw std::runtime_error("Mapping into process memory failed");
+	}
+
+	void* data = mapping;
+	std::atomic_bool* lock = spinning_variable_cast<std::atomic_bool>(data);
+	std::int32_t* ref = spinning_variable_cast<std::int32_t>(data);
+
+	if (created)
+	{
+		new(lock) std::atomic_bool(false);
+	}
+
+	*ref += 1;
+	this->lock = lock;
+	this->ref = ref;
+	msync(ref, sizeof(*ref), MS_SYNC);
+}
+
+SpinningSignal::~SpinningSignal()
+{
+	if (lock && shared)
+    {
+        void* data = static_cast<void*>(lock);
+        std::atomic_bool* lock = spinning_variable_cast<std::atomic_bool>(data);
+        std::int32_t* ref = spinning_variable_cast<std::int32_t>(data);
+        *ref -= 1;
+		msync(ref, sizeof(*ref), MS_SYNC);
+
+        if (*ref == 0)
+        {
+			lock->~atomic();
+            shm_unlink(name.c_str());
+        }
+        munmap(lock, sizeof(*this));
+    }
+
+	if (lock && !shared)
+	{
+		delete lock;
+	}
+
+    if (shm_fd != -1)
+    {
+        close(shm_fd);
+    }
+
+    lock = nullptr;
+    ref = nullptr;
+    shm_fd = -1;
+}
+
+bool SpinningSignal::wait()
+{
+	static int cnt = 0;
+	while (!lock->load(std::memory_order_acquire)) { spinning_signal_sleep(&cnt); }
+	lock->store(false, std::memory_order_release);
+	return true;
+}
+
+bool SpinningSignal::try_wait()
+{
+	if (!lock->load(std::memory_order_acquire))
+	{
+		lock->store(false, std::memory_order_release);
+		return true;
+	}
+	return false;
+}
+
+bool SpinningSignal::timed_wait(std::uint32_t milliseconds)
+{
+	if(!milliseconds)
+    {
+        return wait();
+    }
+	
+	auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+	struct timespec ts = { seconds.count(), nanoseconds.count() };
+	return spinning_signal_timedlock(lock, &ts);
+}
+
+bool SpinningSignal::signal()
+{
+	lock->store(true, std::memory_order_release);
+	return true;
+}
+
+
+template<typename Rep, typename Period>
+bool SpinningSignal::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time)
+{
+	std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
+    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
+    {
+        ++rtime;
+    }
+    return try_wait_until(std::chrono::steady_clock::now() + rtime);
+}
+
+template<typename Duration>
+bool SpinningSignal::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time)
+{
+	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
+    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
+
+	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
+	return spinning_signal_timedlock(lock, &ts);
+}
+
+template<typename Clock, typename Duration>
+bool SpinningSignal::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time)
+{
+	return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
+}

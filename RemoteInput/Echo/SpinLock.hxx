@@ -80,4 +80,41 @@ public:
     bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
 };
 
+
+
+
+
+class SpinningSignal
+{
+private:
+	bool shared;
+	int shm_fd;
+	std::string name;
+	std::atomic_bool* lock;
+	std::int32_t* ref;
+	
+public:
+	SpinningSignal(std::int32_t count = 0);
+    SpinningSignal(std::string name, std::int32_t count = 0);
+    ~SpinningSignal();
+
+    SpinningSignal(const SpinningSignal &other) = delete;
+    SpinningSignal& operator = (const SpinningSignal &other) = delete;
+
+    bool wait();
+    bool try_wait();
+    bool timed_wait(std::uint32_t milliseconds);
+    bool signal();
+
+
+    template<typename Rep, typename Period>
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time);
+
+    template<typename Duration>
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+
+    template<typename Clock, typename Duration>
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+};
+
 #endif /* SPINLOCK_HXX_INCLUDED */

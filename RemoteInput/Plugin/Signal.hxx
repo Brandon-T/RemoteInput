@@ -24,7 +24,7 @@ template<typename T>
 class Signal
 {
 private:
-	using ValidationType = typename std::enable_if<std::is_same<T, Semaphore>::value || std::is_same<T, Mutex>::value || std::is_same<T, SpinLock>::value || std::is_same<T, SpinningSemaphore>::value>::type;
+	using ValidationType = typename std::enable_if<std::is_same<T, Semaphore>::value || std::is_same<T, Mutex>::value || std::is_same<T, SpinLock>::value || std::is_same<T, SpinningSemaphore>::value || std::is_same<T, SpinningSignal>::value>::type;
 	void* underlying_type;
 	
 public:
@@ -96,6 +96,10 @@ bool Signal<T>::wait()
 	{
 		return static_cast<SpinningSemaphore*>(underlying_type)->wait();
 	}
+	else if (std::is_same<T, SpinningSignal>::value)
+	{
+		return static_cast<SpinningSignal*>(underlying_type)->wait();
+	}
 	return false;
 }
 
@@ -117,6 +121,10 @@ bool Signal<T>::try_wait()
 	else if (std::is_same<T, SpinningSemaphore>::value)
 	{
 		return static_cast<SpinningSemaphore*>(underlying_type)->try_wait();
+	}
+	else if (std::is_same<T, SpinningSignal>::value)
+	{
+		return static_cast<SpinningSignal*>(underlying_type)->try_wait();
 	}
 	return false;
 }
@@ -140,6 +148,10 @@ bool Signal<T>::timed_wait(std::uint32_t milliseconds)
 	{
 		return static_cast<SpinningSemaphore*>(underlying_type)->timed_wait(milliseconds);
 	}
+	else if (std::is_same<T, SpinningSignal>::value)
+	{
+		return static_cast<SpinningSignal*>(underlying_type)->timed_wait(milliseconds);
+	}
 	return false;
 }
 
@@ -161,6 +173,10 @@ bool Signal<T>::signal()
 	else if (std::is_same<T, SpinningSemaphore>::value)
 	{
 		return static_cast<SpinningSemaphore*>(underlying_type)->signal();
+	}
+	else if (std::is_same<T, SpinningSignal>::value)
+	{
+		return static_cast<SpinningSignal*>(underlying_type)->signal();
 	}
 	return false;
 }
@@ -186,6 +202,10 @@ bool Signal<T>::try_wait_for(const std::chrono::duration<Rep, Period>& relative_
 	{
 		return static_cast<SpinningSemaphore*>(underlying_type)->try_wait_for(relative_time);
 	}
+	else if (std::is_same<T, SpinningSignal>::value)
+	{
+		return static_cast<SpinningSignal*>(underlying_type)->try_wait_for(relative_time);
+	}
 	return false;
 }
 
@@ -209,6 +229,10 @@ bool Signal<T>::try_wait_until(const std::chrono::time_point<std::chrono::high_r
 	{
 		return static_cast<SpinningSemaphore*>(underlying_type)->try_wait_until(absolute_time);
 	}
+	else if (std::is_same<T, SpinningSignal>::value)
+	{
+		return static_cast<SpinningSignal*>(underlying_type)->try_wait_until(absolute_time);
+	}
 	return false;
 }
 
@@ -231,6 +255,10 @@ bool Signal<T>::try_wait_until(const std::chrono::time_point<Clock, Duration>& a
 	else if (std::is_same<T, SpinningSemaphore>::value)
 	{
 		return static_cast<SpinningSemaphore*>(underlying_type)->try_wait_until(absolute_time);
+	}
+	else if (std::is_same<T, SpinningSignal>::value)
+	{
+		return static_cast<SpinningSignal*>(underlying_type)->try_wait_until(absolute_time);
 	}
 	return false;
 }
