@@ -122,9 +122,21 @@ void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 		
+		
+		control_center->update_dimensions(width, height);
 		std::uint8_t* dest = control_center->get_image();
-		GeneratePixelBuffers(ctx, pbo, width, height, 4);
-		ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+		if (dest)
+		{
+			GeneratePixelBuffers(ctx, pbo, width, height, 4);
+			ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+		}
+		
+		std::uint8_t* src = control_center->get_debug_image();
+		if (src)
+		{
+			//draw_circle(200, 200, 50, src, width, height, 4, true);
+			gl_draw_image(ctx, src, width, height, 4);
+		}
 	}
 	
 	static decltype(glXSwapBuffers)* o_glXSwapBuffers = reinterpret_cast<decltype(glXSwapBuffers)*>(dlsym(RTLD_NEXT, "glXSwapBuffers"));

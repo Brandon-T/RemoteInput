@@ -982,142 +982,6 @@ Model Player::model()
 	
 	eios->ReleaseObjects(&objectsToRelease[0], objectsToRelease.size());
 	return Model(eios, nullptr);
-	
-//	std::vector<Node> buckets = hashTable.buckets();
-//
-//	if (!buckets.empty())
-//	{
-//		std::int64_t index = (modelId & (hashTable.size() - 1));
-//		Node head = std::move(buckets[index]);
-//		Node current = head.next();
-//		while (head.uid() != current.uid())
-//		{
-//			std::int64_t uid = current.uid();
-//			if (uid == modelId)
-//			{
-//				return Model(eios, current.getRef());
-//			}
-//
-//			if (uid == -1)
-//			{
-//				break;
-//			}
-//
-//			current = current.next();
-//		}
-//	}
-//	return Model(eios, nullptr);
-}
-
-
-
-
-
-std::vector<Point> lineTo(std::int32_t X1, std::int32_t Y1, std::int32_t X2, std::int32_t Y2)
-{
-	std::int32_t Dx, Dy, CurrentX, CurrentY, Len, TwoDx, TwoDy, XInc, YInc;
-	std::int32_t TwoDxAccumulatedError, TwoDyAccumulatedError;
-	
-	Len = 0;
-	Dx = (X2-X1);
-	Dy = (Y2-Y1);
-	TwoDx = Dx + Dx;
-	TwoDy = Dy + Dy;
-	CurrentX = X1;
-	CurrentY = Y1;
-	XInc = 1;
-	YInc = 1;
-	
-	if (Dx < 0)
-	{
-	  XInc = -1;
-	  Dx = -Dx;
-	  TwoDx = -TwoDx;
-	}
-	
-	if (Dy < 0)
-	{
-	  YInc = -1;
-	  Dy = -Dy;
-	  TwoDy = -TwoDy;
-	}
-	
-	std::vector<Point> result;
-	result.resize(1);
-	result[0] = Point(X1, Y1, 0);
-	
-	if ((Dx != 0) || (Dy != 0))
-	{
-	  if (Dy <= Dx)
-	  {
-		TwoDxAccumulatedError = 0;
-		do
-		{
-			CurrentX += XInc;
-			TwoDxAccumulatedError += TwoDy;
-			
-		  if (TwoDxAccumulatedError > Dx)
-		  {
-			  CurrentY += YInc;
-			  TwoDxAccumulatedError -= TwoDx;
-			  
-		  }
-			
-			++Len;
-			result.resize(Len + 1);
-			result[Len] = Point(CurrentX, CurrentY, 0);
-		}
-		while (CurrentX != X2);
-	  }
-	  else
-	  {
-		TwoDyAccumulatedError = 0;
-		  do
-		  {
-			  CurrentY += YInc;
-			  TwoDyAccumulatedError += TwoDx;
-			  
-			  if (TwoDyAccumulatedError > Dy)
-			  {
-				  CurrentX += XInc;
-				  TwoDyAccumulatedError -= TwoDy;
-			  }
-			  Len += 1;
-			  result.resize(Len + 1);
-			  result[Len] = Point(CurrentX, CurrentY, 0);
-		  } while(CurrentY != Y2);
-	  }
-	}
-	return result;
-}
-
-void draw_line(std::uint8_t* dest, Point a, Point b, std::int32_t width, std::int32_t height)
-{
-	auto points = lineTo(a.x, a.y, b.x, b.y);
-	for (Point& p : points)
-	{
-		std::uint8_t* ptr = &dest[(p.x * width + p.y) * 4];
-		*ptr++ = 0xFF;
-		*ptr++ = 0xFF;
-		*ptr++ = 0xFF;
-		*ptr++ = 0xFF;
-	}
-}
-
-void draw_polygon(std::uint8_t* dest, std::int32_t npoints, std::int32_t* xpoints, std::int32_t* ypoints, std::int32_t width, std::int32_t height)
-{
-	std::int32_t size = npoints - 2;
-	if (size == -1)
-	{
-		return;
-	}
-	
-	for (int i = 0; i <= size; ++i)
-	{
-		draw_line(dest, Point(xpoints[i], ypoints[i]), Point(xpoints[i + 1], ypoints[i + 1]), width, height);
-	}
-	
-	draw_line(dest, Point(xpoints[size + 1], ypoints[size + 1]), Point(xpoints[0], ypoints[0]), width, height);
 }
 
 void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t height)> renderer)
@@ -1130,86 +994,246 @@ void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t
 	{
 		control_center->get_reflector()->AttachAsDaemon();
 	}
+
+	static int amount = 1;
+	static double time = 0.0f;
+	auto start = std::chrono::high_resolution_clock::now();
 	
-	//if (control_center->get_reflector()->Attach())
+	std::vector<Player> players;
+	players.push_back(Player::localPlayer(eios));
+	
+	std::int32_t cameraX = Camera::getX(eios);
+	std::int32_t cameraY = Camera::getY(eios);
+	std::int32_t cameraZ = Camera::getZ(eios);
+	std::int32_t cameraPitch = Camera::pitch(eios);
+	std::int32_t cameraYaw = Camera::yaw(eios);
+	std::int32_t clientPlane = Client::plane(eios);
+	
+	std::int32_t viewPortWidth = Client::viewPortWidth(eios);
+	std::int32_t viewPortHeight = Client::viewPortHeight(eios);
+	std::int32_t viewPortScale = Client::viewPortScale(eios);
+	
+	for (auto& player : players)
 	{
-		static int amount = 1;
-		static double time = 0.0f;
-		auto start = std::chrono::high_resolution_clock::now();
-		
-		std::vector<Player> players;
-		players.push_back(Player::localPlayer(eios));
-		
-		std::int32_t cameraX = Camera::getX(eios);
-		std::int32_t cameraY = Camera::getY(eios);
-		std::int32_t cameraZ = Camera::getZ(eios);
-		std::int32_t cameraPitch = Camera::pitch(eios);
-		std::int32_t cameraYaw = Camera::yaw(eios);
-		std::int32_t clientPlane = Client::plane(eios);
-		
-		std::int32_t viewPortWidth = Client::viewPortWidth(eios);
-		std::int32_t viewPortHeight = Client::viewPortHeight(eios);
-		std::int32_t viewPortScale = Client::viewPortScale(eios);
-		
-		for (auto& player : players)
+		if (player && !player.name().empty())
 		{
-			if (player && !player.name().empty())
+			std::int32_t width = control_center->get_width();
+			std::int32_t height = control_center->get_height();
+			
+			std::int32_t playerOrientation = player.orientation();
+			std::int32_t orientation = ((playerOrientation & 0x3FFF) + 1024) % 2048;
+
+
+			Model model = player.model();
+			auto triangles = model.getRotatedTriangles(orientation);
+
+			int localX = player.getX();
+			int localY = player.getY();
+
+			std::vector<Polygon> polygons;
+			for (std::size_t i = 0; i < triangles.size(); ++i)
 			{
-				std::int32_t width = control_center->get_width();
-				std::int32_t height = control_center->get_height();
+				Point vx = triangles[i].a;
+				Point vy = triangles[i].b;
+				Point vz = triangles[i].c;
+
+				Point a = Projector::toScreen(eios, vx, localX, localY, -vx.y,
+											  cameraX, cameraY, cameraZ, cameraPitch,
+											  cameraYaw, clientPlane,
+											  viewPortWidth, viewPortHeight,
+											  viewPortScale);
 				
-				std::int32_t playerOrientation = player.orientation();
-				std::int32_t orientation = ((playerOrientation & 0x3FFF) + 1024) % 2048;
-
-
-				Model model = player.model();
-				auto triangles = model.getRotatedTriangles(orientation);
-
-				int localX = player.getX();
-				int localY = player.getY();
-
-				std::vector<Polygon> polygons;
-				for (std::size_t i = 0; i < triangles.size(); ++i)
-				{
-					Point vx = triangles[i].a;
-					Point vy = triangles[i].b;
-					Point vz = triangles[i].c;
-
-					Point a = Projector::toScreen(eios, vx, localX, localY, -vx.y,
-												  cameraX, cameraY, cameraZ, cameraPitch,
-												  cameraYaw, clientPlane,
-												  viewPortWidth, viewPortHeight,
-												  viewPortScale);
-					
-					Point b = Projector::toScreen(eios, vy, localX, localY, -vy.y,
-												  cameraX, cameraY, cameraZ, cameraPitch,
-												  cameraYaw, clientPlane,
-												  viewPortWidth, viewPortHeight,
-												  viewPortScale);
-					
-					Point c = Projector::toScreen(eios, vz, localX, localY, -vz.y,
-												  cameraX, cameraY, cameraZ, cameraPitch,
-												  cameraYaw, clientPlane,
-												  viewPortWidth, viewPortHeight,
-												  viewPortScale);
-					polygons.push_back(Polygon({a.x, b.x, c.x}, {a.y, b.y, c.y}, 3));
-				}
+				Point b = Projector::toScreen(eios, vy, localX, localY, -vy.y,
+											  cameraX, cameraY, cameraZ, cameraPitch,
+											  cameraYaw, clientPlane,
+											  viewPortWidth, viewPortHeight,
+											  viewPortScale);
 				
-				for (Polygon &p : polygons)
-				{
-					renderer(&p, width, height);
-				}
+				Point c = Projector::toScreen(eios, vz, localX, localY, -vz.y,
+											  cameraX, cameraY, cameraZ, cameraPitch,
+											  cameraYaw, clientPlane,
+											  viewPortWidth, viewPortHeight,
+											  viewPortScale);
+				polygons.push_back(Polygon({a.x, b.x, c.x}, {a.y, b.y, c.y}, 3));
 			}
 			
-			auto end = std::chrono::high_resolution_clock::now();
-			time += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-			
-			printf("TIME: %.2f\n", time / (double)amount);
-			++amount;
+			for (Polygon &p : polygons)
+			{
+				renderer(&p, width, height);
+			}
 		}
 		
-		players.clear();
+		auto end = std::chrono::high_resolution_clock::now();
+		time += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 		
-		//control_center->get_reflector()->Detach();
+		printf("TIME: %.2f\n", time / (double)amount);
+		++amount;
 	}
+	
+	players.clear();
 }
+
+
+
+//void DrawLine(CGLContextObj ctx, jint x1, jint y1, jint x2, jint y2)
+//{
+//	CGLContextObj CGL_MACRO_CONTEXT = ctx;
+//
+//    glBegin(GL_LINES);
+//    if (y1 == y2) {
+//        GLfloat fx1 = (GLfloat)x1;
+//        GLfloat fx2 = (GLfloat)x2;
+//        GLfloat fy  = ((GLfloat)y1) + 0.2f;
+//
+//        if (x1 > x2) {
+//            GLfloat t = fx1; fx1 = fx2; fx2 = t;
+//        }
+//
+//        glVertex2f(fx1+0.2f, fy);
+//        glVertex2f(fx2+1.2f, fy);
+//    } else if (x1 == x2) {
+//        GLfloat fx  = ((GLfloat)x1) + 0.2f;
+//        GLfloat fy1 = (GLfloat)y1;
+//        GLfloat fy2 = (GLfloat)y2;
+//
+//        if (y1 > y2) {
+//            GLfloat t = fy1; fy1 = fy2; fy2 = t;
+//        }
+//
+//        glVertex2f(fx, fy1+0.2f);
+//        glVertex2f(fx, fy2+1.2f);
+//    } else {
+//        GLfloat fx1 = (GLfloat)x1;
+//        GLfloat fy1 = (GLfloat)y1;
+//        GLfloat fx2 = (GLfloat)x2;
+//        GLfloat fy2 = (GLfloat)y2;
+//
+//        if (x1 < x2) {
+//            fx1 += 0.2f;
+//            fx2 += 1.0f;
+//        } else {
+//            fx1 += 0.8f;
+//            fx2 -= 0.2f;
+//        }
+//
+//        if (y1 < y2) {
+//            fy1 += 0.2f;
+//            fy2 += 1.0f;
+//        } else {
+//            fy1 += 0.8f;
+//            fy2 -= 0.2f;
+//        }
+//
+//        glVertex2f(fx1, fy1);
+//        glVertex2f(fx2, fy2);
+//    }
+//	glEnd();
+//}
+//
+//void DrawPoly(CGLContextObj ctx,
+//			  jint nPoints, jint isClosed,
+//			  jint transX, jint transY,
+//			  jint *xPoints, jint *yPoints)
+//{
+//	CGLContextObj CGL_MACRO_CONTEXT = ctx;
+//    jboolean isEmpty = JNI_TRUE;
+//    jint mx, my;
+//    jint i;
+//
+//    if (xPoints == NULL || yPoints == NULL)
+//	{
+//        return;
+//    }
+//
+//    mx = xPoints[0];
+//    my = yPoints[0];
+//
+//	glBegin(GL_LINE_STRIP);
+//    for (i = 0; i < nPoints; i++) {
+//        jint x = xPoints[i];
+//        jint y = yPoints[i];
+//
+//        isEmpty = isEmpty && (x == mx && y == my);
+//        glVertex2f((GLfloat)(x + transX) + 0.5f,
+//				   (GLfloat)(y + transY) + 0.5f);
+//    }
+//
+//    if (isClosed && !isEmpty &&
+//        (xPoints[nPoints-1] != mx ||
+//         yPoints[nPoints-1] != my))
+//    {
+//        glVertex2f((GLfloat)(mx + transX) + 0.5f,
+//				   (GLfloat)(my + transY) + 0.5f);
+//		glEnd();
+//    } else if (!isClosed || isEmpty) {
+//		glBegin(GL_LINES);
+//        mx = xPoints[nPoints-1] + transX;
+//        my = yPoints[nPoints-1] + transY;
+//        glVertex2i(mx, my);
+//        glVertex2i(mx+1, my+1);
+//    } else {
+//		glEnd();
+//    }
+//}
+//
+//void DrawPolyLines(CGLContextObj ctx, std::int32_t npoints, std::int32_t* xpoints, std::int32_t* ypoints)
+//{
+//	std::int32_t size = npoints - 2;
+//	for (int i = 0; i <= size; ++i)
+//	{
+//		DrawLine(ctx, xpoints[i], ypoints[i], xpoints[i + 1], ypoints[i + 1]);
+//	}
+//
+//	DrawLine(ctx, xpoints[size + 1], ypoints[size + 1], xpoints[0], ypoints[0]);
+//}
+//
+//
+//
+//
+//void DrawLine2(int x, int y, int x2, int y2, std::function<void(int x, int y)> plot)
+//{
+//	bool yLonger=false;
+//	int incrementVal;
+//	int shortLen=y2-y;
+//	int longLen=x2-x;
+//
+//	if (abs(shortLen)>abs(longLen))
+//	{
+//		int swap=shortLen;
+//		shortLen=longLen;
+//		longLen=swap;
+//		yLonger=true;
+//	}
+//
+//	if (longLen<0) incrementVal=-1;
+//	else incrementVal=1;
+//
+//	double multDiff;
+//	if (longLen==0.0) multDiff=(double)shortLen;
+//	else multDiff=(double)shortLen/(double)longLen;
+//	if (yLonger)
+//	{
+//		for (int i=0;i!=longLen;i+=incrementVal)
+//		{
+//			plot(x+(int)((double)i*multDiff),y+i);
+//		}
+//	}
+//	else
+//	{
+//		for (int i=0;i!=longLen;i+=incrementVal)
+//		{
+//			plot(x+i,y+(int)((double)i*multDiff));
+//		}
+//	}
+//}
+//
+//void DrawPolyLines2(std::int32_t npoints, std::int32_t* xpoints, std::int32_t* ypoints, std::function<void(int x, int y)> plot)
+//{
+//	std::int32_t size = npoints - 2;
+//	for (int i = 0; i <= size; ++i)
+//	{
+//		DrawLine2(xpoints[i], ypoints[i], xpoints[i + 1], ypoints[i + 1], plot);
+//	}
+//
+//	DrawLine2(xpoints[size + 1], ypoints[size + 1], xpoints[0], ypoints[0], plot);
+//}

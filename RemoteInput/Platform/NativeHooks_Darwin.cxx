@@ -59,17 +59,20 @@ void JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jbool
 				bool isRasterAligned = srcInfo.scanStride % srcInfo.pixelStride == 0; //!(srcInfo.scanStride & 0x03);
 				std::uint8_t* dest = control_center->get_image();
 
-				if (isRasterAligned)
+				if (dest)
 				{
-					memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-				}
-				else
-				{
-					for (int i = 0; i < height; ++i)
+					if (isRasterAligned)
 					{
-						int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-						memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
-						rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+						memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+					}
+					else
+					{
+						for (int i = 0; i < height; ++i)
+						{
+							int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
+							memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+							rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+						}
 					}
 				}
 
@@ -180,172 +183,6 @@ CGLError CGLFlushDrawable(CGLContextObj ctx)
 	return o_CGLFlushDrawable(ctx);
 }
 #else
-#include "ModelRendering.hpp"
-
-
-void DrawLine(CGLContextObj ctx, jint x1, jint y1, jint x2, jint y2)
-{
-	CGLContextObj CGL_MACRO_CONTEXT = ctx;
-	
-    glBegin(GL_LINES);
-    if (y1 == y2) {
-        GLfloat fx1 = (GLfloat)x1;
-        GLfloat fx2 = (GLfloat)x2;
-        GLfloat fy  = ((GLfloat)y1) + 0.2f;
-
-        if (x1 > x2) {
-            GLfloat t = fx1; fx1 = fx2; fx2 = t;
-        }
-
-        glVertex2f(fx1+0.2f, fy);
-        glVertex2f(fx2+1.2f, fy);
-    } else if (x1 == x2) {
-        GLfloat fx  = ((GLfloat)x1) + 0.2f;
-        GLfloat fy1 = (GLfloat)y1;
-        GLfloat fy2 = (GLfloat)y2;
-
-        if (y1 > y2) {
-            GLfloat t = fy1; fy1 = fy2; fy2 = t;
-        }
-
-        glVertex2f(fx, fy1+0.2f);
-        glVertex2f(fx, fy2+1.2f);
-    } else {
-        GLfloat fx1 = (GLfloat)x1;
-        GLfloat fy1 = (GLfloat)y1;
-        GLfloat fx2 = (GLfloat)x2;
-        GLfloat fy2 = (GLfloat)y2;
-
-        if (x1 < x2) {
-            fx1 += 0.2f;
-            fx2 += 1.0f;
-        } else {
-            fx1 += 0.8f;
-            fx2 -= 0.2f;
-        }
-
-        if (y1 < y2) {
-            fy1 += 0.2f;
-            fy2 += 1.0f;
-        } else {
-            fy1 += 0.8f;
-            fy2 -= 0.2f;
-        }
-
-        glVertex2f(fx1, fy1);
-        glVertex2f(fx2, fy2);
-    }
-	glEnd();
-}
-
-void DrawPoly(CGLContextObj ctx,
-			  jint nPoints, jint isClosed,
-			  jint transX, jint transY,
-			  jint *xPoints, jint *yPoints)
-{
-	CGLContextObj CGL_MACRO_CONTEXT = ctx;
-    jboolean isEmpty = JNI_TRUE;
-    jint mx, my;
-    jint i;
-
-    if (xPoints == NULL || yPoints == NULL)
-	{
-        return;
-    }
-
-    mx = xPoints[0];
-    my = yPoints[0];
-
-	glBegin(GL_LINE_STRIP);
-    for (i = 0; i < nPoints; i++) {
-        jint x = xPoints[i];
-        jint y = yPoints[i];
-
-        isEmpty = isEmpty && (x == mx && y == my);
-        glVertex2f((GLfloat)(x + transX) + 0.5f,
-				   (GLfloat)(y + transY) + 0.5f);
-    }
-
-    if (isClosed && !isEmpty &&
-        (xPoints[nPoints-1] != mx ||
-         yPoints[nPoints-1] != my))
-    {
-        glVertex2f((GLfloat)(mx + transX) + 0.5f,
-				   (GLfloat)(my + transY) + 0.5f);
-		glEnd();
-    } else if (!isClosed || isEmpty) {
-		glBegin(GL_LINES);
-        mx = xPoints[nPoints-1] + transX;
-        my = yPoints[nPoints-1] + transY;
-        glVertex2i(mx, my);
-        glVertex2i(mx+1, my+1);
-    } else {
-		glEnd();
-    }
-}
-
-void DrawPolyLines(CGLContextObj ctx, std::int32_t npoints, std::int32_t* xpoints, std::int32_t* ypoints)
-{
-	std::int32_t size = npoints - 2;
-	for (int i = 0; i <= size; ++i)
-	{
-		DrawLine(ctx, xpoints[i], ypoints[i], xpoints[i + 1], ypoints[i + 1]);
-	}
-	
-	DrawLine(ctx, xpoints[size + 1], ypoints[size + 1], xpoints[0], ypoints[0]);
-}
-
-
-
-
-void DrawLine2(int x, int y, int x2, int y2, std::function<void(int x, int y)> plot)
-{
-	bool yLonger=false;
-	int incrementVal;
-	int shortLen=y2-y;
-	int longLen=x2-x;
-
-	if (abs(shortLen)>abs(longLen))
-	{
-		int swap=shortLen;
-		shortLen=longLen;
-		longLen=swap;
-		yLonger=true;
-	}
-
-	if (longLen<0) incrementVal=-1;
-	else incrementVal=1;
-
-	double multDiff;
-	if (longLen==0.0) multDiff=(double)shortLen;
-	else multDiff=(double)shortLen/(double)longLen;
-	if (yLonger)
-	{
-		for (int i=0;i!=longLen;i+=incrementVal)
-		{
-			plot(x+(int)((double)i*multDiff),y+i);
-		}
-	}
-	else
-	{
-		for (int i=0;i!=longLen;i+=incrementVal)
-		{
-			plot(x+i,y+(int)((double)i*multDiff));
-		}
-	}
-}
-
-void DrawPolyLines2(std::int32_t npoints, std::int32_t* xpoints, std::int32_t* ypoints, std::function<void(int x, int y)> plot)
-{
-	std::int32_t size = npoints - 2;
-	for (int i = 0; i <= size; ++i)
-	{
-		DrawLine2(xpoints[i], ypoints[i], xpoints[i + 1], ypoints[i + 1], plot);
-	}
-	
-	DrawLine2(xpoints[size + 1], ypoints[size + 1], xpoints[0], ypoints[0], plot);
-}
-
 CGLError mCGLFlushDrawable(CGLContextObj ctx)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
@@ -361,15 +198,19 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 		GLint height = ViewPort[3] - ViewPort[1];
 		
 		control_center->update_dimensions(width, height);
-		
 		std::uint8_t* dest = control_center->get_image();
-		GeneratePixelBuffers(ctx, pbo, width, height, 4);
-		ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
-		
+		if (dest)
+		{
+			GeneratePixelBuffers(ctx, pbo, width, height, 4);
+			ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+		}
 		
 		std::uint8_t* src = control_center->get_debug_image();
-		//draw_circle(200, 200, 50, src, width, height, 4, true);
-		gl_draw_image(ctx, src, width, height, 4);
+		if (src)
+		{
+			//draw_circle(200, 200, 50, src, width, height, 4, true);
+			gl_draw_image(ctx, src, width, height, 4);
+		}
 		
 		/*glPushMatrix();
 		glLoadIdentity();

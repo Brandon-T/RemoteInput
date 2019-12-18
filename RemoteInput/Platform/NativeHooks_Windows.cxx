@@ -49,20 +49,24 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 			{
 				void *rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
 				bool isRasterAligned = !(srcInfo.scanStride & 0x03);
-				std::uint8_t* dest = control_center->get_image();
+				
 				control_center->update_dimensions(width, height);
+				std::uint8_t* dest = control_center->get_image();
 
-				if (isRasterAligned)
+				if (dest)
 				{
-					memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-				}
-				else
-				{
-					for (int i = 0; i < height; ++i)
+					if (isRasterAligned)
 					{
-						int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-						memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
-						rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+						memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+					}
+					else
+					{
+						for (int i = 0; i < height; ++i)
+						{
+							int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
+							memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+							rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+						}
 					}
 				}
 
