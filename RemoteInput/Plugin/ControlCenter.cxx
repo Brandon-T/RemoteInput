@@ -79,23 +79,25 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 						if (this->reflector)
 						{
 							this->reflector->Detach();
+							this->reflector.reset();
 						}
 						return;
 					}
 
-//					command_signal->wait();
+					command_signal->wait();
 					
-					while(!command_signal->try_wait())
-					{
-						usleep(1);
-						continue;
-					}
+//					while(!command_signal->try_wait())
+//					{
+//						usleep(1);
+//						continue;
+//					}
 					
 					if (stopped)
 					{
 						if (this->reflector)
 						{
 							this->reflector->Detach();
+							this->reflector.reset();
 						}
 						return;
 					}
@@ -113,7 +115,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 ControlCenter::~ControlCenter()
 {
 	terminate();
-	reflector.reset();
+	//reflector.reset();
 
 	if (map_lock)
 	{
@@ -582,7 +584,7 @@ bool ControlCenter::hasReflector()
 
 ImageData* ControlCenter::get_image_data() const
 {
-	return static_cast<ImageData*>(memory_map->data());
+	return memory_map && memory_map->is_mapped() ? static_cast<ImageData*>(memory_map->data()) : nullptr;
 }
 
 bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
@@ -594,39 +596,46 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 
 std::int32_t ControlCenter::parent_id() const
 {
-	return get_image_data()->parentId;
+	return memory_map && memory_map->is_mapped() ? get_image_data()->parentId : -1;
 }
 
 std::int32_t ControlCenter::get_width() const
 {
-	return get_image_data()->width;
+	return memory_map && memory_map->is_mapped() ? get_image_data()->width : -1;
 }
 
 std::int32_t ControlCenter::get_height() const
 {
-	return get_image_data()->height;
+	return memory_map && memory_map->is_mapped() ? get_image_data()->height : -1;
 }
 
 std::uint8_t* ControlCenter::get_image() const
 {
 	ImageData* image_data = get_image_data();
-	return reinterpret_cast<std::uint8_t*>(image_data) + sizeof(ImageData);
+	return image_data ? reinterpret_cast<std::uint8_t*>(image_data) + sizeof(ImageData) : nullptr;
 }
 
 std::uint8_t* ControlCenter::get_debug_image() const
 {
-	return get_image() + (get_width() * get_height() * 4);
+	std::uint8_t* image = get_image();
+	return image ? image + (get_width() * get_height() * 4) : nullptr;
 }
 
 void ControlCenter::set_parent(pid_t pid)
 {
-	get_image_data()->parentId = pid;
+	if (memory_map && memory_map->is_mapped())
+	{
+		get_image_data()->parentId = pid;
+	}
 }
 
 void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height)
 {
-	get_image_data()->width = width;
-	get_image_data()->height = height;
+	if (memory_map && memory_map->is_mapped())
+	{
+		get_image_data()->width = width;
+		get_image_data()->height = height;
+	}
 }
 
 void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* height)
@@ -642,8 +651,16 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 		*height = EIOS_Read<std::int32_t>(arguments);
 	}*/
 
-	*width = get_width();
-	*height = get_height();
+	if (memory_map && memory_map->is_mapped())
+	{
+		*width = get_width();
+		*height = get_height();
+	}
+	else
+	{
+		*width = -1;
+		*height = -1;
+	}
 }
 
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
