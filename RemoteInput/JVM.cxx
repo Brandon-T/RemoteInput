@@ -44,7 +44,7 @@ JVM::JVM() : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(false)
     }
 }
 
-JVM::JVM(JNIEnv* env) : env(nullptr), vm(nullptr), createdVM(false)
+JVM::JVM(JNIEnv* env) : env(env), vm(nullptr), createdVM(false)
 {
     this->env->GetJavaVM(&this->vm);
 }
