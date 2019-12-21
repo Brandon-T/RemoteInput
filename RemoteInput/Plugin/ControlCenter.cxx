@@ -465,11 +465,13 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 					{
 						auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
 						EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
+						reflector->getEnv()->DeleteLocalRef(result);
 					}
 				}
 				{
 					auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
 					EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
+					reflector->getEnv()->DeleteLocalRef(result);
 				}
 			}
 				break;
@@ -485,6 +487,8 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 		write_result(array, type, index, length, response);
 		return;
 	}
+	
+	array = static_cast<jarray>(reflector->getEnv()->NewLocalRef(array));
 
 	for (int i = 0; i < dimensions - 1; ++i)
 	{
@@ -492,13 +496,15 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 
 		if (array)
 		{
-			array = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index));
+			jarray local = std::exchange(array, static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index)));
+			reflector->getEnv()->DeleteLocalRef(local);
 		}
 	}
 
 	jsize index = EIOS_Read<jsize>(arguments);
 	jsize length = EIOS_Read<jsize>(arguments);
 	write_result(array, type, index, length, response);
+	reflector->getEnv()->DeleteLocalRef(array);
 }
 
 bool ControlCenter::init_maps()
@@ -640,17 +646,6 @@ void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height)
 
 void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* height)
 {
-	/*auto result = send_command([](ImageData* image_data) {
-		image_data->command = EIOSCommand::GET_TARGET_DIMENSIONS;
-	});
-
-	if (result)
-	{
-		void* arguments = get_image_data()->args;
-		*width = EIOS_Read<std::int32_t>(arguments);
-		*height = EIOS_Read<std::int32_t>(arguments);
-	}*/
-
 	if (memory_map && memory_map->is_mapped())
 	{
 		*width = get_width();

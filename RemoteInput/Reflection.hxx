@@ -34,6 +34,16 @@ private:
 
         return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
     }
+	
+	template<typename T, typename U>
+    auto make_safe_local(U object) -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
+    {
+		auto deleter = [&](T ptr){
+            jvm->DeleteLocalRef(static_cast<jobject>(ptr));
+        };
+
+        return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
+    }
 
     JVM* jvm;
     jobject frame;
@@ -115,33 +125,33 @@ Reflection::getField(jobject object, ReflectionHook hook)
 {
     if (!object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(std::string());
-        jobject string = jvm->GetStaticObjectField(cls, field);
+        auto string = make_safe_local<jstring>(jvm->GetStaticObjectField(cls.get(), field));
 		HANDLE_JAVA_EXCEPTION(std::string());
 
         if (string)
         {
-            const char* chars = jvm->GetStringUTFChars(static_cast<jstring>(string), nullptr);
+            const char* chars = jvm->GetStringUTFChars(string.get(), nullptr);
             std::string result = chars;
-            jvm->ReleaseStringUTFChars(static_cast<jstring>(string), chars);
+            jvm->ReleaseStringUTFChars(string.get(), chars);
             return result;
         }
         return std::string();
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(std::string());
-    jobject string = jvm->GetObjectField(object, field);
+    auto string = make_safe_local<jstring>(jvm->GetObjectField(object, field));
 	HANDLE_JAVA_EXCEPTION(std::string());
 
     if (string)
     {
-        const char* chars = jvm->GetStringUTFChars(static_cast<jstring>(string), nullptr);
+        const char* chars = jvm->GetStringUTFChars(string.get(), nullptr);
         std::string result = chars;
-        jvm->ReleaseStringUTFChars(static_cast<jstring>(string), chars);
+        jvm->ReleaseStringUTFChars(string.get(), chars);
         return result;
     }
     return std::string();
@@ -154,16 +164,16 @@ Reflection::getField(jobject object, ReflectionHook hook)
 {
     if (!object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(nullptr);
-        return static_cast<T>(jvm->NewGlobalRef(jvm->GetStaticObjectField(cls, field)));
+        return static_cast<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetStaticObjectField(cls.get(), field)).get()));
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(nullptr);
-    return static_cast<T>(jvm->NewGlobalRef(jvm->GetObjectField(object, field)));
+    return static_cast<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetObjectField(object, field)).get()));
 }
 
 template<typename T>
@@ -172,16 +182,16 @@ Reflection::getFieldSafe(jobject object, ReflectionHook hook)
 {
     if (!object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(nullptr);
-        return make_safe<T>(jvm->NewGlobalRef(jvm->GetStaticObjectField(cls, field)));
+        return make_safe<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetStaticObjectField(cls.get(), field)).get()));
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(nullptr);
-    return make_safe<T>(jvm->NewGlobalRef(jvm->GetObjectField(object, field)));
+    return make_safe<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetObjectField(object, field)).get()));
 }
 
 template<typename T>
@@ -190,16 +200,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(-1);
-		return jvm->GetIntField(object, field); //* static_cast<std::int32_t>(hook.multiplier);
+		return jvm->GetIntField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(-1);
-	return jvm->GetStaticIntField(cls, field); // * static_cast<std::int32_t>(hook.multiplier);
+	return jvm->GetStaticIntField(cls.get(), field);
 }
 
 template<typename T>
@@ -208,16 +218,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(-1);
-		return jvm->GetLongField(object, field); // * static_cast<std::int64_t>(hook.multiplier);
+		return jvm->GetLongField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(-1);
-	return jvm->GetStaticLongField(cls, field); // * static_cast<std::int64_t>(hook.multiplier);
+	return jvm->GetStaticLongField(cls.get(), field);
 }
 
 template<typename T>
@@ -226,16 +236,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(false);
         return jvm->GetBooleanField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(false);
-    return jvm->GetStaticBooleanField(cls, field);
+    return jvm->GetStaticBooleanField(cls.get(), field);
 }
 
 template<typename T>
@@ -244,16 +254,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(0);
         return jvm->GetByteField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(0);
-    return jvm->GetStaticByteField(cls, field);
+    return jvm->GetStaticByteField(cls.get(), field);
 }
 
 template<typename T>
@@ -262,16 +272,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION('\0');
         return jvm->GetCharField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION('\0');
-    return jvm->GetStaticCharField(cls, field);
+    return jvm->GetStaticCharField(cls.get(), field);
 }
 
 template<typename T>
@@ -280,16 +290,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(-1);
         return jvm->GetShortField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(-1);
-    return jvm->GetStaticShortField(cls, field);
+    return jvm->GetStaticShortField(cls.get(), field);
 }
 
 template<typename T>
@@ -298,16 +308,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(-1.0);
         return jvm->GetFloatField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(-1.0);
-    return jvm->GetStaticFloatField(cls, field);
+    return jvm->GetStaticFloatField(cls.get(), field);
 }
 
 template<typename T>
@@ -316,16 +326,16 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 {
     if (object)
     {
-        jclass cls = this->LoadClass(hook.cls.c_str());
-        jfieldID field = jvm->GetFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 		HANDLE_JAVA_EXCEPTION(-1.0);
         return jvm->GetDoubleField(object, field);
     }
 
-    jclass cls = this->LoadClass(hook.cls.c_str());
-    jfieldID field = jvm->GetStaticFieldID(cls, hook.field.c_str(), hook.desc.c_str());
+    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
+    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
 	HANDLE_JAVA_EXCEPTION(-1.0);
-    return jvm->GetStaticDoubleField(cls, field);
+    return jvm->GetStaticDoubleField(cls.get(), field);
 }
 
 #endif // REFLECTION_HXX_INCLUDED

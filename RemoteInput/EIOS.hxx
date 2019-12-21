@@ -87,7 +87,6 @@ EXPORT [[gnu::stdcall]] void EIOS_ReleaseTarget(EIOS* eios);
 EXPORT [[gnu::stdcall]] void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height);
 EXPORT [[gnu::stdcall]] std::uint8_t* EIOS_GetImageBuffer(EIOS* eios);
 EXPORT [[gnu::stdcall]] std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios);
-EXPORT std::uint8_t* EIOS_GetDebugImageBufferEx(EIOS* eios);
 EXPORT [[gnu::stdcall]] void EIOS_UpdateImageBuffer(EIOS* eios);
 EXPORT [[gnu::stdcall]] void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
 EXPORT [[gnu::stdcall]] void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);

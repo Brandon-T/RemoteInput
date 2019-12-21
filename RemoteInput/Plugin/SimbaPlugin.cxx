@@ -1,21 +1,32 @@
 #include "SimbaPlugin.hxx"
 #include <memory>
-#include <atomic>
 #include <cstring>
 #include <unordered_map>
 
-#include "MemoryMap.hxx"
-#include "SharedEvent.hxx"
-#include "Platform.hxx"
-#include "NativeHooks.hxx"
 #include "ControlCenter.hxx"
 
-#if defined(_WIN32) || defined(_WIN64)
-HMODULE module = nullptr;
-#endif
-
 TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
-std::unique_ptr<ControlCenter> control_center;
+TSimbaMethods PLUGIN_SYNC_METHODS = {0};
+TSimbaMemoryAllocators PLUGIN_MEMORY_ALLOCATORS = {0};
+extern std::unique_ptr<ControlCenter> control_center;
+
+
+// MARK: - DECLARATIONS
+
+template<typename T>
+int PascalHigh(T* Arr);
+
+template<typename T>
+int PascalLength(T* Arr);
+
+template<typename T>
+T* AllocateArray(std::size_t size, std::size_t element_size = sizeof(T));
+
+template<typename T, bool isFPC3 = false>
+T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T));
+
+
+// MARK: - EXPORTS
 
 int GetPluginABIVersion()
 {
@@ -63,6 +74,16 @@ void SetPluginMemManager(TMemoryManager MemMgr)
     PLUGIN_MEMORY_MANAGER = MemMgr;
 }
 
+void SetPluginSimbaMethods(TSimbaMethods Methods)
+{
+	PLUGIN_SYNC_METHODS = Methods;
+}
+
+void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators)
+{
+	PLUGIN_MEMORY_ALLOCATORS = Allocators;
+}
+
 void OnAttach(void* info)
 {
     if (control_center)
@@ -86,179 +107,30 @@ EIOS* Reflect_GetEIOS(std::int32_t pid)
     return nullptr;
 }
 
-jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_object(hook);
-	}
-	return nullptr;
-}
 
-void Reflect_Release_Object(EIOS* eios, jobject object)
-{
-	if (eios)
-	{
-		eios->control_center->reflect_release_object(object);
-	}
-}
-
-void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount)
-{
-	if (eios)
-	{
-		eios->control_center->reflect_release_objects(objects, amount);
-	}
-}
-
-char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_char(hook);
-	}
-	return '\0';
-}
-
-std::uint8_t Reflect_Byte(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_byte(hook);
-	}
-	return 0;
-}
-
-std::int16_t Reflect_Short(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_short(hook);
-	}
-	return -1;
-}
-
-std::int32_t Reflect_Int(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_int(hook);
-	}
-	return -1;
-}
-
-std::int64_t Reflect_Long(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_long(hook);
-	}
-	return -1;
-}
-
-float Reflect_Float(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_float(hook);
-	}
-	return -1.0;
-}
-
-double Reflect_Double(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_double(hook);
-	}
-	return -1.0;
-}
-
-void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc, char* output, std::size_t output_size)
+char* Reflect_Pascal_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
 {
 	if (eios)
 	{
 		ReflectionHook hook{object, cls, field, desc};
 		std::string result = eios->control_center->reflect_string(hook);
-		std::size_t length = std::min(result.length(), output_size);
-		std::memcpy(output, &result[0], length);
-	}
-}
-
-jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
-{
-	if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_array(hook);
+		
+		char* output = AllocateString<char>(result.length());
+		std::memcpy(output, &result[0], result.length());
+		output[result.length() - 1] = '\0';
+		return output;
 	}
 	return nullptr;
 }
 
-jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_size, const char* cls, const char* field, const char* desc)
+std::uint8_t* Pascal_GetDebugImageBuffer(EIOS* eios)
 {
     if (eios)
-	{
-		ReflectionHook hook{object, cls, field, desc};
-		return eios->control_center->reflect_array_with_size(hook, output_size);
-	}
-	return nullptr;
+    {
+		return eios->control_center->get_debug_image();
+    }
+    return nullptr;
 }
-
-std::size_t Reflect_Array_Size(EIOS* eios, jarray array)
-{
-	if (eios)
-	{
-		return eios->control_center->reflect_array_size(array);
-	}
-	return 0;
-}
-
-void Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length, void* buffer)
-{
-	if (eios)
-	{
-		void* result = eios->control_center->reflect_array_index(array, type, index, length);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
-	}
-}
-
-void Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, void* buffer)
-{
-	if (eios)
-	{
-		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
-	}
-}
-
-void Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, void* buffer)
-{
-	if (eios)
-	{
-		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
-	}
-}
-
-void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w, void* buffer)
-{
-	if (eios)
-	{
-		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
-	}
-}
-
-
 
 
 template<typename T>
@@ -274,7 +146,7 @@ int PascalLength(T* Arr)
 }
 
 template<typename T>
-T* AllocateArray(std::size_t size, std::size_t element_size = sizeof(T))
+T* AllocateArray(std::size_t size, std::size_t element_size)
 {
     typedef struct
     {
@@ -290,10 +162,10 @@ T* AllocateArray(std::size_t size, std::size_t element_size = sizeof(T))
     return reinterpret_cast<T*>(++ptr);
 }
 
-template<typename T, bool isFPC3 = false>
-T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
+template<typename T, bool isFPC3>
+T* AllocateString(std::size_t size, std::size_t element_size)
 {
-    if (isFPC3)
+    if constexpr (isFPC3)
     {
         typedef struct
         {
@@ -329,98 +201,3 @@ T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T))
     ptr->length = size;
     return reinterpret_cast<T*>(++ptr);
 }
-
-#if defined(_WIN32) || defined(_WIN64)
-[[gnu::stdcall]] void __load()
-{
-    printf("ATTACHED TO: %d\n", getpid());
-
-	std::thread([&] {
-		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-        if (reflector)
-        {
-            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-        }
-
-		StartHook();
-	}).detach();
-}
-
-[[gnu::stdcall]] void __unload()
-{
-    control_center.reset();
-}
-#elif defined(__APPLE__)
-[[gnu::constructor]] void __load()
-{
-    printf("ATTACHED TO: %d\n", getpid());
-
-	std::thread([&] {
-		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-        if (reflector)
-        {
-            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-        }
-
-		StartHook();
-	}).detach();
-}
-
-[[gnu::destructor]] void __unload()
-{
-	control_center.reset();
-}
-#else
-[[gnu::constructor]] void __load()
-{
-    printf("ATTACHED TO: %d\n", getpid());
-
-	std::thread([&] {
-		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-        if (reflector)
-        {
-            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-        }
-
-		StartHook();
-	}).detach();
-}
-
-[[gnu::destructor]] void __unload()
-{
-	control_center.reset();
-}
-#endif // defined
-
-
-#if defined(_WIN32) || defined(_WIN64)
-extern "C" EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-        {
-            module = hinstDLL;
-            DisableThreadLibraryCalls(hinstDLL);
-
-            __load();
-        }
-            break;
-
-        case DLL_PROCESS_DETACH:
-        {
-			__unload();
-        }
-            break;
-
-        case DLL_THREAD_ATTACH:
-            //printf("ATTACHED\n");
-            break;
-
-        case DLL_THREAD_DETACH:
-            //printf("DETACHED\n");
-            break;
-    }
-    return TRUE; // succesful
-}
-#endif // defined

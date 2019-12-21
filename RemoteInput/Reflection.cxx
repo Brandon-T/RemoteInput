@@ -27,34 +27,26 @@ Reflection::~Reflection()
 
 bool Reflection::Initialize(jobject awtFrame)
 {
-    this->frame = jvm->NewGlobalRef(awtFrame);
     std::function<jobject(jobject)> findClient = [&](jobject component) {
 		jobject result = nullptr;
-        jclass cls = jvm->GetObjectClass(component);
-        jmethodID mid = jvm->GetMethodID(cls, "getComponents", "()[Ljava/awt/Component;");
-
-        //TODO: Should validate that it's actually a java.awt.Frame so I can call `getComponents`
+        auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
+        jmethodID mid = jvm->GetMethodID(cls.get(), "getComponents", "()[Ljava/awt/Component;");
 
         if (mid)
 		{
-            jobjectArray components = static_cast<jobjectArray>(jvm->CallObjectMethod(component, mid));
-            jint len = jvm->GetArrayLength(components);
+            auto components = make_safe_local<jobjectArray>(jvm->CallObjectMethod(component, mid));
+            jint len = jvm->GetArrayLength(components.get());
 
             for (jint i = 0; i < len; ++i)
 			{
-                jobject component = jvm->GetObjectArrayElement(components, i); //Some java.awt.Panel.
-				if (jvm->IsInstanceOf(component, jvm->FindClass("java/applet/Applet")))
+				//Some java.awt.Panel.
+                auto component = make_safe_local<jobject>(jvm->GetObjectArrayElement(components.get(), i));
+				if (jvm->IsInstanceOf(component.get(), jvm->FindClass("java/applet/Applet")))
 				{
-					return component;
+					return jvm->NewGlobalRef(component.get());
 				}
 
-                /*if (getClassName(component) == "client")
-				{
-                    return jvm->NewGlobalRef(component);
-                }*/
-
-				jvm->DeleteLocalRef(cls);
-                result = findClient(component);
+                result = findClient(component.get());
 				if (result)
 				{
 					return result;
@@ -66,18 +58,19 @@ bool Reflection::Initialize(jobject awtFrame)
     };
 
     //Find Client Class.
-    this->applet = jvm->NewGlobalRef(findClient(awtFrame));
+	this->frame = jvm->NewGlobalRef(awtFrame);
+    this->applet = findClient(awtFrame);
 
     if (this->applet)
     {
-        jclass cls = jvm->GetObjectClass(this->applet);
-        jmethodID mid = jvm->GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
-        jobject clsObj = jvm->CallObjectMethod(this->applet, mid);
-        cls = jvm->GetObjectClass(clsObj);
+        auto cls = make_safe_local<jclass>(jvm->GetObjectClass(this->applet));
+        jmethodID mid = jvm->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
+        auto clsObj = make_safe_local<jobject>(jvm->CallObjectMethod(this->applet, mid));
+        cls = make_safe_local<jclass>(jvm->GetObjectClass(clsObj.get()));
 
         //Get Client's ClassLoader.
-        mid = jvm->GetMethodID(cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
-        this->classLoader = jvm->NewGlobalRef(jvm->CallObjectMethod(clsObj, mid));
+        mid = jvm->GetMethodID(cls.get(), "getClassLoader", "()Ljava/lang/ClassLoader;");
+        this->classLoader = jvm->NewGlobalRef(make_safe_local<jobject>(jvm->CallObjectMethod(clsObj.get(), mid)).get());
         return true;
     }
 
@@ -104,16 +97,16 @@ void Reflection::PrintClasses()
 {
     if (this->classLoader)
     {
-        jclass clsLoaderClass = jvm->GetObjectClass(classLoader);
-        jfieldID field = jvm->GetFieldID(clsLoaderClass, "classes", "Ljava/util/Vector;");
-        jobject classes = jvm->GetObjectField(classLoader, field);
-        jmethodID toArray = jvm->GetMethodID(jvm->GetObjectClass(classes), "toArray", "()[Ljava/lang/Object;");
-        jobjectArray clses = static_cast<jobjectArray>(jvm->CallObjectMethod(classes, toArray));
+        auto clsLoaderClass = make_safe_local<jclass>(jvm->GetObjectClass(classLoader));
+        jfieldID field = jvm->GetFieldID(clsLoaderClass.get(), "classes", "Ljava/util/Vector;");
+        auto classes = make_safe_local<jobject>(jvm->GetObjectField(classLoader, field));
+        jmethodID toArray = jvm->GetMethodID(make_safe_local<jclass>(jvm->GetObjectClass(classes.get())).get(), "toArray", "()[Ljava/lang/Object;");
+        auto clses = make_safe_local<jobjectArray>(jvm->CallObjectMethod(classes.get(), toArray));
 
         printf("LOADED CLASSES:\n");
-        for (int i = 0; i < jvm->GetArrayLength(clses); ++i) {
-            jobject clsObj = jvm->GetObjectArrayElement(clses, i);
-            std::string name = this->GetClassName(clsObj);
+        for (int i = 0; i < jvm->GetArrayLength(clses.get()); ++i) {
+            auto clsObj = make_safe_local<jobject>(jvm->GetObjectArrayElement(clses.get(), i));
+            std::string name = this->GetClassName(clsObj.get());
             printf("%s\n", name.c_str());
         }
 
@@ -125,13 +118,13 @@ void Reflection::PrintClasses()
 std::string Reflection::GetClassName(jobject object)
 {
     std::function<std::string(jobject)> getClassName = [&](jobject object) {
-		jclass cls = jvm->GetObjectClass(object);
-		jmethodID mid = jvm->GetMethodID(cls, "getName", "()Ljava/lang/String;");
-		jstring strObj = static_cast<jstring>(jvm->CallObjectMethod(object, mid));
+		auto cls = make_safe_local<jclass>(jvm->GetObjectClass(object));
+		jmethodID mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
+		auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(object, mid));
 
-		const char* str = jvm->GetStringUTFChars(strObj, nullptr);
+		const char* str = jvm->GetStringUTFChars(strObj.get(), nullptr);
 		std::string class_name = str;
-		jvm->ReleaseStringUTFChars(strObj, str);
+		jvm->ReleaseStringUTFChars(strObj.get(), str);
 		return class_name;
 	};
 	return getClassName(object);
@@ -140,17 +133,17 @@ std::string Reflection::GetClassName(jobject object)
 std::string Reflection::GetClassType(jobject object)
 {
     std::function<std::string(jobject)> getClassType = [&](jobject component) {
-		jclass cls = jvm->GetObjectClass(component);
-		jmethodID mid = jvm->GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
-		jobject clsObj = jvm->CallObjectMethod(component, mid);
+		auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
+		jmethodID mid = jvm->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
+		auto clsObj = make_safe_local<jobject>(jvm->CallObjectMethod(component, mid));
 
-		cls = jvm->GetObjectClass(clsObj);
-		mid = jvm->GetMethodID(cls, "getName", "()Ljava/lang/String;");
-		jstring strObj = static_cast<jstring>(jvm->CallObjectMethod(clsObj, mid));
+		cls = make_safe_local<jclass>(jvm->GetObjectClass(clsObj.get()));
+		mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
+		auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(clsObj.get(), mid));
 
-		const char* str = jvm->GetStringUTFChars(strObj, nullptr);
+		const char* str = jvm->GetStringUTFChars(strObj.get(), nullptr);
 		std::string class_name = str;
-		jvm->ReleaseStringUTFChars(strObj, str);
+		jvm->ReleaseStringUTFChars(strObj.get(), str);
 		return class_name;
 	};
 
@@ -159,9 +152,10 @@ std::string Reflection::GetClassType(jobject object)
 
 jclass Reflection::LoadClass(const char* clsToLoad)
 {
-    jclass cls = jvm->GetObjectClass(classLoader);
-    jmethodID loadClass = jvm->GetMethodID(cls, "loadClass", "(Ljava/lang/String;Z)Ljava/lang/Class;");
-    return static_cast<jclass>(jvm->CallObjectMethod(classLoader, loadClass, jvm->NewStringUTF(clsToLoad), true));
+    auto cls = make_safe_local<jclass>(jvm->GetObjectClass(classLoader));
+    jmethodID loadClass = jvm->GetMethodID(cls.get(), "loadClass", "(Ljava/lang/String;Z)Ljava/lang/Class;");
+	auto className = make_safe_local<jstring>(jvm->NewStringUTF(clsToLoad));
+    return static_cast<jclass>(jvm->CallObjectMethod(classLoader, loadClass, className.get(), true));
 }
 
 JVM* Reflection::getVM()

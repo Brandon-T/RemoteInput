@@ -61,4 +61,17 @@ typedef struct
     TFPCHeapStatus (*GetFPCHeapStatus)() DELPHI_CALLING_CONVENTION;
 } __attribute__((__packed__)) TCMemoryManager;
 
+
+typedef struct
+{
+	void (__cdecl *Sync)(void(__cdecl *synchronize_method)(void*), void* data);
+} __attribute__((__packed__)) TSimbaMethods;
+
+
+typedef struct
+{
+	void (__cdecl *GetMem)(std::size_t size);
+	void (__cdecl *FreeMem)(void* ptr);
+} __attribute__((__packed__)) TSimbaMemoryAllocators;
+
 #endif // TMEMORYMANAGER_HXX_INCLUDED
