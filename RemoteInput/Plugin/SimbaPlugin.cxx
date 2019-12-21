@@ -108,8 +108,14 @@ EIOS* Reflect_GetEIOS(std::int32_t pid)
 }
 
 
-char* Reflect_Pascal_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+void Reflect_Pascal_String(void** Params, void** Result)
 {
+	EIOS* eios = static_cast<EIOS*>(Params[0]);
+	jobject object = static_cast<jobject>(Params[1]);
+	const char* cls = static_cast<const char*>(Params[2]);
+	const char* field = static_cast<const char*>(Params[3]);
+	const char* desc = static_cast<const char*>(Params[4]);
+	
 	if (eios)
 	{
 		ReflectionHook hook{object, cls, field, desc};
@@ -118,9 +124,8 @@ char* Reflect_Pascal_String(EIOS* eios, jobject object, const char* cls, const c
 		char* output = AllocateString<char>(result.length());
 		std::memcpy(output, &result[0], result.length());
 		output[result.length() - 1] = '\0';
-		return output;
+		*Result = output;
 	}
-	return nullptr;
 }
 
 std::uint8_t* Pascal_GetDebugImageBuffer(EIOS* eios)
