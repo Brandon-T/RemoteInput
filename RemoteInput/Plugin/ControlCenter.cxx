@@ -71,6 +71,20 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 	if (!is_controller)
 	{
 		std::thread thread = std::thread([&]{
+
+            #if defined(_WIN32) || defined(_WIN64)
+            HANDLE this_process = GetCurrentProcess();
+            SetPriorityClass(this_process, NORMAL_PRIORITY_CLASS);
+
+            HANDLE this_thread = GetCurrentThread();
+            SetThreadPriority(this_thread, THREAD_PRIORITY_HIGHEST);
+            #else
+            pthread_t this_thread = pthread_self();
+            struct sched_param params = {0};
+            params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+            pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+            #endif // defined
+
 			if (this->reflector->Attach())
 			{
 				while(!stopped) {
@@ -85,13 +99,13 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 					}
 
 					command_signal->wait();
-					
+
 //					while(!command_signal->try_wait())
 //					{
 //						usleep(1);
 //						continue;
 //					}
-					
+
 					if (stopped)
 					{
 						if (this->reflector)
@@ -487,7 +501,7 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 		write_result(array, type, index, length, response);
 		return;
 	}
-	
+
 	array = static_cast<jarray>(reflector->getEnv()->NewLocalRef(array));
 
 	for (int i = 0; i < dimensions - 1; ++i)

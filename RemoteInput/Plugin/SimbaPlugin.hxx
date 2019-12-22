@@ -23,7 +23,7 @@ static const char* PascalExports[] =
     "Reflect_Float", "Function RIGetFloat(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): Single;",
     "Reflect_Double", "Function RIGetDouble(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): Double;",
     "Reflect_String", "Procedure RIGetString(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String; output: Pointer; size: PtrUInt);",
-	"Reflect_Pascal_String", "Function RIGetString(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): String;",
+	"Reflect_Pascal_String", "Function RIGetString2(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): String; native;",
     "Reflect_Array", "Function RIGetArray(eios: Pointer; instance: Pointer; cls: String; field: String; desc: String): Pointer;",
     "Reflect_Array_With_Size", "Function RIGetArray(eios: Pointer; instance: Pointer; output_size: ^PtrUInt; cls: String; field: String; desc: String): Pointer; overload;",
     "Reflect_Array_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer): PtrUInt;",
@@ -69,6 +69,7 @@ extern "C"
 {
 #endif
 
+EXPORT EIOS* Reflect_GetEIOS(std::int32_t pid);
 EXPORT char* Reflect_Pascal_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT std::uint8_t* Pascal_GetDebugImageBuffer(EIOS* eios);
 

@@ -5,6 +5,10 @@
 
 #include "ControlCenter.hxx"
 
+#if defined(_WIN32) || defined(_WIN64)
+extern HMODULE module;
+#endif
+
 TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
 TSimbaMethods PLUGIN_SYNC_METHODS = {0};
 TSimbaMemoryAllocators PLUGIN_MEMORY_ALLOCATORS = {0};
@@ -115,12 +119,12 @@ void Reflect_Pascal_String(void** Params, void** Result)
 	const char* cls = static_cast<const char*>(Params[2]);
 	const char* field = static_cast<const char*>(Params[3]);
 	const char* desc = static_cast<const char*>(Params[4]);
-	
+
 	if (eios)
 	{
 		ReflectionHook hook{object, cls, field, desc};
 		std::string result = eios->control_center->reflect_string(hook);
-		
+
 		char* output = AllocateString<char>(result.length());
 		std::memcpy(output, &result[0], result.length());
 		output[result.length() - 1] = '\0';

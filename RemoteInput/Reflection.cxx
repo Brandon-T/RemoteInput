@@ -13,13 +13,14 @@ Reflection::~Reflection()
 	#if defined(__APPLE__)
 	printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
 	#else
-	if (this->jvm->getENV() || this->Attach())
+	printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
+	/*if (this->jvm->getENV() || this->Attach())
 	{
 		jvm->DeleteGlobalRef(this->applet);
 		jvm->DeleteGlobalRef(this->classLoader);
 		jvm->DeleteGlobalRef(this->frame);
 		this->Detach();
-	}
+	}*/
 	#endif
     delete jvm;
     jvm = nullptr;

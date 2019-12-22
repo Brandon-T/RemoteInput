@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <chrono>
 #include <string>
+#include <atomic>
 
 class SpinLock
 {
@@ -21,7 +22,7 @@ private:
 	std::string name;
 	std::atomic_flag* flag;
 	std::int32_t* ref;
-	
+
 public:
 	SpinLock();
     SpinLock(std::string name);
@@ -53,9 +54,9 @@ private:
 	int shm_fd;
 	std::string name;
 	std::atomic_flag* lock;
-	std::atomic_int32_t* count;
+	std::atomic<std::int32_t>* count;
 	std::int32_t* ref;
-	
+
 public:
 	SpinningSemaphore(std::int32_t count = 0);
     SpinningSemaphore(std::string name, std::int32_t count = 0);
@@ -92,7 +93,7 @@ private:
 	std::string name;
 	std::atomic_bool* lock;
 	std::int32_t* ref;
-	
+
 public:
 	SpinningSignal(std::int32_t count = 0);
     SpinningSignal(std::string name, std::int32_t count = 0);

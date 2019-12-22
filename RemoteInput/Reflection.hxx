@@ -24,7 +24,7 @@ private:
 		jvm->ExceptionClear();\
 		return RESULT;\
 	}
-	
+
     template<typename T>
     auto make_safe(jobject object) -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
     {
@@ -34,7 +34,7 @@ private:
 
         return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
     }
-	
+
 	template<typename T, typename U>
     auto make_safe_local(U object) -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
     {
