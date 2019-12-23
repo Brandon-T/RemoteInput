@@ -2,6 +2,7 @@
 #include <memory>
 #include <cstring>
 #include <unordered_map>
+#include <type_traits>
 
 #include "ControlCenter.hxx"
 
@@ -126,8 +127,8 @@ typedef struct
 #if defined(FPC2)
 typedef struct
 {
-    std::int32_t refCount;
-    std::int32_t length;
+    std::make_signed_t<std::size_t> refCount;
+    std::make_signed_t<std::size_t> length;
     char data[];
 } __attribute__((__packed__)) PascalString;
 #else
@@ -138,8 +139,8 @@ typedef struct
     #if defined(__x86_64__)
     std::uint32_t dummy;
     #endif
-    std::int32_t refCount;
-    std::int32_t length;
+    std::make_signed_t<std::size_t> refCount;
+    std::make_signed_t<std::size_t> length;
     char data[];
 } __attribute__((__packed__)) PascalString;
 #endif // defined
@@ -300,11 +301,14 @@ void Pascal_Reflect_String(void** Params, void** Result)
 		ReflectionHook hook{object, field->cls, field->field, field->desc};
 		std::string result = eios->control_center->reflect_string(hook);
 
-		char* output = AllocateString<char>(result.length());
-		std::memcpy(output, &result[0], result.length());
-		output[result.length()] = '\0';
+		if (!result.empty())
+		{
+			char* output = AllocateString<char>(result.length());
+			std::memcpy(output, &result[0], result.length());
+			output[result.length()] = '\0';
 
-		PascalWrite(Result, output);
+			PascalWrite(Result, output);
+		}
 	}
 }
 
