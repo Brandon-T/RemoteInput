@@ -42,6 +42,17 @@ T PascalRead(void* ptr);
 template<typename T>
 void PascalWrite(void* ptr, T result);
 
+std::string Pascal_Read(void* &ptr)
+{
+	std::size_t length = *static_cast<std::size_t*>(ptr);
+	ptr = static_cast<std::size_t*>(ptr) + 1;
+
+	std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
+	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
+	ptr = static_cast<char*>(ptr) + 1;
+	return result;
+}
+
 
 // MARK: - EXPORTS
 
@@ -119,8 +130,8 @@ void OnDetach()
 
 typedef struct
 {
-    std::int32_t refCount;
-    std::int32_t length;
+    std::make_signed_t<std::size_t> refCount;
+    std::make_signed_t<std::size_t> length;
     char data[];
 } __attribute__((__packed__)) PascalArray;
 
@@ -364,6 +375,45 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
 	    std::size_t length = PascalRead<std::size_t>(Params[4]);
 
 		void* result = eios->control_center->reflect_array_index(array, type, index, length);
+		
+		if (type == ReflectionArrayType::STRING)
+		{
+			if (length > 1)
+			{
+				std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+				void** buffer = AllocateArray<void*>(length, element_size);
+				
+				for (std::size_t i = 0; i < length; ++i)
+				{
+					buffer[i] = nullptr;
+					std::string string = Pascal_Read(result);
+					
+					if (!string.empty())
+					{
+						char* output = AllocateString<char>(string.length());
+						std::memcpy(output, &string[0], string.length());
+						output[string.length()] = '\0';
+
+						buffer[i] = output;
+					}
+				}
+				
+				PascalWrite(Result, buffer);
+			}
+			else
+			{
+				std::string string = Pascal_Read(result);
+				if (!string.empty())
+				{
+					char* output = AllocateString<char>(string.length());
+					std::memcpy(output, &string[0], string.length());
+					output[string.length()] = '\0';
+					
+					PascalWrite(Result, output);
+				}
+			}
+			return;
+		}
 
 		if (length > 1)
         {
@@ -388,10 +438,48 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
 	    jarray array = PascalRead<jarray>(Params[1]);
 	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
 	    std::size_t length = PascalRead<std::size_t>(Params[3]);
-	    std::int32_t x = PascalRead<std::size_t>(Params[4]);
-	    std::int32_t y = PascalRead<std::size_t>(Params[5]);
+	    std::int32_t x = PascalRead<std::int32_t>(Params[4]);
+	    std::int32_t y = PascalRead<std::int32_t>(Params[5]);
 
 		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
+		
+		if (type == ReflectionArrayType::STRING)
+		{
+			if (length > 1)
+			{
+				std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+				void** buffer = AllocateArray<void*>(length, element_size);
+				
+				for (std::size_t i = 0; i < length; ++i)
+				{
+					buffer[i] = nullptr;
+					std::string string = Pascal_Read(result);
+					if (!string.empty())
+					{
+						char* output = AllocateString<char>(string.length());
+						std::memcpy(output, &string[0], string.length());
+						output[string.length()] = '\0';
+
+						buffer[i] = output;
+					}
+				}
+				
+				PascalWrite(Result, buffer);
+			}
+			else
+			{
+				std::string string = Pascal_Read(result);
+				if (!string.empty())
+				{
+					char* output = AllocateString<char>(string.length());
+					std::memcpy(output, &string[0], string.length());
+					output[string.length()] = '\0';
+					
+					PascalWrite(Result, output);
+				}
+			}
+			return;
+		}
 
 		if (length > 1)
         {
@@ -416,11 +504,49 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
 	    jarray array = PascalRead<jarray>(Params[1]);
 	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
 	    std::size_t length = PascalRead<std::size_t>(Params[3]);
-	    std::int32_t x = PascalRead<std::size_t>(Params[4]);
-	    std::int32_t y = PascalRead<std::size_t>(Params[5]);
-	    std::int32_t z = PascalRead<std::size_t>(Params[6]);
+	    std::int32_t x = PascalRead<std::int32_t>(Params[4]);
+	    std::int32_t y = PascalRead<std::int32_t>(Params[5]);
+	    std::int32_t z = PascalRead<std::int32_t>(Params[6]);
 
 		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
+		
+		if (type == ReflectionArrayType::STRING)
+		{
+			if (length > 1)
+			{
+				std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+				void** buffer = AllocateArray<void*>(length, element_size);
+				
+				for (std::size_t i = 0; i < length; ++i)
+				{
+					buffer[i] = nullptr;
+					std::string string = Pascal_Read(result);
+					if (!string.empty())
+					{
+						char* output = AllocateString<char>(string.length());
+						std::memcpy(output, &string[0], string.length());
+						output[string.length()] = '\0';
+
+						buffer[i] = output;
+					}
+				}
+				
+				PascalWrite(Result, buffer);
+			}
+			else
+			{
+				std::string string = Pascal_Read(result);
+				if (!string.empty())
+				{
+					char* output = AllocateString<char>(string.length());
+					std::memcpy(output, &string[0], string.length());
+					output[string.length()] = '\0';
+					
+					PascalWrite(Result, output);
+				}
+			}
+			return;
+		}
 
 		if (length > 1)
         {
@@ -445,12 +571,50 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
 	    jarray array = PascalRead<jarray>(Params[1]);
 	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
 	    std::size_t length = PascalRead<std::size_t>(Params[3]);
-	    std::int32_t x = PascalRead<std::size_t>(Params[4]);
-	    std::int32_t y = PascalRead<std::size_t>(Params[5]);
-	    std::int32_t z = PascalRead<std::size_t>(Params[6]);
-	    std::int32_t w = PascalRead<std::size_t>(Params[7]);
+	    std::int32_t x = PascalRead<std::int32_t>(Params[4]);
+	    std::int32_t y = PascalRead<std::int32_t>(Params[5]);
+	    std::int32_t z = PascalRead<std::int32_t>(Params[6]);
+	    std::int32_t w = PascalRead<std::int32_t>(Params[7]);
 
 		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
+		
+		if (type == ReflectionArrayType::STRING)
+		{
+			if (length > 1)
+			{
+				std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+				void** buffer = AllocateArray<void*>(length, element_size);
+				
+				for (std::size_t i = 0; i < length; ++i)
+				{
+					buffer[i] = nullptr;
+					std::string string = Pascal_Read(result);
+					if (!string.empty())
+					{
+						char* output = AllocateString<char>(string.length());
+						std::memcpy(output, &string[0], string.length());
+						output[string.length()] = '\0';
+
+						buffer[i] = output;
+					}
+				}
+				
+				PascalWrite(Result, buffer);
+			}
+			else
+			{
+				std::string string = Pascal_Read(result);
+				if (!string.empty())
+				{
+					char* output = AllocateString<char>(string.length());
+					std::memcpy(output, &string[0], string.length());
+					output[string.length()] = '\0';
+					
+					PascalWrite(Result, output);
+				}
+			}
+			return;
+		}
 
 		if (length > 1)
         {

@@ -19,6 +19,7 @@ enum class ReflectionArrayType: std::uint8_t
 	LONG,
 	FLOAT,
 	DOUBLE,
+	STRING,
 	OBJECT
 };
 

@@ -470,6 +470,28 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 				reflector->getEnv()->GetDoubleArrayRegion(static_cast<jdoubleArray>(array), index, length, static_cast<jdouble*>(response));
 			}
 				break;
+				
+			case ReflectionArrayType::STRING:
+			{
+				if (length > 1)
+				{
+					for (jsize i = 0; i < length; ++i)
+					{
+						auto element = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
+						std::string result = reflector->getField<std::string>(static_cast<jstring>(element));
+						EIOS_Write(response, result);
+						reflector->getEnv()->DeleteLocalRef(element);
+					}
+				}
+				else
+				{
+					auto element = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
+					std::string result = reflector->getField<std::string>(static_cast<jstring>(element));
+					EIOS_Write(response, result);
+					reflector->getEnv()->DeleteLocalRef(element);
+				}
+			}
+				break;
 
 			case ReflectionArrayType::OBJECT:
 			{
@@ -482,6 +504,7 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 						reflector->getEnv()->DeleteLocalRef(result);
 					}
 				}
+				else
 				{
 					auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
 					EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
@@ -1048,6 +1071,7 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
 		sizeof(jlong),
 		sizeof(jfloat),
 		sizeof(jdouble),
+		sizeof(jstring),
 		sizeof(jobject)
 	};
 	/*static std::unordered_map<ReflectionArrayType, std::size_t> mapping = {

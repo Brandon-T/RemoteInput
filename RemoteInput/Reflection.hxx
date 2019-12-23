@@ -70,6 +70,10 @@ public:
 
 	JVM* getVM();
     JNIEnv* getEnv();
+	
+	template<typename T>
+    typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
+    getField(jstring object);
 
     template<typename T>
     typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
@@ -117,7 +121,20 @@ public:
 };
 
 
-
+template<typename T>
+typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
+Reflection::getField(jstring string)
+{
+    if (string)
+    {
+		jsize length = jvm->GetStringUTFLength(string);
+        const char* chars = jvm->GetStringUTFChars(string, nullptr);
+        std::string result = std::string(chars, length);
+        jvm->ReleaseStringUTFChars(string, chars);
+        return result;
+    }
+    return std::string();
+}
 
 template<typename T>
 typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
@@ -133,8 +150,9 @@ Reflection::getField(jobject object, ReflectionHook hook)
 
         if (string)
         {
+			jsize length = jvm->GetStringUTFLength(string.get());
             const char* chars = jvm->GetStringUTFChars(string.get(), nullptr);
-            std::string result = chars;
+            std::string result = std::string(chars, length);
             jvm->ReleaseStringUTFChars(string.get(), chars);
             return result;
         }
@@ -149,8 +167,9 @@ Reflection::getField(jobject object, ReflectionHook hook)
 
     if (string)
     {
+		jsize length = jvm->GetStringUTFLength(string.get());
         const char* chars = jvm->GetStringUTFChars(string.get(), nullptr);
-        std::string result = chars;
+        std::string result = std::string(chars, length);
         jvm->ReleaseStringUTFChars(string.get(), chars);
         return result;
     }
