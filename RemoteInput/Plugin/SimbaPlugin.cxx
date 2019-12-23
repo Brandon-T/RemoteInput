@@ -26,8 +26,20 @@ int PascalLength(T* Arr);
 template<typename T>
 T* AllocateArray(std::size_t size, std::size_t element_size = sizeof(T));
 
-template<typename T, bool isFPC3 = false>
+template<typename T>
+T* GetArray(void* ptr, std::size_t* size);
+
+template<typename T>
 T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T));
+
+template<typename T>
+T* GetString(void* ptr);
+
+template<typename T>
+T PascalRead(void* ptr);
+
+template<typename T>
+void PascalWrite(void* ptr, T result);
 
 
 // MARK: - EXPORTS
@@ -101,44 +113,362 @@ void OnDetach()
 	control_center.reset();
 }
 
-EIOS* Reflect_GetEIOS(std::int32_t pid)
+
+// MARK: - Reflection
+
+typedef struct
 {
+    std::int32_t refCount;
+    std::int32_t length;
+    char data[];
+} __attribute__((__packed__)) PascalArray;
+
+#if defined(FPC2)
+typedef struct
+{
+    std::int32_t refCount;
+    std::int32_t length;
+    char data[];
+} __attribute__((__packed__)) PascalString;
+#else
+typedef struct
+{
+    std::uint16_t codePage;
+    std::uint16_t elementSize;
+    #if defined(__x86_64__)
+    std::uint32_t dummy;
+    #endif
+    std::int32_t refCount;
+    std::int32_t length;
+    char data[];
+} __attribute__((__packed__)) PascalString;
+#endif // defined
+
+typedef struct
+{
+    char* cls;
+    char* field;
+    char* desc;
+} __attribute__((__packed__)) PascalField;
+
+
+
+void Pascal_Reflect_GetEIOS(void** Params, void** Result)
+{
+    std::int32_t pid = PascalRead<std::int32_t>(Params[0]);
     extern std::unordered_map<std::int32_t, EIOS*> clients;
     if (clients.count(pid))
     {
-        return clients[pid];
+        PascalWrite(Result, clients[pid]);
     }
-    return nullptr;
 }
 
-
-void Reflect_Pascal_String(void** Params, void** Result)
+void Pascal_Reflect_Object(void** Params, void** Result)
 {
-	EIOS* eios = static_cast<EIOS*>(Params[0]);
-	jobject object = static_cast<jobject>(Params[1]);
-	const char* cls = static_cast<const char*>(Params[2]);
-	const char* field = static_cast<const char*>(Params[3]);
-	const char* desc = static_cast<const char*>(Params[4]);
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+	    PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_object(hook));
+	}
+}
+
+void Pascal_Reflect_Release_Object(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+	    eios->control_center->reflect_release_object(object);
+	}
+}
+
+void Pascal_Reflect_Release_Objects(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    PascalArray* objects = PascalRead<PascalArray*>(Params[1]);
+		eios->control_center->reflect_release_objects(reinterpret_cast<jobject*>(objects->data), objects->length);
+	}
+}
+
+void Pascal_Reflect_Char(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_char(hook));
+	}
+}
+
+void Pascal_Reflect_Byte(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_byte(hook));
+	}
+}
+
+void Pascal_Reflect_Short(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_short(hook));
+	}
+}
+
+void Pascal_Reflect_Int(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_int(hook));
+	}
+}
+
+void Pascal_Reflect_Long(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_long(hook));
+	}
+}
+
+void Pascal_Reflect_Float(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_float(hook));
+	}
+}
+
+void Pascal_Reflect_Double(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_double(hook));
+	}
+}
+
+void Pascal_Reflect_String(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
 	if (eios)
 	{
-		ReflectionHook hook{object, cls, field, desc};
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
 		std::string result = eios->control_center->reflect_string(hook);
 
 		char* output = AllocateString<char>(result.length());
 		std::memcpy(output, &result[0], result.length());
-		output[result.length() - 1] = '\0';
-		*Result = output;
+		output[result.length()] = '\0';
+
+		PascalWrite(Result, output);
 	}
 }
 
-std::uint8_t* Pascal_GetDebugImageBuffer(EIOS* eios)
+void Pascal_Reflect_Array(void** Params, void** Result)
 {
-    if (eios)
-    {
-		return eios->control_center->get_debug_image();
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_array(hook));
+	}
+}
+
+void Pascal_Reflect_Array_With_Size(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+	    std::size_t* output_size = PascalRead<std::size_t*>(Params[2]);
+        PascalField* field = PascalRead<PascalField*>(Params[3]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_array_with_size(hook, output_size));
+	}
+}
+
+void Pascal_Reflect_Array_Size(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jarray array = PascalRead<jarray>(Params[1]);
+		PascalWrite(Result, eios->control_center->reflect_array_size(array));
+	}
+}
+
+void Pascal_Reflect_Array_Index(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jarray array = PascalRead<jarray>(Params[1]);
+	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
+	    std::size_t index = PascalRead<std::size_t>(Params[2]);
+	    std::size_t length = PascalRead<std::size_t>(Params[3]);
+
+		void* result = eios->control_center->reflect_array_index(array, type, index, length);
+
+		if (length > 1)
+        {
+            std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+            void* buffer = AllocateArray<void>(length, element_size);
+            std::memcpy(buffer, result, length * element_size);
+            PascalWrite(Result, buffer);
+        }
+        else
+        {
+            PascalWrite(Result, result);
+        }
+	}
+}
+
+void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jarray array = PascalRead<jarray>(Params[1]);
+	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
+	    std::size_t length = PascalRead<std::size_t>(Params[3]);
+	    std::int32_t x = PascalRead<std::size_t>(Params[4]);
+	    std::int32_t y = PascalRead<std::size_t>(Params[5]);
+
+		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
+
+		if (length > 1)
+        {
+            std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+            void* buffer = AllocateArray<void>(length, element_size);
+            std::memcpy(buffer, result, length * element_size);
+            PascalWrite(Result, buffer);
+        }
+        else
+        {
+            PascalWrite(Result, result);
+        }
+	}
+}
+
+void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jarray array = PascalRead<jarray>(Params[1]);
+	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
+	    std::size_t length = PascalRead<std::size_t>(Params[3]);
+	    std::int32_t x = PascalRead<std::size_t>(Params[4]);
+	    std::int32_t y = PascalRead<std::size_t>(Params[5]);
+	    std::int32_t z = PascalRead<std::size_t>(Params[6]);
+
+		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
+
+		if (length > 1)
+        {
+            std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+            void* buffer = AllocateArray<void>(length, element_size);
+            std::memcpy(buffer, result, length * element_size);
+            PascalWrite(Result, buffer);
+        }
+        else
+        {
+            PascalWrite(Result, result);
+        }
+	}
+}
+
+void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jarray array = PascalRead<jarray>(Params[1]);
+	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
+	    std::size_t length = PascalRead<std::size_t>(Params[3]);
+	    std::int32_t x = PascalRead<std::size_t>(Params[4]);
+	    std::int32_t y = PascalRead<std::size_t>(Params[5]);
+	    std::int32_t z = PascalRead<std::size_t>(Params[6]);
+	    std::int32_t w = PascalRead<std::size_t>(Params[7]);
+
+		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
+
+		if (length > 1)
+        {
+            std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+            void* buffer = AllocateArray<void>(length, element_size);
+            std::memcpy(buffer, result, length * element_size);
+            PascalWrite(Result, buffer);
+        }
+        else
+        {
+            PascalWrite(Result, result);
+        }
+	}
+}
+
+void Pascal_Pascal_GetDebugImageBuffer(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+		PascalWrite(Result, eios->control_center->get_debug_image());
     }
-    return nullptr;
 }
 
 
@@ -157,56 +487,45 @@ int PascalLength(T* Arr)
 template<typename T>
 T* AllocateArray(std::size_t size, std::size_t element_size)
 {
-    typedef struct
-    {
-        std::int32_t refCount;
-        std::int32_t length;
-        char data[];
-    } FPCArray;
-
-    std::size_t new_size = (size * element_size) + sizeof(FPCArray);
-    FPCArray* ptr = static_cast<FPCArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
+    std::size_t new_size = (size * element_size) + sizeof(PascalArray);
+    PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
     ptr->refCount = 1;
     ptr->length = size - 1;
     return reinterpret_cast<T*>(++ptr);
 }
 
-template<typename T, bool isFPC3>
+template<typename T>
 T* AllocateString(std::size_t size, std::size_t element_size)
 {
-    if constexpr (isFPC3)
-    {
-        typedef struct
-        {
-            std::uint16_t codePage;
-            std::uint16_t elementSize;
-            #if defined(__x86_64__)
-            std::uint32_t dummy;
-            #endif
-            std::int32_t refCount;
-            std::int32_t length;
-            char data[];
-        } __attribute__((__packed__)) FPCAnsiString;
-
-        std::size_t new_size = (size * element_size) + sizeof(FPCAnsiString);
-        FPCAnsiString* ptr = static_cast<FPCAnsiString*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size + 1));
-        ptr->codePage = 0; //CP_ACP
-        ptr->elementSize = element_size;
-        ptr->refCount = 1;
-        ptr->length = size;
-        return reinterpret_cast<T*>(++ptr);
-    }
-
-    typedef struct
-    {
-        std::int32_t refCount;
-        std::int32_t length;
-        char data[];
-    } __attribute__((__packed__)) FPCAnsiString;
-
-    std::size_t new_size = (size * element_size) + sizeof(FPCAnsiString);
-    FPCAnsiString* ptr = static_cast<FPCAnsiString*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size + 1));
+    std::size_t new_size = (size * element_size) + sizeof(PascalString);
+    PascalString* ptr = static_cast<PascalString*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size + 1));
     ptr->refCount = 1;
     ptr->length = size;
     return reinterpret_cast<T*>(++ptr);
+}
+
+template<typename T>
+T* GetArray(void* ptr, std::size_t* size)
+{
+    PascalArray* mem = static_cast<PascalArray*>(ptr);
+    return reinterpret_cast<T*>((--mem)->data);
+}
+
+template<typename T>
+T* GetString(void* ptr)
+{
+    PascalString* mem = static_cast<PascalString*>(ptr);
+    return reinterpret_cast<T*>((--mem)->data);
+}
+
+template<typename T>
+T PascalRead(void* ptr)
+{
+    return *static_cast<T*>(ptr);
+}
+
+template<typename T>
+void PascalWrite(void* ptr, T result)
+{
+    *static_cast<T*>(ptr) = result;
 }

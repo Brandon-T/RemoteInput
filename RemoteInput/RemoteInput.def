@@ -1,5 +1,6 @@
 EXPORTS
     EIOS_GetImageBuffer=EIOS_GetImageBuffer@4
+    EIOS_GetDebugImageBuffer=EIOS_GetDebugImageBuffer@4
     EIOS_GetMousePosition=EIOS_GetMousePosition@12
     EIOS_GetTargetDimensions=EIOS_GetTargetDimensions@12
     EIOS_HoldKey=EIOS_HoldKey@8

@@ -1,59 +1,78 @@
 EXPORTS
     DllMain@12 @1
-    EIOS_GetDebugImageBuffer@4 @2
-    EIOS_GetImageBuffer = EIOS_GetImageBuffer@4 @3
-    EIOS_GetImageBuffer@4 @4
-    EIOS_GetMousePosition = EIOS_GetMousePosition@12 @5
-    EIOS_GetMousePosition@12 @6
-    EIOS_GetTargetDimensions = EIOS_GetTargetDimensions@12 @7
-    EIOS_GetTargetDimensions@12 @8
-    EIOS_HoldKey = EIOS_HoldKey@8 @9
-    EIOS_HoldKey@8 @10
-    EIOS_HoldMouse = EIOS_HoldMouse@16 @11
-    EIOS_HoldMouse@16 @12
-    EIOS_IsKeyHeld = EIOS_IsKeyHeld@8 @13
-    EIOS_IsKeyHeld@8 @14
-    EIOS_IsMouseHeld = EIOS_IsMouseHeld@8 @15
-    EIOS_IsMouseHeld@8 @16
-    EIOS_MoveMouse = EIOS_MoveMouse@12 @17
-    EIOS_MoveMouse@12 @18
-    EIOS_ReleaseKey = EIOS_ReleaseKey@8 @19
-    EIOS_ReleaseKey@8 @20
-    EIOS_ReleaseMouse = EIOS_ReleaseMouse@16 @21
-    EIOS_ReleaseMouse@16 @22
-    EIOS_ReleaseTarget = EIOS_ReleaseTarget@4 @23
-    EIOS_ReleaseTarget@4 @24
-    EIOS_RequestTarget = EIOS_RequestTarget@4 @25
-    EIOS_RequestTarget@4 @26
-    EIOS_SendString = EIOS_SendString@16 @27
-    EIOS_SendString@16 @28
-    EIOS_UpdateImageBuffer = EIOS_UpdateImageBuffer@4 @29
-    EIOS_UpdateImageBuffer@4 @30
-    GetFunctionCount @31
-    GetFunctionInfo @32
-    GetPluginABIVersion @33
-    GetTypeCount @34
-    GetTypeInfo @35
-    OnAttach @36
-    OnDetach @37
-    Pascal_GetDebugImageBuffer @38
-    Reflect_Array @39
-    Reflect_Array_Index @40
-    Reflect_Array_Index2D @41
-    Reflect_Array_Index3D @42
-    Reflect_Array_Index4D @43
-    Reflect_Array_Size @44
-    Reflect_Array_With_Size @45
-    Reflect_Byte @46
-    Reflect_Char @47
-    Reflect_Double @48
-    Reflect_Float @49
-    Reflect_GetEIOS @50
-    Reflect_Int @51
-    Reflect_Long @52
-    Reflect_Object @53
-    Reflect_Release_Object @54
-    Reflect_Release_Objects @55
-    Reflect_Short @56
-    Reflect_String @57
-    SetPluginMemManager @58
+    EIOS_GetDebugImageBuffer = EIOS_GetDebugImageBuffer@4 @2
+    EIOS_GetDebugImageBuffer@4 @3
+    EIOS_GetImageBuffer = EIOS_GetImageBuffer@4 @4
+    EIOS_GetImageBuffer@4 @5
+    EIOS_GetMousePosition = EIOS_GetMousePosition@12 @6
+    EIOS_GetMousePosition@12 @7
+    EIOS_GetTargetDimensions = EIOS_GetTargetDimensions@12 @8
+    EIOS_GetTargetDimensions@12 @9
+    EIOS_HoldKey = EIOS_HoldKey@8 @10
+    EIOS_HoldKey@8 @11
+    EIOS_HoldMouse = EIOS_HoldMouse@16 @12
+    EIOS_HoldMouse@16 @13
+    EIOS_IsKeyHeld = EIOS_IsKeyHeld@8 @14
+    EIOS_IsKeyHeld@8 @15
+    EIOS_IsMouseHeld = EIOS_IsMouseHeld@8 @16
+    EIOS_IsMouseHeld@8 @17
+    EIOS_MoveMouse = EIOS_MoveMouse@12 @18
+    EIOS_MoveMouse@12 @19
+    EIOS_ReleaseKey = EIOS_ReleaseKey@8 @20
+    EIOS_ReleaseKey@8 @21
+    EIOS_ReleaseMouse = EIOS_ReleaseMouse@16 @22
+    EIOS_ReleaseMouse@16 @23
+    EIOS_ReleaseTarget = EIOS_ReleaseTarget@4 @24
+    EIOS_ReleaseTarget@4 @25
+    EIOS_RequestTarget = EIOS_RequestTarget@4 @26
+    EIOS_RequestTarget@4 @27
+    EIOS_SendString = EIOS_SendString@16 @28
+    EIOS_SendString@16 @29
+    EIOS_UpdateImageBuffer = EIOS_UpdateImageBuffer@4 @30
+    EIOS_UpdateImageBuffer@4 @31
+    GetFunctionCount @32
+    GetFunctionInfo @33
+    GetPluginABIVersion @34
+    GetTypeCount @35
+    GetTypeInfo @36
+    OnAttach @37
+    OnDetach @38
+    Pascal_Pascal_GetDebugImageBuffer @39
+    Pascal_Reflect_Array @40
+    Pascal_Reflect_Array_Index @41
+    Pascal_Reflect_Array_Index2D @42
+    Pascal_Reflect_Array_Index3D @43
+    Pascal_Reflect_Array_Index4D @44
+    Pascal_Reflect_Array_Size @45
+    Pascal_Reflect_Array_With_Size @46
+    Pascal_Reflect_Byte @47
+    Pascal_Reflect_Char @48
+    Pascal_Reflect_Double @49
+    Pascal_Reflect_Float @50
+    Pascal_Reflect_GetEIOS @51
+    Pascal_Reflect_Int @52
+    Pascal_Reflect_Long @53
+    Pascal_Reflect_Object @54
+    Pascal_Reflect_Release_Object @55
+    Pascal_Reflect_Release_Objects @56
+    Pascal_Reflect_Short @57
+    Pascal_Reflect_String @58
+    Reflect_Array @59
+    Reflect_Array_Index @60
+    Reflect_Array_Index2D @61
+    Reflect_Array_Index3D @62
+    Reflect_Array_Index4D @63
+    Reflect_Array_Size @64
+    Reflect_Array_With_Size @65
+    Reflect_Byte @66
+    Reflect_Char @67
+    Reflect_Double @68
+    Reflect_Float @69
+    Reflect_Int @70
+    Reflect_Long @71
+    Reflect_Object @72
+    Reflect_Release_Object @73
+    Reflect_Release_Objects @74
+    Reflect_Short @75
+    Reflect_String @76
+    SetPluginMemManager @77

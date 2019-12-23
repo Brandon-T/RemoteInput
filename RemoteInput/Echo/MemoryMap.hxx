@@ -297,7 +297,7 @@ bool MemoryMap<char_type>::is_open() const
 template<typename char_type>
 bool MemoryMap<char_type>::is_mapped() const
 {
-    return pData;
+    return pData != nullptr;
 }
 
 template<typename char_type>

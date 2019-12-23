@@ -1,7 +1,7 @@
 EXPORTS
     DllMain@12 @1
-    EIOS_GetDebugImageBuffer@4 @2
-    EIOS_GetDebugImageBufferEx @3
+    EIOS_GetDebugImageBuffer = EIOS_GetDebugImageBuffer@4 @2
+    EIOS_GetDebugImageBuffer@4 @3
     EIOS_GetImageBuffer = EIOS_GetImageBuffer@4 @4
     EIOS_GetImageBuffer@4 @5
     EIOS_GetMousePosition = EIOS_GetMousePosition@12 @6
@@ -37,22 +37,25 @@ EXPORTS
     GetTypeInfo @36
     OnAttach @37
     OnDetach @38
-    Reflect_Array @39
-    Reflect_Array_Index @40
-    Reflect_Array_Index2D @41
-    Reflect_Array_Index3D @42
-    Reflect_Array_Index4D @43
-    Reflect_Array_Size @44
-    Reflect_Byte @45
-    Reflect_Char @46
-    Reflect_Double @47
-    Reflect_Float @48
-    Reflect_GetEIOS @49
-    Reflect_Int @50
-    Reflect_Long @51
-    Reflect_Object @52
-    Reflect_Release_Object @53
-    Reflect_Release_Objects @54
-    Reflect_Short @55
-    Reflect_String @56
-    SetPluginMemManager @57
+    Pascal_GetDebugImageBuffer @39
+    Reflect_Array @40
+    Reflect_Array_Index @41
+    Reflect_Array_Index2D @42
+    Reflect_Array_Index3D @43
+    Reflect_Array_Index4D @44
+    Reflect_Array_Size @45
+    Reflect_Array_With_Size @46
+    Reflect_Byte @47
+    Reflect_Char @48
+    Reflect_Double @49
+    Reflect_Float @50
+    Reflect_GetEIOS @51
+    Reflect_Int @52
+    Reflect_Long @53
+    Reflect_Object @54
+    Reflect_Pascal_String @55
+    Reflect_Release_Object @56
+    Reflect_Release_Objects @57
+    Reflect_Short @58
+    Reflect_String @59
+    SetPluginMemManager @60

@@ -70,7 +70,7 @@ typedef struct
 
 typedef struct
 {
-	void (__cdecl *GetMem)(std::size_t size);
+	void* (__cdecl *GetMem)(std::size_t size);
 	void (__cdecl *FreeMem)(void* ptr);
 } __attribute__((__packed__)) TSimbaMemoryAllocators;
 
