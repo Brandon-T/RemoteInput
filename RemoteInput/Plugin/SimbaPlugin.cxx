@@ -424,7 +424,7 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
         }
         else
         {
-            PascalWrite(Result, result);
+			PascalWrite(Result, PascalRead<void*>(result));
         }
 	}
 }
@@ -490,7 +490,7 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
         }
         else
         {
-            PascalWrite(Result, result);
+            PascalWrite(Result, PascalRead<void*>(result));
         }
 	}
 }
@@ -557,7 +557,7 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
         }
         else
         {
-            PascalWrite(Result, result);
+            PascalWrite(Result, PascalRead<void*>(result));
         }
 	}
 }
@@ -625,7 +625,7 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
         }
         else
         {
-            PascalWrite(Result, result);
+            PascalWrite(Result, PascalRead<void*>(result));
         }
 	}
 }
