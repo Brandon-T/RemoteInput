@@ -191,8 +191,9 @@ void Pascal_Reflect_Release_Objects(void** Params, void** Result)
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
 	{
-	    PascalArray* objects = PascalRead<PascalArray*>(Params[1]);
-		eios->control_center->reflect_release_objects(reinterpret_cast<jobject*>(objects->data), objects->length);
+	    std::size_t length = 0;
+	    jobject* objects = GetArray<jobject>(PascalRead<void*>(Params[1]), &length);
+		eios->control_center->reflect_release_objects(objects, length);
 	}
 }
 
@@ -355,8 +356,8 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
 	{
 	    jarray array = PascalRead<jarray>(Params[1]);
 	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
-	    std::size_t index = PascalRead<std::size_t>(Params[2]);
-	    std::size_t length = PascalRead<std::size_t>(Params[3]);
+	    std::size_t index = PascalRead<std::size_t>(Params[3]);
+	    std::size_t length = PascalRead<std::size_t>(Params[4]);
 
 		void* result = eios->control_center->reflect_array_index(array, type, index, length);
 

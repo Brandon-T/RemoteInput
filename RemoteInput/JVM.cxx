@@ -68,7 +68,8 @@ JVM::~JVM()
     {
         if (this->env)
         {
-            this->DetachCurrentThread();
+            //this->DetachCurrentThread();
+            printf("~JVM() -> NOT DETACHING VM\n");
         }
 
         if (this->createdVM)
