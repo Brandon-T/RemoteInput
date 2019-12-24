@@ -73,6 +73,7 @@ EXPORT void Pascal_Reflect_GetEIOS(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Object(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Release_Object(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Release_Objects(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Boolean(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Char(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Byte(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Short(void** Params, void** Result);

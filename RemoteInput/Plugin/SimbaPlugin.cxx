@@ -209,6 +209,19 @@ void Pascal_Reflect_Release_Objects(void** Params, void** Result)
 	}
 }
 
+void Pascal_Reflect_Boolean(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+	    jobject object = PascalRead<jobject>(Params[1]);
+        PascalField* field = PascalRead<PascalField*>(Params[2]);
+
+		ReflectionHook hook{object, field->cls, field->field, field->desc};
+		PascalWrite(Result, eios->control_center->reflect_boolean(hook));
+	}
+}
+
 void Pascal_Reflect_Char(void** Params, void** Result)
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
