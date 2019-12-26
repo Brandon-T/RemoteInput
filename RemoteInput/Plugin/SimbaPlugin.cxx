@@ -39,19 +39,12 @@ T* GetString(void* ptr);
 template<typename T>
 T PascalRead(void* ptr);
 
+std::string PascalRead(void* &ptr);
+
 template<typename T>
 void PascalWrite(void* ptr, T result);
 
-std::string Pascal_Read(void* &ptr)
-{
-	std::size_t length = *static_cast<std::size_t*>(ptr);
-	ptr = static_cast<std::size_t*>(ptr) + 1;
-
-	std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
-	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
-	ptr = static_cast<char*>(ptr) + 1;
-	return result;
-}
+void PascalWrite(void* ptr, void* result, ReflectionArrayType type);
 
 
 // MARK: - EXPORTS
@@ -162,6 +155,14 @@ typedef struct
     char* field;
     char* desc;
 } __attribute__((__packed__)) PascalField;
+
+template<typename T, std::size_t size>
+struct __attribute__((__packed__)) StaticPascalArray
+{
+    const std::make_signed_t<std::size_t> refCount = -1;
+    const std::make_signed_t<std::size_t> length = size;
+	T data[size] = {0};
+};
 
 
 
@@ -399,7 +400,7 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
 				for (std::size_t i = 0; i < length; ++i)
 				{
 					buffer[i] = nullptr;
-					std::string string = Pascal_Read(result);
+					std::string string = PascalRead(result);
 					
 					if (!string.empty())
 					{
@@ -415,7 +416,7 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
 			}
 			else
 			{
-				std::string string = Pascal_Read(result);
+				std::string string = PascalRead(result);
 				if (!string.empty())
 				{
 					char* output = AllocateString<char>(string.length());
@@ -437,7 +438,7 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
         }
         else
         {
-			PascalWrite(Result, PascalRead<void*>(result));
+			PascalWrite(Result, result, type);
         }
 	}
 }
@@ -466,7 +467,7 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
 				for (std::size_t i = 0; i < length; ++i)
 				{
 					buffer[i] = nullptr;
-					std::string string = Pascal_Read(result);
+					std::string string = PascalRead(result);
 					if (!string.empty())
 					{
 						char* output = AllocateString<char>(string.length());
@@ -481,7 +482,7 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
 			}
 			else
 			{
-				std::string string = Pascal_Read(result);
+				std::string string = PascalRead(result);
 				if (!string.empty())
 				{
 					char* output = AllocateString<char>(string.length());
@@ -533,7 +534,7 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
 				for (std::size_t i = 0; i < length; ++i)
 				{
 					buffer[i] = nullptr;
-					std::string string = Pascal_Read(result);
+					std::string string = PascalRead(result);
 					if (!string.empty())
 					{
 						char* output = AllocateString<char>(string.length());
@@ -548,7 +549,7 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
 			}
 			else
 			{
-				std::string string = Pascal_Read(result);
+				std::string string = PascalRead(result);
 				if (!string.empty())
 				{
 					char* output = AllocateString<char>(string.length());
@@ -601,7 +602,7 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
 				for (std::size_t i = 0; i < length; ++i)
 				{
 					buffer[i] = nullptr;
-					std::string string = Pascal_Read(result);
+					std::string string = PascalRead(result);
 					if (!string.empty())
 					{
 						char* output = AllocateString<char>(string.length());
@@ -616,7 +617,7 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
 			}
 			else
 			{
-				std::string string = Pascal_Read(result);
+				std::string string = PascalRead(result);
 				if (!string.empty())
 				{
 					char* output = AllocateString<char>(string.length());
@@ -706,8 +707,116 @@ T PascalRead(void* ptr)
     return *static_cast<T*>(ptr);
 }
 
+std::string PascalRead(void* &ptr)
+{
+	std::size_t length = *static_cast<std::size_t*>(ptr);
+	ptr = static_cast<std::size_t*>(ptr) + 1;
+
+	std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
+	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
+	ptr = static_cast<char*>(ptr) + 1;
+	return result;
+}
+
 template<typename T>
 void PascalWrite(void* ptr, T result)
 {
     *static_cast<T*>(ptr) = result;
+}
+
+void PascalWrite(void* ptr, void* result, ReflectionArrayType type)
+{
+	switch (type) {
+		case ReflectionArrayType::CHAR:
+		{
+			static jchar buffer = '\0';
+			buffer = PascalRead<jchar>(result);
+			*static_cast<jchar**>(ptr) = &buffer;
+		}
+			break;
+			
+		case ReflectionArrayType::BYTE:
+		{
+			static jbyte buffer = 0;
+			buffer = PascalRead<jbyte>(result);
+			*static_cast<jbyte**>(ptr) = &buffer;
+		}
+			break;
+		
+		case ReflectionArrayType::BOOL:
+		{
+			static jboolean buffer = false;
+			buffer = PascalRead<jboolean>(result);
+			*static_cast<jboolean**>(ptr) = &buffer;
+		}
+			break;
+		
+		case ReflectionArrayType::SHORT:
+		{
+			static jshort buffer = 0;
+			buffer = PascalRead<jshort>(result);
+			*static_cast<jshort**>(ptr) = &buffer;
+		}
+			break;
+			
+		case ReflectionArrayType::INT:
+		{
+			static jint buffer = 0;
+			buffer = PascalRead<jint>(result);
+			*static_cast<jint**>(ptr) = &buffer;
+		}
+			break;
+			
+		case ReflectionArrayType::LONG:
+		{
+			static jlong buffer = 0;
+			buffer = PascalRead<jlong>(result);
+			*static_cast<jlong**>(ptr) = &buffer;
+		}
+			break;
+			
+		case ReflectionArrayType::FLOAT:
+		{
+			static jfloat buffer = 0;
+			buffer = PascalRead<jfloat>(result);
+			*static_cast<jfloat**>(ptr) = &buffer;
+		}
+			break;
+			
+		case ReflectionArrayType::DOUBLE:
+		{
+			static jdouble buffer = 0;
+			buffer = PascalRead<jdouble>(result);
+			*static_cast<jdouble**>(ptr) = &buffer;
+		}
+			break;
+			
+		case ReflectionArrayType::STRING:
+		{
+			std::string string = PascalRead(result);
+			if (!string.empty())
+			{
+				char* output = AllocateString<char>(string.length());
+				std::memcpy(output, &string[0], string.length());
+				output[string.length()] = '\0';
+				
+				PascalWrite(ptr, output);
+			}
+		}
+			break;
+			
+		case ReflectionArrayType::OBJECT:
+		{
+			static jobject buffer = 0;
+			buffer = PascalRead<jobject>(result);
+			*static_cast<jobject**>(ptr) = &buffer;
+		}
+			break;
+			
+		default:
+		{
+			std::terminate();
+		}
+			break;
+	}
 }
