@@ -25,14 +25,27 @@ static const char* PascalExports[] =
     "Pascal_Reflect_String", "Function RIGetString(eios: Pointer; instance: Pointer; constref field: ^const RIField): String; native;",
 	"Pascal_Reflect_Array", "Function RIGetArray(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
 
+	//Array size
     "Pascal_Reflect_Array_With_Size", "Function RIGetArray(eios: Pointer; instance: Pointer; output_size: ^SizeUInt; constref field: ^const RIField): Pointer; overload; native;",
     "Pascal_Reflect_Array_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer): SizeUInt; native;",
-    "Pascal_Reflect_Array_Index", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: SizeUInt; length: SizeUInt): Pointer; native;",
-    "Pascal_Reflect_Array_Index2D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x: Int32; y: Int32): Pointer; overload; native;",
-    "Pascal_Reflect_Array_Index3D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x: Int32; y: Int32; z: Int32): Pointer; overload; native;",
-    "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x: Int32; y: Int32; z: Int32; w: Int32): Pointer; overload; native;",
+	
+	//Array 1-D
+	"Pascal_Reflect_Array_SingleIndex", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: SizeUInt): Pointer; native;",
+    "Pascal_Reflect_Array_Index", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index, length: SizeUInt): Pointer; native;",
+	
+	//Array 2-D
+	"Pascal_Reflect_Array_SingleIndex2D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y: Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Index2D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y: Int32): Pointer; overload; native;",
+	
+	//Array 3-D
+	"Pascal_Reflect_Array_SingleIndex3D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z: Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Index3D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z: Int32): Pointer; overload; native;",
+	
+	//Array 4-D
+	"Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z, w: Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
-	"Pascal_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;"
+	"Pascal_Reflect_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;"
 };
 
 static const char* PascalTypes[] =
@@ -70,6 +83,8 @@ extern "C"
 #endif
 
 EXPORT void Pascal_Reflect_GetEIOS(void** Params, void** Result);
+EXPORT void Pascal_Reflect_GetDebugImageBuffer(void** Params, void** Result);
+
 EXPORT void Pascal_Reflect_Object(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Release_Object(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Release_Objects(void** Params, void** Result);
@@ -85,10 +100,17 @@ EXPORT void Pascal_Reflect_String(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_With_Size(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_Size(void** Params, void** Result);
+
+EXPORT void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result);
+
 EXPORT void Pascal_Reflect_Array_Index(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_Index2D(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_Index3D(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_Index4D(void** Params, void** Result);
+
 EXPORT void Pascal_Pascal_GetDebugImageBuffer(void** Params, void** Result);
 
 #ifdef __cplusplus
