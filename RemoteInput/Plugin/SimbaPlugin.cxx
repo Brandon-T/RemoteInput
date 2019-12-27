@@ -716,61 +716,62 @@ void PascalWrite(void* ptr, T result)
 }
 
 template<typename T>
-T* PascalProcess(EIOS* eios, void* ptr)
+void PascalProcess(EIOS* eios, void* ptr, void* result)
 {
 	T* buffer = reinterpret_cast<T*>(&eios->local_storage);
-	*buffer = PascalRead<T>(ptr);
-	return buffer;
+	*buffer = PascalRead<T>(result);
+	PascalWrite(ptr, buffer);
 }
 
 void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionArrayType type)
 {
-	switch (type) {
+	switch (type)
+	{
 		case ReflectionArrayType::CHAR:
 		{
-			PascalWrite(ptr, PascalProcess<jchar>(eios, ptr));
+			PascalProcess<jchar>(eios, ptr, result);
 		}
 			break;
 			
 		case ReflectionArrayType::BYTE:
 		{
-			PascalWrite(ptr, PascalProcess<jbyte>(eios, ptr));
+			PascalProcess<jbyte>(eios, ptr, result);
 		}
 			break;
 		
 		case ReflectionArrayType::BOOL:
 		{
-			PascalWrite(ptr, PascalProcess<jboolean>(eios, ptr));
+			PascalProcess<jboolean>(eios, ptr, result);
 		}
 			break;
 		
 		case ReflectionArrayType::SHORT:
 		{
-			PascalWrite(ptr, PascalProcess<jshort>(eios, ptr));
+			PascalProcess<jshort>(eios, ptr, result);
 		}
 			break;
 			
 		case ReflectionArrayType::INT:
 		{
-			PascalWrite(ptr, PascalProcess<jint>(eios, ptr));
+			PascalProcess<jint>(eios, ptr, result);
 		}
 			break;
 			
 		case ReflectionArrayType::LONG:
 		{
-			PascalWrite(ptr, PascalProcess<jlong>(eios, ptr));
+			PascalProcess<jlong>(eios, ptr, result);
 		}
 			break;
 			
 		case ReflectionArrayType::FLOAT:
 		{
-			PascalWrite(ptr, PascalProcess<jfloat>(eios, ptr));
+			PascalProcess<jfloat>(eios, ptr, result);
 		}
 			break;
 			
 		case ReflectionArrayType::DOUBLE:
 		{
-			PascalWrite(ptr, PascalProcess<jdouble>(eios, ptr));
+			PascalProcess<jdouble>(eios, ptr, result);
 		}
 			break;
 			
