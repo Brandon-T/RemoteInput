@@ -159,6 +159,11 @@ jclass Reflection::LoadClass(const char* clsToLoad)
     return static_cast<jclass>(jvm->CallObjectMethod(classLoader, loadClass, className.get(), true));
 }
 
+jobject Reflection::getApplet()
+{
+	return this->applet;
+}
+
 JVM* Reflection::getVM()
 {
 	return this->jvm;

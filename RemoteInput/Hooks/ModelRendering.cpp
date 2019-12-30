@@ -987,12 +987,12 @@ Model Player::model()
 void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t height)> renderer)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
-	Reflector* eios = get_reflector(control_center->get_reflector());
+	Reflector* eios = nullptr; //get_reflector(control_center->get_reflector());
 	
 	static bool isAttached = false;
 	if (!isAttached)
 	{
-		control_center->get_reflector()->AttachAsDaemon();
+		//control_center->get_reflector()->AttachAsDaemon();
 	}
 
 	static int amount = 1;

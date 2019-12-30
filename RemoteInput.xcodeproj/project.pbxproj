@@ -15,11 +15,21 @@
 		5E0F52AF23AE8EAD002518AF /* Plugin.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E0F52AB23AE8EAD002518AF /* Plugin.hxx */; };
 		5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */; };
 		5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
+		5E27B22B23B70EF00091232F /* Awt.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B22923B70EF00091232F /* Awt.cxx */; };
+		5E27B22C23B70EF00091232F /* Awt.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B22A23B70EF00091232F /* Awt.hxx */; };
+		5E27B22D23B7AAFF0091232F /* Awt.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B22A23B70EF00091232F /* Awt.hxx */; };
+		5E27B22E23B7AB010091232F /* Awt.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B22923B70EF00091232F /* Awt.cxx */; };
+		5E27B24423B829C60091232F /* InputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* InputOutput.cxx */; };
+		5E27B24523B829C60091232F /* InputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* InputOutput.cxx */; };
+		5E27B24623B829C60091232F /* InputOutput.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24323B829C60091232F /* InputOutput.hxx */; };
+		5E27B24723B829C60091232F /* InputOutput.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24323B829C60091232F /* InputOutput.hxx */; };
+		5E27B24A23B9A0430091232F /* Random.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24823B9A0430091232F /* Random.cxx */; };
+		5E27B24B23B9A0430091232F /* Random.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24823B9A0430091232F /* Random.cxx */; };
+		5E27B24C23B9A0430091232F /* Random.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24923B9A0430091232F /* Random.hxx */; };
+		5E27B24D23B9A0430091232F /* Random.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24923B9A0430091232F /* Random.hxx */; };
 		5E4CDC1D2381F40700A05869 /* NativeHooks_Darwin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1A2381F40700A05869 /* NativeHooks_Darwin.cxx */; };
 		5E4CDC1E2381F40700A05869 /* NativeHooks_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1B2381F40700A05869 /* NativeHooks_Linux.cxx */; };
 		5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */; };
-		5E4CDC22238214B200A05869 /* InputEvents.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC20238214B200A05869 /* InputEvents.cxx */; };
-		5E4CDC23238214B200A05869 /* InputEvents.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E4CDC21238214B200A05869 /* InputEvents.hxx */; };
 		5E5B3F86239D367F00F07DD1 /* Hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F84239D367F00F07DD1 /* Hooks.cpp */; };
 		5E5B3F87239D367F00F07DD1 /* Hooks.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 5E5B3F85239D367F00F07DD1 /* Hooks.hpp */; };
 		5E5B3F8A239D36A400F07DD1 /* ModelRendering.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */; };
@@ -64,8 +74,6 @@
 		5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66AE235CF15400D183B1 /* ThreadPool.cxx */; };
 		5E6B9A202394C59700E6720C /* ThreadPool.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B8235CF15400D183B1 /* ThreadPool.hxx */; };
 		5E6B9A212394C59700E6720C /* RemoteInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EC5950A232D956B00922111 /* RemoteInput.h */; };
-		5E6B9A222394C59C00E6720C /* InputEvents.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC20238214B200A05869 /* InputEvents.cxx */; };
-		5E6B9A232394C59C00E6720C /* InputEvents.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E4CDC21238214B200A05869 /* InputEvents.hxx */; };
 		5E6B9A242394C59C00E6720C /* ReflectionHook.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */; };
 		5E6B9A252394C59C00E6720C /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
 		5E6B9A262394C60A00E6720C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DC235D041D00D183B1 /* Foundation.framework */; };
@@ -116,11 +124,15 @@
 		5E0F52AB23AE8EAD002518AF /* Plugin.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Plugin.hxx; sourceTree = "<group>"; };
 		5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ReflectionHook.cxx; sourceTree = "<group>"; };
 		5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ReflectionHook.hxx; sourceTree = "<group>"; };
+		5E27B22923B70EF00091232F /* Awt.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Awt.cxx; sourceTree = "<group>"; };
+		5E27B22A23B70EF00091232F /* Awt.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Awt.hxx; sourceTree = "<group>"; };
+		5E27B24223B829C60091232F /* InputOutput.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InputOutput.cxx; sourceTree = "<group>"; };
+		5E27B24323B829C60091232F /* InputOutput.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = InputOutput.hxx; sourceTree = "<group>"; };
+		5E27B24823B9A0430091232F /* Random.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Random.cxx; sourceTree = "<group>"; };
+		5E27B24923B9A0430091232F /* Random.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Random.hxx; sourceTree = "<group>"; };
 		5E4CDC1A2381F40700A05869 /* NativeHooks_Darwin.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Darwin.cxx; sourceTree = "<group>"; };
 		5E4CDC1B2381F40700A05869 /* NativeHooks_Linux.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Linux.cxx; sourceTree = "<group>"; };
 		5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Windows.cxx; sourceTree = "<group>"; };
-		5E4CDC20238214B200A05869 /* InputEvents.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InputEvents.cxx; sourceTree = "<group>"; };
-		5E4CDC21238214B200A05869 /* InputEvents.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = InputEvents.hxx; sourceTree = "<group>"; };
 		5E5B3F84239D367F00F07DD1 /* Hooks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hooks.cpp; sourceTree = "<group>"; };
 		5E5B3F85239D367F00F07DD1 /* Hooks.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Hooks.hpp; sourceTree = "<group>"; };
 		5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ModelRendering.cpp; sourceTree = "<group>"; };
@@ -196,6 +208,8 @@
 				5E5B3F85239D367F00F07DD1 /* Hooks.hpp */,
 				5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */,
 				5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */,
+				5E27B22923B70EF00091232F /* Awt.cxx */,
+				5E27B22A23B70EF00091232F /* Awt.hxx */,
 			);
 			path = Hooks;
 			sourceTree = "<group>";
@@ -231,6 +245,8 @@
 				5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */,
 				5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */,
 				5EFF49C123A704DF00DC83D1 /* Signal.hxx */,
+				5E27B24223B829C60091232F /* InputOutput.cxx */,
+				5E27B24323B829C60091232F /* InputOutput.hxx */,
 			);
 			path = Plugin;
 			sourceTree = "<group>";
@@ -297,10 +313,10 @@
 				5EBD66B8235CF15400D183B1 /* ThreadPool.hxx */,
 				5EC5950A232D956B00922111 /* RemoteInput.h */,
 				5EC5950B232D956B00922111 /* Info.plist */,
-				5E4CDC20238214B200A05869 /* InputEvents.cxx */,
-				5E4CDC21238214B200A05869 /* InputEvents.hxx */,
 				5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */,
 				5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */,
+				5E27B24823B9A0430091232F /* Random.cxx */,
+				5E27B24923B9A0430091232F /* Random.hxx */,
 			);
 			path = RemoteInput;
 			sourceTree = "<group>";
@@ -314,7 +330,9 @@
 			files = (
 				5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */,
 				5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */,
+				5E27B22D23B7AAFF0091232F /* Awt.hxx in Headers */,
 				5E5B3F8D239D39F700F07DD1 /* ModelRendering.hpp in Headers */,
+				5E27B24723B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */,
 				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
 				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
@@ -323,6 +341,7 @@
 				5E6B9A182394C58500E6720C /* TMemoryManager.hxx in Headers */,
 				5E6B9A202394C59700E6720C /* ThreadPool.hxx in Headers */,
 				5E6B9A082394C57600E6720C /* EIOS.hxx in Headers */,
+				5E27B24D23B9A0430091232F /* Random.hxx in Headers */,
 				5EFF49C523A704DF00DC83D1 /* Signal.hxx in Headers */,
 				5E6B9A062394C57600E6720C /* SharedEvent.hxx in Headers */,
 				5E6B9A1A2394C58500E6720C /* ControlCenter.hxx in Headers */,
@@ -331,7 +350,6 @@
 				5E6B9A022394C57600E6720C /* MemoryMap.hxx in Headers */,
 				5E6B9A0E2394C57A00E6720C /* DebugConsole.hxx in Headers */,
 				5E6B9A112394C57A00E6720C /* NativeHooks.hxx in Headers */,
-				5E6B9A232394C59C00E6720C /* InputEvents.hxx in Headers */,
 				5E6B9A102394C57A00E6720C /* Platform.hxx in Headers */,
 				5E6B9A212394C59700E6720C /* RemoteInput.h in Headers */,
 				5E6B9A1E2394C59400E6720C /* Reflection.hxx in Headers */,
@@ -345,7 +363,9 @@
 			files = (
 				5EBD66C4235CF15400D183B1 /* Reflection.hxx in Headers */,
 				5EBD66C7235CF15400D183B1 /* EIOS.hxx in Headers */,
+				5E27B22C23B70EF00091232F /* Awt.hxx in Headers */,
 				5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */,
+				5E27B24623B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
@@ -354,6 +374,7 @@
 				5EBD66C2235CF15400D183B1 /* JavaInternal.hxx in Headers */,
 				5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */,
 				5EBD66D3235CF15400D183B1 /* MemoryMap.hxx in Headers */,
+				5E27B24C23B9A0430091232F /* Random.hxx in Headers */,
 				5EFF49C423A704DF00DC83D1 /* Signal.hxx in Headers */,
 				5EBD66CA235CF15400D183B1 /* TMemoryManager.hxx in Headers */,
 				5EBD66CC235CF15400D183B1 /* JVM.hxx in Headers */,
@@ -362,7 +383,6 @@
 				5EBD66D4235CF15400D183B1 /* Module.hxx in Headers */,
 				5EC5950C232D956B00922111 /* RemoteInput.h in Headers */,
 				5EBD66D6235CF15400D183B1 /* Time.hxx in Headers */,
-				5E4CDC23238214B200A05869 /* InputEvents.hxx in Headers */,
 				5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */,
 				5EBD66BC235CF15400D183B1 /* Platform.hxx in Headers */,
 				5EBD66D7235CF15400D183B1 /* SharedEvent.hxx in Headers */,
@@ -468,7 +488,8 @@
 				5E6B9A162394C58500E6720C /* SimbaPlugin.cxx in Sources */,
 				5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */,
 				5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */,
-				5E6B9A222394C59C00E6720C /* InputEvents.cxx in Sources */,
+				5E27B24523B829C60091232F /* InputOutput.cxx in Sources */,
+				5E27B24B23B9A0430091232F /* Random.cxx in Sources */,
 				5E6B9A002394C57600E6720C /* Time.cxx in Sources */,
 				5E6B9A092394C57600E6720C /* JVM.cxx in Sources */,
 				5EFF49BF23A703C700DC83D1 /* SpinLock.cxx in Sources */,
@@ -483,6 +504,7 @@
 				5E6B9A042394C57600E6720C /* Module.cxx in Sources */,
 				5E6B9A012394C57600E6720C /* SharedEvent.cxx in Sources */,
 				5E6B9A242394C59C00E6720C /* ReflectionHook.cxx in Sources */,
+				5E27B22E23B7AB010091232F /* Awt.cxx in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -497,8 +519,9 @@
 				5EBD66D0235CF15400D183B1 /* JVM.cxx in Sources */,
 				5E5B3F8A239D36A400F07DD1 /* ModelRendering.cpp in Sources */,
 				5EBD66CE235CF15400D183B1 /* EIOS.cxx in Sources */,
-				5E4CDC22238214B200A05869 /* InputEvents.cxx in Sources */,
 				5EBD66BE235CF15400D183B1 /* Platform_Darwin.cxx in Sources */,
+				5E27B24423B829C60091232F /* InputOutput.cxx in Sources */,
+				5E27B24A23B9A0430091232F /* Random.cxx in Sources */,
 				5EBD66BA235CF15400D183B1 /* Platform_Linux.cxx in Sources */,
 				5EBD66C1235CF15400D183B1 /* DebugConsole.cxx in Sources */,
 				5EFF49BE23A703C700DC83D1 /* SpinLock.cxx in Sources */,
@@ -513,6 +536,7 @@
 				5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */,
 				5E07A6C02378B1B100EB4CDF /* Graphics.cxx in Sources */,
 				5EBD66C3235CF15400D183B1 /* Platform_Windows.cxx in Sources */,
+				5E27B22B23B70EF00091232F /* Awt.cxx in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

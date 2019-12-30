@@ -22,24 +22,27 @@ private:
 
 public:
     ThreadPool();
+	ThreadPool(std::size_t max_threads);
     ~ThreadPool();
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator = (const ThreadPool&) = delete;
+	
+	void terminate();
 
-    void enqueue(std::function<void()> &&task);
+    void add_task(std::function<void()> &&task);
 
     template<typename Task, typename... Args>
-    auto enqueue(Task &&task, Args&&... args) -> std::future<typename std::result_of<Task(Args...)>::type>;
+    auto enqueue(Task &&task, Args&&... args) -> std::future<std::invoke_result_t<Task, Args...>>;
 };
 
 template<typename Task, typename... Args>
-auto ThreadPool::enqueue(Task &&task, Args&&... args) -> std::future<typename std::result_of<Task(Args...)>::type>
+auto ThreadPool::enqueue(Task &&task, Args&&... args) -> std::future<std::invoke_result_t<Task, Args...>>
 {
-    auto packaged_task = std::make_shared<std::packaged_task<typename std::result_of<Task(Args...)>::type>>(
+    auto packaged_task = std::make_shared<std::packaged_task<std::invoke_result_t<Task, Args...>(Args&&...)>>(
         std::bind(std::forward<Task>(task), std::forward<Args>(args)...)
     );
 
-    std::future<typename std::result_of<Task(Args...)>::type> result = packaged_task->get_future();
+    std::future<std::invoke_result_t<Task, Args...>> result = packaged_task->get_future();
     std::unique_lock<std::mutex> lock(this->mutex);
     if (this->stop)
     {

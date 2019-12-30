@@ -50,7 +50,6 @@ private:
     jobject applet;
     jobject classLoader;
 
-public:
     void PrintClasses();
 
 public:
@@ -67,6 +66,8 @@ public:
     std::string GetClassName(jobject object);
     std::string GetClassType(jobject object);
     jclass LoadClass(const char* clsToLoad);
+	
+	jobject getApplet();
 
 	JVM* getVM();
     JNIEnv* getEnv();

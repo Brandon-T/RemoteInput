@@ -1074,17 +1074,12 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
 		sizeof(jstring),
 		sizeof(jobject)
 	};
-	/*static std::unordered_map<ReflectionArrayType, std::size_t> mapping = {
-		{ReflectionArrayType::CHAR, sizeof(jchar)},
-		{ReflectionArrayType::BYTE, sizeof(jbyte)},
-		{ReflectionArrayType::BOOL, sizeof(jboolean)},
-		{ReflectionArrayType::SHORT, sizeof(jshort)},
-		{ReflectionArrayType::INT, sizeof(jint)},
-		{ReflectionArrayType::LONG, sizeof(jlong)},
-		{ReflectionArrayType::FLOAT, sizeof(jfloat)},
-		{ReflectionArrayType::DOUBLE, sizeof(jdouble)},
-		{ReflectionArrayType::OBJECT, sizeof(jobject)}
-	};*/
 
 	return mapping[static_cast<std::uint8_t>(type)];
+}
+
+Component ControlCenter::reflect_canvas()
+{
+	Applet applet{reflector->getEnv(), reflector->getApplet(), false};
+	return applet.getComponent(0);
 }

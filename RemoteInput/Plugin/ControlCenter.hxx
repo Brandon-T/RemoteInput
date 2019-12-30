@@ -4,6 +4,7 @@
 #include <atomic>
 #include "Signal.hxx"
 #include "Reflection.hxx"
+#include "Awt.hxx"
 #include "MemoryMap.hxx"
 
 
@@ -87,11 +88,8 @@ public:
 	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
 
 	static std::size_t reflect_size_for_type(ReflectionArrayType type);
-
-	Reflection* get_reflector()
-	{
-		return reflector.get();
-	}
+	
+	Component reflect_canvas();
 };
 
 #endif /* ControlCenter_HXX_INCLUDED */

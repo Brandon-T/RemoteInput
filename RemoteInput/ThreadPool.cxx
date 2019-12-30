@@ -1,10 +1,14 @@
 #include "ThreadPool.hxx"
 
-ThreadPool::ThreadPool() : mutex(), condition(), tasks(), threads(), stop(false)
+ThreadPool::ThreadPool() : ThreadPool::ThreadPool(std::thread::hardware_concurrency())
 {
-    this->threads.reserve(std::thread::hardware_concurrency());
+}
 
-    for (std::size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+ThreadPool::ThreadPool(std::size_t max_threads) : mutex(), condition(), tasks(), threads(), stop(false)
+{
+    this->threads.reserve(max_threads);
+
+    for (std::size_t i = 0; i < max_threads; ++i)
     {
         this->threads.emplace_back([this] {
             while(true)
@@ -32,20 +36,41 @@ ThreadPool::ThreadPool() : mutex(), condition(), tasks(), threads(), stop(false)
 
 ThreadPool::~ThreadPool()
 {
-    std::unique_lock<std::mutex> lock(this->mutex);
-    this->stop = true;
-    lock.unlock();
-    this->condition.notify_all();
+	if (!this->stop)
+	{
+		std::unique_lock<std::mutex> lock(this->mutex);
+		this->stop = true;
+		lock.unlock();
+		this->condition.notify_all();
 
-    for (auto&& thread : this->threads)
-    {
-        thread.join();
-    }
+		for (auto&& thread : this->threads)
+		{
+			thread.join();
+		}
 
-    std::vector<std::thread>().swap(this->threads);
+		std::vector<std::thread>().swap(this->threads);
+	}
 }
 
-void ThreadPool::enqueue(std::function<void()> &&task)
+void ThreadPool::terminate()
+{
+	if (!this->stop)
+	{
+		std::unique_lock<std::mutex> lock(this->mutex);
+		this->stop = true;
+		lock.unlock();
+		this->condition.notify_all();
+
+		for (auto&& thread : this->threads)
+		{
+			thread.detach();
+		}
+
+		std::vector<std::thread>().swap(this->threads);
+	}
+}
+
+void ThreadPool::add_task(std::function<void()> &&task)
 {
     if (!this->stop)
     {
