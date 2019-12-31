@@ -172,25 +172,29 @@ void ControlCenter::process_command()
 
 		case EIOSCommand::GET_TARGET_DIMENSIONS:
 		{
-			EIOS_Write<std::int32_t>(arguments, get_width());
-			EIOS_Write<std::int32_t>(arguments, get_height());
+			EIOS_Write<std::int32_t>(response, get_width());
+			EIOS_Write<std::int32_t>(response, get_height());
 		}
 			break;
 
 		case EIOSCommand::GET_MOUSE:
 		{
-//			EIOS_Write<std::int32_t>(arguments, mouse_x);
-//			EIOS_Write<std::int32_t>(arguments, mouse_y);
+			std::int32_t x = -1;
+			std::int32_t y = -1;
+			
+			io_controller->get_mouse_position(&x, &y);
+			
+			EIOS_Write<std::int32_t>(response, x);
+			EIOS_Write<std::int32_t>(response, y);
 		}
 			break;
 
 		case EIOSCommand::MOVE_MOUSE:
 		{
-//			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
-//			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
-//
-//			mouse_x = x;
-//			mouse_y = y;
+			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
+			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
+			
+			io_controller->move_mouse(x, y);
 		}
 			break;
 
@@ -199,6 +203,8 @@ void ControlCenter::process_command()
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t button = EIOS_Read<std::int32_t>(arguments);
+			
+			io_controller->hold_mouse(x, y, button);
 		}
 			break;
 
@@ -207,10 +213,16 @@ void ControlCenter::process_command()
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t button = EIOS_Read<std::int32_t>(arguments);
+			io_controller->release_mouse(x, y, button);
 		}
 			break;
 
 		case EIOSCommand::IS_MOUSE_HELD:
+		{
+			std::int32_t button = EIOS_Read<std::int32_t>(arguments);
+			auto result = io_controller->is_mouse_held(button);
+			EIOS_Write(response, result);
+		}
 			break;
 
 		case EIOSCommand::SEND_STRING:

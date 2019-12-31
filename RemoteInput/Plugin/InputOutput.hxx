@@ -44,6 +44,12 @@ public:
 	void release_key(std::int32_t code);
 	bool is_key_held(std::int32_t code);
 	void send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait);
+	
+	void get_mouse_position(std::int32_t* x, std::int32_t* y);
+	void move_mouse(std::int32_t x, std::int32_t y);
+	void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
+	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
+	bool is_mouse_held(std::int32_t button);
 };
 
 #endif /* INPUTOUTPUT_HXX_INCLUDED */

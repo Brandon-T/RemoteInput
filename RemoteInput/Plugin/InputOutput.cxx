@@ -402,6 +402,31 @@ void InputOutput::lose_focus(Component* component)
 	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_LOST, true);
 }
 
+void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
+{
+	
+}
+
+void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
+{
+	
+}
+
+void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
+{
+	
+}
+
+void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
+{
+	
+}
+
+bool InputOutput::is_mouse_held(std::int32_t button)
+{
+	return false;
+}
+
 jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode)
 {
 	static const std::int16_t mapping[256] = { //char16_t
