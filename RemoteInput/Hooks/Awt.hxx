@@ -94,10 +94,22 @@ private:
 	jclass cls;
 	
 public:
-	FocusEvent(JNIEnv* env, Component* source, std::int32_t id);
+	FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary);
 	~FocusEvent();
 	
-	static void Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id);
+	static void Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary);
+	
+	enum FocusCodes : std::int32_t
+	{
+		FOCUS_GAINED = 1004,
+		FOCUS_LOST = 1005
+	};
+	
+	enum FocusCauses : std::uint32_t
+	{
+		ACTIVATION,
+		MOUSE_EVENT
+	};
 };
 
 class KeyEvent final : public AWTEvent

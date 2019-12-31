@@ -62,7 +62,7 @@ InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()
 {
 }
 
-void InputOutput::HoldKey(std::int32_t code)
+void InputOutput::hold_key(std::int32_t code)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -85,6 +85,11 @@ void InputOutput::HoldKey(std::int32_t code)
 			Component receiver = control_center->reflect_canvas();
 			
 			JNIEnv* env = receiver.getEnv();
+			if (!this->has_focus(&receiver))
+			{
+				this->gain_focus(&receiver);
+			}
+			
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = 0;
 			std::int32_t keycode = GetJavaKeyCode(code);
@@ -113,6 +118,10 @@ void InputOutput::HoldKey(std::int32_t code)
 				
 				//Dispatch Event
 				Component receiver = control_center->reflect_canvas();
+				if (!this->has_focus(&receiver))
+				{
+					this->gain_focus(&receiver);
+				}
 				
 				JNIEnv* env = receiver.getEnv();
 				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -148,6 +157,10 @@ void InputOutput::HoldKey(std::int32_t code)
 				
 				//Dispatch Event
 				Component receiver = control_center->reflect_canvas();
+				if (!this->has_focus(&receiver))
+				{
+					this->gain_focus(&receiver);
+				}
 				
 				JNIEnv* env = receiver.getEnv();
 				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -191,6 +204,11 @@ void InputOutput::HoldKey(std::int32_t code)
 						std::int32_t code = currently_held_key;
 						
 						//Dispatch Event
+						if (!this->has_focus(&receiver))
+						{
+							this->gain_focus(&receiver);
+						}
+						
 						std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 						std::int32_t modifiers = 0;
 						std::int32_t keycode = GetJavaKeyCode(code);
@@ -222,7 +240,7 @@ void InputOutput::HoldKey(std::int32_t code)
 	}
 }
 
-void InputOutput::ReleaseKey(std::int32_t code)
+void InputOutput::release_key(std::int32_t code)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -275,8 +293,12 @@ void InputOutput::ReleaseKey(std::int32_t code)
 			//Dispatch Event
 			std::lock_guard<std::mutex>(this->mutex);
 			Component receiver = control_center->reflect_canvas();
-			JNIEnv* env = receiver.getEnv();
+			if (!this->has_focus(&receiver))
+			{
+				this->gain_focus(&receiver);
+			}
 			
+			JNIEnv* env = receiver.getEnv();
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = 0;
 			std::int32_t keycode = GetJavaKeyCode(code);
@@ -293,6 +315,91 @@ void InputOutput::ReleaseKey(std::int32_t code)
 							   location);
 		}
 	}
+}
+
+bool InputOutput::is_key_held(std::int32_t code)
+{
+	return std::find(std::begin(held_keys), std::end(held_keys), code) != std::end(held_keys);
+}
+
+void InputOutput::send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait)
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
+	
+	
+	Component receiver = control_center->reflect_canvas();
+	JNIEnv* env = receiver.getEnv();
+	
+	if (!this->has_focus(&receiver))
+	{
+		this->gain_focus(&receiver);
+	}
+	
+	for (char c : string)
+	{
+		//Dispatch Event
+		std::int32_t code = static_cast<std::int32_t>(c);
+		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+		std::int32_t modifiers = 0;
+		std::int32_t keycode = GetJavaKeyCode(code);
+		std::int32_t location = GetKeyLocation(code);
+		
+		//keymodwait is for shift key..
+		
+		KeyEvent::Dispatch(env,
+						   &receiver,
+						   &receiver,
+						   KeyEvent::KeyCodes::KEY_PRESSED,
+						   when,
+						   modifiers,
+						   keycode,
+						   NativeKeyCodeToChar(code),
+						   location);
+
+		KeyEvent::Dispatch(env,
+							&receiver,
+							&receiver,
+							KeyEvent::KeyCodes::KEY_TYPED,
+							when,
+							modifiers,
+							0,
+							NativeKeyCodeToChar(code),
+							KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+		
+		yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70) + keywait));
+		when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+		KeyEvent::Dispatch(env,
+						   &receiver,
+						   &receiver,
+						   KeyEvent::KeyCodes::KEY_RELEASED,
+						   when,
+						   modifiers,
+						   keycode,
+						   NativeKeyCodeToChar(code),
+						   location);
+		
+		yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70) + keywait));
+	}
+}
+
+bool InputOutput::has_focus(Component* component)
+{
+	return component->hasFocus();
+}
+
+void InputOutput::gain_focus(Component* component)
+{
+	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_GAINED, false);
+}
+
+void InputOutput::lose_focus(Component* component)
+{
+	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_LOST, true);
 }
 
 jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode)

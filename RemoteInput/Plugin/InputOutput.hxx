@@ -34,10 +34,16 @@ private:
 	std::int32_t GetJavaKeyCode(std::int32_t native_key_code);
 	std::int32_t GetKeyLocation(std::int32_t keycode);
 	
+	bool has_focus(Component* component);
+	void gain_focus(Component* component);
+	void lose_focus(Component* component);
+	
 public:
 	InputOutput(Reflection* reflector);
-	void HoldKey(std::int32_t code);
-	void ReleaseKey(std::int32_t code);
+	void hold_key(std::int32_t code);
+	void release_key(std::int32_t code);
+	bool is_key_held(std::int32_t code);
+	void send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait);
 };
 
 #endif /* INPUTOUTPUT_HXX_INCLUDED */

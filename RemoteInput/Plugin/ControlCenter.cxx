@@ -214,23 +214,34 @@ void ControlCenter::process_command()
 			break;
 
 		case EIOSCommand::SEND_STRING:
+		{
+			std::string string = EIOS_Read(arguments);
+			std::int32_t keywait = EIOS_Read<std::int32_t>(arguments);
+			std::int32_t keymodwait = EIOS_Read<std::int32_t>(arguments);
+			io_controller->send_string(string, keywait, keymodwait);
+		}
 			break;
 
 		case EIOSCommand::HOLD_KEY:
 		{
 			std::int32_t keycode = EIOS_Read<std::int32_t>(arguments);
-			io_controller->HoldKey(keycode);
+			io_controller->hold_key(keycode);
 		}
 			break;
 
 		case EIOSCommand::RELEASE_KEY:
 		{
 			std::int32_t keycode = EIOS_Read<std::int32_t>(arguments);
-			io_controller->ReleaseKey(keycode);
+			io_controller->release_key(keycode);
 		}
 			break;
 
 		case EIOSCommand::IS_KEY_HELD:
+		{
+			std::int32_t keycode = EIOS_Read<std::int32_t>(arguments);
+			auto result = io_controller->is_key_held(keycode);
+			EIOS_Write(response, result);
+		}
 			break;
 
 		case EIOSCommand::REFLECT_OBJECT:

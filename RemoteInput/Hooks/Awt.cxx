@@ -217,13 +217,13 @@ jobject AWTEvent::get()
 	return self;
 }
 
-FocusEvent::FocusEvent(JNIEnv* env, Component* source, std::int32_t id) : AWTEvent(), env(env), cls(nullptr)
+FocusEvent::FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary) : AWTEvent(), env(env), cls(nullptr)
 {
 	this->cls = env->FindClass("java/awt/event/FocusEvent");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
 	
-	static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;I)V");
-	self = env->NewObject(cls, methodId, source->get(), id);
+	static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IZ)V");
+	self = env->NewObject(cls, methodId, receiver->get(), id);
 	env->DeleteLocalRef(std::exchange(self, static_cast<jclass>(env->NewGlobalRef(self))));
 }
 
@@ -233,13 +233,13 @@ FocusEvent::~FocusEvent()
 	env->DeleteGlobalRef(self);
 }
 
-void FocusEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id)
+void FocusEvent::Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary)
 {
 	jclass cls = env->FindClass("java/awt/event/FocusEvent");
 	if (cls)
 	{
-		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;I)V");
-		jobject event = env->NewObject(cls, methodId, source->get(), id);
+		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IZ)V");
+		jobject event = env->NewObject(cls, methodId, receiver->get(), id, temporary);
 		if (event)
 		{
 			receiver->dispatchEvent(event);
