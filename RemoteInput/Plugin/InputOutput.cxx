@@ -76,6 +76,8 @@ void InputOutput::HoldKey(std::int32_t code)
 		//Key is a control key
 		if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
 		{
+			std::lock_guard<std::mutex>(this->mutex);
+			
 			//Control Keys only generate a single held event..
 			held_keys.push_back(code);
 			
@@ -104,13 +106,76 @@ void InputOutput::HoldKey(std::int32_t code)
 			//Key already being pressed so just replace it
 			if (currently_held_key != -1)
 			{
+				std::lock_guard<std::mutex>(this->mutex);
+				
 				currently_held_key = code;
 				held_keys.push_back(code);
+				
+				//Dispatch Event
+				Component receiver = control_center->reflect_canvas();
+				
+				JNIEnv* env = receiver.getEnv();
+				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+				std::int32_t modifiers = 0;
+				std::int32_t keycode = GetJavaKeyCode(code);
+				std::int32_t location = GetKeyLocation(code);
+				
+				KeyEvent::Dispatch(env,
+								   &receiver,
+								   &receiver,
+								   KeyEvent::KeyCodes::KEY_PRESSED,
+								   when,
+								   modifiers,
+								   keycode,
+								   NativeKeyCodeToChar(code),
+								   location);
+
+				KeyEvent::Dispatch(env,
+									&receiver,
+									&receiver,
+									KeyEvent::KeyCodes::KEY_TYPED,
+									when,
+									modifiers,
+									0,
+									NativeKeyCodeToChar(code),
+									KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 			}
 			else
 			{
+				this->mutex.lock();
 				currently_held_key = code;
 				held_keys.push_back(code);
+				
+				//Dispatch Event
+				Component receiver = control_center->reflect_canvas();
+				
+				JNIEnv* env = receiver.getEnv();
+				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+				std::int32_t modifiers = 0;
+				std::int32_t keycode = GetJavaKeyCode(code);
+				std::int32_t location = GetKeyLocation(code);
+				
+				KeyEvent::Dispatch(env,
+								   &receiver,
+								   &receiver,
+								   KeyEvent::KeyCodes::KEY_PRESSED,
+								   when,
+								   modifiers,
+								   keycode,
+								   NativeKeyCodeToChar(code),
+								   location);
+
+				KeyEvent::Dispatch(env,
+									&receiver,
+									&receiver,
+									KeyEvent::KeyCodes::KEY_TYPED,
+									when,
+									modifiers,
+									0,
+									NativeKeyCodeToChar(code),
+									KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+				this->mutex.unlock();
+				
 				
 				input_thread.add_task([&]{
 					JNIEnv* env = nullptr;
@@ -121,9 +186,11 @@ void InputOutput::HoldKey(std::int32_t code)
 					
 					while (currently_held_key != -1)
 					{
+						std::lock_guard<std::mutex>(this->mutex);
+						yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70)));
 						std::int32_t code = currently_held_key;
 						
-						//DispatchEvent
+						//Dispatch Event
 						std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 						std::int32_t modifiers = 0;
 						std::int32_t keycode = GetJavaKeyCode(code);
@@ -148,8 +215,6 @@ void InputOutput::HoldKey(std::int32_t code)
 											0,
 											NativeKeyCodeToChar(code),
 											KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
-
-						yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70)));
 					}
 				});
 			}
@@ -169,6 +234,8 @@ void InputOutput::ReleaseKey(std::int32_t code)
 	{
 		if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
 		{
+			std::lock_guard<std::mutex>(this->mutex);
+			
 			held_keys.erase(it); //held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), code), held_keys.end());
 			
 			//Dispatch Event
@@ -193,6 +260,7 @@ void InputOutput::ReleaseKey(std::int32_t code)
 		else
 		{
 			//Remove the held key from the list..
+			this->mutex.lock();
 			held_keys.erase(it);
 			
 			//Find the next non-control held-key..
@@ -202,8 +270,10 @@ void InputOutput::ReleaseKey(std::int32_t code)
 			
 			//Set the next currently held key to the first non-control key..
 			currently_held_key = jt != held_keys.crend() ? *jt : -1;
+			this->mutex.unlock();
 
 			//Dispatch Event
+			std::lock_guard<std::mutex>(this->mutex);
 			Component receiver = control_center->reflect_canvas();
 			JNIEnv* env = receiver.getEnv();
 			
