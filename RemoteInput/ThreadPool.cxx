@@ -1,6 +1,6 @@
 #include "ThreadPool.hxx"
 
-ThreadPool::ThreadPool() : ThreadPool::ThreadPool(std::thread::hardware_concurrency())
+ThreadPool::ThreadPool() : ThreadPool(std::thread::hardware_concurrency())
 {
 }
 

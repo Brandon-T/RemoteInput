@@ -130,27 +130,42 @@ void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t 
 
 bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button)
 {
-    printf("%s\n", __FUNCTION__);
+	if (eios)
+	{
+		return eios->control_center->is_mouse_held(button);
+	}
 	return false;
 }
 
 void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait)
 {
-    printf("%s\n", __FUNCTION__);
+	if (eios)
+	{
+		eios->control_center->send_string(string, keywait, keymodwait);
+	}
 }
 
 void EIOS_HoldKey(EIOS* eios, std::int32_t key)
 {
-    printf("%s\n", __FUNCTION__);
+	if (eios)
+	{
+		eios->control_center->hold_key(key);
+	}
 }
 
 void EIOS_ReleaseKey(EIOS* eios, std::int32_t key)
 {
-    printf("%s\n", __FUNCTION__);
+	if (eios)
+	{
+		eios->control_center->release_key(key);
+	}
 }
 
 bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key)
 {
-    printf("%s\n", __FUNCTION__);
+	if (eios)
+	{
+		return eios->control_center->is_key_held(key);
+	}
 	return false;
 }

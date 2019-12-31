@@ -6,6 +6,7 @@
 #include "Reflection.hxx"
 #include "Awt.hxx"
 #include "MemoryMap.hxx"
+#include "InputOutput.hxx"
 
 
 struct ImageData;
@@ -36,6 +37,7 @@ private:
 	std::unique_ptr<Signal> response_signal;
 	std::unique_ptr<Reflection> reflector;
 	std::unique_ptr<MemoryMap<char>> memory_map;
+	std::unique_ptr<InputOutput> io_controller;
 
 	bool init_maps();
 	bool init_locks();
@@ -66,6 +68,11 @@ public:
 	void move_mouse(std::int32_t x, std::int32_t y);
 	void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
+	bool is_mouse_held(std::int32_t button);
+	void send_string(const char* string, std::int32_t keywait, std::int32_t keymodwait);
+	void hold_key(std::int32_t key);
+	void release_key(std::int32_t key);
+	bool is_key_held(std::int32_t key);
 
 	jobject reflect_object(const ReflectionHook &hook);
 	void reflect_release_object(const jobject object);

@@ -20,6 +20,11 @@ protected:
 public:
 	AWTEvent();
 	AWTEvent(jobject self);
+	AWTEvent(AWTEvent&& other);
+	AWTEvent(const AWTEvent& other) = delete;
+	
+	AWTEvent& operator = (AWTEvent&& other);
+	AWTEvent& operator = (const AWTEvent& other) = delete;
 	
 	jobject get();
 };
@@ -36,7 +41,13 @@ protected:
 public:
 	Component(JNIEnv* env, jobject component, bool canDelete = true);
 	Component(JNIEnv* env, jclass cls, jobject component, bool canDelete = true);
+	Component(Component&& other);
+	Component(const Component& other) = delete;
 	~Component();
+
+
+	Component& operator = (Component&& other);
+	Component& operator = (const Component& other) = delete;
 	
 	JNIEnv* getEnv();
 	jobject get();

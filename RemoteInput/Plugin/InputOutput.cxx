@@ -58,7 +58,7 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_RIGHT
 };
 
-InputOutput::InputOutput() : input_thread(2), mutex(), currently_held_key(-1), held_keys()
+InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), input_thread(2), mutex(), currently_held_key(-1), held_keys()
 {
 }
 
@@ -113,16 +113,22 @@ void InputOutput::HoldKey(std::int32_t code)
 				held_keys.push_back(code);
 				
 				input_thread.add_task([&]{
+					JNIEnv* env = nullptr;
+					this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
+					
+					Applet applet{env, this->applet, false};
+					Component receiver = applet.getComponent(0);
+					
 					while (currently_held_key != -1)
 					{
+						std::int32_t code = currently_held_key;
+						
 						//DispatchEvent
-						Component receiver = control_center->reflect_canvas();
-						JNIEnv* env = receiver.getEnv();
 						std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 						std::int32_t modifiers = 0;
 						std::int32_t keycode = GetJavaKeyCode(code);
 						std::int32_t location = GetKeyLocation(code);
-
+						
 						KeyEvent::Dispatch(env,
 										   &receiver,
 										   &receiver,
@@ -143,7 +149,7 @@ void InputOutput::HoldKey(std::int32_t code)
 											NativeKeyCodeToChar(code),
 											KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 
-						yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(60, 120)));
+						yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70)));
 					}
 				});
 			}
@@ -167,6 +173,7 @@ void InputOutput::ReleaseKey(std::int32_t code)
 			
 			//Dispatch Event
 			Component receiver = control_center->reflect_canvas();
+			
 			JNIEnv* env = receiver.getEnv();
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = 0;
@@ -195,10 +202,11 @@ void InputOutput::ReleaseKey(std::int32_t code)
 			
 			//Set the next currently held key to the first non-control key..
 			currently_held_key = jt != held_keys.crend() ? *jt : -1;
-			
+
 			//Dispatch Event
 			Component receiver = control_center->reflect_canvas();
 			JNIEnv* env = receiver.getEnv();
+			
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = 0;
 			std::int32_t keycode = GetJavaKeyCode(code);

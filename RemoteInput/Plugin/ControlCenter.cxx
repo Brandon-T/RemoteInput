@@ -46,7 +46,7 @@ void EIOS_Write(void* &ptr, const std::string &result)
 	ptr = static_cast<char*>(ptr) + 1;
 }
 
-ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid),  is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), reflector(std::move(reflector))
+ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid),  is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), reflector(std::move(reflector)), io_controller()
 {
 	if (pid <= 0)
 	{
@@ -87,6 +87,8 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 			if (this->reflector->Attach())
 			{
+				io_controller = std::make_unique<InputOutput>(this->reflector.get());
+				
 				while(!stopped) {
 					if (!command_signal || /*!map_lock ||*/ !response_signal || !memory_map)
 					{
@@ -215,9 +217,17 @@ void ControlCenter::process_command()
 			break;
 
 		case EIOSCommand::HOLD_KEY:
+		{
+			std::int32_t keycode = EIOS_Read<std::int32_t>(arguments);
+			io_controller->HoldKey(keycode);
+		}
 			break;
 
 		case EIOSCommand::RELEASE_KEY:
+		{
+			std::int32_t keycode = EIOS_Read<std::int32_t>(arguments);
+			io_controller->ReleaseKey(keycode);
+		}
 			break;
 
 		case EIOSCommand::IS_KEY_HELD:
@@ -739,6 +749,67 @@ void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t b
 		EIOS_Write<std::int32_t>(arguments, y);
 		EIOS_Write<std::int32_t>(arguments, button);
 	});
+}
+
+bool ControlCenter::is_mouse_held(std::int32_t button)
+{
+	auto result = send_command([button](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::IS_MOUSE_HELD;
+		EIOS_Write<std::int32_t>(arguments, button);
+	});
+	
+	if (result)
+	{
+		void* arguments = get_image_data()->args;
+		return EIOS_Read<bool>(arguments);
+	}
+	return false;
+}
+
+void ControlCenter::send_string(const char* string, std::int32_t keywait, std::int32_t keymodwait)
+{
+	send_command([string, keywait, keymodwait](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::SEND_STRING;
+		EIOS_Write(arguments, std::string(string));
+		EIOS_Write<std::int32_t>(arguments, keywait);
+		EIOS_Write<std::int32_t>(arguments, keymodwait);
+	});
+}
+
+void ControlCenter::hold_key(std::int32_t key)
+{
+	send_command([key](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::HOLD_KEY;
+		EIOS_Write<std::int32_t>(arguments, key);
+	});
+}
+
+void ControlCenter::release_key(std::int32_t key)
+{
+	send_command([key](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::RELEASE_KEY;
+		EIOS_Write<std::int32_t>(arguments, key);
+	});
+}
+
+bool ControlCenter::is_key_held(std::int32_t key)
+{
+	auto result = send_command([key](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::IS_KEY_HELD;
+		EIOS_Write<std::int32_t>(arguments, key);
+	});
+	
+	if (result)
+	{
+		void* arguments = get_image_data()->args;
+		return EIOS_Read<bool>(arguments);
+	}
+	return false;
 }
 
 jobject ControlCenter::reflect_object(const ReflectionHook &hook)

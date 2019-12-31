@@ -26,6 +26,27 @@ Component::Component(JNIEnv* env, jclass cls, jobject component, bool canDelete)
 {
 }
 
+Component::Component(Component&& other) : env(other.env), cls(other.cls), component(other.component), canDelete(other.canDelete)
+{
+	other.env = nullptr;
+	other.cls = nullptr;
+	other.component = nullptr;
+	other.canDelete = false;
+}
+
+Component& Component::operator = (Component&& other)
+{
+	this->env = other.env;
+	this->cls = other.cls;
+	this->component = other.component;
+	this->canDelete = other.canDelete;
+	other.env = nullptr;
+	other.cls = nullptr;
+	other.component = nullptr;
+	other.canDelete = false;
+	return *this;
+}
+
 Component::~Component()
 {
 	if (cls)
@@ -87,13 +108,13 @@ Component Component::getComponentAt(std::int32_t x, std::int32_t y)
 
 void Component::dispatchEvent(AWTEvent* event)
 {
-	static jmethodID methodId = env->GetMethodID(cls, "dispatchEvent", "(Ljava/awt/AWTEvent)V");
+	static jmethodID methodId = env->GetMethodID(cls, "dispatchEvent", "(Ljava/awt/AWTEvent;)V");
 	env->CallVoidMethod(component, methodId, event->get());
 }
 
 void Component::dispatchEvent(jobject event)
 {
-	static jmethodID methodId = env->GetMethodID(cls, "dispatchEvent", "(Ljava/awt/AWTEvent)V");
+	static jmethodID methodId = env->GetMethodID(cls, "dispatchEvent", "(Ljava/awt/AWTEvent;)V");
 	env->CallVoidMethod(component, methodId, event);
 }
 
@@ -177,6 +198,18 @@ AWTEvent::AWTEvent() : self(nullptr)
 
 AWTEvent::AWTEvent(jobject self) : self(self)
 {
+}
+
+AWTEvent::AWTEvent(AWTEvent&& other) : self(other.self)
+{
+	other.self = nullptr;
+}
+
+AWTEvent& AWTEvent::operator = (AWTEvent&& other)
+{
+	this->self = other.self;
+	other.self = nullptr;
+	return *this;
 }
 
 jobject AWTEvent::get()

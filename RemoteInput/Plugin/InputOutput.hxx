@@ -14,11 +14,15 @@
 #include <list>
 #include <atomic>
 #include <mutex>
-#include <ThreadPool.hxx>
+#include "ThreadPool.hxx"
+#include "Reflection.hxx"
 
 class InputOutput
 {
 private:
+	JavaVM* vm;
+	jobject applet;
+	
 	std::mutex mutex;
 	ThreadPool input_thread;
 	
@@ -31,7 +35,7 @@ private:
 	std::int32_t GetKeyLocation(std::int32_t keycode);
 	
 public:
-	InputOutput();
+	InputOutput(Reflection* reflector);
 	void HoldKey(std::int32_t code);
 	void ReleaseKey(std::int32_t code);
 };
