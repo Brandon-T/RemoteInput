@@ -15,8 +15,10 @@ enum ControlKeys : std::uint32_t
 {
 	VK_FUNCTION = 0x0,
 	VK_NUM_LOCK = 0x90,
+	VK_SHIFT = 0x10,
 	VK_LSHIFT = 0xA0,
 	VK_RSHIFT = 0xA1,
+	VK_CONTROL = 0x11,
 	VK_LEFT_CONTROL = 0xA2,
 	VK_RIGHT_CONTROL = 0xA3,
 	VK_LEFT_ALT = 0xA4,
@@ -47,7 +49,9 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN,
 	KeyEvent::KeyCodes::KEY_LOCATION_STANDARD,
 	KeyEvent::KeyCodes::KEY_LOCATION_LEFT,
+	KeyEvent::KeyCodes::KEY_LOCATION_LEFT,
 	KeyEvent::KeyCodes::KEY_LOCATION_RIGHT,
+	KeyEvent::KeyCodes::KEY_LOCATION_LEFT,
 	KeyEvent::KeyCodes::KEY_LOCATION_LEFT,
 	KeyEvent::KeyCodes::KEY_LOCATION_RIGHT,
 	KeyEvent::KeyCodes::KEY_LOCATION_LEFT,
@@ -58,7 +62,7 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_RIGHT
 };
 
-InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), input_thread(2), mutex(), currently_held_key(-1), held_keys()
+InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), input_thread(2), mutex(), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), mouse_buttons()
 {
 }
 
@@ -322,6 +326,13 @@ bool InputOutput::is_key_held(std::int32_t code)
 	return std::find(std::begin(held_keys), std::end(held_keys), code) != std::end(held_keys);
 }
 
+bool InputOutput::any_key_held(std::array<std::int32_t, 4>&& keys)
+{
+	return std::any_of(std::cbegin(held_keys), std::cend(held_keys), [&](std::int32_t key){
+		return std::find(std::cbegin(keys), std::cend(keys), key) != std::cend(keys);
+	});
+}
+
 void InputOutput::send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
@@ -404,27 +415,245 @@ void InputOutput::lose_focus(Component* component)
 
 void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 {
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
 	
+	if (this->x < 0 || this->y < 0)
+	{
+		Component receiver = control_center->reflect_canvas();
+		receiver.getMousePosition(this->x, this->y);
+		receiver.getSize(this->w, this->h);
+	}
+	
+	*x = this->x;
+	*y = this->y;
 }
 
 void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 {
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
 	
+	Component receiver = control_center->reflect_canvas();
+	JNIEnv* env = receiver.getEnv();
+	
+	receiver.getMousePosition(this->x, this->y);
+	receiver.getSize(this->w, this->h);
+	
+	if (!this->has_focus(&receiver))
+	{
+		this->gain_focus(&receiver);
+	}
+	
+	std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+	
+	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
+	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+	bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
+	
+	//Button priority is 1 (left), 3 (right), 2 (middle)
+	std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
+	std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
+	                          (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
+							  (mouse_buttons[2] ? InputEvent::GetDownMaskForButton(mouse_buttons[2]) : 0);
+
+	//Key extended masks
+	if (this->any_key_held({VK_SHIFT, VK_LSHIFT, VK_RSHIFT}))
+	{
+		buttonMask |= InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+	}
+	
+	if (this->any_key_held({VK_CONTROL, VK_LEFT_CONTROL, VK_RIGHT_CONTROL}))
+	{
+		buttonMask |= InputEvent::InputEventMasks::CTRL_DOWN_MASK;
+	}
+	
+	if (this->is_key_held(VK_LEFT_ALT))
+	{
+		buttonMask |= InputEvent::InputEventMasks::ALT_DOWN_MASK;
+	}
+	
+	if (this->is_key_held(VK_RIGHT_ALT))
+	{
+		buttonMask |= InputEvent::InputEventMasks::ALT_GRAPH_DOWN_MASK;
+	}
+	
+	if (this->any_key_held({VK_LEFT_WINDOWS, VK_RIGHT_WINDOWS, VK_COMMAND}))
+	{
+		buttonMask |= InputEvent::InputEventMasks::META_DOWN_MASK;
+	}
+	
+	if (isRequestedPositionInsideComponent && !isMouseInsideComponent)
+	{
+		//MOUSE_ENTERED
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+	}
+	else if (!isRequestedPositionInsideComponent && isMouseInsideComponent)
+	{
+		//MOUSE_EXITED
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
+	}
+	else if (isRequestedPositionInsideComponent && isMouseInsideComponent)
+	{
+		//MOUSE_MOVED OR MOUSE_DRAGGED
+		if (isDragging)
+		{
+			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
+		}
+		else
+		{
+			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+		}
+	}
+	else if (!isRequestedPositionInsideComponent && !isMouseInsideComponent)
+	{
+		//MOUSE_DRAGGED OUTSIDE
+		if (isDragging)
+		{
+			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
+		}
+	}
 }
 
 void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
 {
-	
+	if (!this->is_mouse_held(button))
+	{
+		extern std::unique_ptr<ControlCenter> control_center;
+		if (!control_center)
+		{
+			return;
+		}
+		
+		Component receiver = control_center->reflect_canvas();
+		JNIEnv* env = receiver.getEnv();
+		
+		if (!this->has_focus(&receiver))
+		{
+			this->gain_focus(&receiver);
+		}
+		
+		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+		//Button priority is 1 (left), 3 (right), 2 (middle)
+		std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
+		std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
+								  (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
+								  (mouse_buttons[2] ? InputEvent::GetDownMaskForButton(mouse_buttons[2]) : 0);
+
+		//Key extended masks
+		if (this->any_key_held({VK_SHIFT, VK_LSHIFT, VK_RSHIFT}))
+		{
+			buttonMask |= InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+		}
+		
+		if (this->any_key_held({VK_CONTROL, VK_LEFT_CONTROL, VK_RIGHT_CONTROL}))
+		{
+			buttonMask |= InputEvent::InputEventMasks::CTRL_DOWN_MASK;
+		}
+		
+		if (this->is_key_held(VK_LEFT_ALT))
+		{
+			buttonMask |= InputEvent::InputEventMasks::ALT_DOWN_MASK;
+		}
+		
+		if (this->is_key_held(VK_RIGHT_ALT))
+		{
+			buttonMask |= InputEvent::InputEventMasks::ALT_GRAPH_DOWN_MASK;
+		}
+		
+		if (this->any_key_held({VK_LEFT_WINDOWS, VK_RIGHT_WINDOWS, VK_COMMAND}))
+		{
+			buttonMask |= InputEvent::InputEventMasks::META_DOWN_MASK;
+		}
+		
+		mouse_buttons[button - 1] = true;
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
+	}
 }
 
 void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
 {
-	
+	if (this->is_mouse_held(button))
+	{
+		extern std::unique_ptr<ControlCenter> control_center;
+		if (!control_center)
+		{
+			return;
+		}
+		
+		Component receiver = control_center->reflect_canvas();
+		JNIEnv* env = receiver.getEnv();
+		
+		if (!this->has_focus(&receiver))
+		{
+			this->gain_focus(&receiver);
+		}
+		
+		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+		bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
+		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+		
+		//Button priority is 1 (left), 3 (right), 2 (middle)
+		std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
+		std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
+								  (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
+								  (mouse_buttons[2] ? InputEvent::GetDownMaskForButton(mouse_buttons[2]) : 0);
+
+		//Key extended masks
+		if (this->any_key_held({VK_SHIFT, VK_LSHIFT, VK_RSHIFT}))
+		{
+			buttonMask |= InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+		}
+		
+		if (this->any_key_held({VK_CONTROL, VK_LEFT_CONTROL, VK_RIGHT_CONTROL}))
+		{
+			buttonMask |= InputEvent::InputEventMasks::CTRL_DOWN_MASK;
+		}
+		
+		if (this->is_key_held(VK_LEFT_ALT))
+		{
+			buttonMask |= InputEvent::InputEventMasks::ALT_DOWN_MASK;
+		}
+		
+		if (this->is_key_held(VK_RIGHT_ALT))
+		{
+			buttonMask |= InputEvent::InputEventMasks::ALT_GRAPH_DOWN_MASK;
+		}
+		
+		if (this->any_key_held({VK_LEFT_WINDOWS, VK_RIGHT_WINDOWS, VK_COMMAND}))
+		{
+			buttonMask |= InputEvent::InputEventMasks::META_DOWN_MASK;
+		}
+		
+		mouse_buttons[button - 1] = false;
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, x, y, click_count, false, button);
+		
+		if (isRequestedPositionInsideComponent && isMouseInsideComponent)
+		{
+			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, x, y, click_count, false, button);
+		}
+	}
 }
 
 bool InputOutput::is_mouse_held(std::int32_t button)
 {
-	return false;
+	switch (button)
+	{
+		case 1: return mouse_buttons[0];
+		case 2: return mouse_buttons[1];
+		case 3: return mouse_buttons[2];
+		default: return false;
+	}
 }
 
 jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode)

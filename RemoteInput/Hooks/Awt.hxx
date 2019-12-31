@@ -52,7 +52,7 @@ public:
 	JNIEnv* getEnv();
 	jobject get();
 	
-	void getMousePosition(std::size_t &x, std::size_t &y);
+	void getMousePosition(std::int32_t &x, std::int32_t &y);
 	void getSize(std::size_t &width, std::size_t &height);
 	Component getComponentAt(std::int32_t x, std::int32_t y);
 	void dispatchEvent(AWTEvent* event);
@@ -151,6 +151,40 @@ public:
 	~MouseEvent();
 	
 	static void Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button);
+	
+	enum MouseEventCodes : std::uint32_t
+	{
+		MOUSE_CLICKED = 500,
+		MOUSE_PRESSED = 501,
+		MOUSE_RELEASED = 502,
+		MOUSE_MOVED = 503,
+		MOUSE_ENTERED = 504,
+		MOUSE_EXITED = 505,
+		MOUSE_DRAGGED = 506,
+		MOUSE_WHEEL = 507,
+		
+		NOBUTTON = 0,
+		BUTTON1 = 1,
+		BUTTON2 = 2,
+		BUTTON3 = 3,
+	};
+};
+
+struct InputEvent
+{
+	enum InputEventMasks : std::uint32_t
+	{
+		SHIFT_DOWN_MASK = 1 << 6,
+		CTRL_DOWN_MASK = 1 << 7,
+		META_DOWN_MASK = 1 << 8,
+		ALT_DOWN_MASK = 1 << 9,
+		BUTTON1_DOWN_MASK = 1 << 10,
+		BUTTON2_DOWN_MASK = 1 << 11,
+		BUTTON3_DOWN_MASK = 1 << 12,
+		ALT_GRAPH_DOWN_MASK = 1 << 13
+	};
+	
+	static std::int32_t GetDownMaskForButton(std::int32_t button);
 };
 
 #endif /* Canvas_hpp */

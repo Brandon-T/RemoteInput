@@ -71,7 +71,7 @@ jobject Component::get()
 	return component;
 }
 
-void Component::getMousePosition(std::size_t &x, std::size_t &y)
+void Component::getMousePosition(std::int32_t &x, std::int32_t &y)
 {
 	jclass pointClass = env->FindClass("java/awt/Point");
 	static jmethodID methodId = env->GetMethodID(cls, "getMousePosition", "()Ljava/awt/Point;");
@@ -79,17 +79,25 @@ void Component::getMousePosition(std::size_t &x, std::size_t &y)
 	static jfieldID yFieldId = env->GetFieldID(pointClass, "y", "I");
 	
 	jobject object = env->CallObjectMethod(component, methodId);
-	x = env->GetIntField(object, xFieldId);
-	y = env->GetIntField(object, yFieldId);
-	
-	env->DeleteLocalRef(object);
-	env->DeleteLocalRef(pointClass);
+	if (object)
+	{
+		x = env->GetIntField(object, xFieldId);
+		y = env->GetIntField(object, yFieldId);
+		
+		env->DeleteLocalRef(object);
+		env->DeleteLocalRef(pointClass);
+	}
+	else
+	{
+		x = -1;
+		y = -1;
+	}
 }
 
 void Component::getSize(std::size_t &width, std::size_t &height)
 {
-	static jmethodID widthId = env->GetMethodID(cls, "getWidth", "I");
-	static jmethodID heightId = env->GetMethodID(cls, "getHeight", "I");
+	static jmethodID widthId = env->GetMethodID(cls, "getWidth", "()I");
+	static jmethodID heightId = env->GetMethodID(cls, "getHeight", "()I");
 	width = env->CallIntMethod(component, widthId);
 	height = env->CallIntMethod(component, heightId);
 }
@@ -314,4 +322,32 @@ void MouseEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, s
 		
 		env->DeleteLocalRef(cls);
 	}
+}
+
+std::int32_t InputEvent::GetDownMaskForButton(std::int32_t button)
+{
+	static const std::int32_t masks[] = {
+		InputEventMasks::BUTTON1_DOWN_MASK,
+		InputEventMasks::BUTTON2_DOWN_MASK,
+		InputEventMasks::BUTTON3_DOWN_MASK,
+		1 << 14, //4th physical button (this is not a wheel!)
+		1 << 15, //(this is not a wheel!)
+		1 << 16,
+		1 << 17,
+		1 << 18,
+		1 << 19,
+		1 << 20,
+		1 << 21,
+		1 << 22,
+		1 << 23,
+		1 << 24,
+		1 << 25,
+		1 << 26,
+		1 << 27,
+		1 << 28,
+		1 << 29,
+		1 << 30
+	};
+	
+	return masks[button - 1];
 }

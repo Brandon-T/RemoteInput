@@ -14,6 +14,7 @@
 #include <list>
 #include <atomic>
 #include <mutex>
+#include <array>
 #include "ThreadPool.hxx"
 #include "Reflection.hxx"
 
@@ -22,13 +23,20 @@ class InputOutput
 private:
 	JavaVM* vm;
 	jobject applet;
-	
 	std::mutex mutex;
 	ThreadPool input_thread;
 	
+	// MARK: - Input Variables
 	std::atomic<std::int32_t> currently_held_key;
 	std::list<std::int32_t> held_keys;
+	std::int32_t x;
+	std::int32_t y;
+	std::size_t w;
+	std::size_t h;
+	std::int32_t click_count;
+	bool mouse_buttons[3];
 	
+	// MARK: - Functions
 	std::int32_t CharToJavaKeyCode(char c);
 	jchar NativeKeyCodeToChar(std::int32_t keycode);
 	std::int32_t GetJavaKeyCode(std::int32_t native_key_code);
@@ -37,6 +45,8 @@ private:
 	bool has_focus(Component* component);
 	void gain_focus(Component* component);
 	void lose_focus(Component* component);
+	
+	bool any_key_held(std::array<std::int32_t, 4>&& keys);
 	
 public:
 	InputOutput(Reflection* reflector);
