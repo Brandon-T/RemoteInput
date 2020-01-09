@@ -382,8 +382,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 								   keycode,
 								   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
 								   location);
-				
-				//Wait
+
 				yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(50, 70) + keymodwait));
 			}
 		}
