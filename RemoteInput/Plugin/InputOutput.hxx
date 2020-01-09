@@ -38,9 +38,11 @@ private:
 	
 	// MARK: - Functions
 	std::int32_t CharToJavaKeyCode(char c);
-	jchar NativeKeyCodeToChar(std::int32_t keycode);
+	jchar NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers);
 	std::int32_t GetJavaKeyCode(std::int32_t native_key_code);
 	std::int32_t GetKeyLocation(std::int32_t keycode);
+	std::int32_t GetActiveKeyModifiers();
+	std::int32_t ModifiersForChar(char c);
 	
 	bool has_focus(Component* component);
 	void gain_focus(Component* component);
