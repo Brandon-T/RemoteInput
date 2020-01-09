@@ -352,16 +352,47 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 		this->gain_focus(&receiver);
 	}
 	
-	for (char c : string)
+	bool isShiftDown = false;
+	
+	for (std::size_t i = 0; i < string.length(); ++i)
 	{
-		//Dispatch Event
+		char c = string[i];
+		char n = i == string.length() - 1 ? '\0' : string[i + 1];
+		std::int32_t modifiers = this->ModifiersForChar(c);
+		
+		//Modifier Key
+		if (modifiers & InputEvent::InputEventMasks::SHIFT_DOWN_MASK)
+		{
+			if (!isShiftDown)
+			{
+				isShiftDown = true;
+				
+				std::int32_t code = VK_LSHIFT;
+				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+				std::int32_t modifiers = InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+				std::int32_t keycode = GetJavaKeyCode(code);
+				std::int32_t location = GetKeyLocation(code);
+				
+				KeyEvent::Dispatch(env,
+								   &receiver,
+								   &receiver,
+								   KeyEvent::KeyCodes::KEY_PRESSED,
+								   when,
+								   modifiers,
+								   keycode,
+								   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
+								   location);
+				
+				//Wait
+				yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(50, 70) + keymodwait));
+			}
+		}
+		
+		//Character Key
 		std::int32_t code = static_cast<std::int32_t>(c);
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-		std::int32_t modifiers = 0;
 		std::int32_t keycode = GetJavaKeyCode(code);
 		std::int32_t location = GetKeyLocation(code);
-		
-		//keymodwait is for shift key..
 		
 		KeyEvent::Dispatch(env,
 						   &receiver,
@@ -397,6 +428,30 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 						   location);
 		
 		yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70) + keywait));
+		
+		//Modifier Key
+		if ((isShiftDown && i == string.length() - 1) || (n != '\0' && !(this->ModifiersForChar(n) & InputEvent::InputEventMasks::SHIFT_DOWN_MASK)))
+		{
+			isShiftDown = false;
+			
+			std::int32_t code = VK_LSHIFT;
+			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+			std::int32_t modifiers = InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+			std::int32_t keycode = GetJavaKeyCode(code);
+			std::int32_t location = GetKeyLocation(code);
+
+			KeyEvent::Dispatch(env,
+							   &receiver,
+							   &receiver,
+							   KeyEvent::KeyCodes::KEY_RELEASED,
+							   when,
+							   modifiers,
+							   keycode,
+							   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
+							   location);
+			
+			yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(50, 70) + keymodwait));
+		}
 	}
 }
 
