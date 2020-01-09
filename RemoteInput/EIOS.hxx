@@ -1,5 +1,5 @@
 //
-//  EIOS.hpp
+//  EIOS.hxx
 //  RemoteInput
 //
 //  Created by Brandon on 2019-09-14.
@@ -33,6 +33,7 @@ enum class EIOSCommand: std::uint32_t
     MOVE_MOUSE,
     HOLD_MOUSE,
     RELEASE_MOUSE,
+	SCROLL_MOUSE,
     IS_MOUSE_HELD,
 	SEND_STRING,
 	HOLD_KEY,
@@ -93,6 +94,7 @@ EXPORT [[gnu::stdcall]] void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, 
 EXPORT [[gnu::stdcall]] void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);
 EXPORT [[gnu::stdcall]] void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
 EXPORT [[gnu::stdcall]] void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
+EXPORT [[gnu::stdcall]] void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines);
 EXPORT [[gnu::stdcall]] bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button);
 EXPORT [[gnu::stdcall]] void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait);
 EXPORT [[gnu::stdcall]] void EIOS_HoldKey(EIOS* eios, std::int32_t key);
@@ -109,6 +111,7 @@ EXPORT void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
 EXPORT void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);
 EXPORT void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
 EXPORT void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button);
+EXPORT void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines);
 EXPORT bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button);
 EXPORT void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait);
 EXPORT void EIOS_HoldKey(EIOS* eios, std::int32_t key);

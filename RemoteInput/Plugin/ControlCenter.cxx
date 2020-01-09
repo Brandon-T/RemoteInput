@@ -193,7 +193,6 @@ void ControlCenter::process_command()
 		{
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
-			
 			io_controller->move_mouse(x, y);
 		}
 			break;
@@ -203,7 +202,6 @@ void ControlCenter::process_command()
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t button = EIOS_Read<std::int32_t>(arguments);
-			
 			io_controller->hold_mouse(x, y, button);
 		}
 			break;
@@ -214,6 +212,15 @@ void ControlCenter::process_command()
 			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
 			std::int32_t button = EIOS_Read<std::int32_t>(arguments);
 			io_controller->release_mouse(x, y, button);
+		}
+			break;
+			
+		case EIOSCommand::SCROLL_MOUSE:
+		{
+			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
+			std::int32_t y = EIOS_Read<std::int32_t>(arguments);
+			std::int32_t lines = EIOS_Read<std::int32_t>(arguments);
+			io_controller->scroll_mouse(x, y, lines);
 		}
 			break;
 
@@ -771,6 +778,17 @@ void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t b
 		EIOS_Write<std::int32_t>(arguments, x);
 		EIOS_Write<std::int32_t>(arguments, y);
 		EIOS_Write<std::int32_t>(arguments, button);
+	});
+}
+
+void ControlCenter::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines)
+{
+	send_command([x, y, lines](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::SCROLL_MOUSE;
+		EIOS_Write<std::int32_t>(arguments, x);
+		EIOS_Write<std::int32_t>(arguments, y);
+		EIOS_Write<std::int32_t>(arguments, lines);
 	});
 }
 

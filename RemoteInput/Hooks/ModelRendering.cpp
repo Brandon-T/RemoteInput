@@ -20,11 +20,34 @@ T ReadPointer(void* &ptr)
 	return result;
 }
 
+std::string ReadPointer(void* &ptr)
+{
+	std::size_t length = *static_cast<std::size_t*>(ptr);
+	ptr = static_cast<std::size_t*>(ptr) + 1;
+
+	std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
+	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
+	ptr = static_cast<char*>(ptr) + 1;
+	return result;
+}
+
 template<typename T>
 void WritePointer(void* &ptr, T result)
 {
 	*static_cast<T*>(ptr) = result;
 	ptr = static_cast<T*>(ptr) + 1;
+}
+
+void WritePointer(void* &ptr, const std::string &result)
+{
+	*static_cast<std::size_t*>(ptr) = result.length();
+	ptr = static_cast<std::size_t*>(ptr) + 1;
+
+	memcpy(ptr, &result[0], result.length() * sizeof(char));
+	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
+
+	*static_cast<char*>(ptr) = '\0';
+	ptr = static_cast<char*>(ptr) + 1;
 }
 
 class Reflector
@@ -242,6 +265,40 @@ void Reflector::process_reflect_array_index(Reflection* eios, jarray array, void
 			}
 				break;
 
+			case ReflectionArrayType::STRING:
+			{
+				auto get_string = [eios](jstring string){
+					if (string)
+					{
+						jsize length = eios->getEnv()->GetStringUTFLength(string);
+						const char* chars = eios->getEnv()->GetStringUTFChars(string, nullptr);
+						std::string result = std::string(chars, length);
+						eios->getEnv()->ReleaseStringUTFChars(string, chars);
+						return result;
+					}
+					return std::string();
+				};
+				
+				if (length > 1)
+				{
+					for (jsize i = 0; i < length; ++i)
+					{
+						auto element = eios->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
+						std::string result = get_string(static_cast<jstring>(element));
+						WritePointer(response, result);
+						eios->getEnv()->DeleteLocalRef(element);
+					}
+				}
+				else
+				{
+					auto element = eios->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index);
+					std::string result = get_string(static_cast<jstring>(element));
+					WritePointer(response, result);
+					eios->getEnv()->DeleteLocalRef(element);
+				}
+			}
+				break;
+				
 			case ReflectionArrayType::OBJECT:
 			{
 				if (length > 1)

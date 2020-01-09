@@ -4,7 +4,7 @@
 #include <atomic>
 #include "Signal.hxx"
 #include "Reflection.hxx"
-#include "Awt.hxx"
+#include "Applet.hxx"
 #include "MemoryMap.hxx"
 #include "InputOutput.hxx"
 
@@ -68,6 +68,7 @@ public:
 	void move_mouse(std::int32_t x, std::int32_t y);
 	void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
+	void scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines);
 	bool is_mouse_held(std::int32_t button);
 	void send_string(const char* string, std::int32_t keywait, std::int32_t keymodwait);
 	void hold_key(std::int32_t key);

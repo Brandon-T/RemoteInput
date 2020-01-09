@@ -128,6 +128,14 @@ void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t 
 	}
 }
 
+void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines)
+{
+	if (eios)
+	{
+		eios->control_center->scroll_mouse(x, y, lines);
+	}
+}
+
 bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button)
 {
 	if (eios)

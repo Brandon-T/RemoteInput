@@ -9,7 +9,6 @@
 #ifndef INPUTOUTPUT_HXX_INCLUDED
 #define INPUTOUTPUT_HXX_INCLUDED
 
-#include "Awt.hxx"
 #include <cstdint>
 #include <list>
 #include <atomic>
@@ -17,6 +16,7 @@
 #include <array>
 #include "ThreadPool.hxx"
 #include "Reflection.hxx"
+#include "Component.hxx"
 
 class InputOutput
 {
@@ -61,6 +61,7 @@ public:
 	void move_mouse(std::int32_t x, std::int32_t y);
 	void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
+	void scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines);
 	bool is_mouse_held(std::int32_t button);
 };
 

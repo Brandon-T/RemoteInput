@@ -15,10 +15,6 @@
 		5E0F52AF23AE8EAD002518AF /* Plugin.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E0F52AB23AE8EAD002518AF /* Plugin.hxx */; };
 		5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */; };
 		5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
-		5E27B22B23B70EF00091232F /* Awt.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B22923B70EF00091232F /* Awt.cxx */; };
-		5E27B22C23B70EF00091232F /* Awt.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B22A23B70EF00091232F /* Awt.hxx */; };
-		5E27B22D23B7AAFF0091232F /* Awt.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B22A23B70EF00091232F /* Awt.hxx */; };
-		5E27B22E23B7AB010091232F /* Awt.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B22923B70EF00091232F /* Awt.cxx */; };
 		5E27B24423B829C60091232F /* InputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* InputOutput.cxx */; };
 		5E27B24523B829C60091232F /* InputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* InputOutput.cxx */; };
 		5E27B24623B829C60091232F /* InputOutput.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24323B829C60091232F /* InputOutput.hxx */; };
@@ -108,6 +104,54 @@
 		5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B8235CF15400D183B1 /* ThreadPool.hxx */; };
 		5EBD66DB235D041600D183B1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DA235D041600D183B1 /* Cocoa.framework */; };
 		5EBD66DD235D041D00D183B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DC235D041D00D183B1 /* Foundation.framework */; };
+		5EBE1A9923C7C84800B99E32 /* KeyEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8123C7C84700B99E32 /* KeyEvent.hxx */; };
+		5EBE1A9A23C7C84800B99E32 /* KeyEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8123C7C84700B99E32 /* KeyEvent.hxx */; };
+		5EBE1A9B23C7C84800B99E32 /* Applet.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8223C7C84700B99E32 /* Applet.cxx */; };
+		5EBE1A9C23C7C84800B99E32 /* Applet.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8223C7C84700B99E32 /* Applet.cxx */; };
+		5EBE1A9D23C7C84800B99E32 /* AWTEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8323C7C84700B99E32 /* AWTEvent.cxx */; };
+		5EBE1A9E23C7C84800B99E32 /* AWTEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8323C7C84700B99E32 /* AWTEvent.cxx */; };
+		5EBE1A9F23C7C84800B99E32 /* AWTEventAccessor.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8423C7C84700B99E32 /* AWTEventAccessor.cxx */; };
+		5EBE1AA023C7C84800B99E32 /* AWTEventAccessor.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8423C7C84700B99E32 /* AWTEventAccessor.cxx */; };
+		5EBE1AA123C7C84800B99E32 /* Component.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8523C7C84700B99E32 /* Component.cxx */; };
+		5EBE1AA223C7C84800B99E32 /* Component.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8523C7C84700B99E32 /* Component.cxx */; };
+		5EBE1AA323C7C84800B99E32 /* AWTAccessor.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8623C7C84700B99E32 /* AWTAccessor.cxx */; };
+		5EBE1AA423C7C84800B99E32 /* AWTAccessor.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8623C7C84700B99E32 /* AWTAccessor.cxx */; };
+		5EBE1AA523C7C84800B99E32 /* InputEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8723C7C84700B99E32 /* InputEvent.cxx */; };
+		5EBE1AA623C7C84800B99E32 /* InputEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8723C7C84700B99E32 /* InputEvent.cxx */; };
+		5EBE1AA723C7C84800B99E32 /* MouseEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8823C7C84700B99E32 /* MouseEvent.cxx */; };
+		5EBE1AA823C7C84800B99E32 /* MouseEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8823C7C84700B99E32 /* MouseEvent.cxx */; };
+		5EBE1AA923C7C84800B99E32 /* EventQueue.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8923C7C84700B99E32 /* EventQueue.cxx */; };
+		5EBE1AAA23C7C84800B99E32 /* EventQueue.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8923C7C84700B99E32 /* EventQueue.cxx */; };
+		5EBE1AAB23C7C84800B99E32 /* Toolkit.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8A23C7C84700B99E32 /* Toolkit.hxx */; };
+		5EBE1AAC23C7C84800B99E32 /* Toolkit.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8A23C7C84700B99E32 /* Toolkit.hxx */; };
+		5EBE1AAD23C7C84800B99E32 /* AWTAccessor.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8B23C7C84700B99E32 /* AWTAccessor.hxx */; };
+		5EBE1AAE23C7C84800B99E32 /* AWTAccessor.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8B23C7C84700B99E32 /* AWTAccessor.hxx */; };
+		5EBE1AAF23C7C84800B99E32 /* Toolkit.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8C23C7C84700B99E32 /* Toolkit.cxx */; };
+		5EBE1AB023C7C84800B99E32 /* Toolkit.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A8C23C7C84700B99E32 /* Toolkit.cxx */; };
+		5EBE1AB123C7C84800B99E32 /* FocusEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8D23C7C84700B99E32 /* FocusEvent.hxx */; };
+		5EBE1AB223C7C84800B99E32 /* FocusEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8D23C7C84700B99E32 /* FocusEvent.hxx */; };
+		5EBE1AB323C7C84800B99E32 /* Applet.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8E23C7C84700B99E32 /* Applet.hxx */; };
+		5EBE1AB423C7C84800B99E32 /* Applet.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8E23C7C84700B99E32 /* Applet.hxx */; };
+		5EBE1AB523C7C84800B99E32 /* AWTEventAccessor.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8F23C7C84700B99E32 /* AWTEventAccessor.hxx */; };
+		5EBE1AB623C7C84800B99E32 /* AWTEventAccessor.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A8F23C7C84700B99E32 /* AWTEventAccessor.hxx */; };
+		5EBE1AB723C7C84800B99E32 /* AWTEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9023C7C84700B99E32 /* AWTEvent.hxx */; };
+		5EBE1AB823C7C84800B99E32 /* AWTEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9023C7C84700B99E32 /* AWTEvent.hxx */; };
+		5EBE1AB923C7C84800B99E32 /* Component.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9123C7C84700B99E32 /* Component.hxx */; };
+		5EBE1ABA23C7C84800B99E32 /* Component.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9123C7C84700B99E32 /* Component.hxx */; };
+		5EBE1ABB23C7C84800B99E32 /* Frame.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9223C7C84800B99E32 /* Frame.hxx */; };
+		5EBE1ABC23C7C84800B99E32 /* Frame.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9223C7C84800B99E32 /* Frame.hxx */; };
+		5EBE1ABD23C7C84800B99E32 /* InputEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9323C7C84800B99E32 /* InputEvent.hxx */; };
+		5EBE1ABE23C7C84800B99E32 /* InputEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9323C7C84800B99E32 /* InputEvent.hxx */; };
+		5EBE1ABF23C7C84800B99E32 /* FocusEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A9423C7C84800B99E32 /* FocusEvent.cxx */; };
+		5EBE1AC023C7C84800B99E32 /* FocusEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A9423C7C84800B99E32 /* FocusEvent.cxx */; };
+		5EBE1AC123C7C84800B99E32 /* KeyEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A9523C7C84800B99E32 /* KeyEvent.cxx */; };
+		5EBE1AC223C7C84800B99E32 /* KeyEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A9523C7C84800B99E32 /* KeyEvent.cxx */; };
+		5EBE1AC323C7C84800B99E32 /* MouseEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9623C7C84800B99E32 /* MouseEvent.hxx */; };
+		5EBE1AC423C7C84800B99E32 /* MouseEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9623C7C84800B99E32 /* MouseEvent.hxx */; };
+		5EBE1AC523C7C84800B99E32 /* EventQueue.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9723C7C84800B99E32 /* EventQueue.hxx */; };
+		5EBE1AC623C7C84800B99E32 /* EventQueue.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBE1A9723C7C84800B99E32 /* EventQueue.hxx */; };
+		5EBE1AC723C7C84800B99E32 /* Frame.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A9823C7C84800B99E32 /* Frame.cxx */; };
+		5EBE1AC823C7C84800B99E32 /* Frame.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBE1A9823C7C84800B99E32 /* Frame.cxx */; };
 		5EC5950C232D956B00922111 /* RemoteInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EC5950A232D956B00922111 /* RemoteInput.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */; };
 		5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */; };
@@ -124,8 +168,6 @@
 		5E0F52AB23AE8EAD002518AF /* Plugin.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Plugin.hxx; sourceTree = "<group>"; };
 		5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ReflectionHook.cxx; sourceTree = "<group>"; };
 		5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ReflectionHook.hxx; sourceTree = "<group>"; };
-		5E27B22923B70EF00091232F /* Awt.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Awt.cxx; sourceTree = "<group>"; };
-		5E27B22A23B70EF00091232F /* Awt.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Awt.hxx; sourceTree = "<group>"; };
 		5E27B24223B829C60091232F /* InputOutput.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InputOutput.cxx; sourceTree = "<group>"; };
 		5E27B24323B829C60091232F /* InputOutput.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = InputOutput.hxx; sourceTree = "<group>"; };
 		5E27B24823B9A0430091232F /* Random.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Random.cxx; sourceTree = "<group>"; };
@@ -170,6 +212,30 @@
 		5EBD66B8235CF15400D183B1 /* ThreadPool.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ThreadPool.hxx; sourceTree = "<group>"; };
 		5EBD66DA235D041600D183B1 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		5EBD66DC235D041D00D183B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		5EBE1A8123C7C84700B99E32 /* KeyEvent.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = KeyEvent.hxx; sourceTree = "<group>"; };
+		5EBE1A8223C7C84700B99E32 /* Applet.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Applet.cxx; sourceTree = "<group>"; };
+		5EBE1A8323C7C84700B99E32 /* AWTEvent.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AWTEvent.cxx; sourceTree = "<group>"; };
+		5EBE1A8423C7C84700B99E32 /* AWTEventAccessor.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AWTEventAccessor.cxx; sourceTree = "<group>"; };
+		5EBE1A8523C7C84700B99E32 /* Component.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Component.cxx; sourceTree = "<group>"; };
+		5EBE1A8623C7C84700B99E32 /* AWTAccessor.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AWTAccessor.cxx; sourceTree = "<group>"; };
+		5EBE1A8723C7C84700B99E32 /* InputEvent.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputEvent.cxx; sourceTree = "<group>"; };
+		5EBE1A8823C7C84700B99E32 /* MouseEvent.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MouseEvent.cxx; sourceTree = "<group>"; };
+		5EBE1A8923C7C84700B99E32 /* EventQueue.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EventQueue.cxx; sourceTree = "<group>"; };
+		5EBE1A8A23C7C84700B99E32 /* Toolkit.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Toolkit.hxx; sourceTree = "<group>"; };
+		5EBE1A8B23C7C84700B99E32 /* AWTAccessor.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AWTAccessor.hxx; sourceTree = "<group>"; };
+		5EBE1A8C23C7C84700B99E32 /* Toolkit.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Toolkit.cxx; sourceTree = "<group>"; };
+		5EBE1A8D23C7C84700B99E32 /* FocusEvent.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = FocusEvent.hxx; sourceTree = "<group>"; };
+		5EBE1A8E23C7C84700B99E32 /* Applet.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Applet.hxx; sourceTree = "<group>"; };
+		5EBE1A8F23C7C84700B99E32 /* AWTEventAccessor.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AWTEventAccessor.hxx; sourceTree = "<group>"; };
+		5EBE1A9023C7C84700B99E32 /* AWTEvent.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AWTEvent.hxx; sourceTree = "<group>"; };
+		5EBE1A9123C7C84700B99E32 /* Component.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Component.hxx; sourceTree = "<group>"; };
+		5EBE1A9223C7C84800B99E32 /* Frame.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Frame.hxx; sourceTree = "<group>"; };
+		5EBE1A9323C7C84800B99E32 /* InputEvent.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = InputEvent.hxx; sourceTree = "<group>"; };
+		5EBE1A9423C7C84800B99E32 /* FocusEvent.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FocusEvent.cxx; sourceTree = "<group>"; };
+		5EBE1A9523C7C84800B99E32 /* KeyEvent.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KeyEvent.cxx; sourceTree = "<group>"; };
+		5EBE1A9623C7C84800B99E32 /* MouseEvent.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MouseEvent.hxx; sourceTree = "<group>"; };
+		5EBE1A9723C7C84800B99E32 /* EventQueue.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = EventQueue.hxx; sourceTree = "<group>"; };
+		5EBE1A9823C7C84800B99E32 /* Frame.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Frame.cxx; sourceTree = "<group>"; };
 		5EC59507232D956B00922111 /* RemoteInput.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RemoteInput.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EC5950A232D956B00922111 /* RemoteInput.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RemoteInput.h; sourceTree = "<group>"; };
 		5EC5950B232D956B00922111 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -208,8 +274,6 @@
 				5E5B3F85239D367F00F07DD1 /* Hooks.hpp */,
 				5E5B3F88239D36A400F07DD1 /* ModelRendering.cpp */,
 				5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */,
-				5E27B22923B70EF00091232F /* Awt.cxx */,
-				5E27B22A23B70EF00091232F /* Awt.hxx */,
 			);
 			path = Hooks;
 			sourceTree = "<group>";
@@ -277,6 +341,37 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		5EBE1A5323C7AE2000B99E32 /* Java */ = {
+			isa = PBXGroup;
+			children = (
+				5EBE1A8223C7C84700B99E32 /* Applet.cxx */,
+				5EBE1A8E23C7C84700B99E32 /* Applet.hxx */,
+				5EBE1A8623C7C84700B99E32 /* AWTAccessor.cxx */,
+				5EBE1A8B23C7C84700B99E32 /* AWTAccessor.hxx */,
+				5EBE1A8323C7C84700B99E32 /* AWTEvent.cxx */,
+				5EBE1A9023C7C84700B99E32 /* AWTEvent.hxx */,
+				5EBE1A8423C7C84700B99E32 /* AWTEventAccessor.cxx */,
+				5EBE1A8F23C7C84700B99E32 /* AWTEventAccessor.hxx */,
+				5EBE1A8523C7C84700B99E32 /* Component.cxx */,
+				5EBE1A9123C7C84700B99E32 /* Component.hxx */,
+				5EBE1A8923C7C84700B99E32 /* EventQueue.cxx */,
+				5EBE1A9723C7C84800B99E32 /* EventQueue.hxx */,
+				5EBE1A9423C7C84800B99E32 /* FocusEvent.cxx */,
+				5EBE1A8D23C7C84700B99E32 /* FocusEvent.hxx */,
+				5EBE1A9823C7C84800B99E32 /* Frame.cxx */,
+				5EBE1A9223C7C84800B99E32 /* Frame.hxx */,
+				5EBE1A8723C7C84700B99E32 /* InputEvent.cxx */,
+				5EBE1A9323C7C84800B99E32 /* InputEvent.hxx */,
+				5EBE1A9523C7C84800B99E32 /* KeyEvent.cxx */,
+				5EBE1A8123C7C84700B99E32 /* KeyEvent.hxx */,
+				5EBE1A8823C7C84700B99E32 /* MouseEvent.cxx */,
+				5EBE1A9623C7C84800B99E32 /* MouseEvent.hxx */,
+				5EBE1A8C23C7C84700B99E32 /* Toolkit.cxx */,
+				5EBE1A8A23C7C84700B99E32 /* Toolkit.hxx */,
+			);
+			path = Java;
+			sourceTree = "<group>";
+		};
 		5EC594FD232D956B00922111 = {
 			isa = PBXGroup;
 			children = (
@@ -298,6 +393,7 @@
 		5EC59509232D956B00922111 /* RemoteInput */ = {
 			isa = PBXGroup;
 			children = (
+				5EBE1A5323C7AE2000B99E32 /* Java */,
 				5E5B3F83239D367000F07DD1 /* Hooks */,
 				5EBD66B0235CF15400D183B1 /* Echo */,
 				5EBD66AD235CF15400D183B1 /* EIOS.cxx */,
@@ -328,25 +424,36 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5EBE1AB823C7C84800B99E32 /* AWTEvent.hxx in Headers */,
+				5EBE1AB223C7C84800B99E32 /* FocusEvent.hxx in Headers */,
+				5EBE1AAE23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
+				5EBE1AB423C7C84800B99E32 /* Applet.hxx in Headers */,
+				5EBE1ABA23C7C84800B99E32 /* Component.hxx in Headers */,
 				5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */,
 				5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */,
-				5E27B22D23B7AAFF0091232F /* Awt.hxx in Headers */,
 				5E5B3F8D239D39F700F07DD1 /* ModelRendering.hpp in Headers */,
+				5EBE1AC623C7C84800B99E32 /* EventQueue.hxx in Headers */,
+				5EBE1AAC23C7C84800B99E32 /* Toolkit.hxx in Headers */,
 				5E27B24723B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */,
 				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
+				5EBE1ABE23C7C84800B99E32 /* InputEvent.hxx in Headers */,
 				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
 				5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */,
 				5E0F52AF23AE8EAD002518AF /* Plugin.hxx in Headers */,
+				5EBE1AB623C7C84800B99E32 /* AWTEventAccessor.hxx in Headers */,
+				5EBE1A9A23C7C84800B99E32 /* KeyEvent.hxx in Headers */,
 				5E6B9A182394C58500E6720C /* TMemoryManager.hxx in Headers */,
 				5E6B9A202394C59700E6720C /* ThreadPool.hxx in Headers */,
 				5E6B9A082394C57600E6720C /* EIOS.hxx in Headers */,
 				5E27B24D23B9A0430091232F /* Random.hxx in Headers */,
 				5EFF49C523A704DF00DC83D1 /* Signal.hxx in Headers */,
+				5EBE1AC423C7C84800B99E32 /* MouseEvent.hxx in Headers */,
 				5E6B9A062394C57600E6720C /* SharedEvent.hxx in Headers */,
 				5E6B9A1A2394C58500E6720C /* ControlCenter.hxx in Headers */,
 				5E6B9A172394C58500E6720C /* SimbaPlugin.hxx in Headers */,
 				5E6B9A252394C59C00E6720C /* ReflectionHook.hxx in Headers */,
+				5EBE1ABC23C7C84800B99E32 /* Frame.hxx in Headers */,
 				5E6B9A022394C57600E6720C /* MemoryMap.hxx in Headers */,
 				5E6B9A0E2394C57A00E6720C /* DebugConsole.hxx in Headers */,
 				5E6B9A112394C57A00E6720C /* NativeHooks.hxx in Headers */,
@@ -361,25 +468,36 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5EBE1AB723C7C84800B99E32 /* AWTEvent.hxx in Headers */,
+				5EBE1AB123C7C84800B99E32 /* FocusEvent.hxx in Headers */,
+				5EBE1AAD23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
+				5EBE1AB323C7C84800B99E32 /* Applet.hxx in Headers */,
+				5EBE1AB923C7C84800B99E32 /* Component.hxx in Headers */,
 				5EBD66C4235CF15400D183B1 /* Reflection.hxx in Headers */,
 				5EBD66C7235CF15400D183B1 /* EIOS.hxx in Headers */,
-				5E27B22C23B70EF00091232F /* Awt.hxx in Headers */,
 				5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */,
+				5EBE1AC523C7C84800B99E32 /* EventQueue.hxx in Headers */,
+				5EBE1AAB23C7C84800B99E32 /* Toolkit.hxx in Headers */,
 				5E27B24623B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
+				5EBE1ABD23C7C84800B99E32 /* InputEvent.hxx in Headers */,
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
 				5E0F52AE23AE8EAD002518AF /* Plugin.hxx in Headers */,
+				5EBE1AB523C7C84800B99E32 /* AWTEventAccessor.hxx in Headers */,
+				5EBE1A9923C7C84800B99E32 /* KeyEvent.hxx in Headers */,
 				5EBD66C2235CF15400D183B1 /* JavaInternal.hxx in Headers */,
 				5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */,
 				5EBD66D3235CF15400D183B1 /* MemoryMap.hxx in Headers */,
 				5E27B24C23B9A0430091232F /* Random.hxx in Headers */,
 				5EFF49C423A704DF00DC83D1 /* Signal.hxx in Headers */,
+				5EBE1AC323C7C84800B99E32 /* MouseEvent.hxx in Headers */,
 				5EBD66CA235CF15400D183B1 /* TMemoryManager.hxx in Headers */,
 				5EBD66CC235CF15400D183B1 /* JVM.hxx in Headers */,
 				5EBD66CB235CF15400D183B1 /* SimbaPlugin.hxx in Headers */,
 				5EBD66B9235CF15400D183B1 /* DebugConsole.hxx in Headers */,
+				5EBE1ABB23C7C84800B99E32 /* Frame.hxx in Headers */,
 				5EBD66D4235CF15400D183B1 /* Module.hxx in Headers */,
 				5EC5950C232D956B00922111 /* RemoteInput.h in Headers */,
 				5EBD66D6235CF15400D183B1 /* Time.hxx in Headers */,
@@ -481,6 +599,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E6B9A192394C58500E6720C /* ControlCenter.cxx in Sources */,
+				5EBE1AA023C7C84800B99E32 /* AWTEventAccessor.cxx in Sources */,
+				5EBE1A9E23C7C84800B99E32 /* AWTEvent.cxx in Sources */,
 				5E6B9A1B2394C58500E6720C /* Graphics.cxx in Sources */,
 				5E5B3F8E239D39FA00F07DD1 /* ModelRendering.cpp in Sources */,
 				5E0F52AD23AE8EAD002518AF /* Plugin.cxx in Sources */,
@@ -488,23 +608,32 @@
 				5E6B9A162394C58500E6720C /* SimbaPlugin.cxx in Sources */,
 				5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */,
 				5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */,
+				5EBE1AC223C7C84800B99E32 /* KeyEvent.cxx in Sources */,
 				5E27B24523B829C60091232F /* InputOutput.cxx in Sources */,
 				5E27B24B23B9A0430091232F /* Random.cxx in Sources */,
 				5E6B9A002394C57600E6720C /* Time.cxx in Sources */,
+				5EBE1AA223C7C84800B99E32 /* Component.cxx in Sources */,
+				5EBE1AA823C7C84800B99E32 /* MouseEvent.cxx in Sources */,
 				5E6B9A092394C57600E6720C /* JVM.cxx in Sources */,
 				5EFF49BF23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E6B9A122394C57A00E6720C /* Platform_Darwin.cxx in Sources */,
 				5E6B9A152394C57A00E6720C /* Platform_Windows.cxx in Sources */,
 				5E6B9A132394C57A00E6720C /* DebugConsole.cxx in Sources */,
+				5EBE1AC823C7C84800B99E32 /* Frame.cxx in Sources */,
 				5E6B9A0C2394C57A00E6720C /* NativeHooks_Linux.cxx in Sources */,
+				5EBE1AC023C7C84800B99E32 /* FocusEvent.cxx in Sources */,
+				5EBE1A9C23C7C84800B99E32 /* Applet.cxx in Sources */,
+				5EBE1AAA23C7C84800B99E32 /* EventQueue.cxx in Sources */,
 				5E6B9A1D2394C59400E6720C /* Reflection.cxx in Sources */,
+				5EBE1AB023C7C84800B99E32 /* Toolkit.cxx in Sources */,
 				5E6B9A072394C57600E6720C /* EIOS.cxx in Sources */,
+				5EBE1AA423C7C84800B99E32 /* AWTAccessor.cxx in Sources */,
 				5E6B9A0F2394C57A00E6720C /* Platform_Linux.cxx in Sources */,
 				5E6B9A0D2394C57A00E6720C /* NativeHooks_Windows.cxx in Sources */,
 				5E6B9A042394C57600E6720C /* Module.cxx in Sources */,
+				5EBE1AA623C7C84800B99E32 /* InputEvent.cxx in Sources */,
 				5E6B9A012394C57600E6720C /* SharedEvent.cxx in Sources */,
 				5E6B9A242394C59C00E6720C /* ReflectionHook.cxx in Sources */,
-				5E27B22E23B7AB010091232F /* Awt.cxx in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -513,6 +642,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E4CDC1E2381F40700A05869 /* NativeHooks_Linux.cxx in Sources */,
+				5EBE1A9F23C7C84800B99E32 /* AWTEventAccessor.cxx in Sources */,
+				5EBE1A9D23C7C84800B99E32 /* AWTEvent.cxx in Sources */,
 				5EBD66D5235CF15400D183B1 /* Module.cxx in Sources */,
 				5EBD66D1235CF15400D183B1 /* Time.cxx in Sources */,
 				5E0F52AC23AE8EAD002518AF /* Plugin.cxx in Sources */,
@@ -520,23 +651,32 @@
 				5E5B3F8A239D36A400F07DD1 /* ModelRendering.cpp in Sources */,
 				5EBD66CE235CF15400D183B1 /* EIOS.cxx in Sources */,
 				5EBD66BE235CF15400D183B1 /* Platform_Darwin.cxx in Sources */,
+				5EBE1AC123C7C84800B99E32 /* KeyEvent.cxx in Sources */,
 				5E27B24423B829C60091232F /* InputOutput.cxx in Sources */,
 				5E27B24A23B9A0430091232F /* Random.cxx in Sources */,
 				5EBD66BA235CF15400D183B1 /* Platform_Linux.cxx in Sources */,
+				5EBE1AA123C7C84800B99E32 /* Component.cxx in Sources */,
+				5EBE1AA723C7C84800B99E32 /* MouseEvent.cxx in Sources */,
 				5EBD66C1235CF15400D183B1 /* DebugConsole.cxx in Sources */,
 				5EFF49BE23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */,
 				5EBD66C9235CF15400D183B1 /* SimbaPlugin.cxx in Sources */,
 				5EBD66C6235CF15400D183B1 /* Reflection.cxx in Sources */,
+				5EBE1AC723C7C84800B99E32 /* Frame.cxx in Sources */,
 				5E4CDC1D2381F40700A05869 /* NativeHooks_Darwin.cxx in Sources */,
+				5EBE1ABF23C7C84800B99E32 /* FocusEvent.cxx in Sources */,
+				5EBE1A9B23C7C84800B99E32 /* Applet.cxx in Sources */,
+				5EBE1AA923C7C84800B99E32 /* EventQueue.cxx in Sources */,
 				5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */,
+				5EBE1AAF23C7C84800B99E32 /* Toolkit.cxx in Sources */,
 				5E5B3F86239D367F00F07DD1 /* Hooks.cpp in Sources */,
+				5EBE1AA323C7C84800B99E32 /* AWTAccessor.cxx in Sources */,
 				5EBD66D2235CF15400D183B1 /* SharedEvent.cxx in Sources */,
 				5EBD66CF235CF15400D183B1 /* ThreadPool.cxx in Sources */,
 				5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */,
+				5EBE1AA523C7C84800B99E32 /* InputEvent.cxx in Sources */,
 				5E07A6C02378B1B100EB4CDF /* Graphics.cxx in Sources */,
 				5EBD66C3235CF15400D183B1 /* Platform_Windows.cxx in Sources */,
-				5E27B22B23B70EF00091232F /* Awt.cxx in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

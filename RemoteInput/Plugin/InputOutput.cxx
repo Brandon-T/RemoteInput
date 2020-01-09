@@ -10,6 +10,11 @@
 #include "ControlCenter.hxx"
 #include "Platform.hxx"
 #include "Random.hxx"
+#include "Applet.hxx"
+#include "InputEvent.hxx"
+#include "FocusEvent.hxx"
+#include "KeyEvent.hxx"
+#include "MouseEvent.hxx"
 
 enum ControlKeys : std::uint32_t
 {
@@ -461,12 +466,12 @@ bool InputOutput::has_focus(Component* component)
 
 void InputOutput::gain_focus(Component* component)
 {
-	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_GAINED, false);
+	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
 }
 
 void InputOutput::lose_focus(Component* component)
 {
-	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_LOST, true);
+	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
 }
 
 void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
@@ -630,6 +635,26 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, x, y, click_count, false, button);
 		}
 	}
+}
+
+void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines)
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
+	
+	Component receiver = control_center->reflect_canvas();
+	JNIEnv* env = receiver.getEnv();
+	
+	if (!this->has_focus(&receiver))
+	{
+		this->gain_focus(&receiver);
+	}
+	
+	
+	
 }
 
 bool InputOutput::is_mouse_held(std::int32_t button)
