@@ -51,6 +51,7 @@
 			<Add directory="RemoteInput/Echo" />
 			<Add directory="RemoteInput/Platform" />
 			<Add directory="RemoteInput/Plugin" />
+			<Add directory="RemoteInput/Java" />
 		</Compiler>
 		<Linker>
 			<Add option="-static-libstdc++" />
@@ -71,6 +72,32 @@
 		<Unit filename="RemoteInput/Info.plist" />
 		<Unit filename="RemoteInput/JVM.cxx" />
 		<Unit filename="RemoteInput/JVM.hxx" />
+		<Unit filename="RemoteInput/Java/AWTAccessor.cxx" />
+		<Unit filename="RemoteInput/Java/AWTAccessor.hxx" />
+		<Unit filename="RemoteInput/Java/AWTEvent.cxx" />
+		<Unit filename="RemoteInput/Java/AWTEvent.hxx" />
+		<Unit filename="RemoteInput/Java/AWTEventAccessor.cxx" />
+		<Unit filename="RemoteInput/Java/AWTEventAccessor.hxx" />
+		<Unit filename="RemoteInput/Java/Applet.cxx" />
+		<Unit filename="RemoteInput/Java/Applet.hxx" />
+		<Unit filename="RemoteInput/Java/Component.cxx" />
+		<Unit filename="RemoteInput/Java/Component.hxx" />
+		<Unit filename="RemoteInput/Java/EventQueue.cxx" />
+		<Unit filename="RemoteInput/Java/EventQueue.hxx" />
+		<Unit filename="RemoteInput/Java/FocusEvent.cxx" />
+		<Unit filename="RemoteInput/Java/FocusEvent.hxx" />
+		<Unit filename="RemoteInput/Java/Frame.cxx" />
+		<Unit filename="RemoteInput/Java/Frame.hxx" />
+		<Unit filename="RemoteInput/Java/InputEvent.cxx" />
+		<Unit filename="RemoteInput/Java/InputEvent.hxx" />
+		<Unit filename="RemoteInput/Java/KeyEvent.cxx" />
+		<Unit filename="RemoteInput/Java/KeyEvent.hxx" />
+		<Unit filename="RemoteInput/Java/MouseEvent.cxx" />
+		<Unit filename="RemoteInput/Java/MouseEvent.hxx" />
+		<Unit filename="RemoteInput/Java/MouseWheelEvent.cxx" />
+		<Unit filename="RemoteInput/Java/MouseWheelEvent.hxx" />
+		<Unit filename="RemoteInput/Java/Toolkit.cxx" />
+		<Unit filename="RemoteInput/Java/Toolkit.hxx" />
 		<Unit filename="RemoteInput/Platform/DebugConsole.cxx" />
 		<Unit filename="RemoteInput/Platform/DebugConsole.hxx" />
 		<Unit filename="RemoteInput/Platform/JavaInternal.hxx" />
@@ -86,12 +113,16 @@
 		<Unit filename="RemoteInput/Plugin/ControlCenter.hxx" />
 		<Unit filename="RemoteInput/Plugin/Graphics.cxx" />
 		<Unit filename="RemoteInput/Plugin/Graphics.hxx" />
+		<Unit filename="RemoteInput/Plugin/InputOutput.cxx" />
+		<Unit filename="RemoteInput/Plugin/InputOutput.hxx" />
 		<Unit filename="RemoteInput/Plugin/Plugin.cxx" />
 		<Unit filename="RemoteInput/Plugin/Plugin.hxx" />
 		<Unit filename="RemoteInput/Plugin/Signal.hxx" />
 		<Unit filename="RemoteInput/Plugin/SimbaPlugin.cxx" />
 		<Unit filename="RemoteInput/Plugin/SimbaPlugin.hxx" />
 		<Unit filename="RemoteInput/Plugin/TMemoryManager.hxx" />
+		<Unit filename="RemoteInput/Random.cxx" />
+		<Unit filename="RemoteInput/Random.hxx" />
 		<Unit filename="RemoteInput/Reflection.cxx" />
 		<Unit filename="RemoteInput/Reflection.hxx" />
 		<Unit filename="RemoteInput/RemoteInput.h" />
