@@ -14,6 +14,10 @@
 #include "Graphics.hxx"
 #endif
 
+#if __has_include("MinHook.h")
+#include "MinHook.h"
+#endif
+
 
 #if defined(_WIN32) || defined(_WIN64)
 typedef void (__stdcall *JavaNativeBlit_t)(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut);
@@ -24,6 +28,8 @@ JavaNativeBlit_t o_JavaNativeBlit;
 #if defined(_WIN32) || defined(_WIN64)
 void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut)
 {
+    MessageBox(NULL, "Native Blit", "", 0);
+
     extern std::unique_ptr<ControlCenter> control_center;
 	if (control_center)
 	{
@@ -106,6 +112,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 
 #if defined(_WIN32) || defined(_WIN64)
 BOOL (__stdcall *o_SwapBuffers)(HDC ctx);
+void (__stdcall *o_glDrawPixels)(GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data);
 void (__stdcall *glGenBuffers) (GLsizei n, GLuint *buffers);
 void (__stdcall *glDeleteBuffers) (GLsizei n,  const GLuint* buffers);
 void (__stdcall *glBindBuffer) (GLenum target, GLuint buffer);
@@ -190,6 +197,44 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
+void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data)
+{
+    extern std::unique_ptr<ControlCenter> control_center;
+
+	if (control_center)
+	{
+	    int src_x = 0;
+	    int src_y = 0;
+	    int bytes_per_pixel = 4; //TODO: Parse format
+		int stride = width * bytes_per_pixel;
+        void *rasBase = static_cast<std::uint8_t*>(const_cast<void*>(data)) + (stride * src_y) + (bytes_per_pixel * src_x);
+
+		control_center->update_dimensions(width, height);
+		std::uint8_t* dest = control_center->get_image();
+		if (dest)
+		{
+			memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
+		}
+
+		std::uint8_t* src = control_center->get_debug_image();
+		if (src)
+		{
+			draw_image(rasBase, src, width, height, bytes_per_pixel);
+
+			std::int32_t x = -1;
+			std::int32_t y = -1;
+			control_center->get_applet_mouse_position(&x, &y);
+
+			if (x > -1 && y > -1)
+			{
+				draw_circle(x, y, 3, rasBase, width, height, bytes_per_pixel, true);
+			}
+		}
+	}
+
+    o_glDrawPixels(width, height, format, type, data);
+}
+
 BOOL __stdcall mSwapBuffers(HDC hdc)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
@@ -198,11 +243,11 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 	{
 		static GLint ViewPort[4] = {0};
 		static GLuint pbo[2] = {0};
-		
+
 		glGetIntegerv(GL_VIEWPORT, ViewPort);
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
-		
+
 		if (width >= 765 && height >= 553)
 		{
 			std::uint8_t* dest = control_center->get_image();
@@ -291,21 +336,24 @@ void InitialiseHooks()
 			return;
 		}
 
-        typedef int __stdcall (*MH_Initialize)(void);
-        typedef int __stdcall (*MH_CreateHook)(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOriginal);
-        typedef int __stdcall (*MH_EnableHook)(LPVOID pTarget);
+		JavaNativeBlit_t original = (JavaNativeBlit_t)GetProcAddress(GetModuleHandle("awt.dll"), "_Java_sun_java2d_windows_GDIBlitLoops_nativeBlit@60");
 
-        HMODULE library = LoadLibrary("C:/Users/Brandon/Desktop/MinHook.x86.dll");
-        MH_Initialize initialize = (MH_Initialize)GetProcAddress(library, "MH_Initialize");
-        MH_CreateHook hook = (MH_CreateHook)GetProcAddress(library, "MH_CreateHook");
-        MH_EnableHook enable = (MH_EnableHook)GetProcAddress(library, "MH_EnableHook");
+		MH_Initialize();
+		MH_CreateHook(reinterpret_cast<void*>(original), reinterpret_cast<void*>(&JavaNativeBlit), reinterpret_cast<void**>(&o_JavaNativeBlit));
+		MH_EnableHook(reinterpret_cast<void*>(original));
+    }).detach();
 
+    std::thread([]{
+		if (!GetModuleHandle("opengl32.dll"))
+		{
+			return;
+		}
 
-        JavaNativeBlit_t original = (JavaNativeBlit_t)GetProcAddress(GetModuleHandle("awt.dll"), "_Java_sun_java2d_windows_GDIBlitLoops_nativeBlit@60");
+		decltype(o_glDrawPixels) original = (decltype(o_glDrawPixels))GetProcAddress(GetModuleHandle("opengl32.dll"), "glDrawPixels");
 
-        initialize();
-        hook((void*)original, (void*)&JavaNativeBlit, (void**)&o_JavaNativeBlit);
-        enable((void*)original);
+		MH_Initialize();
+		MH_CreateHook(reinterpret_cast<void*>(original), reinterpret_cast<void*>(&mglDrawPixels), reinterpret_cast<void**>(&o_glDrawPixels));
+		MH_EnableHook(reinterpret_cast<void*>(original));
     }).detach();
 
     /*std::thread([]{

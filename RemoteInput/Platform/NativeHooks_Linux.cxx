@@ -25,13 +25,14 @@ Bool XShmPutImage(Display *display, Drawable d, GC gc, XImage *image, int src_x,
 		int bytes_per_pixel = image->bits_per_pixel / 8;
 		int stride = width * bytes_per_pixel;
 		void *rasBase = reinterpret_cast<std::uint8_t*>(image->data) + (stride * src_y) + (bytes_per_pixel * src_x);
-		
+
+		control_center->update_dimensions(width, height);
 		std::uint8_t* dest = control_center->get_image();
 		if (dest)
 		{
 			std::memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
 		}
-		
+
 		std::uint8_t* src = control_center->get_debug_image();
 		if (src)
 		{
@@ -68,11 +69,11 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 {
 	static int w = 0;
 	static int h = 0;
-	
+
 	#if defined(__APPLE__)
 	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
 	#endif
-	
+
 	//Buffer size changed
 	if (w != width && h != height)
 	{
@@ -81,7 +82,7 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 		{
 			glDeleteBuffers(2, pbo);
 		}
-		
+
 		//Generate buffers
 		glGenBuffers(2, pbo);
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
@@ -97,15 +98,15 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 {
 	static int index = 0;
 	static int nextIndex = 0;
-	
+
 	#if defined(__APPLE__)
 	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
 	#endif
-	
+
 	//Swap indices
 	index = (index + 1) % 2;
 	nextIndex = (index + 1) % 2;
-	
+
 	//read back-buffer.
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
@@ -131,20 +132,20 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
-	
+
 	if (control_center)
 	{
 		static GLint ViewPort[4] = {0};
 		static GLuint pbo[2] = {0};
-		
+
 		glGetIntegerv(GL_VIEWPORT, ViewPort);
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
-		
+
 		if (width >= 765 && height >= 553)
 		{
 			control_center->update_dimensions(width, height);
-			
+
 			std::uint8_t* dest = control_center->get_image();
 			if (dest)
 			{
@@ -152,12 +153,12 @@ void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
 				FlipImageVertically(width, height, dest);
 			}
-			
+
 			std::uint8_t* src = control_center->get_debug_image();
 			if (src)
 			{
 				gl_draw_image(ctx, src, 0, 0, width, height, 4);
-				
+
 				std::int32_t x = -1;
 				std::int32_t y = -1;
 				control_center->get_applet_mouse_position(&x, &y);
@@ -170,7 +171,7 @@ void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 			}
 		}
 	}
-	
+
 	static decltype(glXSwapBuffers)* o_glXSwapBuffers = reinterpret_cast<decltype(glXSwapBuffers)*>(dlsym(RTLD_NEXT, "glXSwapBuffers"));
 	return o_glXSwapBuffers(dpy, drawable);
 }
