@@ -40,10 +40,6 @@
 		5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F84239D367F00F07DD1 /* Hooks.cpp */; };
 		5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
 		5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
-		5E667F9523C8C64100931DEC /* rd_route.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E667F9323C8C64100931DEC /* rd_route.h */; };
-		5E667F9623C8C64100931DEC /* rd_route.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E667F9323C8C64100931DEC /* rd_route.h */; };
-		5E667F9723C8C64100931DEC /* rd_route.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E667F9423C8C64100931DEC /* rd_route.c */; };
-		5E667F9823C8C64100931DEC /* rd_route.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E667F9423C8C64100931DEC /* rd_route.c */; };
 		5E667F9A23C8D1BB00931DEC /* libawt_lwawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */; };
 		5E667F9E23C8D1C000931DEC /* libawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9D23C8D1C000931DEC /* libawt.dylib */; };
 		5E6B9A002394C57600E6720C /* Time.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B1235CF15400D183B1 /* Time.cxx */; };
@@ -84,6 +80,14 @@
 		5E6B9A252394C59C00E6720C /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
 		5E6B9A262394C60A00E6720C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DC235D041D00D183B1 /* Foundation.framework */; };
 		5E6B9A272394C61200E6720C /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EBD66DA235D041600D183B1 /* Cocoa.framework */; };
+		5E6EA10123C91350003CB0B5 /* DetachedThreadPool.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E6EA0FF23C91350003CB0B5 /* DetachedThreadPool.cxx */; };
+		5E6EA10223C91350003CB0B5 /* DetachedThreadPool.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E6EA0FF23C91350003CB0B5 /* DetachedThreadPool.cxx */; };
+		5E6EA10323C91350003CB0B5 /* DetachedThreadPool.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E6EA10023C91350003CB0B5 /* DetachedThreadPool.hxx */; };
+		5E6EA10423C91350003CB0B5 /* DetachedThreadPool.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E6EA10023C91350003CB0B5 /* DetachedThreadPool.hxx */; };
+		5E6EA10A23C91371003CB0B5 /* rd_route.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E6EA10723C91371003CB0B5 /* rd_route.h */; };
+		5E6EA10B23C91371003CB0B5 /* rd_route.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E6EA10723C91371003CB0B5 /* rd_route.h */; };
+		5E6EA10C23C91371003CB0B5 /* rd_route.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E6EA10923C91371003CB0B5 /* rd_route.c */; };
+		5E6EA10D23C91371003CB0B5 /* rd_route.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E6EA10923C91371003CB0B5 /* rd_route.c */; };
 		5EB76181239B922500218452 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EB76180239B922500218452 /* OpenGL.framework */; };
 		5EBD66B9235CF15400D183B1 /* DebugConsole.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD6697235CF15400D183B1 /* DebugConsole.hxx */; };
 		5EBD66BA235CF15400D183B1 /* Platform_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */; };
@@ -193,13 +197,15 @@
 		5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ModelRendering.hpp; sourceTree = "<group>"; };
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
-		5E667F9323C8C64100931DEC /* rd_route.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rd_route.h; sourceTree = "<group>"; };
-		5E667F9423C8C64100931DEC /* rd_route.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rd_route.c; sourceTree = "<group>"; };
 		5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libawt_lwawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libawt_lwawt.dylib"; sourceTree = "<group>"; };
 		5E667F9D23C8D1C000931DEC /* libawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libawt.dylib"; sourceTree = "<group>"; };
 		5E667FA023C8D1D000931DEC /* libjawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libjawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libjawt.dylib"; sourceTree = "<group>"; };
 		5E667FA323C8D1F500931DEC /* libjvm.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libjvm.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server/libjvm.dylib"; sourceTree = "<group>"; };
 		5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibRemoteInput.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E6EA0FF23C91350003CB0B5 /* DetachedThreadPool.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DetachedThreadPool.cxx; sourceTree = "<group>"; };
+		5E6EA10023C91350003CB0B5 /* DetachedThreadPool.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DetachedThreadPool.hxx; sourceTree = "<group>"; };
+		5E6EA10723C91371003CB0B5 /* rd_route.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rd_route.h; sourceTree = "<group>"; };
+		5E6EA10923C91371003CB0B5 /* rd_route.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rd_route.c; sourceTree = "<group>"; };
 		5EB76180239B922500218452 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		5EBD6697235CF15400D183B1 /* DebugConsole.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DebugConsole.hxx; sourceTree = "<group>"; };
 		5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Platform_Linux.cxx; sourceTree = "<group>"; };
@@ -301,10 +307,34 @@
 		5E667F9223C8C60000931DEC /* Thirdparty */ = {
 			isa = PBXGroup;
 			children = (
-				5E667F9423C8C64100931DEC /* rd_route.c */,
-				5E667F9323C8C64100931DEC /* rd_route.h */,
+				5E6EA10523C91371003CB0B5 /* rd_route */,
 			);
 			path = Thirdparty;
+			sourceTree = "<group>";
+		};
+		5E6EA10523C91371003CB0B5 /* rd_route */ = {
+			isa = PBXGroup;
+			children = (
+				5E6EA10623C91371003CB0B5 /* include */,
+				5E6EA10823C91371003CB0B5 /* src */,
+			);
+			path = rd_route;
+			sourceTree = "<group>";
+		};
+		5E6EA10623C91371003CB0B5 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				5E6EA10723C91371003CB0B5 /* rd_route.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		5E6EA10823C91371003CB0B5 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				5E6EA10923C91371003CB0B5 /* rd_route.c */,
+			);
+			path = src;
 			sourceTree = "<group>";
 		};
 		5EBD6696235CF15400D183B1 /* Platform */ = {
@@ -443,6 +473,8 @@
 				5EBD66A6235CF15400D183B1 /* RemoteInput.def */,
 				5EBD66AE235CF15400D183B1 /* ThreadPool.cxx */,
 				5EBD66B8235CF15400D183B1 /* ThreadPool.hxx */,
+				5E6EA0FF23C91350003CB0B5 /* DetachedThreadPool.cxx */,
+				5E6EA10023C91350003CB0B5 /* DetachedThreadPool.hxx */,
 				5EC5950A232D956B00922111 /* RemoteInput.h */,
 				5EC5950B232D956B00922111 /* Info.plist */,
 				5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */,
@@ -460,6 +492,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E6EA10423C91350003CB0B5 /* DetachedThreadPool.hxx in Headers */,
 				5EBE1AB823C7C84800B99E32 /* AWTEvent.hxx in Headers */,
 				5EBE1AB223C7C84800B99E32 /* FocusEvent.hxx in Headers */,
 				5EBE1AAE23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
@@ -473,7 +506,6 @@
 				5E27B24723B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */,
 				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
-				5E667F9623C8C64100931DEC /* rd_route.h in Headers */,
 				5EBE1ABE23C7C84800B99E32 /* InputEvent.hxx in Headers */,
 				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
 				5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */,
@@ -496,6 +528,7 @@
 				5E6B9A112394C57A00E6720C /* NativeHooks.hxx in Headers */,
 				5E6B9A102394C57A00E6720C /* Platform.hxx in Headers */,
 				5E6B9A212394C59700E6720C /* RemoteInput.h in Headers */,
+				5E6EA10B23C91371003CB0B5 /* rd_route.h in Headers */,
 				5E31A8B623C840F500E751F6 /* MouseWheelEvent.hxx in Headers */,
 				5E6B9A1E2394C59400E6720C /* Reflection.hxx in Headers */,
 				5E5B3F8C239D39F200F07DD1 /* Hooks.hpp in Headers */,
@@ -506,6 +539,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E6EA10323C91350003CB0B5 /* DetachedThreadPool.hxx in Headers */,
 				5EBE1AB723C7C84800B99E32 /* AWTEvent.hxx in Headers */,
 				5EBE1AB123C7C84800B99E32 /* FocusEvent.hxx in Headers */,
 				5EBE1AAD23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
@@ -519,7 +553,6 @@
 				5E27B24623B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
-				5E667F9523C8C64100931DEC /* rd_route.h in Headers */,
 				5EBE1ABD23C7C84800B99E32 /* InputEvent.hxx in Headers */,
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
@@ -542,6 +575,7 @@
 				5EBD66D6235CF15400D183B1 /* Time.hxx in Headers */,
 				5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */,
 				5EBD66BC235CF15400D183B1 /* Platform.hxx in Headers */,
+				5E6EA10A23C91371003CB0B5 /* rd_route.h in Headers */,
 				5EBD66D7235CF15400D183B1 /* SharedEvent.hxx in Headers */,
 				5E5B3F87239D367F00F07DD1 /* Hooks.hpp in Headers */,
 				5E31A8B423C83E3F00E751F6 /* MouseWheelEvent.hxx in Headers */,
@@ -665,15 +699,16 @@
 				5EBE1AC023C7C84800B99E32 /* FocusEvent.cxx in Sources */,
 				5EBE1A9C23C7C84800B99E32 /* Applet.cxx in Sources */,
 				5EBE1AAA23C7C84800B99E32 /* EventQueue.cxx in Sources */,
+				5E6EA10223C91350003CB0B5 /* DetachedThreadPool.cxx in Sources */,
 				5E6B9A1D2394C59400E6720C /* Reflection.cxx in Sources */,
 				5EBE1AB023C7C84800B99E32 /* Toolkit.cxx in Sources */,
 				5E6B9A072394C57600E6720C /* EIOS.cxx in Sources */,
 				5EBE1AA423C7C84800B99E32 /* AWTAccessor.cxx in Sources */,
-				5E667F9823C8C64100931DEC /* rd_route.c in Sources */,
 				5E6B9A0F2394C57A00E6720C /* Platform_Linux.cxx in Sources */,
 				5E6B9A0D2394C57A00E6720C /* NativeHooks_Windows.cxx in Sources */,
 				5E6B9A042394C57600E6720C /* Module.cxx in Sources */,
 				5EBE1AA623C7C84800B99E32 /* InputEvent.cxx in Sources */,
+				5E6EA10D23C91371003CB0B5 /* rd_route.c in Sources */,
 				5E6B9A012394C57600E6720C /* SharedEvent.cxx in Sources */,
 				5E6B9A242394C59C00E6720C /* ReflectionHook.cxx in Sources */,
 			);
@@ -710,15 +745,16 @@
 				5EBE1ABF23C7C84800B99E32 /* FocusEvent.cxx in Sources */,
 				5EBE1A9B23C7C84800B99E32 /* Applet.cxx in Sources */,
 				5EBE1AA923C7C84800B99E32 /* EventQueue.cxx in Sources */,
+				5E6EA10123C91350003CB0B5 /* DetachedThreadPool.cxx in Sources */,
 				5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */,
 				5EBE1AAF23C7C84800B99E32 /* Toolkit.cxx in Sources */,
 				5E5B3F86239D367F00F07DD1 /* Hooks.cpp in Sources */,
 				5EBE1AA323C7C84800B99E32 /* AWTAccessor.cxx in Sources */,
-				5E667F9723C8C64100931DEC /* rd_route.c in Sources */,
 				5EBD66D2235CF15400D183B1 /* SharedEvent.cxx in Sources */,
 				5EBD66CF235CF15400D183B1 /* ThreadPool.cxx in Sources */,
 				5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */,
 				5EBE1AA523C7C84800B99E32 /* InputEvent.cxx in Sources */,
+				5E6EA10C23C91371003CB0B5 /* rd_route.c in Sources */,
 				5E07A6C02378B1B100EB4CDF /* Graphics.cxx in Sources */,
 				5EBD66C3235CF15400D183B1 /* Platform_Windows.cxx in Sources */,
 			);
