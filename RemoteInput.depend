@@ -64,7 +64,7 @@
 	<cstdint>
 	"Reflection.hxx"
 
-1576990887 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
 	<string>
 	<memory>
 	<functional>
@@ -85,13 +85,13 @@
 	<chrono>
 	<windows.h>
 
-1576990887 source:c:\users\brandon\desktop\remoteinput\remoteinput\reflection.cxx
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\reflection.cxx
 	"Reflection.hxx"
 
-1575590048 source:c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.cxx
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.cxx
 	"ThreadPool.hxx"
 
-1575590048 c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.hxx
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.hxx
 	<thread>
 	<future>
 	<mutex>
@@ -139,20 +139,21 @@
 	<errno.h>
 	<unistd.h>
 
-1577077465 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
 	"SimbaPlugin.hxx"
 	<memory>
 	<cstring>
 	<unordered_map>
+	<type_traits>
 	"ControlCenter.hxx"
 
-1577075082 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
 	<cstdint>
 	<cstdio>
 	"EIOS.hxx"
 	"TMemoryManager.hxx"
 
-1577022382 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
 	<cstdint>
 	<stdint.h>
 	"ControlCenter.hxx"
@@ -176,7 +177,7 @@
 1575590048 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
 	<jni.h>
 
-1576990050 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
 	"EIOS.hxx"
 	<cstdio>
 	<unordered_map>
@@ -201,7 +202,7 @@
 	<vector>
 	"../Echo/SharedEvent.hxx"
 
-1575963865 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.cxx
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.cxx
 	"Graphics.hxx"
 	<cstdint>
 	<cstring>
@@ -213,14 +214,16 @@
 	<gl/gl.h>
 	<gl/glext.h>
 
-1575940407 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
 	<cstdint>
 
-1576990050 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
 	<atomic>
 	"Signal.hxx"
 	"Reflection.hxx"
+	"Applet.hxx"
 	"MemoryMap.hxx"
+	"InputOutput.hxx"
 
 1573527112 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.cxx
 	"NativeHooks.hxx"
@@ -232,7 +235,7 @@
 	"EIOS.hxx"
 	"Graphics.hxx"
 
-1576994175 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
 	"ControlCenter.hxx"
 	<thread>
 	<unordered_map>
@@ -243,7 +246,7 @@
 	"Graphics.hxx"
 	"ReflectionHook.hxx"
 
-1576990050 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_darwin.cxx
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_darwin.cxx
 	"NativeHooks.hxx"
 	"rd_route.h"
 	<OpenGL/OpenGL.h>
@@ -313,10 +316,144 @@
 	"NativeHooks.hxx"
 	"ControlCenter.hxx"
 
-1576990050 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\plugin.hxx
+1578646226 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\plugin.hxx
 	<cstdint>
 	<cstdio>
 	<new>
 	"EIOS.hxx"
 	<windows.h>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.hxx
+	<cstdint>
+	<list>
+	<atomic>
+	<mutex>
+	<array>
+	"ThreadPool.hxx"
+	"Reflection.hxx"
+	"Component.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\applet.cxx
+	"Applet.hxx"
+	<utility>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\applet.hxx
+	<jni.h>
+	"Component.hxx"
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\component.hxx
+	<jni.h>
+	<cstdint>
+	<cstddef>
+	"AWTEvent.hxx"
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\awtevent.hxx
+	<jni.h>
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\awtaccessor.cxx
+	"AWTAccessor.hxx"
+	<utility>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\awtaccessor.hxx
+	<jni.h>
+	"AWTEventAccessor.hxx"
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\awteventaccessor.hxx
+	<jni.h>
+	"AWTEvent.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\awtevent.cxx
+	"AWTEvent.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\awteventaccessor.cxx
+	"AWTEventAccessor.hxx"
+	<utility>
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\component.cxx
+	"Component.hxx"
+	<utility>
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\eventqueue.cxx
+	"EventQueue.hxx"
+	<utility>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\eventqueue.hxx
+	<jni.h>
+	"AWTEvent.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\focusevent.cxx
+	"FocusEvent.hxx"
+	<utility>
+
+1578646825 c:\users\brandon\desktop\remoteinput\remoteinput\java\focusevent.hxx
+	<jni.h>
+	"AWTEvent.hxx"
+	"Component.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\frame.cxx
+	"Frame.hxx"
+	<utility>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\frame.hxx
+	<jni.h>
+	"Component.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\inputevent.cxx
+	"InputEvent.hxx"
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\inputevent.hxx
+	<jni.h>
+	<cstdint>
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\keyevent.cxx
+	"KeyEvent.hxx"
+	<utility>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\keyevent.hxx
+	<jni.h>
+	"AWTEvent.hxx"
+	"Component.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\mouseevent.cxx
+	"MouseEvent.hxx"
+	<utility>
+
+1578646806 c:\users\brandon\desktop\remoteinput\remoteinput\java\mouseevent.hxx
+	<jni.h>
+	"AWTEvent.hxx"
+	"Component.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\mousewheelevent.cxx
+	"MouseWheelEvent.hxx"
+	<utility>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\mousewheelevent.hxx
+	<jni.h>
+	"AWTEvent.hxx"
+	"Component.hxx"
+
+1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\toolkit.cxx
+	"Toolkit.hxx"
+	<utility>
+
+1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\java\toolkit.hxx
+	<jni.h>
+	"EventQueue.hxx"
+
+1578646891 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
+	"InputOutput.hxx"
+	"ControlCenter.hxx"
+	"Platform.hxx"
+	"Random.hxx"
+	"Applet.hxx"
+	"InputEvent.hxx"
+	"FocusEvent.hxx"
+	"KeyEvent.hxx"
+	"MouseEvent.hxx"
+	"MouseWheelEvent.hxx"
+
+1578646971 c:\users\brandon\desktop\remoteinput\remoteinput\random.hxx
+	<random>
+	<limits>
+	<memory>
 

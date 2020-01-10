@@ -17,19 +17,24 @@ class FocusEvent final : public AWTEvent
 {
 public:
 	enum class Cause : std::uint32_t;
-	
+
 private:
 	JNIEnv* env;
 	jclass cls;
 	static jobject GetCauseDescription(JNIEnv* env, Cause cause);
-	
+
 public:
 	FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause);
 	~FocusEvent();
-	
+
 	static void Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false);
 	static void Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false);
-	
+
+	#warning "WINDOWS BS"
+	#ifdef MOUSE_EVENT
+	#undef MOUSE_EVENT
+	#endif
+
 	enum class Cause : std::uint32_t
 	{
 		UNKNOWN,
@@ -44,7 +49,7 @@ public:
         ACTIVATION,
         CLEAR_GLOBAL_FOCUS_OWNER
 	};
-	
+
 	enum FocusCodes : std::int32_t
 	{
 		FOCUS_GAINED = 1004,

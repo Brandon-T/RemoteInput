@@ -18,15 +18,20 @@ class MouseEvent final : public AWTEvent
 private:
 	JNIEnv* env;
 	jclass cls;
-	
+
 public:
 	MouseEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button);
 	virtual ~MouseEvent();
-	
+
 	static void Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated = false);
-	
+
 	static void Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated = false);
-	
+
+	#warning "WINDOWS BS"
+	#ifdef MOUSE_MOVED
+	#undef MOUSE_MOVED
+	#endif // MOUSE_MOVED
+
 	enum MouseEventCodes : std::uint32_t
 	{
 		MOUSE_CLICKED = 500,
@@ -37,7 +42,7 @@ public:
 		MOUSE_EXITED = 505,
 		MOUSE_DRAGGED = 506,
 		MOUSE_WHEEL = 507,
-		
+
 		NOBUTTON = 0,
 		BUTTON1 = 1,
 		BUTTON2 = 2,

@@ -17,6 +17,15 @@
 #include "MouseEvent.hxx"
 #include "MouseWheelEvent.hxx"
 
+#warning "WINDOWS BS"
+#ifdef VK_SHIFT
+#undef VK_SHIFT
+#undef VK_LSHIFT
+#undef VK_RSHIFT
+#undef VK_CONTROL
+#undef VK_APPS
+#endif // VK_SHIFT
+
 enum ControlKeys : std::uint32_t
 {
 	VK_FUNCTION = 0x0,
@@ -79,7 +88,7 @@ void InputOutput::hold_key(std::int32_t code)
 	{
 		return;
 	}
-	
+
 	//Key is not already held..
 	if (std::find(held_keys.begin(), held_keys.end(), code) == held_keys.end())
 	{
@@ -87,24 +96,24 @@ void InputOutput::hold_key(std::int32_t code)
 		if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
 		{
 			std::lock_guard<std::mutex>(this->mutex);
-			
+
 			//Control Keys only generate a single held event..
 			held_keys.push_back(code);
-			
+
 			//DispatchEvent
 			Component receiver = control_center->reflect_canvas();
-			
+
 			JNIEnv* env = receiver.getEnv();
 			if (!this->has_focus(&receiver))
 			{
 				this->gain_focus(&receiver);
 			}
-			
+
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = GetActiveKeyModifiers();
 			std::int32_t keycode = GetJavaKeyCode(code);
 			std::int32_t location = GetKeyLocation(code);
-			
+
 			KeyEvent::Dispatch(env,
 							   &receiver,
 							   &receiver,
@@ -121,23 +130,23 @@ void InputOutput::hold_key(std::int32_t code)
 			if (currently_held_key != -1)
 			{
 				std::lock_guard<std::mutex>(this->mutex);
-				
+
 				currently_held_key = code;
 				held_keys.push_back(code);
-				
+
 				//Dispatch Event
 				Component receiver = control_center->reflect_canvas();
 				if (!this->has_focus(&receiver))
 				{
 					this->gain_focus(&receiver);
 				}
-				
+
 				JNIEnv* env = receiver.getEnv();
 				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 				std::int32_t modifiers = GetActiveKeyModifiers();
 				std::int32_t keycode = GetJavaKeyCode(code);
 				std::int32_t location = GetKeyLocation(code);
-				
+
 				KeyEvent::Dispatch(env,
 								   &receiver,
 								   &receiver,
@@ -163,20 +172,20 @@ void InputOutput::hold_key(std::int32_t code)
 				this->mutex.lock();
 				currently_held_key = code;
 				held_keys.push_back(code);
-				
+
 				//Dispatch Event
 				Component receiver = control_center->reflect_canvas();
 				if (!this->has_focus(&receiver))
 				{
 					this->gain_focus(&receiver);
 				}
-				
+
 				JNIEnv* env = receiver.getEnv();
 				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 				std::int32_t modifiers = GetActiveKeyModifiers();
 				std::int32_t keycode = GetJavaKeyCode(code);
 				std::int32_t location = GetKeyLocation(code);
-				
+
 				KeyEvent::Dispatch(env,
 								   &receiver,
 								   &receiver,
@@ -197,32 +206,32 @@ void InputOutput::hold_key(std::int32_t code)
 									NativeKeyCodeToChar(code, modifiers),
 									KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 				this->mutex.unlock();
-				
-				
+
+
 				input_thread.add_task([&]{
 					JNIEnv* env = nullptr;
 					this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
-					
+
 					Applet applet{env, this->applet, false};
 					Component receiver = applet.getComponent(0);
-					
+
 					while (currently_held_key != -1)
 					{
 						std::lock_guard<std::mutex>(this->mutex);
 						yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70)));
 						std::int32_t code = currently_held_key;
-						
+
 						//Dispatch Event
 						if (!this->has_focus(&receiver))
 						{
 							this->gain_focus(&receiver);
 						}
-						
+
 						std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 						std::int32_t modifiers = GetActiveKeyModifiers();
 						std::int32_t keycode = GetJavaKeyCode(code);
 						std::int32_t location = GetKeyLocation(code);
-						
+
 						KeyEvent::Dispatch(env,
 										   &receiver,
 										   &receiver,
@@ -256,22 +265,22 @@ void InputOutput::release_key(std::int32_t code)
 	{
 		return;
 	}
-	
+
 	if (auto it = std::find(held_keys.begin(), held_keys.end(), code); it != held_keys.end())
 	{
 		if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
 		{
 			std::lock_guard<std::mutex>(this->mutex);
-			
+
 			held_keys.erase(it); //held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), code), held_keys.end());
-			
+
 			//Dispatch Event
 			Component receiver = control_center->reflect_canvas();
 			if (!this->has_focus(&receiver))
 			{
 				this->gain_focus(&receiver);
 			}
-			
+
 			JNIEnv* env = receiver.getEnv();
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = GetActiveKeyModifiers();
@@ -293,12 +302,12 @@ void InputOutput::release_key(std::int32_t code)
 			//Remove the held key from the list..
 			this->mutex.lock();
 			held_keys.erase(it);
-			
+
 			//Find the next non-control held-key..
 			auto jt = std::find_if(held_keys.crbegin(), held_keys.crend(), [](std::int32_t key){
 				return std::find(std::begin(control_keys), std::end(control_keys), key) == std::end(control_keys);
 			});
-			
+
 			//Set the next currently held key to the first non-control key..
 			currently_held_key = jt != held_keys.crend() ? *jt : -1;
 			this->mutex.unlock();
@@ -310,7 +319,7 @@ void InputOutput::release_key(std::int32_t code)
 			{
 				this->gain_focus(&receiver);
 			}
-			
+
 			JNIEnv* env = receiver.getEnv();
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = GetActiveKeyModifiers();
@@ -349,36 +358,36 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 	{
 		return;
 	}
-	
+
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
-	
+
 	if (!this->has_focus(&receiver))
 	{
 		this->gain_focus(&receiver);
 	}
-	
+
 	bool isShiftDown = false;
-	
+
 	for (std::size_t i = 0; i < string.length(); ++i)
 	{
 		char c = string[i];
 		char n = i == string.length() - 1 ? '\0' : string[i + 1];
 		std::int32_t modifiers = this->ModifiersForChar(c);
-		
+
 		//Modifier Key
 		if (modifiers & InputEvent::InputEventMasks::SHIFT_DOWN_MASK)
 		{
 			if (!isShiftDown)
 			{
 				isShiftDown = true;
-				
+
 				std::int32_t code = VK_LSHIFT;
 				std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 				std::int32_t modifiers = InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
 				std::int32_t keycode = GetJavaKeyCode(code);
 				std::int32_t location = GetKeyLocation(code);
-				
+
 				KeyEvent::Dispatch(env,
 								   &receiver,
 								   &receiver,
@@ -392,13 +401,13 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 				yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(50, 70) + keymodwait));
 			}
 		}
-		
+
 		//Character Key
 		std::int32_t code = static_cast<std::int32_t>(c);
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 		std::int32_t keycode = GetJavaKeyCode(code);
 		std::int32_t location = GetKeyLocation(code);
-		
+
 		KeyEvent::Dispatch(env,
 						   &receiver,
 						   &receiver,
@@ -418,7 +427,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 							0,
 							NativeKeyCodeToChar(code, modifiers),
 							KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
-		
+
 		yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70) + keywait));
 		when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
@@ -431,14 +440,14 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 						   keycode,
 						   NativeKeyCodeToChar(code, modifiers),
 						   location);
-		
+
 		yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70) + keywait));
-		
+
 		//Modifier Key
 		if ((isShiftDown && i == string.length() - 1) || (n != '\0' && !(this->ModifiersForChar(n) & InputEvent::InputEventMasks::SHIFT_DOWN_MASK)))
 		{
 			isShiftDown = false;
-			
+
 			std::int32_t code = VK_LSHIFT;
 			std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			std::int32_t modifiers = InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
@@ -454,7 +463,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 							   keycode,
 							   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
 							   location);
-			
+
 			yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(50, 70) + keymodwait));
 		}
 	}
@@ -482,14 +491,14 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 	{
 		return;
 	}
-	
+
 	if (this->x < 0 || this->y < 0)
 	{
 		Component receiver = control_center->reflect_canvas();
 		receiver.getMousePosition(this->x, this->y);
 		receiver.getSize(this->w, this->h);
 	}
-	
+
 	*x = this->x;
 	*y = this->y;
 }
@@ -501,27 +510,27 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 	{
 		return;
 	}
-	
+
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
-	
+
 	if (!this->has_focus(&receiver))
 	{
 		this->gain_focus(&receiver);
 	}
-	
+
 	if (this->x < 0 || this->y < 0)
 	{
 		receiver.getMousePosition(this->x, this->y);
 		receiver.getSize(this->w, this->h);
 	}
-	
+
 	std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-	
+
 	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
 	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
 	bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
-	
+
 	//Button priority is 1 (left), 3 (right), 2 (middle)
 	std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
 	std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
@@ -530,7 +539,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 
 	//Key extended masks
 	buttonMask |= GetActiveKeyModifiers();
-	
+
 	if (isRequestedPositionInsideComponent && !isMouseInsideComponent)
 	{
 		//MOUSE_ENTERED
@@ -579,15 +588,15 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 		{
 			return;
 		}
-		
+
 		Component receiver = control_center->reflect_canvas();
 		JNIEnv* env = receiver.getEnv();
-		
+
 		if (!this->has_focus(&receiver))
 		{
 			this->gain_focus(&receiver);
 		}
-		
+
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
 		//Button priority is 1 (left), 3 (right), 2 (middle)
@@ -612,20 +621,20 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 		{
 			return;
 		}
-		
+
 		Component receiver = control_center->reflect_canvas();
 		JNIEnv* env = receiver.getEnv();
-		
+
 		if (!this->has_focus(&receiver))
 		{
 			this->gain_focus(&receiver);
 		}
-		
+
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
 		bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
 		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
-		
+
 		//Button priority is 1 (left), 3 (right), 2 (middle)
 		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = false;
 		std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
@@ -636,7 +645,7 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 		//Key extended masks
 		buttonMask |= GetActiveKeyModifiers();
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, x, y, click_count, false, button);
-		
+
 		if (isRequestedPositionInsideComponent && isMouseInsideComponent)
 		{
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, x, y, click_count, false, button);
@@ -651,15 +660,15 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 	{
 		return;
 	}
-	
+
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
-	
+
 	if (!this->has_focus(&receiver))
 	{
 		this->gain_focus(&receiver);
 	}
-	
+
 	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
 	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
 
@@ -668,20 +677,20 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 		std::int32_t cx = 0;
 		std::int32_t cy = 0;
 		receiver.getLocationOnScreen(cx, cy);
-		
+
 		if (cx == -1 || cy == -1)
 		{
 			cx = 0;
 			cy = 0;
 		}
-		
+
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 		std::int32_t modifiers = GetActiveKeyModifiers();
-		
+
 		//Technically, this should be gausian curve or bell-curve or parabola as the wheel speeds up and slows down..
 		double precision = lines > 0 ? Random::instance()->generate_random_int(1, 9) : lines < 0 ? Random::instance()->generate_random_int(-9, -1) : Random::instance()->generate_random_double(-1, 1);
 		precision /= 10.0;
-		
+
 		MouseWheelEvent::Dispatch(env,
 								  &receiver,
 								  &receiver,
@@ -748,7 +757,7 @@ jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifi
 		0x00F0, 0x00F1, 0x00F2, 0x00F3, 0x00F4, 0x00F5, 0x00F6, 0x00F7,
 		0x00F8, 0x00F9, 0x00FA, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x00FF
 	};
-	
+
 	if (modifiers != 0)
 	{
 		static const std::string normal_chars = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./";
@@ -855,28 +864,28 @@ std::int32_t InputOutput::GetKeyLocation(std::int32_t keycode)
 std::int32_t InputOutput::GetActiveKeyModifiers()
 {
 	std::int32_t modifiers = 0;
-	
+
 	//Key extended masks
 	if (this->any_key_held({VK_SHIFT, VK_LSHIFT, VK_RSHIFT}))
 	{
 		modifiers |= InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
 	}
-	
+
 	if (this->any_key_held({VK_CONTROL, VK_LEFT_CONTROL, VK_RIGHT_CONTROL}))
 	{
 		modifiers |= InputEvent::InputEventMasks::CTRL_DOWN_MASK;
 	}
-	
+
 	if (this->is_key_held(VK_LEFT_ALT))
 	{
 		modifiers |= InputEvent::InputEventMasks::ALT_DOWN_MASK;
 	}
-	
+
 	if (this->is_key_held(VK_RIGHT_ALT))
 	{
 		modifiers |= InputEvent::InputEventMasks::ALT_GRAPH_DOWN_MASK;
 	}
-	
+
 	if (this->any_key_held({VK_LEFT_WINDOWS, VK_RIGHT_WINDOWS, VK_COMMAND}))
 	{
 		modifiers |= InputEvent::InputEventMasks::META_DOWN_MASK;
@@ -909,11 +918,11 @@ void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::i
 	{
 		Applet receiver{env, this->applet, false};
 		//Component receiver = applet.getComponent(0);
-		
+
 		receiver.getLocation(x, y);
 		receiver.getSize(this->w, this->h);
 	}
-	
+
 	width = static_cast<std::int32_t>(this->w);
 	height = static_cast<std::int32_t>(this->h);
 }
