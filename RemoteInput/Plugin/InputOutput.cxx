@@ -81,6 +81,13 @@ InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()
 {
 }
 
+InputOutput::~InputOutput()
+{
+    this->input_thread.terminate();
+    this->vm = nullptr;
+    this->applet = nullptr;
+}
+
 void InputOutput::hold_key(std::int32_t code)
 {
 	extern std::unique_ptr<ControlCenter> control_center;

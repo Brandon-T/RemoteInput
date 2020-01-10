@@ -91,7 +91,7 @@
 1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.cxx
 	"ThreadPool.hxx"
 
-1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.hxx
+1578678054 c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.hxx
 	<thread>
 	<future>
 	<mutex>
@@ -235,7 +235,7 @@
 	"EIOS.hxx"
 	"Graphics.hxx"
 
-1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+1578679379 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
 	"ControlCenter.hxx"
 	<thread>
 	<unordered_map>
@@ -269,7 +269,7 @@
 	<gl/gl.h>
 	<gl/glext.h>
 
-1578674246 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_windows.cxx
+1578677351 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks_windows.cxx
 	"NativeHooks.hxx"
 	<windows.h>
 	<gl/gl.h>
@@ -324,13 +324,13 @@
 	"EIOS.hxx"
 	<windows.h>
 
-1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.hxx
+1578678833 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.hxx
 	<cstdint>
 	<list>
 	<atomic>
 	<mutex>
 	<array>
-	"ThreadPool.hxx"
+	"DetachedThreadPool.hxx"
 	"Reflection.hxx"
 	"Component.hxx"
 
@@ -441,7 +441,7 @@
 	<jni.h>
 	"EventQueue.hxx"
 
-1578647257 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
+1578679144 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
 	"InputOutput.hxx"
 	"ControlCenter.hxx"
 	"Platform.hxx"
@@ -507,4 +507,18 @@
 	"./hde/hde32.h"
 	"trampoline.h"
 	"buffer.h"
+
+1578680904 source:c:\users\brandon\desktop\remoteinput\remoteinput\detachedthreadpool.cxx
+	"DetachedThreadPool.hxx"
+
+1578678442 c:\users\brandon\desktop\remoteinput\remoteinput\detachedthreadpool.hxx
+	<thread>
+	<future>
+	<mutex>
+	<atomic>
+	<queue>
+	<functional>
+	<condition_variable>
+	<stdexcept>
+	<vector>
 

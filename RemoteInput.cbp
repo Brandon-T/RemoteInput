@@ -61,6 +61,8 @@
 			<Add option="-m32" />
 			<Add option="RemoteInput/RemoteInput.def" />
 		</Linker>
+		<Unit filename="RemoteInput/DetachedThreadPool.cxx" />
+		<Unit filename="RemoteInput/DetachedThreadPool.hxx" />
 		<Unit filename="RemoteInput/EIOS.cxx" />
 		<Unit filename="RemoteInput/EIOS.hxx" />
 		<Unit filename="RemoteInput/Echo/MemoryMap.hxx" />

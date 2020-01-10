@@ -87,11 +87,17 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 			if (this->reflector->Attach())
 			{
-				io_controller = std::make_unique<InputOutput>(this->reflector.get());
-				
-				while(!stopped) {
+				this->io_controller = std::make_unique<InputOutput>(this->reflector.get());
+
+				while(!stopped)
+                {
 					if (!command_signal || /*!map_lock ||*/ !response_signal || !memory_map)
 					{
+					    if (this->io_controller)
+                        {
+                            this->io_controller.reset();
+                        }
+
 						if (this->reflector)
 						{
 							this->reflector->Detach();
@@ -110,6 +116,12 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 					if (stopped)
 					{
+					    if (this->io_controller)
+                        {
+                            this->io_controller.reset();
+                        }
+
+
 						if (this->reflector)
 						{
 							this->reflector->Detach();
@@ -181,9 +193,9 @@ void ControlCenter::process_command()
 		{
 			std::int32_t x = -1;
 			std::int32_t y = -1;
-			
+
 			io_controller->get_mouse_position(&x, &y);
-			
+
 			EIOS_Write<std::int32_t>(response, x);
 			EIOS_Write<std::int32_t>(response, y);
 		}
@@ -214,7 +226,7 @@ void ControlCenter::process_command()
 			io_controller->release_mouse(x, y, button);
 		}
 			break;
-			
+
 		case EIOSCommand::SCROLL_MOUSE:
 		{
 			std::int32_t x = EIOS_Read<std::int32_t>(arguments);
@@ -510,7 +522,7 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 				reflector->getEnv()->GetDoubleArrayRegion(static_cast<jdoubleArray>(array), index, length, static_cast<jdouble*>(response));
 			}
 				break;
-				
+
 			case ReflectionArrayType::STRING:
 			{
 				if (length > 1)
@@ -799,7 +811,7 @@ bool ControlCenter::is_mouse_held(std::int32_t button)
 		image_data->command = EIOSCommand::IS_MOUSE_HELD;
 		EIOS_Write<std::int32_t>(arguments, button);
 	});
-	
+
 	if (result)
 	{
 		void* arguments = get_image_data()->args;
@@ -844,7 +856,7 @@ bool ControlCenter::is_key_held(std::int32_t key)
 		image_data->command = EIOSCommand::IS_KEY_HELD;
 		EIOS_Write<std::int32_t>(arguments, key);
 	});
-	
+
 	if (result)
 	{
 		void* arguments = get_image_data()->args;
@@ -1198,10 +1210,16 @@ Component ControlCenter::reflect_canvas()
 
 void ControlCenter::get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::int32_t* width, std::int32_t* height)
 {
-	io_controller->get_applet_dimensions(*x, *y, *width, *height);
+    if (io_controller)
+    {
+        io_controller->get_applet_dimensions(*x, *y, *width, *height);
+    }
 }
 
 void ControlCenter::get_applet_mouse_position(std::int32_t* x, std::int32_t* y)
 {
-	io_controller->get_applet_mouse_position(*x, *y);
+    if (io_controller)
+    {
+        io_controller->get_applet_mouse_position(*x, *y);
+    }
 }

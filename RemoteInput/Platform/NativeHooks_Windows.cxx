@@ -28,8 +28,6 @@ JavaNativeBlit_t o_JavaNativeBlit;
 #if defined(_WIN32) || defined(_WIN64)
 void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut)
 {
-    MessageBox(NULL, "Native Blit", "", 0);
-
     extern std::unique_ptr<ControlCenter> control_center;
 	if (control_center)
 	{
