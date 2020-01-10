@@ -58,7 +58,7 @@ void KeyEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std
 	}
 }
 
-void KeyEvent::Post(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation, bool is_system_generated)
+void KeyEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation, bool is_system_generated)
 {
 	jclass cls = env->FindClass("java/awt/event/KeyEvent");
 	if (cls)

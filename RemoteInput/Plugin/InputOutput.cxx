@@ -15,6 +15,7 @@
 #include "FocusEvent.hxx"
 #include "KeyEvent.hxx"
 #include "MouseEvent.hxx"
+#include "MouseWheelEvent.hxx"
 
 enum ControlKeys : std::uint32_t
 {
@@ -582,6 +583,7 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
 		//Button priority is 1 (left), 3 (right), 2 (middle)
+		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = true;
 		std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
 		std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
 								  (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
@@ -589,8 +591,6 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 
 		//Key extended masks
 		buttonMask |= GetActiveKeyModifiers();
-		
-		mouse_buttons[button - 1] = true;
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
 	}
 }
@@ -619,6 +619,7 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
 		
 		//Button priority is 1 (left), 3 (right), 2 (middle)
+		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = false;
 		std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
 		std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
 								  (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
@@ -626,8 +627,6 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 
 		//Key extended masks
 		buttonMask |= GetActiveKeyModifiers();
-		
-		mouse_buttons[button - 1] = false;
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, x, y, click_count, false, button);
 		
 		if (isRequestedPositionInsideComponent && isMouseInsideComponent)
@@ -653,8 +652,45 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 		this->gain_focus(&receiver);
 	}
 	
-	
-	
+	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
+	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+
+	if (isRequestedPositionInsideComponent && isMouseInsideComponent)
+	{
+		std::int32_t cx = 0;
+		std::int32_t cy = 0;
+		receiver.getLocationOnScreen(cx, cy);
+		
+		if (cx == -1 || cy == -1)
+		{
+			cx = 0;
+			cy = 0;
+		}
+		
+		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+		std::int32_t modifiers = GetActiveKeyModifiers();
+		
+		//Technically, this should be gausian curve or bell-curve or parabola as the wheel speeds up and slows down..
+		double precision = lines > 0 ? Random::instance()->generate_random_int(1, 9) : lines < 0 ? Random::instance()->generate_random_int(-9, -1) : Random::instance()->generate_random_double(-1, 1);
+		precision /= 10.0;
+		
+		MouseWheelEvent::Dispatch(env,
+								  &receiver,
+								  &receiver,
+								  MouseEvent::MouseEventCodes::MOUSE_WHEEL,
+								  when,
+								  modifiers,
+								  x,
+								  y,
+								  cx + x,
+								  cy + y,
+								  0,
+								  false,
+								  MouseWheelEvent::MouseWheelEventCodes::WHEEL_UNIT_SCROLL,
+								  1,
+								  lines,
+								  lines + precision);
+	}
 }
 
 bool InputOutput::is_mouse_held(std::int32_t button)
@@ -849,4 +885,11 @@ std::int32_t InputOutput::ModifiersForChar(char c)
 		modifiers |= InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
 	}
 	return 0;
+}
+
+std::int32_t InputOutput::SimbaMouseButtonToJava(std::int32_t button)
+{
+	//Java Button priority is 1 (left), 3 (right), 2 (middle)
+	//Simba Button priority is 1 (left), 0 (right), 2 (middle)
+	return button == 1 ? 1 : button == 0 ? 3 : button == 2 ? 2 : button;
 }

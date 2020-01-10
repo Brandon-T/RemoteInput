@@ -23,6 +23,10 @@
 		5E27B24B23B9A0430091232F /* Random.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24823B9A0430091232F /* Random.cxx */; };
 		5E27B24C23B9A0430091232F /* Random.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24923B9A0430091232F /* Random.hxx */; };
 		5E27B24D23B9A0430091232F /* Random.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24923B9A0430091232F /* Random.hxx */; };
+		5E31A8B323C83E3F00E751F6 /* MouseWheelEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E31A8B123C83E3F00E751F6 /* MouseWheelEvent.cxx */; };
+		5E31A8B423C83E3F00E751F6 /* MouseWheelEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E31A8B223C83E3F00E751F6 /* MouseWheelEvent.hxx */; };
+		5E31A8B523C840F500E751F6 /* MouseWheelEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E31A8B123C83E3F00E751F6 /* MouseWheelEvent.cxx */; };
+		5E31A8B623C840F500E751F6 /* MouseWheelEvent.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E31A8B223C83E3F00E751F6 /* MouseWheelEvent.hxx */; };
 		5E4CDC1D2381F40700A05869 /* NativeHooks_Darwin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1A2381F40700A05869 /* NativeHooks_Darwin.cxx */; };
 		5E4CDC1E2381F40700A05869 /* NativeHooks_Linux.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1B2381F40700A05869 /* NativeHooks_Linux.cxx */; };
 		5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */; };
@@ -172,6 +176,8 @@
 		5E27B24323B829C60091232F /* InputOutput.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = InputOutput.hxx; sourceTree = "<group>"; };
 		5E27B24823B9A0430091232F /* Random.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Random.cxx; sourceTree = "<group>"; };
 		5E27B24923B9A0430091232F /* Random.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Random.hxx; sourceTree = "<group>"; };
+		5E31A8B123C83E3F00E751F6 /* MouseWheelEvent.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MouseWheelEvent.cxx; sourceTree = "<group>"; };
+		5E31A8B223C83E3F00E751F6 /* MouseWheelEvent.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MouseWheelEvent.hxx; sourceTree = "<group>"; };
 		5E4CDC1A2381F40700A05869 /* NativeHooks_Darwin.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Darwin.cxx; sourceTree = "<group>"; };
 		5E4CDC1B2381F40700A05869 /* NativeHooks_Linux.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Linux.cxx; sourceTree = "<group>"; };
 		5E4CDC1C2381F40700A05869 /* NativeHooks_Windows.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativeHooks_Windows.cxx; sourceTree = "<group>"; };
@@ -366,6 +372,8 @@
 				5EBE1A8123C7C84700B99E32 /* KeyEvent.hxx */,
 				5EBE1A8823C7C84700B99E32 /* MouseEvent.cxx */,
 				5EBE1A9623C7C84800B99E32 /* MouseEvent.hxx */,
+				5E31A8B123C83E3F00E751F6 /* MouseWheelEvent.cxx */,
+				5E31A8B223C83E3F00E751F6 /* MouseWheelEvent.hxx */,
 				5EBE1A8C23C7C84700B99E32 /* Toolkit.cxx */,
 				5EBE1A8A23C7C84700B99E32 /* Toolkit.hxx */,
 			);
@@ -459,6 +467,7 @@
 				5E6B9A112394C57A00E6720C /* NativeHooks.hxx in Headers */,
 				5E6B9A102394C57A00E6720C /* Platform.hxx in Headers */,
 				5E6B9A212394C59700E6720C /* RemoteInput.h in Headers */,
+				5E31A8B623C840F500E751F6 /* MouseWheelEvent.hxx in Headers */,
 				5E6B9A1E2394C59400E6720C /* Reflection.hxx in Headers */,
 				5E5B3F8C239D39F200F07DD1 /* Hooks.hpp in Headers */,
 			);
@@ -505,6 +514,7 @@
 				5EBD66BC235CF15400D183B1 /* Platform.hxx in Headers */,
 				5EBD66D7235CF15400D183B1 /* SharedEvent.hxx in Headers */,
 				5E5B3F87239D367F00F07DD1 /* Hooks.hpp in Headers */,
+				5E31A8B423C83E3F00E751F6 /* MouseWheelEvent.hxx in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -610,6 +620,7 @@
 				5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */,
 				5EBE1AC223C7C84800B99E32 /* KeyEvent.cxx in Sources */,
 				5E27B24523B829C60091232F /* InputOutput.cxx in Sources */,
+				5E31A8B523C840F500E751F6 /* MouseWheelEvent.cxx in Sources */,
 				5E27B24B23B9A0430091232F /* Random.cxx in Sources */,
 				5E6B9A002394C57600E6720C /* Time.cxx in Sources */,
 				5EBE1AA223C7C84800B99E32 /* Component.cxx in Sources */,
@@ -645,6 +656,7 @@
 				5EBE1A9F23C7C84800B99E32 /* AWTEventAccessor.cxx in Sources */,
 				5EBE1A9D23C7C84800B99E32 /* AWTEvent.cxx in Sources */,
 				5EBD66D5235CF15400D183B1 /* Module.cxx in Sources */,
+				5E31A8B323C83E3F00E751F6 /* MouseWheelEvent.cxx in Sources */,
 				5EBD66D1235CF15400D183B1 /* Time.cxx in Sources */,
 				5E0F52AC23AE8EAD002518AF /* Plugin.cxx in Sources */,
 				5EBD66D0235CF15400D183B1 /* JVM.cxx in Sources */,

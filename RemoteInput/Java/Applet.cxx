@@ -11,7 +11,7 @@
 
 Applet::Applet(JNIEnv* env, jobject applet, bool canDelete) : Component(env, nullptr, applet, canDelete)
 {
-	this->cls = env->FindClass("java/awt/Applet");
+	this->cls = applet ? env->GetObjectClass(applet) : env->FindClass("java/awt/Applet");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
 }
 

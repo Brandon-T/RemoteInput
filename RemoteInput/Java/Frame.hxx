@@ -20,12 +20,4 @@ public:
 	Component getContentPane();
 };
 
-class Applet final : public Component
-{
-public:
-	Applet(JNIEnv* env, jobject applet, bool canDelete = true);
-	
-	Component getComponent(std::int32_t index);
-};
-
 #endif /* FRAME_HXX_INCLUDED */

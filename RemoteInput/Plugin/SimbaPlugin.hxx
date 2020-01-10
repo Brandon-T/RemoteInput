@@ -45,7 +45,9 @@ static const char* PascalExports[] =
 	"Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z, w: Int32): Pointer; overload; native;",
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
-	"Pascal_Reflect_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;"
+	"Pascal_Reflect_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
+	"EIOS_HoldMouse", "Procedure EIOS_HoldMouse(eios: Pointer; x, y, button: Int32);",
+	"EIOS_ReleaseMouse", "Procedure EIOS_ReleaseMouse(eios: Pointer; x, y, button: Int32);",
 };
 
 static const char* PascalTypes[] =

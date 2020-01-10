@@ -21,6 +21,7 @@ public:
 	AWTEvent(jobject self);
 	AWTEvent(AWTEvent&& other);
 	AWTEvent(const AWTEvent& other) = delete;
+	virtual ~AWTEvent();
 	
 	AWTEvent& operator = (AWTEvent&& other);
 	AWTEvent& operator = (const AWTEvent& other) = delete;

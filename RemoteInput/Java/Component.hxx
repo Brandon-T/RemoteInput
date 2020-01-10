@@ -27,7 +27,7 @@ public:
 	Component(JNIEnv* env, jclass cls, jobject component, bool canDelete = true);
 	Component(Component&& other);
 	Component(const Component& other) = delete;
-	~Component();
+	virtual ~Component();
 
 
 	Component& operator = (Component&& other);
@@ -36,6 +36,7 @@ public:
 	JNIEnv* getEnv();
 	jobject get();
 	
+	void getLocationOnScreen(std::int32_t &x, std::int32_t &y);
 	void getMousePosition(std::int32_t &x, std::int32_t &y);
 	void getSize(std::size_t &width, std::size_t &height);
 	Component getComponentAt(std::int32_t x, std::int32_t y);

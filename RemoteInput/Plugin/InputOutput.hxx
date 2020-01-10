@@ -43,6 +43,7 @@ private:
 	std::int32_t GetKeyLocation(std::int32_t keycode);
 	std::int32_t GetActiveKeyModifiers();
 	std::int32_t ModifiersForChar(char c);
+	std::int32_t SimbaMouseButtonToJava(std::int32_t button);
 	
 	bool has_focus(Component* component);
 	void gain_focus(Component* component);

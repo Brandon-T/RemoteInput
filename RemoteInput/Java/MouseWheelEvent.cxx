@@ -1,21 +1,21 @@
 //
-//  MouseEvent.cxx
+//  MouseWheelEvent.cxx
 //  RemoteInput
 //
-//  Created by Brandon on 2020-01-09.
+//  Created by Brandon on 2020-01-10.
 //  Copyright © 2020 XIO. All rights reserved.
 //
 
-#include "MouseEvent.hxx"
+#include "MouseWheelEvent.hxx"
 #include <utility>
 
-MouseEvent::MouseEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button) : AWTEvent(), env(env), cls(nullptr)
+MouseEvent::MouseEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation) : AWTEvent(), env(env), cls(nullptr)
 {
-	this->cls = env->FindClass("java/awt/event/MouseEvent");
+	this->cls = env->FindClass("java/awt/event/MouseWheelEvent");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
 	
-	static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IJIIIIZI)V");
-	self = env->NewObject(cls, methodId, source->get(), id, when, modifiers, x, y, clickCount, popupTrigger, button);
+	static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IJIIIIIIZIIID)V");
+	self = env->NewObject(cls, methodId, source->get(), id, when, modifiers, x, y, xAbs, yAbs, clickCount, popupTrigger, scrollType, scrollAmount, wheelRotation, preciseWheelRotation);
 	env->DeleteLocalRef(std::exchange(self, static_cast<jclass>(env->NewGlobalRef(self))));
 }
 
@@ -25,13 +25,13 @@ MouseEvent::~MouseEvent()
 	env->DeleteGlobalRef(self);
 }
 	
-void MouseEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated)
+void MouseEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated)
 {
 	jclass cls = env->FindClass("java/awt/event/MouseEvent");
 	if (cls)
 	{
-		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IJIIIIZI)V");
-		jobject event = env->NewObject(cls, methodId, source->get(), id, when, modifiers, x, y, clickCount, popupTrigger, button);
+		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IJIIIIIIZIIID)V");
+		jobject event = env->NewObject(cls, methodId, source->get(), id, when, modifiers, x, y, xAbs, yAbs, clickCount, popupTrigger, scrollType, scrollAmount, wheelRotation, preciseWheelRotation);
 		if (event)
 		{
 			if (is_system_generated)
@@ -58,13 +58,13 @@ void MouseEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, s
 	}
 }
 
-void MouseEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated)
+void MouseEvent::Post(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated)
 {
 	jclass cls = env->FindClass("java/awt/event/MouseEvent");
 	if (cls)
 	{
-		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IJIIIIZI)V");
-		jobject event = env->NewObject(cls, methodId, source->get(), id, when, modifiers, x, y, clickCount, popupTrigger, button);
+		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IJIIIIIIZIIID)V");
+		jobject event = env->NewObject(cls, methodId, source->get(), id, when, modifiers, x, y, xAbs, yAbs, clickCount, popupTrigger, scrollType, scrollAmount, wheelRotation, preciseWheelRotation);
 		if (event)
 		{
 			if (is_system_generated)

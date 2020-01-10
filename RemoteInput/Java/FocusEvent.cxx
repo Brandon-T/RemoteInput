@@ -15,11 +15,8 @@ FocusEvent::FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool t
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
 	
 	static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IZ)V");
-	
-	jobject event_cause = FocusEvent::GetCauseDescription(env, cause);
-	self = env->NewObject(cls, methodId, receiver->get(), id, temporary, event_cause);
+	self = env->NewObject(cls, methodId, receiver->get(), id, temporary);
 	env->DeleteLocalRef(std::exchange(self, static_cast<jclass>(env->NewGlobalRef(self))));
-	env->DeleteLocalRef(event_cause);
 }
 
 FocusEvent::~FocusEvent()
@@ -33,11 +30,8 @@ void FocusEvent::Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, boo
 	jclass cls = env->FindClass("java/awt/event/FocusEvent");
 	if (cls)
 	{
-		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IZLjava/awt/event/FocusEvent$Cause;)V");
-		
-		jobject event_cause = FocusEvent::GetCauseDescription(env, cause);
-		jobject event = env->NewObject(cls, methodId, receiver->get(), id, temporary, event_cause);
-		env->DeleteLocalRef(event_cause);
+		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IZ)V");
+		jobject event = env->NewObject(cls, methodId, receiver->get(), id, temporary);
 		
 		if (event)
 		{
@@ -71,10 +65,7 @@ void FocusEvent::Post(JNIEnv* env, Component* receiver, std::int32_t id, bool te
 	if (cls)
 	{
 		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IZ)V");
-		
-		jobject event_cause = FocusEvent::GetCauseDescription(env, cause);
-		jobject event = env->NewObject(cls, methodId, receiver->get(), id, temporary, event_cause);
-		env->DeleteLocalRef(event_cause);
+		jobject event = env->NewObject(cls, methodId, receiver->get(), id, temporary);
 		
 		if (event)
 		{
@@ -121,6 +112,7 @@ void FocusEvent::Post(JNIEnv* env, Component* receiver, std::int32_t id, bool te
 
 jobject FocusEvent::GetCauseDescription(JNIEnv* env, Cause cause)
 {
+	//Java 9+
 	static const char* const causes[] = {
 		"UNKNOWN",
         "MOUSE_EVENT",
@@ -134,8 +126,12 @@ jobject FocusEvent::GetCauseDescription(JNIEnv* env, Cause cause)
         "ACTIVATION",
         "CLEAR_GLOBAL_FOCUS_OWNER"
 	};
-	
+
 	jclass cause_cls = env->FindClass("java/awt/event/FocusEvent$Cause");
-	static jfieldID fieldId = env->GetStaticFieldID(cause_cls , causes[static_cast<std::uint32_t>(cause)], "Ljava/awt/event/FocusEvent$Cause;");
-	return env->GetStaticObjectField(cause_cls, fieldId);
+	if (cause_cls)
+	{
+		static jfieldID fieldId = env->GetStaticFieldID(cause_cls , causes[static_cast<std::uint32_t>(cause)], "Ljava/awt/event/FocusEvent$Cause;");
+		return env->GetStaticObjectField(cause_cls, fieldId);
+	}
+	return nullptr;
 }

@@ -11,7 +11,7 @@
 
 Frame::Frame(JNIEnv* env, jobject frame, bool canDelete) : Component(env, nullptr, frame, canDelete)
 {
-	this->cls = env->FindClass("java/awt/JFrame");
+	this->cls = frame ? env->GetObjectClass(frame) : env->FindClass("java/awt/JFrame");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
 }
 

@@ -12,6 +12,10 @@ AWTEvent::AWTEvent() : self(nullptr)
 {
 }
 
+AWTEvent::~AWTEvent()
+{
+}
+
 AWTEvent::AWTEvent(jobject self) : self(self)
 {
 }
