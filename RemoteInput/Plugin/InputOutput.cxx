@@ -505,12 +505,15 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
 	
-	receiver.getMousePosition(this->x, this->y);
-	receiver.getSize(this->w, this->h);
-	
 	if (!this->has_focus(&receiver))
 	{
 		this->gain_focus(&receiver);
+	}
+	
+	if (this->x < 0 || this->y < 0)
+	{
+		receiver.getMousePosition(this->x, this->y);
+		receiver.getSize(this->w, this->h);
 	}
 	
 	std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -531,12 +534,14 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 	if (isRequestedPositionInsideComponent && !isMouseInsideComponent)
 	{
 		//MOUSE_ENTERED
+		this->x = x; this->y = y;
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 	}
 	else if (!isRequestedPositionInsideComponent && isMouseInsideComponent)
 	{
 		//MOUSE_EXITED
+		this->x = x; this->y = y;
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
 	}
@@ -545,10 +550,12 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 		//MOUSE_MOVED OR MOUSE_DRAGGED
 		if (isDragging)
 		{
+			this->x = x; this->y = y;
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
 		else
 		{
+			this->x = x; this->y = y;
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 		}
 	}
@@ -557,6 +564,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 		//MOUSE_DRAGGED OUTSIDE
 		if (isDragging)
 		{
+			this->x = x; this->y = y;
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
 	}
