@@ -31,7 +31,7 @@ public:
 	static void Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false);
 
 	#warning "WINDOWS BS"
-	#ifdef MOUSE_EVENT
+	#if defined(MOUSE_EVENT) && (defined(_WIN32) || defined(_WIN64))
 	#undef MOUSE_EVENT
 	#endif
 

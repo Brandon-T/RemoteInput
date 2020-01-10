@@ -47,7 +47,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 			srcOps->GetRasInfo(env, srcOps, &srcInfo);
 			if (srcInfo.rasBase)
 			{
-				void *rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+				void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
 				bool isRasterAligned = !(srcInfo.scanStride & 0x03);
 
 				control_center->update_dimensions(width, height);
@@ -71,8 +71,20 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 				}
 
 				rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-				dest = control_center->get_debug_image();
-				draw_image(rasBase, dest, width, height, srcInfo.pixelStride);
+				std::uint8_t* src = control_center->get_debug_image();
+				if (src)
+				{
+					draw_image(rasBase, src, width, height, srcInfo.pixelStride);
+
+					std::int32_t x = -1;
+					std::int32_t y = -1;
+					control_center->get_applet_mouse_position(&x, &y);
+
+					if (x > -1 && y > -1)
+					{
+						draw_circle(x, y, 4, rasBase, width, height, srcInfo.pixelStride, true);
+					}
+				}
 
 				if (srcOps->Release)
 				{
@@ -186,15 +198,22 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 	{
 		static GLint ViewPort[4] = {0};
 		static GLuint pbo[2] = {0};
-
+		
 		glGetIntegerv(GL_VIEWPORT, ViewPort);
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
-
-		std::uint8_t* dest = control_center->get_image();
-		LoadOpenGLExtensions();
-		GeneratePixelBuffers(hdc, pbo, width, height, 4);
-		ReadPixelBuffers(hdc, dest, pbo, width, height, 4);
+		
+		if (width >= 765 && height >= 553)
+		{
+			std::uint8_t* dest = control_center->get_image();
+			if (dest)
+			{
+				LoadOpenGLExtensions();
+				GeneratePixelBuffers(hdc, pbo, width, height, 4);
+				ReadPixelBuffers(hdc, dest, pbo, width, height, 4);
+				FlipImageVertically(width, height, dest);
+			}
+		}
 	}
 
 	//Original

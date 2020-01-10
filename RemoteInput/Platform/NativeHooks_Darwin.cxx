@@ -55,8 +55,10 @@ void JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jbool
 			srcOps->GetRasInfo(env, srcOps, &srcInfo);
 			if (srcInfo.rasBase)
 			{
-				void *rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
+				void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
 				bool isRasterAligned = srcInfo.scanStride % srcInfo.pixelStride == 0; //!(srcInfo.scanStride & 0x03);
+				
+				control_center->update_dimensions(width, height);
 				std::uint8_t* dest = control_center->get_image();
 
 				if (dest)
@@ -73,6 +75,22 @@ void JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jbool
 							memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
 							rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
 						}
+					}
+				}
+				
+				rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
+				std::uint8_t* src = control_center->get_debug_image();
+				if (src)
+				{
+					draw_image(rasBase, src, width, height, srcInfo.pixelStride);
+
+					std::int32_t x = -1;
+					std::int32_t y = -1;
+					control_center->get_applet_mouse_position(&x, &y);
+
+					if (x > -1 && y > -1)
+					{
+						draw_circle(x, y, 4, rasBase, width, height, srcInfo.pixelStride, true);
 					}
 				}
 
@@ -173,10 +191,16 @@ CGLError CGLFlushDrawable(CGLContextObj ctx)
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 		
-		
-		std::uint8_t* dest = control_center->get_image();
-		GeneratePixelBuffers(ctx, pbo, width, height, 4);
-		ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+		if (width >= 765 && height >= 553)
+		{
+			std::uint8_t* dest = control_center->get_image();
+			if (dest)
+			{
+				GeneratePixelBuffers(ctx, pbo, width, height, 4);
+				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+				FlipImageVertically(width, height, dest);
+			}
+		}
 	}
 	
 	static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
@@ -206,16 +230,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 			{
 				GeneratePixelBuffers(ctx, pbo, width, height, 4);
 				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
-				
-				const std::size_t stride = width * 4;
-				std::unique_ptr<std::uint8_t[]> row = std::make_unique<std::uint8_t[]>(stride);
-				
-				for (std::uint8_t* it = dest, *jt = &dest[(height - 1) * stride]; it < jt; it += stride, jt -= stride)
-				{
-					memcpy(row.get(), it, stride);
-					memcpy(it, jt, stride);
-					memcpy(jt, row.get(), stride);
-				}
+				FlipImageVertically(width, height, dest);
 			}
 			
 			std::uint8_t* src = control_center->get_debug_image();
@@ -266,10 +281,7 @@ void InitialiseHooks()
 {
 	#if __has_include("rd_route.h")
 	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
-	if (blit)
-	{
-		rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
-	}
+	rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
 	#else
 	DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
 	#endif

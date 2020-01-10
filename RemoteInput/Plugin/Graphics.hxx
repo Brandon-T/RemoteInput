@@ -8,6 +8,9 @@
 
 #pragma GCC push_options
 #pragma GCC optimize ("-O3")
+void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data);
+void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data);
+
 void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled);
 
 void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride);

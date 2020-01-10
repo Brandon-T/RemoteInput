@@ -13,6 +13,43 @@
 #include <gl/glext.h>
 #endif
 
+void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data)
+{
+	struct BGRA
+	{
+		uint8_t b;
+		uint8_t g;
+		uint8_t r;
+		uint8_t a;
+	} rgb;
+	
+	for (std::int32_t y = 0; y < height / 2; ++y)
+	{
+		for (std::int32_t x = 0; x < width; ++x)
+		{
+			std::int32_t top = (x + y * width) * sizeof(BGRA);
+			std::int32_t bottom = (x + (height - y - 1) * width) * sizeof(BGRA);
+
+			std::memcpy(&rgb, data + top, sizeof(BGRA));
+			std::memcpy(data + top, data + bottom, sizeof(BGRA));
+			std::memcpy(data + bottom, &rgb, sizeof(BGRA));
+		}
+	}
+}
+
+void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data)
+{
+	const std::size_t stride = width * 4;
+	std::unique_ptr<std::uint8_t[]> row = std::make_unique<std::uint8_t[]>(stride);
+	
+	for (std::uint8_t* it = data, *jt = &data[(height - 1) * stride]; it < jt; it += stride, jt -= stride)
+	{
+		std::memcpy(row.get(), it, stride);
+		std::memcpy(it, jt, stride);
+		std::memcpy(jt, row.get(), stride);
+	}
+}
+
 /*void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled)
 {
 	typedef struct bgra_t

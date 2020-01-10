@@ -40,6 +40,12 @@
 		5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F84239D367F00F07DD1 /* Hooks.cpp */; };
 		5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
 		5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
+		5E667F9523C8C64100931DEC /* rd_route.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E667F9323C8C64100931DEC /* rd_route.h */; };
+		5E667F9623C8C64100931DEC /* rd_route.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E667F9323C8C64100931DEC /* rd_route.h */; };
+		5E667F9723C8C64100931DEC /* rd_route.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E667F9423C8C64100931DEC /* rd_route.c */; };
+		5E667F9823C8C64100931DEC /* rd_route.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E667F9423C8C64100931DEC /* rd_route.c */; };
+		5E667F9A23C8D1BB00931DEC /* libawt_lwawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */; };
+		5E667F9E23C8D1C000931DEC /* libawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9D23C8D1C000931DEC /* libawt.dylib */; };
 		5E6B9A002394C57600E6720C /* Time.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B1235CF15400D183B1 /* Time.cxx */; };
 		5E6B9A012394C57600E6720C /* SharedEvent.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B2235CF15400D183B1 /* SharedEvent.cxx */; };
 		5E6B9A022394C57600E6720C /* MemoryMap.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EBD66B3235CF15400D183B1 /* MemoryMap.hxx */; };
@@ -187,6 +193,12 @@
 		5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ModelRendering.hpp; sourceTree = "<group>"; };
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
+		5E667F9323C8C64100931DEC /* rd_route.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rd_route.h; sourceTree = "<group>"; };
+		5E667F9423C8C64100931DEC /* rd_route.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rd_route.c; sourceTree = "<group>"; };
+		5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libawt_lwawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libawt_lwawt.dylib"; sourceTree = "<group>"; };
+		5E667F9D23C8D1C000931DEC /* libawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libawt.dylib"; sourceTree = "<group>"; };
+		5E667FA023C8D1D000931DEC /* libjawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libjawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libjawt.dylib"; sourceTree = "<group>"; };
+		5E667FA323C8D1F500931DEC /* libjvm.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libjvm.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server/libjvm.dylib"; sourceTree = "<group>"; };
 		5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibRemoteInput.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EB76180239B922500218452 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		5EBD6697235CF15400D183B1 /* DebugConsole.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DebugConsole.hxx; sourceTree = "<group>"; };
@@ -256,6 +268,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E6B9A272394C61200E6720C /* Cocoa.framework in Frameworks */,
+				5E667F9A23C8D1BB00931DEC /* libawt_lwawt.dylib in Frameworks */,
+				5E667F9E23C8D1C000931DEC /* libawt.dylib in Frameworks */,
 				5E6B9A262394C60A00E6720C /* Foundation.framework in Frameworks */,
 				5EB76181239B922500218452 /* OpenGL.framework in Frameworks */,
 			);
@@ -282,6 +296,15 @@
 				5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */,
 			);
 			path = Hooks;
+			sourceTree = "<group>";
+		};
+		5E667F9223C8C60000931DEC /* Thirdparty */ = {
+			isa = PBXGroup;
+			children = (
+				5E667F9423C8C64100931DEC /* rd_route.c */,
+				5E667F9323C8C64100931DEC /* rd_route.h */,
+			);
+			path = Thirdparty;
 			sourceTree = "<group>";
 		};
 		5EBD6696235CF15400D183B1 /* Platform */ = {
@@ -340,6 +363,10 @@
 		5EBD66D9235D041600D183B1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5E667FA323C8D1F500931DEC /* libjvm.dylib */,
+				5E667FA023C8D1D000931DEC /* libjawt.dylib */,
+				5E667F9D23C8D1C000931DEC /* libawt.dylib */,
+				5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */,
 				5EB76180239B922500218452 /* OpenGL.framework */,
 				5EBD66DC235D041D00D183B1 /* Foundation.framework */,
 				5EBD66DA235D041600D183B1 /* Cocoa.framework */,
@@ -401,6 +428,7 @@
 		5EC59509232D956B00922111 /* RemoteInput */ = {
 			isa = PBXGroup;
 			children = (
+				5E667F9223C8C60000931DEC /* Thirdparty */,
 				5EBE1A5323C7AE2000B99E32 /* Java */,
 				5E5B3F83239D367000F07DD1 /* Hooks */,
 				5EBD66B0235CF15400D183B1 /* Echo */,
@@ -445,6 +473,7 @@
 				5E27B24723B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */,
 				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
+				5E667F9623C8C64100931DEC /* rd_route.h in Headers */,
 				5EBE1ABE23C7C84800B99E32 /* InputEvent.hxx in Headers */,
 				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
 				5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */,
@@ -490,6 +519,7 @@
 				5E27B24623B829C60091232F /* InputOutput.hxx in Headers */,
 				5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
+				5E667F9523C8C64100931DEC /* rd_route.h in Headers */,
 				5EBE1ABD23C7C84800B99E32 /* InputEvent.hxx in Headers */,
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
@@ -639,6 +669,7 @@
 				5EBE1AB023C7C84800B99E32 /* Toolkit.cxx in Sources */,
 				5E6B9A072394C57600E6720C /* EIOS.cxx in Sources */,
 				5EBE1AA423C7C84800B99E32 /* AWTAccessor.cxx in Sources */,
+				5E667F9823C8C64100931DEC /* rd_route.c in Sources */,
 				5E6B9A0F2394C57A00E6720C /* Platform_Linux.cxx in Sources */,
 				5E6B9A0D2394C57A00E6720C /* NativeHooks_Windows.cxx in Sources */,
 				5E6B9A042394C57600E6720C /* Module.cxx in Sources */,
@@ -683,6 +714,7 @@
 				5EBE1AAF23C7C84800B99E32 /* Toolkit.cxx in Sources */,
 				5E5B3F86239D367F00F07DD1 /* Hooks.cpp in Sources */,
 				5EBE1AA323C7C84800B99E32 /* AWTAccessor.cxx in Sources */,
+				5E667F9723C8C64100931DEC /* rd_route.c in Sources */,
 				5EBD66D2235CF15400D183B1 /* SharedEvent.cxx in Sources */,
 				5EBD66CF235CF15400D183B1 /* ThreadPool.cxx in Sources */,
 				5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */,
@@ -710,8 +742,21 @@
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include",
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include/darwin",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				OTHER_CFLAGS = "-fvisibility=hidden";
+				OTHER_LDFLAGS = (
+					"-rpath",
+					"/Library/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"-rpath",
+					"/Library/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server/",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
@@ -731,8 +776,21 @@
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include",
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include/darwin",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"$(LOCAL_LIBRARY_DIR)/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				OTHER_CFLAGS = "-fvisibility=hidden";
+				OTHER_LDFLAGS = (
+					"-rpath",
+					"/Library/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib",
+					"-rpath",
+					"/Library/Internet\\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server/",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
