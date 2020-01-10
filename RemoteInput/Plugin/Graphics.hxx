@@ -11,7 +11,9 @@
 void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled);
 
 void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride);
-void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride);
+
+void gl_draw_point(void* ctx, float x, float y, float z, float radius);
+void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride);
 #pragma GCC pop_options
 
 #endif /* Graphics_HXX_INCLUDED */

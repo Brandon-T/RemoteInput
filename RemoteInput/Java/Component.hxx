@@ -38,6 +38,7 @@ public:
 	
 	void getLocationOnScreen(std::int32_t &x, std::int32_t &y);
 	void getMousePosition(std::int32_t &x, std::int32_t &y);
+	void getLocation(std::int32_t &x, std::int32_t &y);
 	void getSize(std::size_t &width, std::size_t &height);
 	Component getComponentAt(std::int32_t x, std::int32_t y);
 	void dispatchEvent(AWTEvent* event);

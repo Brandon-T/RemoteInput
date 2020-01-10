@@ -1195,3 +1195,13 @@ Component ControlCenter::reflect_canvas()
 	Applet applet{reflector->getEnv(), reflector->getApplet(), false};
 	return applet.getComponent(0);
 }
+
+void ControlCenter::get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::int32_t* width, std::int32_t* height)
+{
+	io_controller->get_applet_dimensions(*x, *y, *width, *height);
+}
+
+void ControlCenter::get_applet_mouse_position(std::int32_t* x, std::int32_t* y)
+{
+	io_controller->get_applet_mouse_position(*x, *y);
+}

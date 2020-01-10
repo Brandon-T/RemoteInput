@@ -135,7 +135,67 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 	}
 }
 
-void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride)
+void gl_draw_point(void* ctx, float x, float y, float z, float radius)
+{
+	#define GL_TEXTURE_RECTANGLE              0x84F5
+	
+	#if defined(__APPLE__)
+	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+	#endif
+	
+	//Backup
+	GLfloat point_size = 0.0;
+	bool GLBlend = glIsEnabled(GL_BLEND);
+	bool GLTexture2D = glIsEnabled(GL_TEXTURE_2D);
+	bool GLRectangle = glIsEnabled(GL_TEXTURE_RECTANGLE);
+    bool PointSmooth = glIsEnabled(GL_POINT_SMOOTH);
+	glGetFloatv(GL_POINT_SIZE, &point_size);
+
+	glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_POINT_SMOOTH);
+    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+
+    glPushMatrix();
+    glLoadIdentity();
+	
+	//Draw Point
+    glRasterPos2f(x, y);
+    glPointSize(radius);
+    glBegin(GL_POINTS);
+        glVertex3f(x, y, z);
+    glEnd();
+    glFlush();
+	
+	//Restore
+	glPopMatrix();
+
+	if (!GLBlend)
+	{
+		glDisable(GL_BLEND);
+	}
+
+    if (GLTexture2D)
+	{
+		glEnable(GL_TEXTURE_2D);
+	}
+
+	if (GLRectangle)
+	{
+		glEnable(GL_TEXTURE_RECTANGLE);
+	}
+
+    if (!PointSmooth)
+	{
+		glDisable(GL_POINT_SMOOTH);
+	}
+	
+	glPointSize(point_size);
+}
+
+void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride)
 {
 	#define GL_TEXTURE_RECTANGLE              0x84F5
 
@@ -214,15 +274,14 @@ void gl_draw_image(void* ctx, void* source_buffer, std::int32_t width, std::int3
 	}
 
 
-	float x1 = 0.0;
-	float y1 = 0.0;
+	float x1 = x;
+	float y1 = y;
 	float x2 = width;
 	float y2 = height;
 	width = target == GL_TEXTURE_2D ? 1 : width;
     height = target == GL_TEXTURE_2D ? 1 : height;
 
 	//Render Texture
-
     glEnable(target);
     glBindTexture(target, ID);
     glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);

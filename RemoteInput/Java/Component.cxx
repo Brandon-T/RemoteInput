@@ -118,6 +118,29 @@ void Component::getMousePosition(std::int32_t &x, std::int32_t &y)
 	}
 }
 
+void Component::getLocation(std::int32_t &x, std::int32_t &y)
+{
+	jclass pointClass = env->FindClass("java/awt/Point");
+	static jmethodID methodId = env->GetMethodID(cls, "getLocation", "()Ljava/awt/Point;");
+	static jfieldID xFieldId = env->GetFieldID(pointClass, "x", "I");
+	static jfieldID yFieldId = env->GetFieldID(pointClass, "y", "I");
+	
+	jobject object = env->CallObjectMethod(component, methodId);
+	if (object)
+	{
+		x = env->GetIntField(object, xFieldId);
+		y = env->GetIntField(object, yFieldId);
+		
+		env->DeleteLocalRef(object);
+		env->DeleteLocalRef(pointClass);
+	}
+	else
+	{
+		x = -1;
+		y = -1;
+	}
+}
+
 void Component::getSize(std::size_t &width, std::size_t &height)
 {
 	static jmethodID widthId = env->GetMethodID(cls, "getWidth", "()I");

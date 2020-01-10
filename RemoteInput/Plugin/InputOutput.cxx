@@ -901,3 +901,25 @@ std::int32_t InputOutput::SimbaMouseButtonToJava(std::int32_t button)
 	//Simba Button priority is 1 (left), 0 (right), 2 (middle)
 	return button == 1 ? 1 : button == 0 ? 3 : button == 2 ? 2 : button;
 }
+
+void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::int32_t &width, std::int32_t &height)
+{
+	JNIEnv* env = nullptr;
+	if (this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr) == JNI_OK)
+	{
+		Applet receiver{env, this->applet, false};
+		//Component receiver = applet.getComponent(0);
+		
+		receiver.getLocation(x, y);
+		receiver.getSize(this->w, this->h);
+	}
+	
+	width = static_cast<std::int32_t>(this->w);
+	height = static_cast<std::int32_t>(this->h);
+}
+
+void InputOutput::get_applet_mouse_position(std::int32_t &x, std::int32_t &y)
+{
+	x = this->x;
+	y = this->y;
+}

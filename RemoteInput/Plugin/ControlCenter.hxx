@@ -98,6 +98,9 @@ public:
 	static std::size_t reflect_size_for_type(ReflectionArrayType type);
 	
 	Component reflect_canvas();
+	
+	void get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::int32_t* width, std::int32_t* height);
+	void get_applet_mouse_position(std::int32_t* x, std::int32_t* y);
 };
 
 #endif /* ControlCenter_HXX_INCLUDED */

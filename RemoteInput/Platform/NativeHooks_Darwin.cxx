@@ -197,19 +197,42 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 		
-		control_center->update_dimensions(width, height);
-		std::uint8_t* dest = control_center->get_image();
-		if (dest)
+		if (width >= 765 && height >= 553)
 		{
-			GeneratePixelBuffers(ctx, pbo, width, height, 4);
-			ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
-		}
-		
-		std::uint8_t* src = control_center->get_debug_image();
-		if (src)
-		{
-			//draw_circle(200, 200, 50, src, width, height, 4, true);
-			gl_draw_image(ctx, src, width, height, 4);
+			control_center->update_dimensions(width, height);
+			
+			std::uint8_t* dest = control_center->get_image();
+			if (dest)
+			{
+				GeneratePixelBuffers(ctx, pbo, width, height, 4);
+				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+				
+				const std::size_t stride = width * 4;
+				std::unique_ptr<std::uint8_t[]> row = std::make_unique<std::uint8_t[]>(stride);
+				
+				for (std::uint8_t* it = dest, *jt = &dest[(height - 1) * stride]; it < jt; it += stride, jt -= stride)
+				{
+					memcpy(row.get(), it, stride);
+					memcpy(it, jt, stride);
+					memcpy(jt, row.get(), stride);
+				}
+			}
+			
+			std::uint8_t* src = control_center->get_debug_image();
+			if (src)
+			{
+				gl_draw_image(ctx, src, 0, 0, width, height, 4);
+				
+				std::int32_t x = -1;
+				std::int32_t y = -1;
+				control_center->get_applet_mouse_position(&x, &y);
+
+				if (x > -1 && y > -1)
+				{
+					glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+					gl_draw_point(ctx, x, y, 0, 4);
+				}
+			}
 		}
 		
 		/*glPushMatrix();

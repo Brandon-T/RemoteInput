@@ -64,6 +64,11 @@ public:
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
 	void scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines);
 	bool is_mouse_held(std::int32_t button);
+	
+	
+	//Internal
+	void get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::int32_t &width, std::int32_t &height);
+	void get_applet_mouse_position(std::int32_t &x, std::int32_t &y);
 };
 
 #endif /* INPUTOUTPUT_HXX_INCLUDED */
