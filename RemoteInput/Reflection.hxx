@@ -55,7 +55,12 @@ private:
 public:
     Reflection();
     Reflection(JNIEnv* env);
+    Reflection(const Reflection& other) = delete;
+    Reflection(Reflection&& other);
     ~Reflection();
+
+    Reflection& operator = (const Reflection& other) = delete;
+    Reflection& operator = (Reflection&& other);
 
     bool Initialize(jobject awtFrame);
 
@@ -66,12 +71,12 @@ public:
     std::string GetClassName(jobject object);
     std::string GetClassType(jobject object);
     jclass LoadClass(const char* clsToLoad);
-	
+
 	jobject getApplet();
 
 	JVM* getVM();
     JNIEnv* getEnv();
-	
+
 	template<typename T>
     typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
     getField(jstring object);

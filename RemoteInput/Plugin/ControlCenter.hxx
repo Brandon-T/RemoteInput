@@ -28,7 +28,7 @@ enum class ReflectionArrayType: std::uint8_t
 class ControlCenter final {
 private:
 	using Signal = Signal<Semaphore>;
-	
+
 	pid_t pid;
 	bool is_controller;
 	std::atomic_bool stopped;
@@ -96,9 +96,9 @@ public:
 	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
 
 	static std::size_t reflect_size_for_type(ReflectionArrayType type);
-	
+
 	Component reflect_canvas();
-	
+
 	void get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::int32_t* width, std::int32_t* height);
 	void get_applet_mouse_position(std::int32_t* x, std::int32_t* y);
 };

@@ -16,7 +16,7 @@ class DetachedThreadPool final
 private:
     std::shared_ptr<std::mutex> mutex;
     std::shared_ptr<std::condition_variable> condition;
-    std::shared_ptr<std::queue<std::function<void()>>> tasks;
+    std::shared_ptr<std::queue<std::function<void(std::atomic_bool& stopped)>>> tasks;
     std::vector<std::thread> threads;
     std::shared_ptr<std::atomic_bool> stop;
     std::size_t max_threads;
@@ -25,13 +25,17 @@ private:
 public:
     DetachedThreadPool();
 	DetachedThreadPool(std::size_t max_threads);
+	DetachedThreadPool(const DetachedThreadPool&) = delete;
+	DetachedThreadPool(DetachedThreadPool&& other);
     ~DetachedThreadPool();
-    DetachedThreadPool(const DetachedThreadPool&) = delete;
+
+
     DetachedThreadPool& operator = (const DetachedThreadPool&) = delete;
+    DetachedThreadPool& operator = (DetachedThreadPool&&) = delete;
 
 	void terminate();
 
-    void add_task(std::function<void()> &&task);
+    void add_task(std::function<void(std::atomic_bool&)> &&task);
 
     template<typename Task, typename... Args>
     auto enqueue(Task &&task, Args&&... args) -> std::future<std::invoke_result_t<Task, Args...>>;
@@ -51,9 +55,9 @@ auto DetachedThreadPool::enqueue(Task &&task, Args&&... args) -> std::future<std
         throw std::runtime_error("DetachedThreadPool is currently shutting down. Cannot enqueue more tasks.");
     }
 
-    tasks->emplace([packaged_task] {
-        (*packaged_task)();
-    });
+    tasks->emplace([packaged_task](std::atomic_bool &stopped) {
+        (*packaged_task)(stopped);
+    }, std::ref(stop));
 
     condition->notify_one();
     return result;

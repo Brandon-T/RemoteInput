@@ -8,6 +8,14 @@ Reflection::Reflection(JNIEnv* env) : jvm(new JVM(env)), frame(nullptr), applet(
 {
 }
 
+Reflection::Reflection(Reflection&& other) : jvm(other.jvm), frame(other.frame), applet(other.applet), classLoader(other.classLoader)
+{
+    other.jvm = nullptr;
+    other.frame = nullptr;
+    other.applet = nullptr;
+    other.classLoader = nullptr;
+}
+
 Reflection::~Reflection()
 {
 	#if defined(__APPLE__)
@@ -24,6 +32,15 @@ Reflection::~Reflection()
 	#endif
     delete jvm;
     jvm = nullptr;
+}
+
+Reflection& Reflection::operator = (Reflection&& other)
+{
+    std::swap(jvm, other.jvm);
+    std::swap(frame, other.frame);
+    std::swap(applet, other.applet);
+    std::swap(classLoader, other.classLoader);
+    return *this;
 }
 
 bool Reflection::Initialize(jobject awtFrame)

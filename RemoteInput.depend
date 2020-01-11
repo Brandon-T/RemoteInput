@@ -64,7 +64,7 @@
 	<cstdint>
 	"Reflection.hxx"
 
-1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
+1578757090 c:\users\brandon\desktop\remoteinput\remoteinput\reflection.hxx
 	<string>
 	<memory>
 	<functional>
@@ -85,7 +85,7 @@
 	<chrono>
 	<windows.h>
 
-1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\reflection.cxx
+1578758065 source:c:\users\brandon\desktop\remoteinput\remoteinput\reflection.cxx
 	"Reflection.hxx"
 
 1578646258 source:c:\users\brandon\desktop\remoteinput\remoteinput\threadpool.cxx
@@ -217,7 +217,7 @@
 1578672078 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
 	<cstdint>
 
-1578646258 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
+1578760022 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
 	<atomic>
 	"Signal.hxx"
 	"Reflection.hxx"
@@ -235,7 +235,7 @@
 	"EIOS.hxx"
 	"Graphics.hxx"
 
-1578750280 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+1578760040 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
 	"ControlCenter.hxx"
 	<thread>
 	<unordered_map>
@@ -305,7 +305,7 @@
 	<string>
 	<atomic>
 
-1578750140 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\plugin.cxx
+1578754292 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\plugin.cxx
 	"Plugin.hxx"
 	<memory>
 	<atomic>
@@ -324,7 +324,7 @@
 	"EIOS.hxx"
 	<windows.h>
 
-1578678833 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.hxx
+1578760668 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.hxx
 	<cstdint>
 	<list>
 	<atomic>
@@ -441,7 +441,7 @@
 	<jni.h>
 	"EventQueue.hxx"
 
-1578679144 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
+1578760651 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
 	"InputOutput.hxx"
 	"ControlCenter.hxx"
 	"Platform.hxx"
@@ -508,11 +508,11 @@
 	"trampoline.h"
 	"buffer.h"
 
-1578753802 source:c:\users\brandon\desktop\remoteinput\remoteinput\detachedthreadpool.cxx
+1578761462 source:c:\users\brandon\desktop\remoteinput\remoteinput\detachedthreadpool.cxx
 	"DetachedThreadPool.hxx"
 	<windows.h>
 
-1578753760 c:\users\brandon\desktop\remoteinput\remoteinput\detachedthreadpool.hxx
+1578761388 c:\users\brandon\desktop\remoteinput\remoteinput\detachedthreadpool.hxx
 	<thread>
 	<future>
 	<mutex>

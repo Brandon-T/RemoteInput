@@ -215,14 +215,14 @@ void InputOutput::hold_key(std::int32_t code)
 				this->mutex.unlock();
 
 
-				input_thread.add_task([&]{
+				input_thread.add_task([&](std::atomic_bool &stopped){
 					JNIEnv* env = nullptr;
 					this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
 
 					Applet applet{env, this->applet, false};
 					Component receiver = applet.getComponent(0);
 
-					while (currently_held_key != -1)
+					while (!stopped && currently_held_key != -1)
 					{
 						std::lock_guard<std::mutex>(this->mutex);
 						yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70)));
