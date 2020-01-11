@@ -93,17 +93,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
                 {
 					if (!command_signal || /*!map_lock ||*/ !response_signal || !memory_map)
 					{
-					    if (this->io_controller)
-                        {
-                            this->io_controller.reset();
-                        }
-
-						if (this->reflector)
-						{
-							this->reflector->Detach();
-							this->reflector.reset();
-						}
-						return;
+						break;
 					}
 
 					command_signal->wait();
@@ -116,23 +106,24 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 					if (stopped)
 					{
-					    if (this->io_controller)
-                        {
-                            this->io_controller.reset();
-                        }
-
-
-						if (this->reflector)
-						{
-							this->reflector->Detach();
-							this->reflector.reset();
-						}
-						return;
+						break;
 					}
 
 					process_command();
 					response_signal->signal();
 				}
+
+				if (this->io_controller)
+                {
+                    this->io_controller.reset();
+                }
+
+
+                if (this->reflector)
+                {
+                    this->reflector->Detach();
+                    this->reflector.reset();
+                }
 			}
 		});
 
