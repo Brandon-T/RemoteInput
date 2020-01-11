@@ -1,5 +1,4 @@
 #include "DetachedThreadPool.hxx"
-#include <windows.h>
 
 DetachedThreadPool::DetachedThreadPool() : DetachedThreadPool(std::thread::hardware_concurrency())
 {
