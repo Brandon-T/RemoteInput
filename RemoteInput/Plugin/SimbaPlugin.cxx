@@ -111,11 +111,13 @@ void OnAttach(void* info)
 	{
 		control_center.reset();
 	}
+	EIOS_KillZombieClients();
 }
 
 void OnDetach()
 {
 	control_center.reset();
+	EIOS_KillZombieClients();
 }
 
 
@@ -166,16 +168,6 @@ struct __attribute__((__packed__)) StaticPascalArray
 
 
 // MARK: Single Functions
-
-void Pascal_Reflect_GetEIOS(void** Params, void** Result)
-{
-    std::int32_t pid = PascalRead<std::int32_t>(Params[0]);
-    extern std::unordered_map<std::int32_t, EIOS*> clients;
-    if (clients.count(pid))
-    {
-        PascalWrite(Result, clients[pid]);
-    }
-}
 
 void Pascal_Reflect_GetDebugImageBuffer(void** Params, void** Result)
 {

@@ -3,6 +3,8 @@
 #if defined(__linux__)
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <signal.h>
+#include <libproc.h>
 
 #include <functional>
 #include <cstring>
@@ -16,6 +18,43 @@ void GetDesktopResolution(int &width, int &height)
     width = screen->width;
     height = screen->height;
     XCloseDisplay(display);
+}
+
+std::int32_t GetCurrentThreadID()
+{
+	return gettid();
+}
+
+bool IsProcessAlive(pid_t pid)
+{
+	return !kill(pid, 0);
+}
+
+std::vector<pid_t> get_pids()
+{
+	std::vector<pid_t> pids(2048);
+	pids.resize(proc_listpids(PROC_ALL_PIDS, 0, &pids[0], 2048 * sizeof(pid_t)) / sizeof(pid_t));
+	std::vector<pid_t>(pids).swap(pids);
+	return pids;
+}
+
+std::vector<pid_t> get_pids(const char* process_name)
+{
+	std::vector<pid_t> result;
+	std::vector<pid_t> pids = get_pids();
+	
+    for (std::size_t i = 0; i < pids.size(); ++i)
+	{
+        struct proc_bsdinfo proc;
+        if (proc_pidinfo(pids[i], PROC_PIDTBSDINFO, 0, &proc, PROC_PIDTBSDINFO_SIZE) == PROC_PIDTBSDINFO_SIZE)
+		{
+            if (!strcmp(process_name, proc.pbi_name))
+			{
+				result.push_back(pids[i]);
+            }
+        }
+    }
+	return result;
 }
 #endif
 

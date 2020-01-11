@@ -28,6 +28,8 @@
 enum class EIOSCommand: std::uint32_t
 {
     COMMAND_NONE,
+	KILL_APPLICATION,
+	
 	GET_TARGET_DIMENSIONS,
 	GET_MOUSE,
     MOVE_MOUSE,
@@ -100,6 +102,12 @@ EXPORT [[gnu::stdcall]] void EIOS_SendString(EIOS* eios, const char* string, std
 EXPORT [[gnu::stdcall]] void EIOS_HoldKey(EIOS* eios, std::int32_t key);
 EXPORT [[gnu::stdcall]] void EIOS_ReleaseKey(EIOS* eios, std::int32_t key);
 EXPORT [[gnu::stdcall]] bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key);
+EXPORT [[gnu::stdcall]] EIOS* EIOS_PairClient(pid_t pid);
+EXPORT [[gnu::stdcall]] void EIOS_KillClientPID(pid_t pid);
+EXPORT [[gnu::stdcall]] void EIOS_KillClient(EIOS* eios);
+EXPORT [[gnu::stdcall]] void EIOS_KillZombieClients();
+EXPORT [[gnu::stdcall]] std::size_t EIOS_GetClients(bool unpaired_only);
+EXPORT [[gnu::stdcall]] pid_t EIOS_GetClientPID(std::size_t index);
 #else
 EXPORT EIOS* EIOS_RequestTarget(const char* initargs);
 EXPORT void EIOS_ReleaseTarget(EIOS* eios);
@@ -117,6 +125,12 @@ EXPORT void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait
 EXPORT void EIOS_HoldKey(EIOS* eios, std::int32_t key);
 EXPORT void EIOS_ReleaseKey(EIOS* eios, std::int32_t key);
 EXPORT bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key);
+EXPORT EIOS* EIOS_PairClient(pid_t pid);
+EXPORT void EIOS_KillClientPID(pid_t pid);
+EXPORT void EIOS_KillClient(EIOS* eios);
+EXPORT void EIOS_KillZombieClients();
+EXPORT std::size_t EIOS_GetClients(bool unpaired_only);
+EXPORT pid_t EIOS_GetClientPID(std::size_t index);
 #endif
 
 #ifdef __cplusplus

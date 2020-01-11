@@ -46,7 +46,9 @@ public:
     bool open();
     bool open_file();
     bool map();
+	bool map(std::size_t amount);
     bool unmap();
+	bool unmap(std::size_t amount);
     bool close();
     bool is_open() const;
     bool is_mapped() const;
@@ -241,6 +243,21 @@ bool MemoryMap<char_type>::map()
 }
 
 template<typename char_type>
+bool MemoryMap<char_type>::map(std::size_t amount)
+{
+	bool read_only = !(mode & std::ios::out);
+    #if defined(_WIN32) || defined(_WIN64)
+    DWORD dwAccess = read_only ? FILE_MAP_READ : FILE_MAP_READ | FILE_MAP_WRITE;
+    pData = MapViewOfFile(hMap, dwAccess, 0, 0, amount);
+    return pData != nullptr;
+    #else
+    int dwAccess = read_only ? PROT_READ : (PROT_READ | PROT_WRITE);
+    pData = mmap(nullptr, amount, dwAccess, MAP_SHARED, hFile, 0);
+    return pData != MAP_FAILED;
+    #endif
+}
+
+template<typename char_type>
 bool MemoryMap<char_type>::unmap()
 {
     bool result = true;
@@ -249,6 +266,20 @@ bool MemoryMap<char_type>::unmap()
     pData = nullptr;
     #else
     result = !munmap(pData, pSize);
+    pData = nullptr;
+    #endif
+    return result;
+}
+
+template<typename char_type>
+bool MemoryMap<char_type>::unmap(std::size_t amount)
+{
+    bool result = true;
+    #if defined(_WIN32) || defined(_WIN64)
+    result = UnmapViewOfFile(pData);
+    pData = nullptr;
+    #else
+    result = !munmap(pData, amount);
     pData = nullptr;
     #endif
     return result;

@@ -10,7 +10,6 @@
 
 static const char* PascalExports[] =
 {
-    "Pascal_Reflect_GetEIOS", "Function RIGetEIOS(pid: Int32): Pointer; native;",
 	"Pascal_Reflect_Object", "Function RIGetObject(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
     "Pascal_Reflect_Release_Object", "Procedure RIReleaseObject(eios: Pointer; instance: Pointer); native;",
     "Pascal_Reflect_Release_Objects", "Procedure RIReleaseObjects(eios: Pointer; objects: Array of Pointer); native;",
@@ -46,8 +45,12 @@ static const char* PascalExports[] =
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
 	"Pascal_Reflect_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
-	"EIOS_HoldMouse", "Procedure EIOS_HoldMouse(eios: Pointer; x, y, button: Int32);",
-	"EIOS_ReleaseMouse", "Procedure EIOS_ReleaseMouse(eios: Pointer; x, y, button: Int32);",
+	
+	"EIOS_PairClient", "Function EIOS_PairClient(pid: Int32): Pointer;",
+	"EIOS_KillClientPID", "Procedure EIOS_KillClient(pid: Int32);",
+	"EIOS_KillClient", "Procedure EIOS_KillClient(eios: Pointer); overload;",
+	"EIOS_GetClients", "Function EIOS_GetClients(unpaired_only: Boolean): SizeUInt;",
+	"EIOS_GetClientPID", "Function EIOS_GetClientPID(index: SizeUInt): Int32;"
 };
 
 static const char* PascalTypes[] =
@@ -84,7 +87,6 @@ extern "C"
 {
 #endif
 
-EXPORT void Pascal_Reflect_GetEIOS(void** Params, void** Result);
 EXPORT void Pascal_Reflect_GetDebugImageBuffer(void** Params, void** Result);
 
 EXPORT void Pascal_Reflect_Object(void** Params, void** Result);

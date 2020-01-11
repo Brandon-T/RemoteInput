@@ -15,8 +15,10 @@
 #include "MemoryMap.hxx"
 #include "SharedEvent.hxx"
 #include "Reflection.hxx"
+#include "Platform.hxx"
 
 std::unordered_map<std::int32_t, EIOS*> clients;
+std::vector<std::int32_t> all_clients;
 
 EIOS* EIOS_RequestTarget(const char* initargs)
 {
@@ -24,30 +26,7 @@ EIOS* EIOS_RequestTarget(const char* initargs)
     std::int32_t pid = std::stoi(initargs, &pos);
     if (pos == std::string(initargs).length())
     {
-        if (clients.count(pid))
-        {
-            return clients[pid];
-        }
-
-        try {
-            std::unique_ptr<ControlCenter> control_center = std::make_unique<ControlCenter>(pid, true, nullptr);
-            if (control_center)
-            {
-                EIOS* eios = new EIOS();
-                eios->pid = pid;
-                eios->width = control_center->get_width();
-                eios->height = control_center->get_height();
-                eios->control_center = std::move(control_center);
-                eios->control_center->set_parent(getpid());
-
-                clients[pid] = eios;
-                return eios;
-            }
-        }
-        catch(std::exception& e)
-        {
-            printf("%s\n", e.what());
-        }
+		return EIOS_PairClient(pid);
     }
 	return nullptr;
 }
@@ -92,7 +71,7 @@ std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios)
 
 void EIOS_UpdateImageBuffer(EIOS* eios)
 {
-    printf("%s\n", __FUNCTION__);
+    //printf("%s\n", __FUNCTION__);
 }
 
 void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
@@ -176,4 +155,120 @@ bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key)
 		return eios->control_center->is_key_held(key);
 	}
 	return false;
+}
+
+EIOS* EIOS_PairClient(pid_t pid)
+{
+	std::int32_t tid = GetCurrentThreadID();
+	
+	if (clients.count(pid))
+	{
+		EIOS* eios = clients[pid];
+		return eios->control_center->get_parent() == tid ? eios : nullptr;
+	}
+	
+	if (!IsProcessAlive(pid))
+	{
+		clients.erase(pid);
+		ControlCenter::kill_zombie_process(pid);
+		return nullptr;
+	}
+
+	try {
+		std::unique_ptr<ControlCenter> control_center = std::make_unique<ControlCenter>(pid, true, nullptr);
+		if (control_center)
+		{
+			EIOS* eios = new EIOS();
+			eios->pid = pid;
+			eios->width = control_center->get_width();
+			eios->height = control_center->get_height();
+			eios->control_center = std::move(control_center);
+			eios->control_center->set_parent(tid);
+
+			clients[pid] = eios;
+			return eios;
+		}
+	}
+	catch(std::exception& e)
+	{
+		printf("%s\n", e.what());
+	}
+	return nullptr;
+}
+
+void EIOS_KillClientPID(pid_t pid)
+{
+	if (pid != -1 && clients.count(pid) && IsProcessAlive(pid))
+	{
+		if (EIOS* eios = clients[pid]; eios->control_center->get_parent() == GetCurrentThreadID())
+		{
+			clients.erase(pid);
+			eios->control_center->kill_process(pid);
+		}
+	}
+}
+
+void EIOS_KillClient(EIOS* eios)
+{
+	if (eios && eios->pid != -1 && clients.count(eios->pid) && IsProcessAlive(eios->pid))
+	{
+		if (eios->control_center->get_parent() == GetCurrentThreadID())
+		{
+			clients.erase(eios->pid);
+			eios->control_center->kill_process(eios->pid);
+		}
+	}
+}
+
+void EIOS_KillZombieClients()
+{
+	std::vector<std::int32_t> dead_clients;
+	for(auto it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (!IsProcessAlive(it->first))
+		{
+			ControlCenter::kill_zombie_process(it->first);
+			dead_clients.push_back(it->first);
+		}
+	}
+	
+	for (auto pid : dead_clients)
+	{
+		clients.erase(pid);
+	}
+}
+
+std::size_t EIOS_GetClients(bool unpaired_only)
+{
+	all_clients.clear();
+	
+	auto pids = get_pids();
+	for (auto pid : pids)
+	{
+		if (unpaired_only)
+		{
+			bool exists = false;
+			if (!ControlCenter::controller_is_paired(pid, &exists))
+			{
+				if (exists)
+				{
+					all_clients.push_back(pid);
+				}
+			}
+		}
+		else
+		{
+			if (ControlCenter::controller_exists(pid))
+			{
+				all_clients.push_back(pid);
+			}
+		}
+	}
+	
+	return all_clients.size();
+}
+
+pid_t EIOS_GetClientPID(std::size_t index)
+{
+	return index < all_clients.size() && all_clients.size() > 0 ? all_clients[index] : -1;
 }

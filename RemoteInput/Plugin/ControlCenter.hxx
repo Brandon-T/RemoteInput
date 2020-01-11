@@ -54,8 +54,14 @@ public:
 
 	void terminate();
 	bool hasReflector();
+	pid_t get_parent();
 	void set_parent(pid_t pid);
 	void update_dimensions(std::int32_t width, std::int32_t height);
+	
+	static bool controller_exists(pid_t pid);
+	static bool controller_is_paired(pid_t pid, bool* exists);
+	void kill_process(pid_t pid);
+	static void kill_zombie_process(pid_t pid);
 
 	std::int32_t parent_id() const;
 	std::int32_t get_width() const;

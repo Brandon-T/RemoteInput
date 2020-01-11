@@ -15,6 +15,74 @@ void GetDesktopResolution(int &width, int &height)
     width = desktop.right;
     height = desktop.bottom;
 }
+
+std::int32_t GetCurrentThreadID()
+{
+	return GetCurrentThreadId();
+}
+
+bool IsProcessAlive(pid_t pid)
+{
+	HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
+    DWORD ret = WaitForSingleObject(process, 0);
+    CloseHandle(process);
+    return ret == WAIT_TIMEOUT;
+}
+
+std::vector<pid_t> get_pids()
+{
+	std::vector<pid_t> result;
+	PROCESSENTRY32 processInfo = {0};
+	processInfo.dwSize = sizeof(processInfo);
+
+	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, nullptr);
+	if (processesSnapshot != INVALID_HANDLE_VALUE)
+	{
+		if (Process32First(processesSnapshot, &processInfo))
+		{
+			result.push_back(processInfo.th32ProcessID);
+
+			while (Process32Next(processesSnapshot, &processInfo))
+			{
+				result.push_back(processInfo.th32ProcessID);
+			}
+		}
+		CloseHandle(processesSnapshot);
+	}
+	return result;
+}
+
+std::vector<pid_t> get_pids(const char* process_name)
+{
+	std::vector<pid_t> result;
+	PROCESSENTRY32 processInfo = {0};
+	processInfo.dwSize = sizeof(processInfo);
+
+	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, nullptr);
+	if (processesSnapshot != INVALID_HANDLE_VALUE)
+	{
+		if (Process32First(processesSnapshot, &processInfo))
+		{
+			if (!strcmp(process_name, processInfo.szExeFile))
+			{
+				CloseHandle(processesSnapshot);
+				result.push_back(processInfo.th32ProcessID);
+			}
+
+			while (Process32Next(processesSnapshot, &processInfo))
+			{
+				if (!strcmp(process_name, processInfo.szExeFile))
+				{
+					CloseHandle(processesSnapshot);
+					result.push_back(processInfo.th32ProcessID);
+				}
+			}
+		}
+
+		CloseHandle(processesSnapshot);
+	}
+	return result;
+}
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)

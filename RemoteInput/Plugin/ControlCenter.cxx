@@ -70,6 +70,8 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 	if (!is_controller)
 	{
+		this->set_parent(-1);
+		
 		std::thread thread = std::thread([&]{
 
             #if defined(_WIN32) || defined(_WIN64)
@@ -171,6 +173,27 @@ void ControlCenter::process_command()
 	switch(command)
 	{
 		case EIOSCommand::COMMAND_NONE:
+			break;
+			
+		case EIOSCommand::KILL_APPLICATION:
+		{
+			stopped = true;
+			response_signal->signal();
+			
+			if (this->io_controller)
+			{
+				this->io_controller.reset();
+			}
+
+
+			if (this->reflector)
+			{
+				this->reflector->Detach();
+				this->reflector.reset();
+			}
+			
+			std::exit(0);
+		}
 			break;
 
 		case EIOSCommand::GET_TARGET_DIMENSIONS:
@@ -663,6 +686,47 @@ bool ControlCenter::init_signals()
     return command_signal && response_signal;
 }
 
+void ControlCenter::kill_zombie_process(pid_t pid)
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	
+	#elif defined(__linux__)
+	char buffer[256] = {0};
+	
+	//Kill Memory Maps
+	sprintf(buffer, "RemoteInput_%d", pid);
+	shm_unlink(buffer);
+	
+	//Kill Locks
+	sprintf(buffer, "/RemoteInput_Lock_%d", pid);
+	shm_unlink(buffer);
+	
+	//Kill Signals
+	sprintf(buffer, "/RemoteInput_ControlCenter_EventRead_%d", pid);
+	sem_unlink(buffer);
+	
+	sprintf(buffer, "/RemoteInput_ControlCenter_EventWrite_%d", pid);
+	sem_unlink(buffer);
+	#else
+	char buffer[256] = {0};
+	
+	//Kill Memory Maps
+	sprintf(buffer, "RemoteInput_%d", pid);
+	shm_unlink(buffer);
+	
+	//Kill Locks
+	sprintf(buffer, "/RemoteInput_Lock_%d", pid);
+	shm_unlink(buffer);
+	
+	//Kill Signals
+	sprintf(buffer, "/RI_CC_EventRead_%d", pid);
+	sem_unlink(buffer);
+	
+	sprintf(buffer, "/RI_CC_EventWrite_%d", pid);
+	sem_unlink(buffer);
+	#endif
+}
+
 bool ControlCenter::hasReflector()
 {
 	return reflector != nullptr;
@@ -677,7 +741,7 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 {
 	writer(get_image_data());
 	command_signal->signal();
-	return response_signal->wait();
+	return response_signal->timed_wait(5000);
 }
 
 std::int32_t ControlCenter::parent_id() const
@@ -707,12 +771,65 @@ std::uint8_t* ControlCenter::get_debug_image() const
 	return image ? image + (get_width() * get_height() * 4) : nullptr;
 }
 
+pid_t ControlCenter::get_parent()
+{
+	if (memory_map && memory_map->is_mapped())
+	{
+		return get_image_data()->parentId;
+	}
+	return -1;
+}
+
 void ControlCenter::set_parent(pid_t pid)
 {
 	if (memory_map && memory_map->is_mapped())
 	{
 		get_image_data()->parentId = pid;
 	}
+}
+
+bool ControlCenter::controller_exists(pid_t pid)
+{
+	char mapName[256] = {0};
+	#if defined(_WIN32) || defined(_WIN64)
+    sprintf(mapName, "Local\\RemoteInput_%d", pid);
+	#else
+	sprintf(mapName, "RemoteInput_%d", pid);
+	#endif
+
+	return MemoryMap<char>(mapName, std::ios::in).open();
+}
+
+bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
+{
+	char mapName[256] = {0};
+	#if defined(_WIN32) || defined(_WIN64)
+    sprintf(mapName, "Local\\RemoteInput_%d", pid);
+	#else
+	sprintf(mapName, "RemoteInput_%d", pid);
+	#endif
+
+	*exists = false;
+	auto memory = MemoryMap<char>(mapName, std::ios::in);
+	if (memory.open())
+	{
+		*exists = true;
+		if (memory.map(sizeof(ImageData)))
+		{
+			bool is_paired = static_cast<ImageData*>(memory.data())->parentId != -1;
+			memory.unmap(sizeof(ImageData));
+			return is_paired;
+		}
+	}
+	
+	return false;
+}
+
+void ControlCenter::kill_process(pid_t pid)
+{
+	send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::KILL_APPLICATION;
+	});
 }
 
 void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height)

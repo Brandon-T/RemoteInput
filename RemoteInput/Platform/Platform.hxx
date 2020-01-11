@@ -5,10 +5,17 @@
 #include <ratio>
 #include <thread>
 #include <cstdint>
+#include <vector>
 #include "Reflection.hxx"
 
 void GetDesktopResolution(int &width, int &height);
 Reflection* GetNativeReflector();
+
+std::int32_t GetCurrentThreadID();
+
+bool IsProcessAlive(pid_t pid);
+std::vector<pid_t> get_pids();
+std::vector<pid_t> get_pids(const char* process_name);
 
 template<typename T>
 void yield_thread(std::chrono::duration<std::int64_t, T> time)

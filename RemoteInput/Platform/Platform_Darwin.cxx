@@ -11,6 +11,10 @@ extern "C" {
 #if defined(__cplusplus)
 }
 #endif
+
+#include <signal.h>
+#include <libproc.h>
+#include <sys/syscall.h>
 #endif // defined
 
 #if defined(__APPLE__)
@@ -30,6 +34,46 @@ void GetDesktopResolution(int &width, int &height)
 	}
 	
 	get_screen_resolution();
+}
+
+std::int32_t GetCurrentThreadID()
+{
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+	return syscall(SYS_thread_selfid);
+	#pragma clang diagnostic pop
+}
+
+bool IsProcessAlive(pid_t pid)
+{
+	return !kill(pid, 0);
+}
+
+std::vector<pid_t> get_pids()
+{
+	std::vector<pid_t> pids(2048);
+	pids.resize(proc_listpids(PROC_ALL_PIDS, 0, &pids[0], 2048 * sizeof(pid_t)) / sizeof(pid_t));
+	std::vector<pid_t>(pids).swap(pids);
+	return pids;
+}
+
+std::vector<pid_t> get_pids(const char* process_name)
+{
+	std::vector<pid_t> result;
+	std::vector<pid_t> pids = get_pids();
+	
+    for (std::size_t i = 0; i < pids.size(); ++i)
+	{
+        struct proc_bsdinfo proc;
+        if (proc_pidinfo(pids[i], PROC_PIDTBSDINFO, 0, &proc, PROC_PIDTBSDINFO_SIZE) == PROC_PIDTBSDINFO_SIZE)
+		{
+            if (!strcmp(process_name, proc.pbi_name))
+			{
+				result.push_back(pids[i]);
+            }
+        }
+    }
+	return result;
 }
 #endif // defined
 
