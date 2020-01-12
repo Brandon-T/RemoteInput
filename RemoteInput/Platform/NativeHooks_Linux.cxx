@@ -27,25 +27,32 @@ Bool XShmPutImage(Display *display, Drawable d, GC gc, XImage *image, int src_x,
 		void *rasBase = reinterpret_cast<std::uint8_t*>(image->data) + (stride * src_y) + (bytes_per_pixel * src_x);
 
 		control_center->update_dimensions(width, height);
+		
+		//Render to Shared Memory
 		std::uint8_t* dest = control_center->get_image();
 		if (dest)
 		{
 			std::memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
 		}
 
-		std::uint8_t* src = control_center->get_debug_image();
-		if (src)
+		//Render Debug Graphics
+		if (control_center->get_debug_graphics())
 		{
-			draw_image(rasBase, src, width, height, bytes_per_pixel);
-
-			std::int32_t x = -1;
-			std::int32_t y = -1;
-			control_center->get_applet_mouse_position(&x, &y);
-
-			if (x > -1 && y > -1)
+			std::uint8_t* src = control_center->get_debug_image();
+			if (src)
 			{
-				draw_circle(x, y, 4, rasBase, width, height, bytes_per_pixel, true);
+				draw_image(rasBase, src, width, height, bytes_per_pixel);
 			}
+		}
+		
+		//Render Cursor
+		std::int32_t x = -1;
+		std::int32_t y = -1;
+		control_center->get_applet_mouse_position(&x, &y);
+
+		if (x > -1 && y > -1)
+		{
+			draw_circle(x, y, 4, rasBase, width, height, bytes_per_pixel, true);
 		}
 
 		/*for (std::size_t i = 0; i < image->height; ++i)
@@ -145,29 +152,35 @@ void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 		if (width >= 765 && height >= 553)
 		{
 			control_center->update_dimensions(width, height);
-
+			
+			//Render to Shared Memory
 			std::uint8_t* dest = control_center->get_image();
 			if (dest)
 			{
-				GeneratePixelBuffers(ctx, pbo, width, height, 4);
-				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+				GeneratePixelBuffers(drawable, pbo, width, height, 4);
+				ReadPixelBuffers(drawable, dest, pbo, width, height, 4);
 				FlipImageVertically(width, height, dest);
 			}
-
-			std::uint8_t* src = control_center->get_debug_image();
-			if (src)
+			
+			//Render Debug Graphics
+			if (control_center->get_debug_graphics())
 			{
-				gl_draw_image(ctx, src, 0, 0, width, height, 4);
-
-				std::int32_t x = -1;
-				std::int32_t y = -1;
-				control_center->get_applet_mouse_position(&x, &y);
-
-				if (x > -1 && y > -1)
+				std::uint8_t* src = control_center->get_debug_image();
+				if (src)
 				{
-					glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-					gl_draw_point(ctx, x, y, 0, 4);
+					gl_draw_image(drawable, src, 0, 0, width, height, 4);
 				}
+			}
+			
+			//Render Cursor
+			std::int32_t x = -1;
+			std::int32_t y = -1;
+			control_center->get_applet_mouse_position(&x, &y);
+
+			if (x > -1 && y > -1)
+			{
+				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+				gl_draw_point(drawable, x, y, 0, 4);
 			}
 		}
 	}

@@ -69,6 +69,14 @@ std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios)
     return nullptr;
 }
 
+void EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled)
+{
+	if (eios)
+	{
+		eios->control_center->set_debug_graphics(enabled);
+	}
+}
+
 void EIOS_UpdateImageBuffer(EIOS* eios)
 {
     //printf("%s\n", __FUNCTION__);

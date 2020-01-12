@@ -68,6 +68,8 @@ public:
 	std::int32_t get_height() const;
 	std::uint8_t* get_image() const;
 	std::uint8_t* get_debug_image() const;
+	bool get_debug_graphics() const;
+	void set_debug_graphics(bool enabled);
 
 	void get_target_dimensions(std::int32_t* width, std::int32_t* height);
 	void get_mouse_position(std::int32_t* x, std::int32_t* y);

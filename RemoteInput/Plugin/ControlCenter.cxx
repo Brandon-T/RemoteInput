@@ -741,7 +741,19 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 {
 	writer(get_image_data());
 	command_signal->signal();
-	return response_signal->timed_wait(5000);
+	
+	static const std::int64_t timeout = 5000;
+	std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+	while(elapsed_time<std::chrono::milliseconds>(now) < timeout)
+	{
+		if (response_signal->try_wait())
+		{
+			return true;
+		}
+		yield_thread(std::chrono::nanoseconds(1));
+	}
+	
+	return false;
 }
 
 std::int32_t ControlCenter::parent_id() const
@@ -769,6 +781,23 @@ std::uint8_t* ControlCenter::get_debug_image() const
 {
 	std::uint8_t* image = get_image();
 	return image ? image + (get_width() * get_height() * 4) : nullptr;
+}
+
+bool ControlCenter::get_debug_graphics() const
+{
+	if (memory_map && memory_map->is_mapped())
+	{
+		return get_image_data()->debug_graphics;
+	}
+	return false;
+}
+
+void ControlCenter::set_debug_graphics(bool enabled)
+{
+	if (memory_map && memory_map->is_mapped())
+	{
+		get_image_data()->debug_graphics = enabled;
+	}
 }
 
 pid_t ControlCenter::get_parent()

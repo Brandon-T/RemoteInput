@@ -57,6 +57,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 				control_center->update_dimensions(width, height);
 				std::uint8_t* dest = control_center->get_image();
 
+				//Render to Shared Memory
 				if (dest)
 				{
 					if (isRasterAligned)
@@ -74,20 +75,26 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 					}
 				}
 
-				rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-				std::uint8_t* src = control_center->get_debug_image();
-				if (src)
+				//Render Debug Graphics
+				if (control_center->get_debug_graphics())
 				{
-					draw_image(rasBase, src, width, height, srcInfo.pixelStride);
-
-					std::int32_t x = -1;
-					std::int32_t y = -1;
-					control_center->get_applet_mouse_position(&x, &y);
-
-					if (x > -1 && y > -1)
+					std::uint8_t* src = control_center->get_debug_image();
+					if (src)
 					{
-						draw_circle(x, y, 4, rasBase, width, height, srcInfo.pixelStride, true);
+						rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+						draw_image(rasBase, src, width, height, srcInfo.pixelStride);
 					}
+				}
+				
+				//Render Cursor
+				std::int32_t x = -1;
+				std::int32_t y = -1;
+				control_center->get_applet_mouse_position(&x, &y);
+
+				if (x > -1 && y > -1)
+				{
+					rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+					draw_circle(x, y, 4, rasBase, width, height, srcInfo.pixelStride, true);
 				}
 
 				if (srcOps->Release)
@@ -208,25 +215,32 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
         void *rasBase = static_cast<std::uint8_t*>(const_cast<void*>(data)) + (stride * src_y) + (bytes_per_pixel * src_x);
 
 		control_center->update_dimensions(width, height);
+		
+		//Render to Shared Memory
 		std::uint8_t* dest = control_center->get_image();
 		if (dest)
 		{
 			memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
 		}
 
-		std::uint8_t* src = control_center->get_debug_image();
-		if (src)
+		//Render Debug Graphics
+		if (control_center->get_debug_graphics())
 		{
-			draw_image(rasBase, src, width, height, bytes_per_pixel);
-
-			std::int32_t x = -1;
-			std::int32_t y = -1;
-			control_center->get_applet_mouse_position(&x, &y);
-
-			if (x > -1 && y > -1)
+			std::uint8_t* src = control_center->get_debug_image();
+			if (src)
 			{
-				draw_circle(x, y, 3, rasBase, width, height, bytes_per_pixel, true);
+				draw_image(rasBase, src, width, height, bytes_per_pixel);
 			}
+		}
+		
+		//Render Cursor
+		std::int32_t x = -1;
+		std::int32_t y = -1;
+		control_center->get_applet_mouse_position(&x, &y);
+
+		if (x > -1 && y > -1)
+		{
+			draw_circle(x, y, 3, rasBase, width, height, bytes_per_pixel, true);
 		}
 	}
 
@@ -248,6 +262,9 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 
 		if (width >= 765 && height >= 553)
 		{
+			control_center->update_dimensions(width, height);
+			
+			//Render to Shared Memory
 			std::uint8_t* dest = control_center->get_image();
 			if (dest)
 			{
@@ -255,6 +272,27 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 				GeneratePixelBuffers(hdc, pbo, width, height, 4);
 				ReadPixelBuffers(hdc, dest, pbo, width, height, 4);
 				FlipImageVertically(width, height, dest);
+			}
+			
+			//Render Debug Graphics
+			if (control_center->get_debug_graphics())
+			{
+				std::uint8_t* src = control_center->get_debug_image();
+				if (src)
+				{
+					gl_draw_image(hdc, src, 0, 0, width, height, 4);
+				}
+			}
+			
+			//Render Cursor
+			std::int32_t x = -1;
+			std::int32_t y = -1;
+			control_center->get_applet_mouse_position(&x, &y);
+
+			if (x > -1 && y > -1)
+			{
+				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+				gl_draw_point(hdc, x, y, 0, 4);
 			}
 		}
 	}

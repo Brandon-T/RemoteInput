@@ -45,6 +45,7 @@ static const char* PascalExports[] =
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
 	"Pascal_Reflect_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
+	"EIOS_SetGraphicsDebugging", "Procedure EIOS_SetGraphicsDebugging(eios: Pointer; enabled: Boolean);",
 	
 	"EIOS_PairClient", "Function EIOS_PairClient(pid: Int32): Pointer;",
 	"EIOS_KillClientPID", "Procedure EIOS_KillClient(pid: Int32);",

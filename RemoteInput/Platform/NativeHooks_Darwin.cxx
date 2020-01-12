@@ -3,12 +3,12 @@
 
 #if __has_include("rd_route.h")
 #include "rd_route.h"
-#else
+#endif
+
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLMacro.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
-#endif
 
 #include <memory>
 #include <thread>
@@ -61,6 +61,7 @@ void JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jbool
 				control_center->update_dimensions(width, height);
 				std::uint8_t* dest = control_center->get_image();
 
+				//Render to Shared Memory
 				if (dest)
 				{
 					if (isRasterAligned)
@@ -78,20 +79,26 @@ void JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jbool
 					}
 				}
 				
-				rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
-				std::uint8_t* src = control_center->get_debug_image();
-				if (src)
+				//Render Debug Graphics
+				if (control_center->get_debug_graphics())
 				{
-					draw_image(rasBase, src, width, height, srcInfo.pixelStride);
-
-					std::int32_t x = -1;
-					std::int32_t y = -1;
-					control_center->get_applet_mouse_position(&x, &y);
-
-					if (x > -1 && y > -1)
+					std::uint8_t* src = control_center->get_debug_image();
+					if (src)
 					{
-						draw_circle(x, y, 4, rasBase, width, height, srcInfo.pixelStride, true);
+						rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
+						draw_image(rasBase, src, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride);
 					}
+				}
+				
+				//Render Cursor
+				std::int32_t x = -1;
+				std::int32_t y = -1;
+				control_center->get_applet_mouse_position(&x, &y);
+
+				if (x > -1 && y > -1)
+				{
+					rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
+					draw_circle(x, y, 4, rasBase, width, height, srcInfo.pixelStride, true);
 				}
 
 				if (srcOps->Release)
@@ -111,7 +118,7 @@ void JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jbool
 }
 #endif
 
-#if defined(__APPLE__) && !__has_include("rd_route.h")
+#if defined(__APPLE__)
 void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
 {
 	static int w = 0;
@@ -177,7 +184,10 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 }
 
 #if __has_include("rd_route.h")
-CGLError CGLFlushDrawable(CGLContextObj ctx)
+typedef CGLError (*CGLFlushDrawable_t)(CGLContextObj ctx);
+CGLFlushDrawable_t o_CGLFlushDrawable;
+
+CGLError mCGLFlushDrawable(CGLContextObj ctx)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	
@@ -193,6 +203,9 @@ CGLError CGLFlushDrawable(CGLContextObj ctx)
 		
 		if (width >= 765 && height >= 553)
 		{
+			control_center->update_dimensions(width, height);
+			
+			//Render to Shared Memory
 			std::uint8_t* dest = control_center->get_image();
 			if (dest)
 			{
@@ -200,10 +213,30 @@ CGLError CGLFlushDrawable(CGLContextObj ctx)
 				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
 				FlipImageVertically(width, height, dest);
 			}
+			
+			//Render Debug Graphics
+			if (control_center->get_debug_graphics())
+			{
+				std::uint8_t* src = control_center->get_debug_image();
+				if (src)
+				{
+					gl_draw_image(ctx, src, 0, 0, width, height, 4);
+				}
+			}
+			
+			//Render Cursor
+			std::int32_t x = -1;
+			std::int32_t y = -1;
+			control_center->get_applet_mouse_position(&x, &y);
+
+			if (x > -1 && y > -1)
+			{
+				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+				gl_draw_point(ctx, x, y, 0, 4);
+			}
 		}
 	}
 	
-	static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
 	return o_CGLFlushDrawable(ctx);
 }
 #else
@@ -225,6 +258,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 		{
 			control_center->update_dimensions(width, height);
 			
+			//Render to Shared Memory
 			std::uint8_t* dest = control_center->get_image();
 			if (dest)
 			{
@@ -233,41 +267,27 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 				FlipImageVertically(width, height, dest);
 			}
 			
-			std::uint8_t* src = control_center->get_debug_image();
-			if (src)
+			//Render Debug Graphics
+			if (control_center->get_debug_graphics())
 			{
-				gl_draw_image(ctx, src, 0, 0, width, height, 4);
-				
-				std::int32_t x = -1;
-				std::int32_t y = -1;
-				control_center->get_applet_mouse_position(&x, &y);
-
-				if (x > -1 && y > -1)
+				std::uint8_t* src = control_center->get_debug_image();
+				if (src)
 				{
-					glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-					gl_draw_point(ctx, x, y, 0, 4);
+					gl_draw_image(ctx, src, 0, 0, width, height, 4);
 				}
 			}
+			
+			//Render Cursor
+			std::int32_t x = -1;
+			std::int32_t y = -1;
+			control_center->get_applet_mouse_position(&x, &y);
+
+			if (x > -1 && y > -1)
+			{
+				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+				gl_draw_point(ctx, x, y, 0, 4);
+			}
 		}
-		
-		/*glPushMatrix();
-		glLoadIdentity();
-		draw_player([&](Polygon* p, std::int32_t width, std::int32_t height) {
-			//OpenGL
-			//p->ypoints[0] = height - p->ypoints[0];
-			//p->ypoints[1] = height - p->ypoints[1];
-			//p->ypoints[2] = height - p->ypoints[2];
-			//DrawPolyLines(ctx, p->npoints, &p->xpoints[0], &p->ypoints[0]);
-			
-			
-			//OpenGL2
-			//DrawPoly(ctx, p->npoints, 1, 0, 0, &p->xpoints[0], &p->ypoints[0]);
-			
-			
-			//Raw
-			//draw_polygon(src, p->npoints, &p->ypoints[0], &p->xpoints[0], width, height);
-		});
-		glPopMatrix();*/
 	}
 	
 	static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
@@ -282,6 +302,9 @@ void InitialiseHooks()
 	#if __has_include("rd_route.h")
 	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
 	rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
+	
+	//CGLFlushDrawable_t swap = (CGLFlushDrawable_t)dlsym(RTLD_NEXT, "CGLFlushDrawable");
+	//rd_route((void*)swap, (void*)mCGLFlushDrawable, (void **)&o_CGLFlushDrawable);
 	#else
 	DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
 	#endif
