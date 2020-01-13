@@ -11,7 +11,7 @@
 void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data);
 void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data);
 
-void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled);
+void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t abgr_colour);
 
 void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride);
 

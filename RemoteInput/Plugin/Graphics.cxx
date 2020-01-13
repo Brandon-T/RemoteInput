@@ -13,6 +13,19 @@
 #include <gl/glext.h>
 #endif
 
+std::uint32_t RGBA(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a)
+{
+	return (r << 24) + (g << 16) + (b << 8) + (a);
+}
+
+void RGBA(std::uint32_t colour, std::uint8_t& r, std::uint8_t& g, std::uint8_t& b, std::uint8_t& a)
+{
+	r = (colour >> 24) & 0xFF;
+    g = (colour >> 16) & 0xFF;
+    b = (colour >> 8) & 0xFF;
+    a = (colour & 0xFF);
+}
+
 void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data)
 {
 	struct BGRA
@@ -96,7 +109,7 @@ void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t*
 	}
 }*/
 
-void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled)
+void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t abgr_colour)
 {
 	typedef struct bgra_t
 	{
@@ -105,14 +118,14 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
 		std::uint8_t r;
 		std::uint8_t a;
 	} bgra;
+	
+	bgra draw_colour = {0};
+	RGBA(abgr_colour, draw_colour.r, draw_colour.g, draw_colour.b, draw_colour.a);
 
 	auto set_pixel = [&](int x, int y) {
 		std::uint8_t* ptr = static_cast<std::uint8_t*>(buffer);
 		bgra* pixel = reinterpret_cast<bgra*>(&ptr[(y * width + x) * stride]);
-		pixel->r = 0xFF;
-		pixel->g = 0xFF;
-		pixel->b = 0xFF;
-		pixel->a = 0xFF;
+		*pixel = draw_colour;
 	};
 
 	int radiusSq = radius * radius;

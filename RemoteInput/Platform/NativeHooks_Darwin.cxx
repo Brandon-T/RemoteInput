@@ -98,7 +98,7 @@ void JavaNativeBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jbool
 				if (x > -1 && y > -1)
 				{
 					rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
-					draw_circle(x, y, 4, rasBase, width, height, srcInfo.pixelStride, true);
+					draw_circle(x, y, 2, rasBase, width, height, srcInfo.pixelStride, true, 0xFF0000FF);
 				}
 
 				if (srcOps->Release)

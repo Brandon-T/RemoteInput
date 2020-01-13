@@ -52,7 +52,7 @@ Bool XShmPutImage(Display *display, Drawable d, GC gc, XImage *image, int src_x,
 
 		if (x > -1 && y > -1)
 		{
-			draw_circle(x, y, 4, rasBase, width, height, bytes_per_pixel, true);
+			draw_circle(x, y, 2, rasBase, width, height, bytes_per_pixel, true, 0xFF0000FF);
 		}
 
 		/*for (std::size_t i = 0; i < image->height; ++i)
