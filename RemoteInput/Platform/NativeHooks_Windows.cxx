@@ -85,7 +85,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 						draw_image(rasBase, src, width, height, srcInfo.pixelStride);
 					}
 				}
-				
+
 				//Render Cursor
 				std::int32_t x = -1;
 				std::int32_t y = -1;
@@ -215,7 +215,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
         void *rasBase = static_cast<std::uint8_t*>(const_cast<void*>(data)) + (stride * src_y) + (bytes_per_pixel * src_x);
 
 		control_center->update_dimensions(width, height);
-		
+
 		//Render to Shared Memory
 		std::uint8_t* dest = control_center->get_image();
 		if (dest)
@@ -232,7 +232,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
 				draw_image(rasBase, src, width, height, bytes_per_pixel);
 			}
 		}
-		
+
 		//Render Cursor
 		std::int32_t x = -1;
 		std::int32_t y = -1;
@@ -240,7 +240,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
 
 		if (x > -1 && y > -1)
 		{
-			draw_circle(x, y, 3, rasBase, width, height, bytes_per_pixel, true);
+			draw_circle(x, y, 3, rasBase, width, height, bytes_per_pixel, true, 0xFF0000FF);
 		}
 	}
 
@@ -263,7 +263,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 		if (width >= 765 && height >= 553)
 		{
 			control_center->update_dimensions(width, height);
-			
+
 			//Render to Shared Memory
 			std::uint8_t* dest = control_center->get_image();
 			if (dest)
@@ -273,7 +273,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 				ReadPixelBuffers(hdc, dest, pbo, width, height, 4);
 				FlipImageVertically(width, height, dest);
 			}
-			
+
 			//Render Debug Graphics
 			if (control_center->get_debug_graphics())
 			{
@@ -283,7 +283,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 					gl_draw_image(hdc, src, 0, 0, width, height, 4);
 				}
 			}
-			
+
 			//Render Cursor
 			std::int32_t x = -1;
 			std::int32_t y = -1;

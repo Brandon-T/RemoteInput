@@ -4,6 +4,7 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#include <tlhelp32.h>
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -35,7 +36,7 @@ std::vector<pid_t> get_pids()
 	PROCESSENTRY32 processInfo = {0};
 	processInfo.dwSize = sizeof(processInfo);
 
-	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, nullptr);
+	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (processesSnapshot != INVALID_HANDLE_VALUE)
 	{
 		if (Process32First(processesSnapshot, &processInfo))
@@ -58,7 +59,7 @@ std::vector<pid_t> get_pids(const char* process_name)
 	PROCESSENTRY32 processInfo = {0};
 	processInfo.dwSize = sizeof(processInfo);
 
-	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, nullptr);
+	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (processesSnapshot != INVALID_HANDLE_VALUE)
 	{
 		if (Process32First(processesSnapshot, &processInfo))

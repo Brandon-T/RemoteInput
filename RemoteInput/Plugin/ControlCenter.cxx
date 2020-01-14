@@ -46,7 +46,7 @@ void EIOS_Write(void* &ptr, const std::string &result)
 		ptr = static_cast<std::size_t*>(ptr) + 1;
 		return;
 	}
-	
+
 	*static_cast<std::size_t*>(ptr) = result.length();
 	ptr = static_cast<std::size_t*>(ptr) + 1;
 
@@ -82,7 +82,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 	if (!is_controller)
 	{
 		this->set_parent(-1);
-		
+
 		std::thread thread = std::thread([&]{
 
             #if defined(_WIN32) || defined(_WIN64)
@@ -185,12 +185,12 @@ void ControlCenter::process_command()
 	{
 		case EIOSCommand::COMMAND_NONE:
 			break;
-			
+
 		case EIOSCommand::KILL_APPLICATION:
 		{
 			stopped = true;
 			response_signal->signal();
-			
+
 			if (this->io_controller)
 			{
 				this->io_controller.reset();
@@ -202,7 +202,7 @@ void ControlCenter::process_command()
 				this->reflector->Detach();
 				this->reflector.reset();
 			}
-			
+
 			std::exit(0);
 		}
 			break;
@@ -700,39 +700,39 @@ bool ControlCenter::init_signals()
 void ControlCenter::kill_zombie_process(pid_t pid)
 {
 	#if defined(_WIN32) || defined(_WIN64)
-	
+
 	#elif defined(__linux__)
 	char buffer[256] = {0};
-	
+
 	//Kill Memory Maps
 	sprintf(buffer, "RemoteInput_%d", pid);
 	shm_unlink(buffer);
-	
+
 	//Kill Locks
 	sprintf(buffer, "/RemoteInput_Lock_%d", pid);
 	shm_unlink(buffer);
-	
+
 	//Kill Signals
 	sprintf(buffer, "/RemoteInput_ControlCenter_EventRead_%d", pid);
 	sem_unlink(buffer);
-	
+
 	sprintf(buffer, "/RemoteInput_ControlCenter_EventWrite_%d", pid);
 	sem_unlink(buffer);
 	#else
 	char buffer[256] = {0};
-	
+
 	//Kill Memory Maps
 	sprintf(buffer, "RemoteInput_%d", pid);
 	shm_unlink(buffer);
-	
+
 	//Kill Locks
 	sprintf(buffer, "/RemoteInput_Lock_%d", pid);
 	shm_unlink(buffer);
-	
+
 	//Kill Signals
 	sprintf(buffer, "/RI_CC_EventRead_%d", pid);
 	sem_unlink(buffer);
-	
+
 	sprintf(buffer, "/RI_CC_EventWrite_%d", pid);
 	sem_unlink(buffer);
 	#endif
@@ -752,7 +752,12 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 {
 	writer(get_image_data());
 	command_signal->signal();
-	
+
+	//On Windows, it is much faster to sleep a thread in a loop, than to yield it.
+	//On other platforms, a small yield is faster than a sleep.
+	//#if defined(_WIN32) && defined(_WIN64)
+	//return response_signal->timed_wait(5000);
+	//#else
 	static const std::int64_t timeout = 5000;
 	std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	while(elapsed_time<std::chrono::milliseconds>(now) < timeout)
@@ -763,8 +768,9 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 		}
 		yield_thread(std::chrono::nanoseconds(1));
 	}
-	
+
 	return false;
+	//#endif
 }
 
 std::int32_t ControlCenter::parent_id() const
@@ -861,7 +867,7 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
 			return is_paired;
 		}
 	}
-	
+
 	return false;
 }
 

@@ -168,13 +168,13 @@ bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key)
 EIOS* EIOS_PairClient(pid_t pid)
 {
 	std::int32_t tid = GetCurrentThreadID();
-	
+
 	if (clients.count(pid))
 	{
 		EIOS* eios = clients[pid];
 		return eios->control_center->get_parent() == tid ? eios : nullptr;
 	}
-	
+
 	if (!IsProcessAlive(pid))
 	{
 		clients.erase(pid);
@@ -239,7 +239,7 @@ void EIOS_KillZombieClients()
 			dead_clients.push_back(it->first);
 		}
 	}
-	
+
 	for (auto pid : dead_clients)
 	{
 		clients.erase(pid);
@@ -249,7 +249,7 @@ void EIOS_KillZombieClients()
 std::size_t EIOS_GetClients(bool unpaired_only)
 {
 	all_clients.clear();
-	
+
 	auto pids = get_pids();
 	for (auto pid : pids)
 	{
@@ -272,7 +272,7 @@ std::size_t EIOS_GetClients(bool unpaired_only)
 			}
 		}
 	}
-	
+
 	return all_clients.size();
 }
 

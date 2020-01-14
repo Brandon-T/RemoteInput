@@ -128,6 +128,7 @@
 		<Unit filename="RemoteInput/Random.hxx" />
 		<Unit filename="RemoteInput/Reflection.cxx" />
 		<Unit filename="RemoteInput/Reflection.hxx" />
+		<Unit filename="RemoteInput/RemoteInput.def" />
 		<Unit filename="RemoteInput/RemoteInput.h" />
 		<Unit filename="RemoteInput/Thirdparty/min_hook/include/MinHook.h" />
 		<Unit filename="RemoteInput/Thirdparty/min_hook/src/buffer.c">
