@@ -111,11 +111,10 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 					command_signal->wait();
 
-//					while(!command_signal->try_wait())
-//					{
-//						usleep(1);
-//						continue;
-//					}
+					/*while(!command_signal->try_wait())
+					{
+						std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+					}*/
 
 					if (stopped)
 					{
@@ -754,10 +753,22 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 	command_signal->signal();
 
 	//On Windows, it is much faster to sleep a thread in a loop, than to yield it.
-	//On other platforms, a small yield is faster than a sleep.
-	//#if defined(_WIN32) && defined(_WIN64)
-	//return response_signal->timed_wait(5000);
-	//#else
+	//Yield is equivalent to Sleep(0) and gives up a time-slice.
+	//It's really SLOW in fast iteration loops.
+	//
+	//On other platforms, a small yield is faster than a sleep for fast iteration loops.
+	//
+	//However, on Windows (and other platforms too),
+	//it's much faster to poll the signal instead of calling timed_wait
+	//which uses WaitSingleObject
+	//
+	//The difference is milli-second resolution vs. nano-second and it's very noticeable.
+	//IE: 16ms response time with timed_wait vs. nano-second response time with polling.
+	//This is because nano-sleep is implemented with CreateWaitableTimer in WinAPI
+	//and uses QUAD/LARGE_INTEGER for sleeping small amounts.
+	//On other platforms, pthread_mutex_wait, sem_timed_op, etc..
+	//has a minimum resolution of 5 nano-seconds
+
 	static const std::int64_t timeout = 5000;
 	std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	while(elapsed_time<std::chrono::milliseconds>(now) < timeout)
@@ -766,11 +777,14 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 		{
 			return true;
 		}
-		yield_thread(std::chrono::nanoseconds(1));
+
+		//6 is a 1ns higher than default resolution on MacOS and Linux.
+		//Spikes around 10% CPU usage for thousands of calls per second.
+		std::this_thread::sleep_for(std::chrono::nanoseconds(6));
+		//yield_thread(std::chrono::nanoseconds(1));
 	}
 
 	return false;
-	//#endif
 }
 
 std::int32_t ControlCenter::parent_id() const
