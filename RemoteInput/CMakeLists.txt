@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(RemoteInput)
+project(RemoteInput VERSION 1.0.0 DESCRIPTION "Remote Input")
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -177,3 +177,4 @@ add_library(${PROJECT_NAME} SHARED
         ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME}
         ${LIBRARIES_LIST})
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
