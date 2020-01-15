@@ -126,7 +126,7 @@ bool JVM::Init(int argc, const char* argv[])
 
         JNI_GetDefaultJavaVMInitArgs(&jvm_args);
 
-        jvm_args.version = JNI_VERSION_1_8;
+        jvm_args.version = JNI_VERSION_1_6;
         jvm_args.nOptions = argc;
         jvm_args.options = options;
         jvm_args.ignoreUnrecognized = false;
