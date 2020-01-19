@@ -449,7 +449,7 @@ void ControlCenter::process_command()
 			hook.read(arguments);
 
 			auto result = reflector->getField<jarray>(hook.object, hook);
-			jsize length = reflector->getEnv()->GetArrayLength(result);
+			jsize length = result ? reflector->getEnv()->GetArrayLength(result) : 0;
 			EIOS_Write(arguments, length);
 			EIOS_Write(arguments, result);
         }
@@ -458,7 +458,6 @@ void ControlCenter::process_command()
 		case EIOSCommand::REFLECT_ARRAY_SIZE:
 		{
 			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
-
 			jsize length = reflector->getEnv()->GetArrayLength(array);
 			EIOS_Write(response, length);
 		}
