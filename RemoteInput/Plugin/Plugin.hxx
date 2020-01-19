@@ -27,6 +27,7 @@ extern "C"
 
 EXPORT EIOS* Reflect_GetEIOS(std::int32_t pid);
 EXPORT jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
+EXPORT jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second);
 EXPORT void Reflect_Release_Object(EIOS* eios, jobject object);
 EXPORT void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount);
 EXPORT char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);

@@ -169,6 +169,18 @@ struct __attribute__((__packed__)) StaticPascalArray
 
 // MARK: Single Functions
 
+void Pascal_Reflect_Equal(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        jobject first = PascalRead<jobject>(Params[1]);
+        jobject second = PascalRead<jobject>(Params[2]);
+
+        PascalWrite(Result, eios->control_center->reflect_is_objects_equal(first, second));
+    }
+}
+
 void Pascal_Reflect_Object(void** Params, void** Result)
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);

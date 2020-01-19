@@ -36,6 +36,15 @@ jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* 
 	return nullptr;
 }
 
+jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second)
+{
+    if (eios)
+    {
+        return eios->control_center->reflect_is_objects_equal(first, second);
+    }
+    return false;
+}
+
 void Reflect_Release_Object(EIOS* eios, jobject object)
 {
 	if (eios)

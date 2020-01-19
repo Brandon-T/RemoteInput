@@ -81,7 +81,8 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 
 	if (!is_controller)
 	{
-		this->set_parent(-1);
+        this->set_parent_process_id(-1);
+        this->set_parent_thread_id(-1);
 
 		std::thread thread = std::thread([&]{
 
@@ -308,6 +309,15 @@ void ControlCenter::process_command()
 			EIOS_Write(response, result);
 		}
 			break;
+
+	    case EIOSCommand::REFLECT_COMPARE_OBJECTS:
+        {
+            jobject first = EIOS_Read<jobject>(arguments);
+            jobject second = EIOS_Read<jobject>(arguments);
+            auto result = reflector->getVM()->IsSameObject(first, second);
+            EIOS_Write(response, result);
+        }
+            break;
 
 		case EIOSCommand::REFLECT_RELEASE_OBJECT:
 		{
@@ -787,9 +797,14 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 	return false;
 }
 
-std::int32_t ControlCenter::parent_id() const
+std::int32_t ControlCenter::parent_process_id() const
 {
-	return memory_map && memory_map->is_mapped() ? get_image_data()->parentId : -1;
+    return memory_map && memory_map->is_mapped() ? get_image_data()->parent_process_id : -1;
+}
+
+std::int32_t ControlCenter::parent_thread_id() const
+{
+	return memory_map && memory_map->is_mapped() ? get_image_data()->parent_thread_id : -1;
 }
 
 std::int32_t ControlCenter::get_width() const
@@ -831,20 +846,19 @@ void ControlCenter::set_debug_graphics(bool enabled)
 	}
 }
 
-pid_t ControlCenter::get_parent()
+void ControlCenter::set_parent_process_id(std::int32_t pid)
 {
-	if (memory_map && memory_map->is_mapped())
-	{
-		return get_image_data()->parentId;
-	}
-	return -1;
+    if (memory_map && memory_map->is_mapped())
+    {
+        get_image_data()->parent_process_id = pid;
+    }
 }
 
-void ControlCenter::set_parent(pid_t pid)
+void ControlCenter::set_parent_thread_id(std::int32_t tid)
 {
 	if (memory_map && memory_map->is_mapped())
 	{
-		get_image_data()->parentId = pid;
+		get_image_data()->parent_thread_id = tid;
 	}
 }
 
@@ -876,7 +890,14 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
 		*exists = true;
 		if (memory.map(sizeof(ImageData)))
 		{
-			bool is_paired = static_cast<ImageData*>(memory.data())->parentId != -1;
+		    ImageData* data = static_cast<ImageData*>(memory.data());
+		    if (data->parent_process_id != -1 && !IsProcessAlive(data->parent_process_id))
+            {
+                data->parent_process_id = -1;
+                data->parent_thread_id = -1;
+            }
+
+			bool is_paired = data->parent_thread_id != -1;
 			memory.unmap(sizeof(ImageData));
 			return is_paired;
 		}
@@ -1031,6 +1052,23 @@ bool ControlCenter::is_key_held(std::int32_t key)
 		return EIOS_Read<bool>(arguments);
 	}
 	return false;
+}
+
+bool ControlCenter::reflect_is_objects_equal(const jobject first, const jobject second)
+{
+    auto result = send_command([&](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_COMPARE_OBJECTS;
+        EIOS_Write(arguments, first);
+        EIOS_Write(arguments, second);
+    });
+
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        return EIOS_Read<bool>(response);
+    }
+    return false;
 }
 
 jobject ControlCenter::reflect_object(const ReflectionHook &hook)

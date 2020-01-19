@@ -43,6 +43,7 @@ enum class EIOSCommand: std::uint32_t
 	IS_KEY_HELD,
 
 	REFLECT_OBJECT,
+    REFLECT_COMPARE_OBJECTS,
 	REFLECT_RELEASE_OBJECT,
 	REFLECT_RELEASE_OBJECTS,
 	REFLECT_CHAR,
@@ -65,7 +66,8 @@ enum class EIOSCommand: std::uint32_t
 
 typedef struct ImageData
 {
-    std::int32_t parentId;
+	std::int32_t parent_process_id;
+    std::int32_t parent_thread_id;
     std::int32_t width;
     std::int32_t height;
 	bool debug_graphics;

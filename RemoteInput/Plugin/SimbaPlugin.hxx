@@ -10,6 +10,7 @@
 
 static const char* PascalExports[] =
 {
+    "Pascal_Reflect_Equal", "Function RIObjectsEqual(eios: Pointer; A, B: Pointer): Boolean; native;",
 	"Pascal_Reflect_Object", "Function RIGetObject(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
     "Pascal_Reflect_Release_Object", "Procedure RIReleaseObject(eios: Pointer; instance: Pointer); native;",
     "Pascal_Reflect_Release_Objects", "Procedure RIReleaseObjects(eios: Pointer; objects: Array of Pointer); native;",
@@ -88,6 +89,7 @@ extern "C"
 {
 #endif
 
+EXPORT void Pascal_Reflect_Equal(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Object(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Release_Object(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Release_Objects(void** Params, void** Result);

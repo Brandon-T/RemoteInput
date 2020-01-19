@@ -36,7 +36,8 @@ void EIOS_ReleaseTarget(EIOS* eios)
     if (eios)
     {
         clients.erase(eios->pid);
-		eios->control_center->set_parent(-1);
+		eios->control_center->set_parent_process_id(-1);
+		eios->control_center->set_parent_thread_id(-1);
 		eios->control_center->terminate();
 		eios->control_center.reset();
 		delete eios;
@@ -172,7 +173,7 @@ EIOS* EIOS_PairClient(pid_t pid)
 	if (clients.count(pid))
 	{
 		EIOS* eios = clients[pid];
-		return eios->control_center->get_parent() == tid ? eios : nullptr;
+		return eios->control_center->parent_thread_id() == tid ? eios : nullptr;
 	}
 
 	if (!IsProcessAlive(pid))
@@ -191,7 +192,8 @@ EIOS* EIOS_PairClient(pid_t pid)
 			eios->width = control_center->get_width();
 			eios->height = control_center->get_height();
 			eios->control_center = std::move(control_center);
-			eios->control_center->set_parent(tid);
+			eios->control_center->set_parent_process_id(getpid());
+			eios->control_center->set_parent_thread_id(tid);
 
 			clients[pid] = eios;
 			return eios;
@@ -208,7 +210,7 @@ void EIOS_KillClientPID(pid_t pid)
 {
 	if (pid != -1 && clients.count(pid) && IsProcessAlive(pid))
 	{
-		if (EIOS* eios = clients[pid]; eios->control_center->get_parent() == GetCurrentThreadID())
+		if (EIOS* eios = clients[pid]; eios->control_center->parent_thread_id() == GetCurrentThreadID())
 		{
 			clients.erase(pid);
 			eios->control_center->kill_process(pid);
@@ -220,7 +222,7 @@ void EIOS_KillClient(EIOS* eios)
 {
 	if (eios && eios->pid != -1 && clients.count(eios->pid) && IsProcessAlive(eios->pid))
 	{
-		if (eios->control_center->get_parent() == GetCurrentThreadID())
+		if (eios->control_center->parent_thread_id() == GetCurrentThreadID())
 		{
 			clients.erase(eios->pid);
 			eios->control_center->kill_process(eios->pid);

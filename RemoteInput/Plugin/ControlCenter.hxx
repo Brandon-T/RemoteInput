@@ -54,8 +54,8 @@ public:
 
 	void terminate();
 	bool hasReflector();
-	pid_t get_parent();
-	void set_parent(pid_t pid);
+	void set_parent_process_id(std::int32_t pid);
+	void set_parent_thread_id(std::int32_t tid);
 	void update_dimensions(std::int32_t width, std::int32_t height);
 	
 	static bool controller_exists(pid_t pid);
@@ -63,7 +63,8 @@ public:
 	void kill_process(pid_t pid);
 	static void kill_zombie_process(pid_t pid);
 
-	std::int32_t parent_id() const;
+	std::int32_t parent_process_id() const;
+	std::int32_t parent_thread_id() const;
 	std::int32_t get_width() const;
 	std::int32_t get_height() const;
 	std::uint8_t* get_image() const;
@@ -83,6 +84,7 @@ public:
 	void release_key(std::int32_t key);
 	bool is_key_held(std::int32_t key);
 
+	bool reflect_is_objects_equal(const jobject first, const jobject second);
 	jobject reflect_object(const ReflectionHook &hook);
 	void reflect_release_object(const jobject object);
 	void reflect_release_objects(const jobject* array, std::size_t length);
