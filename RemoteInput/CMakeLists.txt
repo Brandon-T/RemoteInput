@@ -12,7 +12,8 @@ include_directories(Plugin)
 
 
 # PACKAGES
-find_package(JNI REQUIRED)
+#find_package(Java 1.8 REQUIRED)
+find_package(JNI 1.8 REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS})
 
 
@@ -79,8 +80,50 @@ ELSE()
 ENDIF()
 
 # LIBRARIES
-set(LIBRARIES_LIST
+IF(WIN32)
+    set(LIBRARIES_LIST
         ${JAVA_AWT_LIBRARY})
+ELSEIF(APPLE)
+    set(JAVA_JNI_LIBRARY_PATH
+            /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib)
+
+    set(JAVA_JNI_LIBRARY_RPATH
+            "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib")
+
+    find_library(Java_JAWT_LIBRARY
+            NAMES libawt.dylib
+            HIMES ${_JAVA_HINTS}
+            PATHS ${JAVA_JNI_LIBRARY_PATH})
+
+    find_library(Java_JAWT_EXTENDED_LIBRARY
+            NAMES libawt_lwawt.dylib
+            HIMES ${_JAVA_HINTS}
+            PATHS ${JAVA_JNI_LIBRARY_PATH})
+
+    set(OTHER_LDFLAGS
+            ${OTHER_LDFLAGS}
+            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}\""
+            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}/server\"")
+
+    set(LIBRARIES_LIST
+            ${Java_JAWT_LIBRARY}
+            ${Java_JAWT_EXTENDED_LIBRARY}
+            ${OTHER_LDFLAGS})
+ELSE()
+    find_library(Java_JAWT_LIBRARY
+            NAMES libawt.so
+            HIMES ${_JAVA_HINTS}
+            PATHS ${_JAVA_HOME}/lib)
+
+    find_library(Java_JAWT_EXTENDED_LIBRARY
+            NAMES libawt_lwawt.so
+            HIMES ${_JAVA_HINTS}
+            PATHS ${_JAVA_HOME}/lib)
+
+    set(LIBRARIES_LIST
+            ${Java_JAWT_LIBRARY}
+            ${Java_JAWT_EXTENDED_LIBRARY})
+ENDIF()
 
 
 # SOURCES

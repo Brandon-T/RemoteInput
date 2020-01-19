@@ -301,10 +301,15 @@ void InitialiseHooks()
 {
 	#if __has_include("rd_route.h")
 	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
-	rd_route((void*)blit, (void*)JavaNativeBlit, (void **)&o_JavaNativeBlit);
-	
-	//CGLFlushDrawable_t swap = (CGLFlushDrawable_t)dlsym(RTLD_NEXT, "CGLFlushDrawable");
-	//rd_route((void*)swap, (void*)mCGLFlushDrawable, (void **)&o_CGLFlushDrawable);
+	if (blit)
+	{
+        rd_route((void *) blit, (void *) JavaNativeBlit, (void **) &o_JavaNativeBlit);
+    }
+	else
+    {
+        CGLFlushDrawable_t swap = (CGLFlushDrawable_t)dlsym(RTLD_NEXT, "CGLFlushDrawable");
+        rd_route((void*)swap, (void*)mCGLFlushDrawable, (void **)&o_CGLFlushDrawable);
+    }
 	#else
 	DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
 	#endif
