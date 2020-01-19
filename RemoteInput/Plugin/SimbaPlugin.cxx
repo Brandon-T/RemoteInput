@@ -473,7 +473,6 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
 			{
 				buffer[i] = nullptr;
 				std::string string = PascalRead(result);
-
 				if (!string.empty())
 				{
 					char* output = AllocateString<char>(string.length());
@@ -739,11 +738,15 @@ std::string PascalRead(void* &ptr)
 {
 	std::size_t length = *static_cast<std::size_t*>(ptr);
 	ptr = static_cast<std::size_t*>(ptr) + 1;
-
-	std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
-	ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
-	ptr = static_cast<char*>(ptr) + 1;
-	return result;
+	
+	if (length > 0)
+	{
+		std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
+		ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
+		ptr = static_cast<char*>(ptr) + 1;
+		return result;
+	}
+	return std::string();
 }
 
 template<typename T>

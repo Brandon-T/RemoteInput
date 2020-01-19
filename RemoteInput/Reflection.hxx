@@ -148,10 +148,16 @@ Reflection::getField(jstring string)
     if (string)
     {
 		jsize length = jvm->GetStringUTFLength(string);
-        const char* chars = jvm->GetStringUTFChars(string, nullptr);
-        std::string result = std::string(chars, length);
-        jvm->ReleaseStringUTFChars(string, chars);
-        return result;
+		if (length > 0)
+		{
+			const char* chars = jvm->GetStringUTFChars(string, nullptr);
+			if (chars)
+			{
+				std::string result = std::string(chars, length);
+				jvm->ReleaseStringUTFChars(string, chars);
+				return result;
+			}
+		}
     }
     return std::string();
 }

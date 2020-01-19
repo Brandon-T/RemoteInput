@@ -28,7 +28,7 @@ std::string EIOS_Read(void* &ptr)
 		ptr = static_cast<char*>(ptr) + 1;
 		return result;
 	}
-	return "";
+	return std::string();
 }
 
 template<typename T>
