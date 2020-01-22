@@ -45,6 +45,15 @@ jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second)
     return false;
 }
 
+jboolean Reflect_InstanceOf(EIOS* eios, jobject object, const char* cls)
+{
+	if (eios)
+	{
+		return eios->control_center->reflect_instance_of(object, cls);
+	}
+	return false;
+}
+
 void Reflect_Release_Object(EIOS* eios, jobject object)
 {
 	if (eios)

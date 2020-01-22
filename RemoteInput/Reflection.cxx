@@ -122,7 +122,8 @@ void Reflection::PrintClasses()
         auto clses = make_safe_local<jobjectArray>(jvm->CallObjectMethod(classes.get(), toArray));
 
         printf("LOADED CLASSES:\n");
-        for (int i = 0; i < jvm->GetArrayLength(clses.get()); ++i) {
+        for (int i = 0; i < jvm->GetArrayLength(clses.get()); ++i)
+		{
             auto clsObj = make_safe_local<jobject>(jvm->GetObjectArrayElement(clses.get(), i));
             std::string name = this->GetClassName(clsObj.get());
             printf("%s\n", name.c_str());

@@ -181,6 +181,18 @@ void Pascal_Reflect_Equal(void** Params, void** Result)
     }
 }
 
+void Pascal_Reflect_InstanceOf(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        jobject object = PascalRead<jobject>(Params[1]);
+        char* cls = PascalRead<char*>(Params[2]);
+
+        PascalWrite(Result, eios->control_center->reflect_instance_of(object, cls));
+    }
+}
+
 void Pascal_Reflect_Object(void** Params, void** Result)
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);

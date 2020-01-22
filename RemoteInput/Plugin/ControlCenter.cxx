@@ -318,6 +318,27 @@ void ControlCenter::process_command()
             EIOS_Write(response, result);
         }
             break;
+			
+		case EIOSCommand::REFLECT_INSTANCE_OF:
+		{
+			jboolean result = false;
+			jobject object = EIOS_Read<jobject>(arguments);
+			std::string className = EIOS_Read(arguments);
+			jclass cls = reflector->LoadClass(className.c_str());
+			if (!cls)
+			{
+				cls = reflector->getVM()->FindClass(className.c_str());
+			}
+			
+			if (cls)
+			{
+				result = reflector->getEnv()->IsInstanceOf(object, cls);
+				reflector->getEnv()->DeleteLocalRef(cls);
+			}
+			
+			EIOS_Write(response, result);
+		}
+			break;
 
 		case EIOSCommand::REFLECT_RELEASE_OBJECT:
 		{
@@ -1068,6 +1089,23 @@ bool ControlCenter::reflect_is_objects_equal(const jobject first, const jobject 
         return EIOS_Read<bool>(response);
     }
     return false;
+}
+
+bool ControlCenter::reflect_instance_of(const jobject object, std::string cls)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_INSTANCE_OF;
+		EIOS_Write(arguments, object);
+		EIOS_Write(arguments, cls);
+	});
+	
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		return EIOS_Read<jboolean>(response);
+	}
+	return false;
 }
 
 jobject ControlCenter::reflect_object(const ReflectionHook &hook)

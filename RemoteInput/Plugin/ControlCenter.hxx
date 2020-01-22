@@ -85,6 +85,7 @@ public:
 	bool is_key_held(std::int32_t key);
 
 	bool reflect_is_objects_equal(const jobject first, const jobject second);
+	bool reflect_instance_of(const jobject object, std::string cls);
 	jobject reflect_object(const ReflectionHook &hook);
 	void reflect_release_object(const jobject object);
 	void reflect_release_objects(const jobject* array, std::size_t length);
