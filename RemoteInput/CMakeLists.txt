@@ -67,6 +67,8 @@ ELSE()
 ENDIF()
 
 IF(WIN32)
+    set(EXTRA_LIBRARIES
+            OpenGL32)
 ELSEIF(APPLE)
     find_library(FOUNDATION Foundation)
     find_library(COCOA Cocoa)
@@ -82,7 +84,7 @@ ENDIF()
 # LIBRARIES
 IF(WIN32)
     set(LIBRARIES_LIST
-        ${JAVA_AWT_LIBRARY})
+            ${JAVA_AWT_LIBRARY})
 ELSEIF(APPLE)
     set(JAVA_JNI_LIBRARY_PATH
             /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib)
@@ -139,14 +141,14 @@ set(SRC_LIST
         Echo/Module.hxx
         Echo/SharedEvent.cxx
         Echo/SharedEvent.hxx
-        Echo/SpinLock.cxx
-        Echo/SpinLock.hxx
+        #Echo/SpinLock.cxx
+        #Echo/SpinLock.hxx
         Echo/Time.cxx
         Echo/Time.hxx
         Hooks/Hooks.cpp
         Hooks/Hooks.hpp
-        Hooks/ModelRendering.cpp
-        Hooks/ModelRendering.hpp
+        #Hooks/ModelRendering.cpp
+        #Hooks/ModelRendering.hpp
         Java/Applet.cxx
         Java/Applet.hxx
         Java/AWTAccessor.cxx
@@ -181,7 +183,7 @@ set(SRC_LIST
         Platform/NativeHooks_Linux.cxx
         Platform/NativeHooks_Windows.cxx
         Platform/Platform.hxx
-        Platform/Platform_Darwin.mm
+        #Platform/Platform_Darwin.mm
         Platform/Platform_Linux.cxx
         Platform/Platform_Windows.cxx
         Plugin/ControlCenter.cxx
@@ -211,6 +213,22 @@ set(SRC_LIST
         RemoteInput.h
         ThreadPool.cxx
         ThreadPool.hxx)
+
+IF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE Release)
+ENDIF()
+
+set(CMAKE_CXX_FLAGS_DEBUG
+        "${CMAKE_CXX_FLAGS_DEBUG} -g -static -static-libgcc -static-libstdc++")
+
+set(CMAKE_CXX_FLAGS_RELEASE
+        "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s -static -static-libgcc -static-libstdc++")
+
+IF(APPLE)
+    set(SRC_LIST
+            ${SRC_LIST}
+            Platform/Platform_Darwin.mm)
+ENDIF()
 
 set(LIBRARIES_LIST
         ${LIBRARIES_LIST}

@@ -24,6 +24,9 @@
 #undef VK_RSHIFT
 #undef VK_CONTROL
 #undef VK_APPS
+#undef VK_TAB
+#undef VK_BACK
+#undef VK_RETURN
 #endif // VK_SHIFT
 
 enum ControlKeys : std::uint32_t
