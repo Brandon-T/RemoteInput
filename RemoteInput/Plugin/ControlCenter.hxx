@@ -101,6 +101,7 @@ public:
 	jarray reflect_array(const ReflectionHook &hook);
 	jarray reflect_array_with_size(const ReflectionHook &hook, std::size_t* output_size);
 	std::size_t reflect_array_size(const jarray array);
+	std::size_t reflect_array_size(const jarray array, std::size_t index);
 	void* reflect_array_index(const jarray array, ReflectionArrayType type, std::size_t index, std::size_t length);
 	void* reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y);
 	void* reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z);

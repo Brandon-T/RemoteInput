@@ -483,6 +483,22 @@ void ControlCenter::process_command()
 			EIOS_Write(response, length);
 		}
 			break;
+			
+		case EIOSCommand::REFLECT_ARRAY_INDEX_SIZE:
+		{
+			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
+			jsize index = EIOS_Read<jsize>(arguments);
+			
+			jarray local = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(array, index));
+			jsize length = local ? reflector->getEnv()->GetArrayLength(local) : 0;
+			if (local)
+			{
+				reflector->getEnv()->DeleteLocalRef(local);
+			}
+			
+			EIOS_Write(response, length);
+		}
+			break;
 
 		case EIOSCommand::REFLECT_ARRAY_INDEX:
 		{
@@ -524,7 +540,8 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 
 		if (length == 0)
         {
-            length = reflector->getEnv()->GetArrayLength(array);
+            //length = reflector->getEnv()->GetArrayLength(array);
+			return EIOS_Write(response, nullptr);
         }
 
 		//Maybe better to use GetPrimitiveArrayCritical + memcpy
@@ -1338,6 +1355,24 @@ std::size_t ControlCenter::reflect_array_size(const jarray array)
 		void* arguments = image_data->args;
 		image_data->command = EIOSCommand::REFLECT_ARRAY_SIZE;
 		EIOS_Write(arguments, array);
+	});
+
+	if (result)
+	{
+		void* response = get_image_data()->args;
+		jsize object = EIOS_Read<jsize>(response);
+		return object;
+	}
+	return 0;
+}
+
+std::size_t ControlCenter::reflect_array_size(const jarray array, std::size_t index)
+{
+	auto result = send_command([&](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX_SIZE;
+		EIOS_Write(arguments, array);
+		EIOS_Write(arguments, index);
 	});
 
 	if (result)

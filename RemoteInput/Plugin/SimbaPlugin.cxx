@@ -397,6 +397,18 @@ void Pascal_Reflect_Array_Size(void** Params, void** Result)
 	}
 }
 
+void Pascal_Reflect_Array_Index_Size(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+	if (eios)
+	{
+	    jarray array = PascalRead<jarray>(Params[1]);
+		std::int32_t index = PascalRead<std::int32_t>(Params[2]);
+		PascalWrite(Result, eios->control_center->reflect_array_size(array, index));
+	}
+}
+
 void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result)
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
@@ -473,6 +485,11 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
 	    ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
 	    std::size_t index = PascalRead<std::size_t>(Params[3]);
 	    std::size_t length = PascalRead<std::size_t>(Params[4]);
+		
+		if (length == 0)
+		{
+			return;
+		}
 
 		void* result = eios->control_center->reflect_array_index(array, type, index, length);
 
@@ -517,6 +534,11 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
 	    std::size_t length = PascalRead<std::size_t>(Params[3]);
 	    std::int32_t x = PascalRead<std::int32_t>(Params[4]);
 	    std::int32_t y = PascalRead<std::int32_t>(Params[5]);
+		
+		if (length == 0)
+		{
+			return;
+		}
 
 		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
 
@@ -562,6 +584,11 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
 	    std::int32_t x = PascalRead<std::int32_t>(Params[4]);
 	    std::int32_t y = PascalRead<std::int32_t>(Params[5]);
 	    std::int32_t z = PascalRead<std::int32_t>(Params[6]);
+		
+		if (length == 0)
+		{
+			return;
+		}
 
 		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
 
@@ -608,6 +635,11 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
 	    std::int32_t y = PascalRead<std::int32_t>(Params[5]);
 	    std::int32_t z = PascalRead<std::int32_t>(Params[6]);
 	    std::int32_t w = PascalRead<std::int32_t>(Params[7]);
+		
+		if (length == 0)
+		{
+			return;
+		}
 
 		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
 
