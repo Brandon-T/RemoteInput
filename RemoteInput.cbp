@@ -109,7 +109,7 @@
 		<Unit filename="RemoteInput/Platform/NativeHooks_Linux.cxx" />
 		<Unit filename="RemoteInput/Platform/NativeHooks_Windows.cxx" />
 		<Unit filename="RemoteInput/Platform/Platform.hxx" />
-		<Unit filename="RemoteInput/Platform/Platform_Darwin.cxx" />
+		<Unit filename="RemoteInput/Platform/Platform_Darwin.mm" />
 		<Unit filename="RemoteInput/Platform/Platform_Linux.cxx" />
 		<Unit filename="RemoteInput/Platform/Platform_Windows.cxx" />
 		<Unit filename="RemoteInput/Plugin/ControlCenter.cxx" />

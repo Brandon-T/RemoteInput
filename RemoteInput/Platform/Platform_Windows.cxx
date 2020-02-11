@@ -30,6 +30,14 @@ bool IsProcessAlive(pid_t pid)
     return ret == WAIT_TIMEOUT;
 }
 
+bool IsThreadAlive(std::int32_t tid)
+{
+    HANDLE thread = OpenThread(SYNCHRONIZE, FALSE, tid);
+    DWORD ret = WaitForSingleObject(thread, 0);
+    CloseHandle(thread);
+    return ret == WAIT_TIMEOUT;
+}
+
 std::vector<pid_t> get_pids()
 {
 	std::vector<pid_t> result;
@@ -83,6 +91,92 @@ std::vector<pid_t> get_pids(const char* process_name)
 		CloseHandle(processesSnapshot);
 	}
 	return result;
+}
+
+PROCESSENTRY32 GetProcessInfo(pid_t pid)
+{
+    HANDLE processesSnapshot = nullptr;
+    if((processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)) == INVALID_HANDLE_VALUE)
+    {
+        return {0};
+    }
+
+    PROCESSENTRY32 processInfo = {0};
+    processInfo.dwSize = sizeof(PROCESSENTRY32);
+    while(Process32Next(processesSnapshot, &processInfo))
+    {
+        if(processInfo.th32ProcessID == static_cast<DWORD>(pid))
+        {
+            CloseHandle(processesSnapshot);
+            return processInfo;
+        }
+    }
+    CloseHandle(processesSnapshot);
+    return {0};
+}
+
+void PrintProcessInfo(pid_t pid)
+{
+    /*PROCESSENTRY32 Proc32 = GetProcessInfo(pid);
+    if (Proc32.th32ProcessID != 0)
+    {
+        std::cout << "  =======================================================\n";
+        std::cout << "  Process Name:            " << Proc32.szExeFile           << "\n";
+        std::cout << "  =======================================================\n\n";
+        std::cout << "  Process ID:              " << Proc32.th32ProcessID       << "\n";
+        std::cout << "  Thread Count:            " << Proc32.cntThreads          << "\n";
+        std::cout << "  Priority Base:           " << Proc32.pcPriClassBase      << "\n";
+        std::cout << "  Parent Process ID:       " << Proc32.th32ParentProcessID << "\n\n";
+        std::cout << "  =======================================================\n";
+    }*/
+}
+
+bool InjectSelf(pid_t pid)
+{
+    if (IsProcessAlive(pid))
+    {
+        std::string File;
+        File.resize(MAX_PATH);
+        extern HMODULE module;
+
+        if (GetModuleFileName(module, &File[0], MAX_PATH) == 0)
+        {
+            return false;
+        }
+
+        HMODULE hKernel32 = nullptr;
+        void* RemoteAddress = nullptr;
+        HANDLE ProcessHandle, hThread = nullptr;
+        LPTHREAD_START_ROUTINE LoadLibraryHandle = nullptr;
+
+        if ((ProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, false, pid)))
+        {
+            if ((hKernel32 = GetModuleHandle("Kernel32.dll")))
+            {
+                PrintProcessInfo(pid);
+
+                LoadLibraryHandle = reinterpret_cast<LPTHREAD_START_ROUTINE>(GetProcAddress(hKernel32, "LoadLibraryA"));
+                RemoteAddress = VirtualAllocEx(ProcessHandle, nullptr, File.size() * sizeof(char), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+                WriteProcessMemory(ProcessHandle, RemoteAddress, &File[0], File.size() * sizeof(char), nullptr);
+                hThread = CreateRemoteThread(ProcessHandle, nullptr, 0, LoadLibraryHandle, RemoteAddress, 0, nullptr);
+                WaitForSingleObject(hThread, INFINITE);
+                VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
+                CloseHandle(ProcessHandle);
+                CloseHandle(hThread);
+                Sleep(5000);
+                return true;
+            }
+            CloseHandle(ProcessHandle);
+        }
+    }
+    return false;
+}
+
+pid_t PIDFromWindow(void* window)
+{
+    DWORD pid = 0;
+    GetWindowThreadProcessId(static_cast<HWND>(window), &pid);
+    return static_cast<pid_t>(pid);
 }
 #endif // defined
 

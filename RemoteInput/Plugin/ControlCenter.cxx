@@ -934,7 +934,12 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
                 data->parent_thread_id = -1;
             }
 
-			bool is_paired = data->parent_thread_id != -1;
+            if (data->parent_thread_id != -1 && !IsThreadAlive(data->parent_thread_id))
+            {
+                data->parent_thread_id = -1;
+            }
+
+			bool is_paired = data->parent_thread_id != GetCurrentThreadID();
 			memory.unmap(sizeof(ImageData));
 			return is_paired;
 		}

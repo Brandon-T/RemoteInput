@@ -40,6 +40,7 @@ void EIOS_ReleaseTarget(EIOS* eios)
 		eios->control_center->set_parent_thread_id(-1);
 		eios->control_center->terminate();
 		eios->control_center.reset();
+		eios->pid = -1;
 		delete eios;
     }
 }
