@@ -25,17 +25,25 @@ std::int32_t GetCurrentThreadID()
 bool IsProcessAlive(pid_t pid)
 {
 	HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
-    DWORD ret = WaitForSingleObject(process, 0);
-    CloseHandle(process);
-    return ret == WAIT_TIMEOUT;
+	if (process)
+    {
+        DWORD ret = WaitForSingleObject(process, 0);
+        CloseHandle(process);
+        return ret == WAIT_TIMEOUT;
+    }
+    return false;
 }
 
 bool IsThreadAlive(std::int32_t tid)
 {
     HANDLE thread = OpenThread(SYNCHRONIZE, FALSE, tid);
-    DWORD ret = WaitForSingleObject(thread, 0);
-    CloseHandle(thread);
-    return ret == WAIT_TIMEOUT;
+    if (thread)
+    {
+        DWORD ret = WaitForSingleObject(thread, 0);
+        CloseHandle(thread);
+        return ret == WAIT_TIMEOUT;
+    }
+    return false;
 }
 
 std::vector<pid_t> get_pids()
@@ -200,14 +208,29 @@ bool InjectSelf(pid_t pid)
                 PrintProcessInfo(pid);
 
                 LoadLibraryHandle = reinterpret_cast<LPTHREAD_START_ROUTINE>(GetProcAddress(hKernel32, "LoadLibraryA"));
-                RemoteAddress = VirtualAllocEx(ProcessHandle, nullptr, File.size() * sizeof(char), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-                WriteProcessMemory(ProcessHandle, RemoteAddress, &File[0], File.size() * sizeof(char), nullptr);
-                hThread = CreateRemoteThread(ProcessHandle, nullptr, 0, LoadLibraryHandle, RemoteAddress, 0, nullptr);
-                WaitForSingleObject(hThread, INFINITE);
-                VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
-                CloseHandle(ProcessHandle);
-                CloseHandle(hThread);
-                return true;
+                if (LoadLibraryHandle)
+                {
+                    RemoteAddress = VirtualAllocEx(ProcessHandle, nullptr, File.size() * sizeof(char), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+                    if (RemoteAddress)
+                    {
+                        if (WriteProcessMemory(ProcessHandle, RemoteAddress, &File[0], File.size() * sizeof(char), nullptr))
+                        {
+                            hThread = CreateRemoteThread(ProcessHandle, nullptr, 0, LoadLibraryHandle, RemoteAddress, 0, nullptr);
+                            if (hThread)
+                            {
+                                //More than enough time to wait for a proccess to create a thread..
+                                WaitForSingleObject(hThread, 5000);
+                                CloseHandle(hThread);
+                            }
+
+                            VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
+                            CloseHandle(ProcessHandle);
+                            return true;
+                        }
+
+                        VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
+                    }
+                }
             }
             CloseHandle(ProcessHandle);
         }
