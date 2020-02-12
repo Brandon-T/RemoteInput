@@ -928,15 +928,24 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
 		if (memory.map(sizeof(ImageData)))
 		{
 		    ImageData* data = static_cast<ImageData*>(memory.data());
-		    if (data->parent_process_id != -1 && !IsProcessAlive(data->parent_process_id))
+		    if (data)
             {
-                data->parent_process_id = -1;
-                data->parent_thread_id = -1;
-            }
+                if (data->parent_process_id != -1 && !IsProcessAlive(data->parent_process_id))
+                {
+                    data->parent_process_id = -1;
+                    data->parent_thread_id = -1;
+                }
 
-			bool is_paired = data->parent_thread_id != -1;
-			memory.unmap(sizeof(ImageData));
-			return is_paired;
+                if (data->parent_thread_id != -1 && !IsThreadAlive(data->parent_thread_id))
+                {
+                    data->parent_thread_id = -1;
+                }
+
+                //data->parent_thread_id != GetCurrentThreadID();
+                bool is_paired = data->parent_thread_id != -1 && data->parent_thread_id != GetCurrentThreadID();
+                memory.unmap(sizeof(ImageData));
+                return is_paired;
+            }
 		}
 	}
 

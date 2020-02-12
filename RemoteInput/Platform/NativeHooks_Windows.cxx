@@ -148,8 +148,11 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 	#endif
 
 	//Buffer size changed
-	if (w != width && h != height)
+	if (w != width || h != height)
 	{
+	    w = width;
+	    h = height;
+
 		//If buffers already exist, clean them up
 		if (pbo[1] != 0)
 		{
@@ -260,7 +263,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 
-		if (width >= 765 && height >= 553)
+		if (width >= 200 && height >= 200)
 		{
 			control_center->update_dimensions(width, height);
 

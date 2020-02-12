@@ -49,6 +49,11 @@ bool IsProcessAlive(pid_t pid)
 	return !kill(pid, 0);
 }
 
+bool IsThreadAlive(std::int32_t tid)
+{
+    return !syscall(SYS_tkill, tid, 0);
+}
+
 std::vector<pid_t> get_pids()
 {
 	std::vector<pid_t> pids(2048);
@@ -74,6 +79,11 @@ std::vector<pid_t> get_pids(const char* process_name)
         }
     }
 	return result;
+}
+
+pid_t PIDFromWindow(void* window)
+{
+    return 0; //Can iterate all CGWindows and check the kCGWindowOwnerPID
 }
 #endif // defined
 

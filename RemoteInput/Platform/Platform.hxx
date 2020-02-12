@@ -14,8 +14,10 @@ Reflection* GetNativeReflector();
 std::int32_t GetCurrentThreadID();
 
 bool IsProcessAlive(pid_t pid);
+bool IsThreadAlive(std::int32_t tid);
 std::vector<pid_t> get_pids();
 std::vector<pid_t> get_pids(const char* process_name);
+pid_t PIDFromWindow(void* window);
 
 template<typename T>
 void yield_thread(std::chrono::duration<std::int64_t, T> time)

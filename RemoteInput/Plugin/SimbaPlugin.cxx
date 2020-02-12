@@ -725,6 +725,16 @@ void Pascal_GetClientPID(void** Params, void** Result)
     PascalWrite(Result, EIOS_GetClientPID(index));
 }
 
+void Pascal_Inject(void** Params, void** Result)
+{
+    const char* process_name = PascalRead<const char*>(Params[0]);
+    if (process_name)
+    {
+        extern void InjectProcesses(const char* process_name);
+        InjectProcesses(process_name);
+    }
+}
+
 
 template<typename T>
 int PascalHigh(T* Arr)

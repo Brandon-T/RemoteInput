@@ -30,6 +30,11 @@ bool IsProcessAlive(pid_t pid)
 	return !kill(pid, 0);
 }
 
+bool IsThreadAlive(std::int32_t tid)
+{
+    return !syscall(SYS_tkill, tid, 0);
+}
+
 std::vector<pid_t> get_pids()
 {
 	std::vector<pid_t> pids(2048);
@@ -241,6 +246,15 @@ std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid)
     std::vector<Window> windows;
     GetWindowsFromPIDInternal(display, XDefaultRootWindow(display), atomPID, pid, windows);
     return windows;
+}
+
+pid_t PIDFromWindow(void* window)
+{
+    pid_t pid = 0;
+    Display* display = XOpenDisplay(nullptr);
+    GetWindowThreadProcessId(display, static_cast<Window>(window), &pid);
+    XCloseDisplay(display);
+    return pid;
 }
 #endif
 

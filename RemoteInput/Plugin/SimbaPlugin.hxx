@@ -54,7 +54,9 @@ static const char* PascalExports[] =
 	"Pascal_KillClientPID", "Procedure EIOS_KillClient(pid: Int32); native;",
 	"Pascal_KillClient", "Procedure EIOS_KillClient(eios: Pointer); overload; native;",
 	"Pascal_GetClients", "Function EIOS_GetClients(unpaired_only: Boolean): SizeUInt; native;",
-	"Pascal_GetClientPID", "Function EIOS_GetClientPID(index: SizeUInt): Int32; native;"
+	"Pascal_GetClientPID", "Function EIOS_GetClientPID(index: SizeUInt): Int32; native;",
+
+	"Pascal_Inject", "Procedure RIInject(process_name: String); native;"
 };
 
 static const char* PascalTypes[] =
@@ -127,6 +129,8 @@ EXPORT void Pascal_KillClientPID(void** Params, void** Result);
 EXPORT void Pascal_KillClient(void** Params, void** Result);
 EXPORT void Pascal_GetClients(void** Params, void** Result);
 EXPORT void Pascal_GetClientPID(void** Params, void** Result);
+
+EXPORT void Pascal_Inject(void** Params, void** Result);
 
 #ifdef __cplusplus
 }
