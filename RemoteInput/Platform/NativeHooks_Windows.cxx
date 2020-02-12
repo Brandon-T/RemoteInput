@@ -193,7 +193,8 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 
 	if (data)
 	{
-		memcpy(dest, data, width * height * 4);
+		//memcpy(dest, data, width * height * 4);
+		FlipImageBytes(data, (void*&)dest, width, height, 32);
 		data = nullptr;
 		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	}
@@ -274,7 +275,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 				LoadOpenGLExtensions();
 				GeneratePixelBuffers(hdc, pbo, width, height, 4);
 				ReadPixelBuffers(hdc, dest, pbo, width, height, 4);
-				FlipImageVertically(width, height, dest);
+				//FlipImageVertically(width, height, dest);
 			}
 
 			//Render Debug Graphics

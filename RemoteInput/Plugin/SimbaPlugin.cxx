@@ -727,12 +727,14 @@ void Pascal_GetClientPID(void** Params, void** Result)
 
 void Pascal_Inject(void** Params, void** Result)
 {
+	#if defined(_WIN32) || defined(_WIN64)
     const char* process_name = PascalRead<const char*>(Params[0]);
     if (process_name)
     {
         extern void InjectProcesses(const char* process_name);
         InjectProcesses(process_name);
     }
+	#endif
 }
 
 

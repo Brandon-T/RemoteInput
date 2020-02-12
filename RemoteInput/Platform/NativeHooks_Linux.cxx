@@ -82,8 +82,11 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 	#endif
 
 	//Buffer size changed
-	if (w != width && h != height)
+	if (w != width || h != height)
 	{
+		w = width;
+		h = height;
+		
 		//If buffers already exist, clean them up
 		if (pbo[1] != 0)
 		{
@@ -124,7 +127,8 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 
 	if (data)
 	{
-		memcpy(dest, data, width * height * 4);
+		//memcpy(dest, data, width * height * 4);
+		FlipImageBytes(data, (void*&)dest, width, height, 32);
 		data = nullptr;
 		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	}
@@ -149,7 +153,7 @@ void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 
-		if (width >= 765 && height >= 553)
+		if (width >= 200 && height >= 200)
 		{
 			control_center->update_dimensions(width, height);
 			
@@ -159,7 +163,7 @@ void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 			{
 				GeneratePixelBuffers(drawable, pbo, width, height, 4);
 				ReadPixelBuffers(drawable, dest, pbo, width, height, 4);
-				FlipImageVertically(width, height, dest);
+				//FlipImageVertically(width, height, dest);
 			}
 			
 			//Render Debug Graphics

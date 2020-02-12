@@ -51,7 +51,7 @@ bool IsProcessAlive(pid_t pid)
 
 bool IsThreadAlive(std::int32_t tid)
 {
-    return !syscall(SYS_tkill, tid, 0);
+    return !kill(tid, 0);
 }
 
 std::vector<pid_t> get_pids()
@@ -83,7 +83,17 @@ std::vector<pid_t> get_pids(const char* process_name)
 
 pid_t PIDFromWindow(void* window)
 {
-    return 0; //Can iterate all CGWindows and check the kCGWindowOwnerPID
+    NSArray *windowList = (NSArray *)CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID));
+	
+	for (int i = 0; i < windowList.count; ++i)
+	{
+		CGWindowID windowId = [[windowList[i] valueForKey:(NSString *)kCGWindowNumber] intValue];
+		if (windowId == (CGWindowID)reinterpret_cast<std::uintptr_t>(window))
+		{
+			return ((NSNumber *)[windowList[i] valueForKey:(NSString *)kCGWindowOwnerPID]).intValue;
+		}
+	}
+	return 0;
 }
 #endif // defined
 
