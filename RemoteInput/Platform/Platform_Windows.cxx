@@ -72,17 +72,15 @@ std::vector<pid_t> get_pids(const char* process_name)
 	{
 		if (Process32First(processesSnapshot, &processInfo))
 		{
-			if (!strcmp(process_name, processInfo.szExeFile))
+			if (!_stricmp(process_name, processInfo.szExeFile))
 			{
-				CloseHandle(processesSnapshot);
 				result.push_back(processInfo.th32ProcessID);
 			}
 
 			while (Process32Next(processesSnapshot, &processInfo))
 			{
-				if (!strcmp(process_name, processInfo.szExeFile))
+				if (!_stricmp(process_name, processInfo.szExeFile))
 				{
-					CloseHandle(processesSnapshot);
 					result.push_back(processInfo.th32ProcessID);
 				}
 			}
@@ -115,20 +113,66 @@ PROCESSENTRY32 GetProcessInfo(pid_t pid)
     return {0};
 }
 
+MODULEENTRY32 GetModuleInfo(pid_t pid, const char* module_name)
+{
+	HANDLE modulesSnapshot = nullptr;
+	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
+    {
+		return {0};
+    }
+
+    MODULEENTRY32 moduleInfo = {0};
+	moduleInfo.dwSize = sizeof(MODULEENTRY32);
+	while (Module32Next(modulesSnapshot, &moduleInfo))
+	{
+		if (!_stricmp(module_name, moduleInfo.szModule))
+		{
+			CloseHandle(modulesSnapshot);
+			return moduleInfo;
+		}
+	}
+
+	CloseHandle(modulesSnapshot);
+	return {0};
+}
+
+MODULEENTRY32 GetModuleInfo(pid_t pid, HMODULE module_handle)
+{
+	HANDLE modulesSnapshot = nullptr;
+	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
+    {
+		return {0};
+    }
+
+    MODULEENTRY32 moduleInfo = {0};
+	moduleInfo.dwSize = sizeof(MODULEENTRY32);
+	while (Module32Next(modulesSnapshot, &moduleInfo))
+	{
+		if (module_handle == moduleInfo.hModule)
+		{
+			CloseHandle(modulesSnapshot);
+			return moduleInfo;
+		}
+	}
+
+	CloseHandle(modulesSnapshot);
+	return {0};
+}
+
 void PrintProcessInfo(pid_t pid)
 {
-    /*PROCESSENTRY32 Proc32 = GetProcessInfo(pid);
+    PROCESSENTRY32 Proc32 = GetProcessInfo(pid);
     if (Proc32.th32ProcessID != 0)
     {
-        std::cout << "  =======================================================\n";
-        std::cout << "  Process Name:            " << Proc32.szExeFile           << "\n";
-        std::cout << "  =======================================================\n\n";
-        std::cout << "  Process ID:              " << Proc32.th32ProcessID       << "\n";
-        std::cout << "  Thread Count:            " << Proc32.cntThreads          << "\n";
-        std::cout << "  Priority Base:           " << Proc32.pcPriClassBase      << "\n";
-        std::cout << "  Parent Process ID:       " << Proc32.th32ParentProcessID << "\n\n";
-        std::cout << "  =======================================================\n";
-    }*/
+        printf("  =======================================================\n");
+        printf("  Process Name:            %s\n", Proc32.szExeFile);
+        printf("  =======================================================\n\n");
+        printf("  Process ID:              %lu\n", Proc32.th32ProcessID);
+        printf("  Thread Count:            %lu\n", Proc32.cntThreads);
+        printf("  Priority Base:           %lu\n", Proc32.pcPriClassBase);
+        printf("  Parent Process ID:       %lu\n\n", Proc32.th32ParentProcessID);
+        printf("  =======================================================\n");
+    }
 }
 
 bool InjectSelf(pid_t pid)
@@ -163,13 +207,27 @@ bool InjectSelf(pid_t pid)
                 VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
                 CloseHandle(ProcessHandle);
                 CloseHandle(hThread);
-                Sleep(5000);
                 return true;
             }
             CloseHandle(ProcessHandle);
         }
     }
     return false;
+}
+
+void InjectProcesses(const char* process_name)
+{
+    extern HMODULE module;
+
+    std::vector<pid_t> pids = get_pids(process_name);
+    for (pid_t pid : pids)
+    {
+        MODULEENTRY32 info = GetModuleInfo(pid, module);
+        if (info.dwSize == 0)
+        {
+            InjectSelf(pid);
+        }
+    }
 }
 
 pid_t PIDFromWindow(void* window)
