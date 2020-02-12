@@ -3,6 +3,7 @@
 
 #if __has_include("rd_route.h")
 #include "rd_route.h"
+#define USE_RD_ROUTE
 #endif
 
 #include <OpenGL/OpenGL.h>
@@ -17,7 +18,7 @@
 #include "Graphics.hxx"
 #endif
 
-#if !__has_include("rd_route.h")
+#if !defined(USE_RD_ROUTE)
 #define DYLD_INTERPOSE(_replacment,_replacee) \
 __attribute__((used)) static struct{ const void* replacment; const void* replacee; } _interpose_##_replacee \
 __attribute__ ((section ("__DATA,__interpose"))) = { (const void*)(unsigned long)&_replacment, (const void*)(unsigned long)&_replacee };
@@ -129,8 +130,11 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 	#endif
 	
 	//Buffer size changed
-	if (w != width && h != height)
+	if (w != width || h != height)
 	{
+		w = width;
+		h = height;
+		
 		//If buffers already exist, clean them up
 		if (pbo[1] != 0)
 		{
@@ -171,7 +175,8 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 
 	if (data)
 	{
-		memcpy(dest, data, width * height * 4);
+		//memcpy(dest, data, width * height * 4);
+		FlipImageBytes(data, (void*&)dest, width, height, 32);
 		data = nullptr;
 		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	}
@@ -183,7 +188,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
-#if __has_include("rd_route.h")
+#if defined(USE_RD_ROUTE)
 typedef CGLError (*CGLFlushDrawable_t)(CGLContextObj ctx);
 CGLFlushDrawable_t o_CGLFlushDrawable;
 
@@ -201,7 +206,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 		
-		if (width >= 765 && height >= 553)
+		if (width >= 200 && height >= 200)
 		{
 			control_center->update_dimensions(width, height);
 			
@@ -211,7 +216,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 			{
 				GeneratePixelBuffers(ctx, pbo, width, height, 4);
 				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
-				FlipImageVertically(width, height, dest);
+				//FlipImageVertically(width, height, dest);
 			}
 			
 			//Render Debug Graphics
@@ -232,7 +237,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 			if (x > -1 && y > -1)
 			{
 				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-				gl_draw_point(ctx, x, y, 0, 4);
+				gl_draw_point(ctx, x, height - y, 0, 4);
 			}
 		}
 	}
@@ -254,7 +259,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 		
-		if (width >= 765 && height >= 553)
+		if (width >= 200 && height >= 200)
 		{
 			control_center->update_dimensions(width, height);
 			
@@ -264,7 +269,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 			{
 				GeneratePixelBuffers(ctx, pbo, width, height, 4);
 				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
-				FlipImageVertically(width, height, dest);
+				//FlipImageVertically(width, height, dest);
 			}
 			
 			//Render Debug Graphics
@@ -285,7 +290,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 			if (x > -1 && y > -1)
 			{
 				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-				gl_draw_point(ctx, x, y, 0, 4);
+				gl_draw_point(ctx, x, height - y, 0, 4);
 			}
 		}
 	}
@@ -299,7 +304,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 #if defined(__APPLE__)
 void InitialiseHooks()
 {
-	#if __has_include("rd_route.h")
+	#if defined(USE_RD_ROUTE)
 	JavaNativeBlit_t blit = (JavaNativeBlit_t)dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
 	if (blit)
 	{

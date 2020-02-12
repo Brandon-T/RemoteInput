@@ -26,6 +26,25 @@ void RGBA(std::uint32_t colour, std::uint8_t& r, std::uint8_t& g, std::uint8_t& 
     a = (colour & 0xFF);
 }
 
+void FlipImageBytes(void* In, void* &Out, int width, int height, uint32_t Bpp)
+{
+   unsigned long Chunk = (Bpp > 24 ? width * 4 : width * 3 + width % 4);
+   unsigned char* Destination = static_cast<unsigned char*>(Out);
+   unsigned char* Source = static_cast<unsigned char*>(In) + Chunk * (height - 1);
+
+   while(Source != In)
+   {
+      //std::memcpy(Destination, Source, Chunk);
+	   for (int i = 0; i < Chunk; ++i)
+	   {
+		   *(Destination + i) = *(Source + i);
+	   }
+	   
+      Destination += Chunk;
+      Source -= Chunk;
+   }
+}
+
 void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data)
 {
 	struct BGRA
@@ -212,7 +231,7 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius)
     glLoadIdentity();
 	
 	//Draw Point
-    glRasterPos2f(x, y);
+	glRasterPos2f(x, y);
     glPointSize(radius);
     glBegin(GL_POINTS);
         glVertex3f(x, y, z);

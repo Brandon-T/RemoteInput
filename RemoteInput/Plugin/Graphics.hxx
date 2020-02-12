@@ -8,6 +8,7 @@
 
 #pragma GCC push_options
 #pragma GCC optimize ("-O3")
+void FlipImageBytes(void* In, void* &Out, int width, int height, uint32_t Bpp);
 void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data);
 void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data);
 
