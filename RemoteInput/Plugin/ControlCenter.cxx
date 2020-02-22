@@ -167,13 +167,16 @@ ControlCenter::~ControlCenter()
 
 void ControlCenter::terminate()
 {
-	if (!stopped)
+	if (!is_controller)
 	{
-		stopped = true;
-
-		if (command_signal)
+		if (!stopped)
 		{
-			command_signal->signal();
+			stopped = true;
+
+			if (command_signal)
+			{
+				command_signal->signal();
+			}
 		}
 	}
 }
