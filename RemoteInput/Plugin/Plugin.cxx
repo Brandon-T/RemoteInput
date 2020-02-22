@@ -224,14 +224,29 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 {
     printf("ATTACHED TO: %d\n", getpid());
 
-	std::thread([&] {
+    //Windows OR GCC has a bug where if you `FreeLibrary` before the thread even starts,
+    //the destructor of the thread will trigger causing an exception to be thrown..
+    //If you use CreateThread, there is no destructor and the thread is never started..
+    //and no exception or error is thrown..
+	/*std::thread([&] {
 		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
 			StartHook();
         }
-	}).detach();
+	}).detach();*/
+
+	HANDLE hThread = CreateThread(nullptr, 0, [](void* lpParam) __stdcall -> DWORD {
+        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+        if (reflector)
+        {
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+			StartHook();
+        }
+        return 0;
+    }, nullptr, 0, nullptr);
+    CloseHandle(hThread);
 }
 
 [[gnu::stdcall]] void __unload()

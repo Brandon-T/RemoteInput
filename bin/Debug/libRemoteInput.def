@@ -1,0 +1,102 @@
+EXPORTS
+    DllMain@12 @1
+    EIOS_GetClientPID@4 @2
+    EIOS_GetClients@4 @3
+    EIOS_GetDebugImageBuffer = EIOS_GetDebugImageBuffer@4 @4
+    EIOS_GetDebugImageBuffer@4 @5
+    EIOS_GetImageBuffer = EIOS_GetImageBuffer@4 @6
+    EIOS_GetImageBuffer@4 @7
+    EIOS_GetMousePosition = EIOS_GetMousePosition@12 @8
+    EIOS_GetMousePosition@12 @9
+    EIOS_GetTargetDimensions = EIOS_GetTargetDimensions@12 @10
+    EIOS_GetTargetDimensions@12 @11
+    EIOS_HoldKey = EIOS_HoldKey@8 @12
+    EIOS_HoldKey@8 @13
+    EIOS_HoldMouse = EIOS_HoldMouse@16 @14
+    EIOS_HoldMouse@16 @15
+    EIOS_IsKeyHeld = EIOS_IsKeyHeld@8 @16
+    EIOS_IsKeyHeld@8 @17
+    EIOS_IsMouseHeld = EIOS_IsMouseHeld@8 @18
+    EIOS_IsMouseHeld@8 @19
+    EIOS_KillClient@4 @20
+    EIOS_KillClientPID@4 @21
+    EIOS_KillZombieClients@0 @22
+    EIOS_MoveMouse = EIOS_MoveMouse@12 @23
+    EIOS_MoveMouse@12 @24
+    EIOS_PairClient@4 @25
+    EIOS_ReleaseKey = EIOS_ReleaseKey@8 @26
+    EIOS_ReleaseKey@8 @27
+    EIOS_ReleaseMouse = EIOS_ReleaseMouse@16 @28
+    EIOS_ReleaseMouse@16 @29
+    EIOS_ReleaseTarget = EIOS_ReleaseTarget@4 @30
+    EIOS_ReleaseTarget@4 @31
+    EIOS_RequestTarget = EIOS_RequestTarget@4 @32
+    EIOS_RequestTarget@4 @33
+    EIOS_ScrollMouse@16 @34
+    EIOS_SendString = EIOS_SendString@16 @35
+    EIOS_SendString@16 @36
+    EIOS_SetGraphicsDebugging@8 @37
+    EIOS_UpdateImageBuffer = EIOS_UpdateImageBuffer@4 @38
+    EIOS_UpdateImageBuffer@4 @39
+    GetFunctionCount @40
+    GetFunctionInfo @41
+    GetPluginABIVersion @42
+    GetTypeCount @43
+    GetTypeInfo @44
+    OnAttach @45
+    OnDetach @46
+    Pascal_GetClientPID @47
+    Pascal_GetClients @48
+    Pascal_GetDebugImageBuffer @49
+    Pascal_Inject @50
+    Pascal_KillClient @51
+    Pascal_KillClientPID @52
+    Pascal_PairClient @53
+    Pascal_Reflect_Array @54
+    Pascal_Reflect_Array_Index @55
+    Pascal_Reflect_Array_Index2D @56
+    Pascal_Reflect_Array_Index3D @57
+    Pascal_Reflect_Array_Index4D @58
+    Pascal_Reflect_Array_Index_Size @59
+    Pascal_Reflect_Array_SingleIndex @60
+    Pascal_Reflect_Array_SingleIndex2D @61
+    Pascal_Reflect_Array_SingleIndex3D @62
+    Pascal_Reflect_Array_SingleIndex4D @63
+    Pascal_Reflect_Array_Size @64
+    Pascal_Reflect_Array_With_Size @65
+    Pascal_Reflect_Boolean @66
+    Pascal_Reflect_Byte @67
+    Pascal_Reflect_Char @68
+    Pascal_Reflect_Double @69
+    Pascal_Reflect_Equal @70
+    Pascal_Reflect_Float @71
+    Pascal_Reflect_InstanceOf @72
+    Pascal_Reflect_Int @73
+    Pascal_Reflect_Long @74
+    Pascal_Reflect_Object @75
+    Pascal_Reflect_Release_Object @76
+    Pascal_Reflect_Release_Objects @77
+    Pascal_Reflect_Short @78
+    Pascal_Reflect_String @79
+    Pascal_SetGraphicsDebugging @80
+    Reflect_Array @81
+    Reflect_Array_Index @82
+    Reflect_Array_Index2D @83
+    Reflect_Array_Index3D @84
+    Reflect_Array_Index4D @85
+    Reflect_Array_Size @86
+    Reflect_Array_With_Size @87
+    Reflect_Byte @88
+    Reflect_Char @89
+    Reflect_Double @90
+    Reflect_Float @91
+    Reflect_InstanceOf @92
+    Reflect_Int @93
+    Reflect_IsSame_Object @94
+    Reflect_Long @95
+    Reflect_Object @96
+    Reflect_Release_Object @97
+    Reflect_Release_Objects @98
+    Reflect_Short @99
+    Reflect_String @100
+    SetPluginMemManager @101
