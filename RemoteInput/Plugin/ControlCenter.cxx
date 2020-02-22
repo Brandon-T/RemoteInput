@@ -94,9 +94,12 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
             SetThreadPriority(this_thread, THREAD_PRIORITY_HIGHEST);
             #else
             pthread_t this_thread = pthread_self();
-            struct sched_param params = {0};
-            params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-            pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+			if (this_thread)
+			{
+				struct sched_param params = {0};
+				params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+				pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+			}
             #endif // defined
 
 			if (this->reflector->Attach())
@@ -125,6 +128,7 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 					process_command();
 					response_signal->signal();
 				}
+				
 
 				if (this->io_controller)
                 {
@@ -901,6 +905,11 @@ void ControlCenter::set_parent_thread_id(std::int32_t tid)
 
 bool ControlCenter::controller_exists(pid_t pid)
 {
+	if (pid == getpid())
+	{
+		return false;
+	}
+	
 	char mapName[256] = {0};
 	#if defined(_WIN32) || defined(_WIN64)
     sprintf(mapName, "Local\\RemoteInput_%d", pid);
@@ -913,6 +922,12 @@ bool ControlCenter::controller_exists(pid_t pid)
 
 bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
 {
+	if (pid == getpid())
+	{
+		*exists = false;
+		return true;
+	}
+	
 	char mapName[256] = {0};
 	#if defined(_WIN32) || defined(_WIN64)
     sprintf(mapName, "Local\\RemoteInput_%d", pid);
@@ -921,7 +936,7 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
 	#endif
 
 	*exists = false;
-	auto memory = MemoryMap<char>(mapName, std::ios::in);
+	auto memory = MemoryMap<char>(mapName, std::ios::in | std::ios::out);
 	if (memory.open())
 	{
 		*exists = true;
@@ -941,7 +956,6 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
                     data->parent_thread_id = -1;
                 }
 
-                //data->parent_thread_id != GetCurrentThreadID();
                 bool is_paired = data->parent_thread_id != -1 && data->parent_thread_id != GetCurrentThreadID();
                 memory.unmap(sizeof(ImageData));
                 return is_paired;

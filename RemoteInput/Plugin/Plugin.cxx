@@ -229,9 +229,8 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+			StartHook();
         }
-
-		StartHook();
 	}).detach();
 }
 
@@ -249,9 +248,8 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+			StartHook();
         }
-
-		StartHook();
 	}).detach();
 }
 
@@ -269,9 +267,8 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+			StartHook();
         }
-
-		StartHook();
 	}).detach();
 }
 
