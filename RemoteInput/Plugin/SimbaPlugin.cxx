@@ -107,10 +107,7 @@ void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators)
 
 void OnAttach(void* info)
 {
-    if (control_center)
-	{
-		control_center.reset();
-	}
+    control_center.reset();
 	EIOS_KillZombieClients();
 }
 
@@ -733,6 +730,18 @@ void Pascal_Inject(void** Params, void** Result)
     {
         extern void InjectProcesses(const char* process_name);
         InjectProcesses(process_name);
+    }
+	#endif
+}
+
+void Pascal_Inject_PID(void** Params, void** Result)
+{
+	#if defined(_WIN32) || defined(_WIN64)
+    pid_t pid = PascalRead<pid_t>(Params[0]);
+    if (pid)
+    {
+        extern void InjectProcess(pid_t);
+        InjectProcess(pid);
     }
 	#endif
 }

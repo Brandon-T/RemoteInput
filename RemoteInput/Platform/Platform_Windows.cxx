@@ -238,6 +238,16 @@ bool InjectSelf(pid_t pid)
     return false;
 }
 
+void InjectProcess(pid_t pid)
+{
+    extern HMODULE module;
+	MODULEENTRY32 info = GetModuleInfo(pid, module);
+	if (info.dwSize == 0)
+	{
+		InjectSelf(pid);
+	}
+}
+
 void InjectProcesses(const char* process_name)
 {
     extern HMODULE module;

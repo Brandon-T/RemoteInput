@@ -223,19 +223,33 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 [[gnu::stdcall]] void __load()
 {
     printf("ATTACHED TO: %d\n", getpid());
-
-	std::thread([&] {
-		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+	
+	//Increase our reference count by 1..
+	//So that if someone calls `FreeLibrary` before the thread exists, we won't get a crash.
+	//Later on we will call `FreeLibraryAndExitThread`
+	HMODULE this_module = nullptr;
+	GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(module), &this_module);
+	
+	HANDLE hThread = CreateThread(nullptr, 0, [](void* lpParam) __stdcall -> DWORD {
+        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
 			StartHook();
         }
-	}).detach();
+		
+		
+		//Decrease our reference count by 1..
+		//So if `FreeLibrary` was called previous, our count reaches 0 and we'll be fred.
+		Free­Library­AndExit­Thread(module, 0);
+        return 0;
+    }, nullptr, 0, nullptr);
+	CloseHandle(hThread);
 }
 
 [[gnu::stdcall]] void __unload()
 {
+	
     control_center.reset();
 }
 #elif defined(__APPLE__)
