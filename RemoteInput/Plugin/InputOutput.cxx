@@ -89,8 +89,9 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), input_thread(2), mutex(), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), mouse_buttons()
+InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), input_thread(2), mutex(), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), mouse_buttons()
 {
+	keyboard_speed = Random::instance()->generate_random_int(15, 70);
 }
 
 InputOutput::~InputOutput()
@@ -237,7 +238,7 @@ void InputOutput::hold_key(std::int32_t code)
 					while (!stopped && currently_held_key != -1)
 					{
 						std::lock_guard<std::mutex>(this->mutex);
-						yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70)));
+						yield_thread(std::chrono::milliseconds(this->keyboard_speed));
 						std::int32_t code = currently_held_key;
 
 						//Dispatch Event
@@ -533,15 +534,15 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
 
-	if (!this->has_focus(&receiver))
-	{
-		this->gain_focus(&receiver);
-	}
-
 	if (this->x < 0 || this->y < 0)
 	{
 		receiver.getMousePosition(this->x, this->y);
 		receiver.getSize(this->w, this->h);
+	}
+	
+	if (!this->has_focus(&receiver))
+	{
+		this->gain_focus(&receiver);
 	}
 
 	std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -572,6 +573,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 		this->x = x; this->y = y;
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
+		this->lose_focus(&receiver);
 	}
 	else if (isRequestedPositionInsideComponent && isMouseInsideComponent)
 	{
@@ -595,6 +597,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 			this->x = x; this->y = y;
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
+		this->lose_focus(&receiver);
 	}
 }
 

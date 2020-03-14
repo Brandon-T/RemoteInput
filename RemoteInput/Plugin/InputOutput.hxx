@@ -34,6 +34,7 @@ private:
 	std::size_t w;
 	std::size_t h;
 	std::int32_t click_count;
+	std::size_t keyboard_speed;
 	bool mouse_buttons[3];
 
 	// MARK: - Functions

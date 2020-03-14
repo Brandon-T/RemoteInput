@@ -176,4 +176,15 @@ Reflection* GetNativeReflector()
 	delete reflection;
 	return nullptr;
 }
+
+void disable_app_nap()
+{
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		dispatch_async(dispatch_get_main_queue(), ^{
+			static NSObject* app_nap_token = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep | NSActivityLatencyCritical reason:@"No nappy time"];
+			printf("Disable App-Nap: %p\n", app_nap_token);
+		});
+	});
+}
 #endif // defined

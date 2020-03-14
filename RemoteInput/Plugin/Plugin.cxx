@@ -265,8 +265,11 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 [[gnu::constructor]] void __load()
 {
     printf("ATTACHED TO: %d\n", getpid());
-
+	
+	extern void disable_app_nap();
 	std::thread([&] {
+		disable_app_nap();
+		
 		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
