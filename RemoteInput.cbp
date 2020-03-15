@@ -39,6 +39,7 @@
 					<Add option="-s" />
 					<Add library="user32" />
 					<Add library="opengl32" />
+					<Add library="gdi32" />
 				</Linker>
 			</Target>
 		</Build>
