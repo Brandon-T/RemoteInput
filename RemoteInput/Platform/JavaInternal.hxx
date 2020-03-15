@@ -1,6 +1,12 @@
 #ifndef JAVAINTERNAL_HXX_INCLUDED
 #define JAVAINTERNAL_HXX_INCLUDED
 
+/*
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * LICENSED UNDER GPL2.
+ */
+
 #include <jni.h>
 
 typedef struct {
@@ -78,5 +84,67 @@ struct _SurfaceDataOps {
     DisposeFunc         *Dispose;
     jobject             sdObject;
 };
+
+
+
+#if defined(_WIN32) || defined(_WIN64)
+typedef struct _GDIWinSDOps GDIWinSDOps;
+
+typedef HDC GetDCFunc(JNIEnv *env,
+                      GDIWinSDOps *wsdo,
+                      jint flags,
+                      jint *patrop,
+                      jobject clip,
+                      jobject comp,
+                      jint color);
+
+typedef void ReleaseDCFunc(JNIEnv *env,
+                           GDIWinSDOps *wsdo,
+                           HDC hdc);
+
+
+typedef void InvalidateSDFunc(JNIEnv *env,
+                              GDIWinSDOps *wsdo);
+
+struct _GDIWinSDOps {
+    SurfaceDataOps      sdOps;
+    LONG                timeStamp;
+    jboolean            invalid;
+    GetDCFunc           *GetDC;
+    ReleaseDCFunc       *ReleaseDC;
+    InvalidateSDFunc    *InvalidateSD;
+    jint                lockType;
+    jint                lockFlags;
+    jobject             peer;
+    HWND                window;
+    RECT                insets;
+    jint                depth;
+    jint                pixelStride;
+    DWORD               pixelMasks[3];
+    HBITMAP             bitmap;
+    HBITMAP             oldmap;
+    HDC                 bmdc;
+    int                 bmScanStride;
+    int                 bmWidth;
+    int                 bmHeight;
+    void                *bmBuffer;
+    jboolean            bmCopyToScreen;
+    void                *brush;
+    jint                brushclr;
+    void                *pen;
+    jint                penclr;
+    int                 x, y, w, h;
+    void                *surfaceLock;
+    void                *device;
+};
+
+typedef struct tagBitmapHeader {
+    BITMAPINFOHEADER bmiHeader;
+    union {
+        DWORD dwMasks[3];
+        RGBQUAD palette[256];
+    } colors;
+} BmiType;
+#endif
 
 #endif // JAVAINTERNAL_HXX_INCLUDED

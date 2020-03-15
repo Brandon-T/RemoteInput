@@ -35,11 +35,11 @@ void FlipImageBytes(void* In, void* &Out, int width, int height, uint32_t Bpp)
    while(Source != In)
    {
       //std::memcpy(Destination, Source, Chunk);
-	   for (int i = 0; i < Chunk; ++i)
+	   for (unsigned long i = 0; i < Chunk; ++i)
 	   {
 		   *(Destination + i) = *(Source + i);
 	   }
-	   
+
       Destination += Chunk;
       Source -= Chunk;
    }
@@ -54,7 +54,7 @@ void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* 
 		uint8_t r;
 		uint8_t a;
 	} rgb;
-	
+
 	for (std::int32_t y = 0; y < height / 2; ++y)
 	{
 		for (std::int32_t x = 0; x < width; ++x)
@@ -73,7 +73,7 @@ void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t*
 {
 	const std::size_t stride = width * 4;
 	std::unique_ptr<std::uint8_t[]> row = std::make_unique<std::uint8_t[]>(stride);
-	
+
 	for (std::uint8_t* it = data, *jt = &data[(height - 1) * stride]; it < jt; it += stride, jt -= stride)
 	{
 		std::memcpy(row.get(), it, stride);
@@ -137,7 +137,7 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
 		std::uint8_t r;
 		std::uint8_t a;
 	} bgra;
-	
+
 	bgra draw_colour = {0};
 	RGBA(abgr_colour, draw_colour.r, draw_colour.g, draw_colour.b, draw_colour.a);
 
@@ -157,7 +157,7 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
 		int yy = (i / rr) - radius;
 
 		//clamp
-		if (x + xx >= 0 && y + yy >= 0 && x + xx <= width && y + yy <= height)
+		if (x + xx >= 0 && y + yy >= 0 && x + xx < width && y + yy < height)
 		{
 			if (filled)
 			{
@@ -192,7 +192,7 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 
 	for (std::int32_t i = 0; i < width * height * stride; i += stride)
 	{
-	    dest->a = (source->b == 0x00 && source->g == 0x00 && source->r == 0x00) ? 0x00 : 0xFF;
+        dest->a = (source->b == 0x00 && source->g == 0x00 && source->r == 0x00) ? 0x00 : 0xFF;
 	    if (dest->a != 0x00)
         {
             dest->b = source->b;
@@ -207,11 +207,11 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 void gl_draw_point(void* ctx, float x, float y, float z, float radius)
 {
 	#define GL_TEXTURE_RECTANGLE              0x84F5
-	
+
 	#if defined(__APPLE__)
 	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
 	#endif
-	
+
 	//Backup
 	GLfloat point_size = 0.0;
 	bool GLBlend = glIsEnabled(GL_BLEND);
@@ -229,7 +229,7 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius)
 
     glPushMatrix();
     glLoadIdentity();
-	
+
 	//Draw Point
 	glRasterPos2f(x, y);
     glPointSize(radius);
@@ -237,7 +237,7 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius)
         glVertex3f(x, y, z);
     glEnd();
     glFlush();
-	
+
 	//Restore
 	glPopMatrix();
 
@@ -260,7 +260,7 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius)
 	{
 		glDisable(GL_POINT_SMOOTH);
 	}
-	
+
 	glPointSize(point_size);
 }
 
