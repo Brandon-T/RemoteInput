@@ -16,6 +16,7 @@
 #include "KeyEvent.hxx"
 #include "MouseEvent.hxx"
 #include "MouseWheelEvent.hxx"
+#include "PointerInfo.hxx"
 
 #warning "WINDOWS BS"
 #ifdef VK_SHIFT
@@ -91,6 +92,8 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 
 InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), input_thread(2), mutex(), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), mouse_buttons()
 {
+	x = std::numeric_limits<std::int32_t>::min();
+	y = std::numeric_limits<std::int32_t>::min();
 	keyboard_speed = Random::instance()->generate_random_int(15, 70);
 }
 
@@ -489,14 +492,50 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 	}
 }
 
+bool InputOutput::has_focus()
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return false;
+	}
+	
+	Component component = control_center->reflect_canvas();
+	return component.hasFocus();
+}
+
 bool InputOutput::has_focus(Component* component)
 {
 	return component->hasFocus();
 }
 
+void InputOutput::gain_focus()
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
+	
+	Component component = control_center->reflect_canvas();
+	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
+}
+
 void InputOutput::gain_focus(Component* component)
 {
 	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
+}
+
+void InputOutput::lose_focus()
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
+	
+	Component component = control_center->reflect_canvas();
+	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
 }
 
 void InputOutput::lose_focus(Component* component)
@@ -512,15 +551,41 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 		return;
 	}
 
-	if (this->x < 0 || this->y < 0)
+	if (this->x == std::numeric_limits<std::int32_t>::min() || this->y == std::numeric_limits<std::int32_t>::min())
 	{
 		Component receiver = control_center->reflect_canvas();
 		receiver.getMousePosition(this->x, this->y);
 		receiver.getSize(this->w, this->h);
+		
+		if (this->x == -1 || this->y == -1)
+		{
+			Component receiver = control_center->reflect_canvas();
+			JNIEnv* env = receiver.getEnv();
+			
+			PointerInfo info = PointerInfo::getPointerInfo(env);
+			info.getLocation(this->x, this->y);
+			info.PointToScreen(env, this->x, this->y, &receiver);
+		}
 	}
 
 	*x = this->x;
 	*y = this->y;
+}
+
+void InputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y)
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
+
+	Component receiver = control_center->reflect_canvas();
+	JNIEnv* env = receiver.getEnv();
+	
+	PointerInfo info = PointerInfo::getPointerInfo(env);
+	info.getLocation(*x, *y);
+	info.PointToScreen(env, *x, *y, &receiver);
 }
 
 void InputOutput::move_mouse(std::int32_t x, std::int32_t y)

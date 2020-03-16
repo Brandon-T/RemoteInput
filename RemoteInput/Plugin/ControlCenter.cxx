@@ -220,6 +220,25 @@ void ControlCenter::process_command()
 			EIOS_Write<std::int32_t>(response, get_height());
 		}
 			break;
+			
+		case EIOSCommand::HAS_FOCUS:
+		{
+			jboolean result = io_controller->has_focus();
+			EIOS_Write<jboolean>(response, result);
+		}
+			break;
+			
+		case EIOSCommand::GAIN_FOCUS:
+		{
+			io_controller->gain_focus();
+		}
+			break;
+			
+		case EIOSCommand::LOSE_FOCUS:
+		{
+			io_controller->lose_focus();
+		}
+			break;
 
 		case EIOSCommand::GET_MOUSE:
 		{
@@ -227,6 +246,18 @@ void ControlCenter::process_command()
 			std::int32_t y = -1;
 
 			io_controller->get_mouse_position(&x, &y);
+
+			EIOS_Write<std::int32_t>(response, x);
+			EIOS_Write<std::int32_t>(response, y);
+		}
+			break;
+			
+		case EIOSCommand::GET_REAL_MOUSE:
+		{
+			std::int32_t x = -1;
+			std::int32_t y = -1;
+
+			io_controller->get_real_mouse_position(&x, &y);
 
 			EIOS_Write<std::int32_t>(response, x);
 			EIOS_Write<std::int32_t>(response, y);
@@ -999,10 +1030,52 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 	}
 }
 
+bool ControlCenter::has_focus()
+{
+	auto result = send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::HAS_FOCUS;
+	});
+
+	if (result)
+	{
+		void* arguments = get_image_data()->args;
+		return EIOS_Read<jboolean>(arguments);
+	}
+	return false;
+}
+
+void ControlCenter::gain_focus()
+{
+	send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::GAIN_FOCUS;
+	});
+}
+
+void ControlCenter::lose_focus()
+{
+	send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::LOSE_FOCUS;
+	});
+}
+
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 {
 	auto result = send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::GET_MOUSE;
+	});
+
+	if (result)
+	{
+		void* arguments = get_image_data()->args;
+		*x = EIOS_Read<std::int32_t>(arguments);
+		*y = EIOS_Read<std::int32_t>(arguments);
+	}
+}
+
+void ControlCenter::get_real_mouse_position(std::int32_t* x, std::int32_t* y)
+{
+	auto result = send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::GET_REAL_MOUSE;
 	});
 
 	if (result)

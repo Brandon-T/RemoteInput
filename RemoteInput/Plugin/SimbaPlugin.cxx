@@ -746,6 +746,56 @@ void Pascal_Inject_PID(void** Params, void** Result)
 	#endif
 }
 
+bool Pascal_HasFocus(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+		return EIOS_HasFocus(eios);
+	}
+	return false;
+}
+
+void Pascal_GainFocus(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+		EIOS_GainFocus(eios);
+	}
+}
+
+void Pascal_LoseFocus(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+		EIOS_LoseFocus(eios);
+	}
+}
+
+void Pascal_GetRealMousePosition(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	std::int32_t* x = static_cast<std::int32_t*>(Params[1]);
+	std::int32_t* y = static_cast<std::int32_t*>(Params[2]);
+	
+	if (eios)
+	{
+		if (x && y)
+		{
+			EIOS_GetRealMousePosition(eios, x, y);
+		}
+	}
+	else
+	{
+		if (x && y)
+		{
+			*x = std::numeric_limits<std::int32_t>::min();
+			*y = std::numeric_limits<std::int32_t>::min();
+		}
+	}
+}
 
 template<typename T>
 int PascalHigh(T* Arr)

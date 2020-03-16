@@ -47,17 +47,26 @@ static const char* PascalExports[] =
 	"Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z, w: Int32): Pointer; overload; native;",
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
+	//Graphics
 	"Pascal_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
 	"Pascal_SetGraphicsDebugging", "Procedure EIOS_SetGraphicsDebugging(eios: Pointer; enabled: Boolean); native;",
 
+	//Pairing
 	"Pascal_PairClient", "Function EIOS_PairClient(pid: Int32): Pointer; native;",
 	"Pascal_KillClientPID", "Procedure EIOS_KillClient(pid: Int32); native;",
 	"Pascal_KillClient", "Procedure EIOS_KillClient(eios: Pointer); overload; native;",
 	"Pascal_GetClients", "Function EIOS_GetClients(unpaired_only: Boolean): SizeUInt; native;",
 	"Pascal_GetClientPID", "Function EIOS_GetClientPID(index: SizeUInt): Int32; native;",
 
+	//Injecting
 	"Pascal_Inject", "Procedure RIInject(process_name: String); native;",
-	"Pascal_Inject_PID", "Procedure RIInject(pid: Int32); overload; native;"
+	"Pascal_Inject_PID", "Procedure RIInject(pid: Int32); overload; native;",
+	
+	//Other
+	"Pascal_HasFocus", "Function EIOS_HasFocus(eios: Pointer): Boolean; native;",
+	"Pascal_GainFocus", "Procedure EIOS_GainFocus(eios: Pointer); native;",
+	"Pascal_LoseFocus", "Procedure EIOS_LoseFocus(eios: Pointer); native;",
+	"Pascal_GetRealMousePosition", "Procedure EIOS_GetRealMousePosition(eios: Pointer; var x, y: Int32); native;"
 };
 
 static const char* PascalTypes[] =
@@ -133,6 +142,11 @@ EXPORT void Pascal_GetClientPID(void** Params, void** Result);
 
 EXPORT void Pascal_Inject(void** Params, void** Result);
 EXPORT void Pascal_Inject_PID(void** Params, void** Result);
+
+EXPORT bool Pascal_HasFocus(void** Params, void** Result);
+EXPORT void Pascal_GainFocus(void** Params, void** Result);
+EXPORT void Pascal_LoseFocus(void** Params, void** Result);
+EXPORT void Pascal_GetRealMousePosition(void** Params, void** Result);
 
 #ifdef __cplusplus
 }

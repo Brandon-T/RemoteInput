@@ -72,8 +72,12 @@ public:
 	bool get_debug_graphics() const;
 	void set_debug_graphics(bool enabled);
 
+	bool has_focus();
+	void gain_focus();
+	void lose_focus();
 	void get_target_dimensions(std::int32_t* width, std::int32_t* height);
 	void get_mouse_position(std::int32_t* x, std::int32_t* y);
+	void get_real_mouse_position(std::int32_t* x, std::int32_t* y);
 	void move_mouse(std::int32_t x, std::int32_t y);
 	void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button);
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button);

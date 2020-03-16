@@ -84,12 +84,46 @@ void EIOS_UpdateImageBuffer(EIOS* eios)
     //printf("%s\n", __FUNCTION__);
 }
 
+bool EIOS_HasFocus(EIOS* eios)
+{
+	if (eios)
+	{
+		return eios->control_center->has_focus();
+	}
+	return false;
+}
+
+void EIOS_GainFocus(EIOS* eios)
+{
+	if (eios)
+	{
+		eios->control_center->gain_focus();
+	}
+}
+
+void EIOS_LoseFocus(EIOS* eios)
+{
+	if (eios)
+	{
+		eios->control_center->lose_focus();
+	}
+}
+
 void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 {
 
 	if (eios)
 	{
 		eios->control_center->get_mouse_position(x, y);
+	}
+}
+
+void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
+{
+
+	if (eios)
+	{
+		eios->control_center->get_real_mouse_position(x, y);
 	}
 }
 
