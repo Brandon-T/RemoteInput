@@ -539,17 +539,20 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 		receiver.getMousePosition(this->x, this->y);
 		receiver.getSize(this->w, this->h);
 	}
-	
-	if (!this->has_focus(&receiver))
-	{
-		this->gain_focus(&receiver);
-	}
 
 	std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
 	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
 	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
 	bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
+	
+	if (isRequestedPositionInsideComponent)
+	{
+		if (!this->has_focus(&receiver))
+		{
+			this->gain_focus(&receiver);
+		}
+	}
 
 	//Button priority is 1 (left), 3 (right), 2 (middle)
 	std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
@@ -592,12 +595,16 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 	else if (!isRequestedPositionInsideComponent && !isMouseInsideComponent)
 	{
 		//MOUSE_DRAGGED OUTSIDE
+		this->x = x; this->y = y;
 		if (isDragging)
 		{
-			this->x = x; this->y = y;
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
-		this->lose_focus(&receiver);
+		
+		if (this->has_focus(&receiver))
+		{
+			this->lose_focus(&receiver);
+		}
 	}
 }
 
