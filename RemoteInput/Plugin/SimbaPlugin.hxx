@@ -143,7 +143,7 @@ EXPORT void Pascal_GetClientPID(void** Params, void** Result);
 EXPORT void Pascal_Inject(void** Params, void** Result);
 EXPORT void Pascal_Inject_PID(void** Params, void** Result);
 
-EXPORT bool Pascal_HasFocus(void** Params, void** Result);
+EXPORT void Pascal_HasFocus(void** Params, void** Result);
 EXPORT void Pascal_GainFocus(void** Params, void** Result);
 EXPORT void Pascal_LoseFocus(void** Params, void** Result);
 EXPORT void Pascal_GetRealMousePosition(void** Params, void** Result);

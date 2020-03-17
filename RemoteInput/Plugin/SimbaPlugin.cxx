@@ -746,14 +746,13 @@ void Pascal_Inject_PID(void** Params, void** Result)
 	#endif
 }
 
-bool Pascal_HasFocus(void** Params, void** Result)
+void Pascal_HasFocus(void** Params, void** Result)
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
 	{
-		return EIOS_HasFocus(eios);
+		PascalWrite(Result, EIOS_HasFocus(eios));
 	}
-	return false;
 }
 
 void Pascal_GainFocus(void** Params, void** Result)
