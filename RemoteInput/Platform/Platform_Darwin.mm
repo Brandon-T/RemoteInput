@@ -7,6 +7,7 @@ extern "C" {
 
 #include <Foundation/Foundation.h>
 #include <Cocoa/Cocoa.h>
+#include "mach_inject.h"
 
 #if defined(__cplusplus)
 }
@@ -79,6 +80,46 @@ std::vector<pid_t> get_pids(const char* process_name)
         }
     }
 	return result;
+}
+
+void InjectProcess(pid_t pid)
+{
+	Dl_info info = {0};
+    if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
+	{
+		char path[256] = {0};
+		realpath((std::string(info.dli_fname) + "/../libRemoteInputBootstrap.dylib").c_str(), path);
+		void* dll = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+		if (!dll)
+		{
+			printf("Cannot find libRemoteInputBootstrap\n");
+			return;
+		}
+		
+		void* bootstrap = dlsym(dll, "LoadLibrary");
+		if (!bootstrap)
+		{
+			printf("Cannot find LoadLibrary\n");
+			return;
+		}
+		
+		mach_error_t err = mach_inject(reinterpret_cast<mach_inject_entry>(bootstrap), info.dli_fname, strlen(info.dli_fname) + 1, pid, 0);
+		if (err)
+		{
+			printf("Error Injecting: %d!\n", err);
+		}
+		
+		dlclose(dll);
+    }
+}
+
+void InjectProcesses(const char* process_name)
+{
+    std::vector<pid_t> pids = get_pids(process_name);
+    for (pid_t pid : pids)
+    {
+        InjectProcess(pid);
+    }
 }
 
 pid_t PIDFromWindow(void* window)

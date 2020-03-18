@@ -44,6 +44,11 @@
 		5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F84239D367F00F07DD1 /* Hooks.cpp */; };
 		5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
 		5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
+		5E6281CB242182EB006BA298 /* mach_inject.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E6281C9242182EB006BA298 /* mach_inject.h */; };
+		5E6281CC242182EB006BA298 /* mach_inject.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E6281CA242182EB006BA298 /* mach_inject.c */; };
+		5E6281CD24218314006BA298 /* mach_inject.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E6281C9242182EB006BA298 /* mach_inject.h */; };
+		5E6281CE24218316006BA298 /* mach_inject.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E6281CA242182EB006BA298 /* mach_inject.c */; };
+		5E6281F12421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E6281EF2421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx */; };
 		5E667F9A23C8D1BB00931DEC /* libawt_lwawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */; };
 		5E667F9E23C8D1C000931DEC /* libawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9D23C8D1C000931DEC /* libawt.dylib */; };
 		5E6B9A002394C57600E6720C /* Time.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD66B1235CF15400D183B1 /* Time.cxx */; };
@@ -203,6 +208,10 @@
 		5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ModelRendering.hpp; sourceTree = "<group>"; };
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
+		5E6281C9242182EB006BA298 /* mach_inject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mach_inject.h; sourceTree = "<group>"; };
+		5E6281CA242182EB006BA298 /* mach_inject.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mach_inject.c; sourceTree = "<group>"; };
+		5E6281EB2421B776006BA298 /* libRemoteInputBootstrap.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libRemoteInputBootstrap.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E6281EF2421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RemoteInputBootstrap_Darwin.cxx; sourceTree = "<group>"; };
 		5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libawt_lwawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libawt_lwawt.dylib"; sourceTree = "<group>"; };
 		5E667F9D23C8D1C000931DEC /* libawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libawt.dylib"; sourceTree = "<group>"; };
 		5E667FA023C8D1D000931DEC /* libjawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libjawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libjawt.dylib"; sourceTree = "<group>"; };
@@ -275,6 +284,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		5E6281E92421B776006BA298 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5E6B99FA2394C4F200E6720C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -310,9 +326,19 @@
 			path = Hooks;
 			sourceTree = "<group>";
 		};
+		5E6281C8242182D1006BA298 /* mach_inject */ = {
+			isa = PBXGroup;
+			children = (
+				5E6281C9242182EB006BA298 /* mach_inject.h */,
+				5E6281CA242182EB006BA298 /* mach_inject.c */,
+			);
+			path = mach_inject;
+			sourceTree = "<group>";
+		};
 		5E667F9223C8C60000931DEC /* Thirdparty */ = {
 			isa = PBXGroup;
 			children = (
+				5E6281C8242182D1006BA298 /* mach_inject */,
 				5E6EA10523C91371003CB0B5 /* rd_route */,
 			);
 			path = Thirdparty;
@@ -357,6 +383,7 @@
 				5EBD669F235CF15400D183B1 /* DebugConsole.cxx */,
 				5EBD66A0235CF15400D183B1 /* JavaInternal.hxx */,
 				5EBD66A1235CF15400D183B1 /* Platform_Windows.cxx */,
+				5E6281EF2421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx */,
 			);
 			path = Platform;
 			sourceTree = "<group>";
@@ -459,6 +486,7 @@
 			children = (
 				5EC59507232D956B00922111 /* RemoteInput.framework */,
 				5E6B99FC2394C4F200E6720C /* liblibRemoteInput.dylib */,
+				5E6281EB2421B776006BA298 /* libRemoteInputBootstrap.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -496,6 +524,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		5E6281E72421B776006BA298 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5E6B99F82394C4F200E6720C /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -506,6 +541,7 @@
 				5EBE1AAE23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
 				5EBE1AB423C7C84800B99E32 /* Applet.hxx in Headers */,
 				5E4D644E241F47990010EDBE /* PointerInfo.hxx in Headers */,
+				5E6281CD24218314006BA298 /* mach_inject.h in Headers */,
 				5EBE1ABA23C7C84800B99E32 /* Component.hxx in Headers */,
 				5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */,
 				5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */,
@@ -554,6 +590,7 @@
 				5EBE1AAD23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
 				5EBE1AB323C7C84800B99E32 /* Applet.hxx in Headers */,
 				5EBE1AB923C7C84800B99E32 /* Component.hxx in Headers */,
+				5E6281CB242182EB006BA298 /* mach_inject.h in Headers */,
 				5EBD66C4235CF15400D183B1 /* Reflection.hxx in Headers */,
 				5EBD66C7235CF15400D183B1 /* EIOS.hxx in Headers */,
 				5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */,
@@ -595,6 +632,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		5E6281EA2421B776006BA298 /* RemoteInputBootstrap */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E6281EE2421B776006BA298 /* Build configuration list for PBXNativeTarget "RemoteInputBootstrap" */;
+			buildPhases = (
+				5E6281E72421B776006BA298 /* Headers */,
+				5E6281E82421B776006BA298 /* Sources */,
+				5E6281E92421B776006BA298 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RemoteInputBootstrap;
+			productName = RemoteInputBootstrap;
+			productReference = 5E6281EB2421B776006BA298 /* libRemoteInputBootstrap.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
 		5E6B99FB2394C4F200E6720C /* libRemoteInput */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5E6B99FD2394C4F200E6720C /* Build configuration list for PBXNativeTarget "libRemoteInput" */;
@@ -639,6 +693,9 @@
 				LastUpgradeCheck = 1100;
 				ORGANIZATIONNAME = XIO;
 				TargetAttributes = {
+					5E6281EA2421B776006BA298 = {
+						CreatedOnToolsVersion = 11.3.1;
+					};
 					5E6B99FB2394C4F200E6720C = {
 						CreatedOnToolsVersion = 11.2.1;
 					};
@@ -662,6 +719,7 @@
 			targets = (
 				5EC59506232D956B00922111 /* RemoteInput */,
 				5E6B99FB2394C4F200E6720C /* libRemoteInput */,
+				5E6281EA2421B776006BA298 /* RemoteInputBootstrap */,
 			);
 		};
 /* End PBXProject section */
@@ -678,6 +736,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		5E6281E82421B776006BA298 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5E6281F12421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5E6B99F92394C4F200E6720C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -701,6 +767,7 @@
 				5EC942EC23D4A8AA00E42B21 /* Platform_Darwin.mm in Sources */,
 				5EBE1AA823C7C84800B99E32 /* MouseEvent.cxx in Sources */,
 				5E6B9A092394C57600E6720C /* JVM.cxx in Sources */,
+				5E6281CE24218316006BA298 /* mach_inject.c in Sources */,
 				5EFF49BF23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E6B9A152394C57A00E6720C /* Platform_Windows.cxx in Sources */,
 				5E6B9A132394C57A00E6720C /* DebugConsole.cxx in Sources */,
@@ -748,6 +815,7 @@
 				5EBE1AA723C7C84800B99E32 /* MouseEvent.cxx in Sources */,
 				5EC942EB23D4A81B00E42B21 /* Platform_Darwin.mm in Sources */,
 				5EBD66C1235CF15400D183B1 /* DebugConsole.cxx in Sources */,
+				5E6281CC242182EB006BA298 /* mach_inject.c in Sources */,
 				5EFF49BE23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */,
 				5EBD66C9235CF15400D183B1 /* SimbaPlugin.cxx in Sources */,
@@ -775,6 +843,32 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		5E6281EC2421B776006BA298 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		5E6281ED2421B776006BA298 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		5E6B99FE2394C4F200E6720C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1016,6 +1110,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5E6281EE2421B776006BA298 /* Build configuration list for PBXNativeTarget "RemoteInputBootstrap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5E6281EC2421B776006BA298 /* Debug */,
+				5E6281ED2421B776006BA298 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		5E6B99FD2394C4F200E6720C /* Build configuration list for PBXNativeTarget "libRemoteInput" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
