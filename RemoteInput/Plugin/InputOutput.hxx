@@ -51,6 +51,8 @@ private:
 	void lose_focus(Component* component);
 
 	bool any_key_held(std::array<std::int32_t, 4>&& keys);
+	
+	void handle_resize(Component* component);
 
 public:
 	InputOutput(Reflection* reflector);

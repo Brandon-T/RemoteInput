@@ -104,6 +104,26 @@ InputOutput::~InputOutput()
     this->applet = nullptr;
 }
 
+void InputOutput::handle_resize(Component* component)
+{
+	//Most likely the physical cursor messed us up..
+	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+	if (isMouseInsideComponent)
+	{
+		component->getMousePosition(this->x, this->y);
+		component->getSize(this->w, this->h);
+		
+		if (this->x == -1 || this->y == -1)
+		{
+			JNIEnv* env = component->getEnv();
+			
+			PointerInfo info = PointerInfo::getPointerInfo(env);
+			info.getLocation(this->x, this->y);
+			info.PointToScreen(env, this->x, this->y,component);
+		}
+	}
+}
+
 void InputOutput::hold_key(std::int32_t code)
 {
 	extern std::unique_ptr<ControlCenter> control_center;
@@ -567,6 +587,11 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 			info.PointToScreen(env, this->x, this->y, &receiver);
 		}
 	}
+	else if (!has_focus())
+	{
+		Component receiver = control_center->reflect_canvas();
+		this->handle_resize(&receiver);
+	}
 
 	*x = this->x;
 	*y = this->y;
@@ -598,12 +623,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
-
-	if (this->x < 0 || this->y < 0)
-	{
-		receiver.getMousePosition(this->x, this->y);
-		receiver.getSize(this->w, this->h);
-	}
+	this->handle_resize(&receiver);
 
 	std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
