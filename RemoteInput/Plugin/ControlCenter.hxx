@@ -75,6 +75,8 @@ public:
 	bool has_focus();
 	void gain_focus();
 	void lose_focus();
+	bool is_input_enabled();
+	void set_input_enabled(bool enabled);
 	void get_target_dimensions(std::int32_t* width, std::int32_t* height);
 	void get_mouse_position(std::int32_t* x, std::int32_t* y);
 	void get_real_mouse_position(std::int32_t* x, std::int32_t* y);
@@ -113,6 +115,7 @@ public:
 
 	static std::size_t reflect_size_for_type(ReflectionArrayType type);
 
+	Applet reflect_applet();
 	Component reflect_canvas();
 
 	void get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::int32_t* width, std::int32_t* height);

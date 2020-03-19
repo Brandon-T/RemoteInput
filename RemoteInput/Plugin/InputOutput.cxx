@@ -106,20 +106,22 @@ InputOutput::~InputOutput()
 
 void InputOutput::handle_resize(Component* component)
 {
-	//Most likely the physical cursor messed us up..
-	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
-	if (isMouseInsideComponent)
+	if (this->is_input_enabled())
 	{
-		component->getMousePosition(this->x, this->y);
-		component->getSize(this->w, this->h);
-		
-		if (this->x == -1 || this->y == -1)
+		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+		if (isMouseInsideComponent)
 		{
-			JNIEnv* env = component->getEnv();
-			
-			PointerInfo info = PointerInfo::getPointerInfo(env);
-			info.getLocation(this->x, this->y);
-			info.PointToScreen(env, this->x, this->y,component);
+			component->getMousePosition(this->x, this->y);
+			component->getSize(this->w, this->h);
+
+			if (this->x == -1 || this->y == -1)
+			{
+				JNIEnv* env = component->getEnv();
+
+				PointerInfo info = PointerInfo::getPointerInfo(env);
+				info.getLocation(this->x, this->y);
+				info.PointToScreen(env, this->x, this->y,component);
+			}
 		}
 	}
 }
@@ -556,6 +558,28 @@ void InputOutput::lose_focus()
 	
 	Component component = control_center->reflect_canvas();
 	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
+}
+
+bool InputOutput::is_input_enabled()
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return false;
+	}
+	
+	return control_center->reflect_applet().isEnabled();
+}
+
+void InputOutput::set_input_enabled(bool enabled)
+{
+	extern std::unique_ptr<ControlCenter> control_center;
+	if (!control_center)
+	{
+		return;
+	}
+	
+	control_center->reflect_applet().setEnabled(enabled);
 }
 
 void InputOutput::lose_focus(Component* component)

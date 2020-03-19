@@ -184,6 +184,18 @@ bool Component::isValid()
 	return env->CallBooleanMethod(component, methodId);
 }
 
+bool Component::isEnabled()
+{
+	static jmethodID methodId = env->GetMethodID(cls, "isEnabled", "()Z");
+	return env->CallBooleanMethod(component, methodId);
+}
+
+void Component::setEnabled(bool enabled)
+{
+	static jmethodID methodId = env->GetMethodID(cls, "setEnabled", "(Z)V");
+	env->CallVoidMethod(component, methodId, enabled);
+}
+
 bool Component::hasFocus()
 {
 	static jmethodID methodId = env->GetMethodID(cls, "hasFocus", "()Z");

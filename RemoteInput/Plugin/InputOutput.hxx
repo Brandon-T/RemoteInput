@@ -61,6 +61,8 @@ public:
 	bool has_focus();
 	void gain_focus();
 	void lose_focus();
+	bool is_input_enabled();
+	void set_input_enabled(bool enabled);
 
 	void hold_key(std::int32_t code);
 	void release_key(std::int32_t code);

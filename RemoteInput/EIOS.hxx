@@ -34,6 +34,8 @@ enum class EIOSCommand: std::uint32_t
 	HAS_FOCUS,
 	GAIN_FOCUS,
 	LOSE_FOCUS,
+	IS_INPUT_ENABLED,
+	SET_INPUT_ENABLED,
 	GET_MOUSE,
 	GET_REAL_MOUSE,
     MOVE_MOUSE,
@@ -105,6 +107,8 @@ EXPORT [[gnu::stdcall]] void EIOS_UpdateImageBuffer(EIOS* eios);
 EXPORT [[gnu::stdcall]] bool EIOS_HasFocus(EIOS* eios);
 EXPORT [[gnu::stdcall]] void EIOS_GainFocus(EIOS* eios);
 EXPORT [[gnu::stdcall]] void EIOS_LoseFocus(EIOS* eios);
+EXPORT [[gnu::stdcall]] bool EIOS_IsInputEnabled(EIOS* eios);
+EXPORT [[gnu::stdcall]] void EIOS_SetInputEnabled(EIOS* eios, bool enabled);
 EXPORT [[gnu::stdcall]] void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
 EXPORT [[gnu::stdcall]] void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
 EXPORT [[gnu::stdcall]] void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);
@@ -133,6 +137,8 @@ EXPORT void EIOS_UpdateImageBuffer(EIOS* eios);
 EXPORT bool EIOS_HasFocus(EIOS* eios);
 EXPORT void EIOS_GainFocus(EIOS* eios);
 EXPORT void EIOS_LoseFocus(EIOS* eios);
+EXPORT bool EIOS_IsInputEnabled(EIOS* eios);
+EXPORT void EIOS_SetInputEnabled(EIOS* eios, bool enabled);
 EXPORT void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
 EXPORT void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y);
 EXPORT void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y);

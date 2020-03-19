@@ -66,6 +66,8 @@ static const char* PascalExports[] =
 	"Pascal_HasFocus", "Function EIOS_HasFocus(eios: Pointer): Boolean; native;",
 	"Pascal_GainFocus", "Procedure EIOS_GainFocus(eios: Pointer); native;",
 	"Pascal_LoseFocus", "Procedure EIOS_LoseFocus(eios: Pointer); native;",
+	"Pascal_IsInputEnabled", "Function EIOS_IsInputEnabled(eios: Pointer): Boolean; native;",
+	"Pascal_SetInputEnabled", "Function EIOS_SetInputEnabled(eios: Pointer; enabled: Boolean): Boolean; native;",
 	"Pascal_GetRealMousePosition", "Procedure EIOS_GetRealMousePosition(eios: Pointer; var x, y: Int32); native;"
 };
 
@@ -146,6 +148,8 @@ EXPORT void Pascal_Inject_PID(void** Params, void** Result);
 EXPORT void Pascal_HasFocus(void** Params, void** Result);
 EXPORT void Pascal_GainFocus(void** Params, void** Result);
 EXPORT void Pascal_LoseFocus(void** Params, void** Result);
+EXPORT void Pascal_IsInputEnabled(void** Params, void** Result);
+EXPORT void Pascal_SetInputEnabled(void** Params, void** Result);
 EXPORT void Pascal_GetRealMousePosition(void** Params, void** Result);
 
 #ifdef __cplusplus

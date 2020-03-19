@@ -109,6 +109,23 @@ void EIOS_LoseFocus(EIOS* eios)
 	}
 }
 
+bool EIOS_IsInputEnabled(EIOS* eios)
+{
+	if (eios)
+	{
+		return eios->control_center->is_input_enabled();
+	}
+	return false;
+}
+
+void EIOS_SetInputEnabled(EIOS* eios, bool enabled)
+{
+	if (eios)
+	{
+		eios->control_center->set_input_enabled(enabled);
+	}
+}
+
 void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 {
 

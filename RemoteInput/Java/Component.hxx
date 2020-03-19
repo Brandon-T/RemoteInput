@@ -47,6 +47,8 @@ public:
 	
 	bool isVisible();
 	bool isValid();
+	bool isEnabled();
+	void setEnabled(bool enabled);
 	
 	bool hasFocus();
 	bool requestFocusInWindow();

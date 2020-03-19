@@ -773,6 +773,25 @@ void Pascal_LoseFocus(void** Params, void** Result)
 	}
 }
 
+void Pascal_IsInputEnabled(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+		PascalWrite(Result, EIOS_IsInputEnabled(eios));
+	}
+}
+
+void Pascal_SetInputEnabled(void** Params, void** Result)
+{
+	EIOS* eios = PascalRead<EIOS*>(Params[0]);
+	if (eios)
+	{
+		bool enabled = PascalRead<bool>(Params[1]);
+		EIOS_SetInputEnabled(eios, enabled);
+	}
+}
+
 void Pascal_GetRealMousePosition(void** Params, void** Result)
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);

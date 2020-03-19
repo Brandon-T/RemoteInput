@@ -239,6 +239,20 @@ void ControlCenter::process_command()
 			io_controller->lose_focus();
 		}
 			break;
+			
+		case EIOSCommand::IS_INPUT_ENABLED:
+		{
+			jboolean result = io_controller->is_input_enabled();
+			EIOS_Write<jboolean>(response, result);
+		}
+			break;
+			
+		case EIOSCommand::SET_INPUT_ENABLED:
+		{
+			jboolean enabled = EIOS_Read<jboolean>(arguments);
+			io_controller->set_input_enabled(enabled);
+		}
+			break;
 
 		case EIOSCommand::GET_MOUSE:
 		{
@@ -1058,6 +1072,30 @@ void ControlCenter::lose_focus()
 	});
 }
 
+bool ControlCenter::is_input_enabled()
+{
+	auto result = send_command([](ImageData* image_data) {
+		image_data->command = EIOSCommand::IS_INPUT_ENABLED;
+	});
+	
+	if (result)
+	{
+		void* arguments = get_image_data()->args;
+		return EIOS_Read<jboolean>(arguments);
+	}
+	
+	return false;
+}
+
+void ControlCenter::set_input_enabled(bool enabled)
+{
+	send_command([enabled](ImageData* image_data) {
+		void* arguments = image_data->args;
+		image_data->command = EIOSCommand::SET_INPUT_ENABLED;
+		EIOS_Write<jboolean>(arguments, enabled);
+	});
+}
+
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 {
 	auto result = send_command([](ImageData* image_data) {
@@ -1577,6 +1615,11 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
 	};
 
 	return mapping[static_cast<std::uint8_t>(type)];
+}
+
+Applet ControlCenter::reflect_applet()
+{
+	return {reflector->getEnv(), reflector->getApplet(), false};
 }
 
 Component ControlCenter::reflect_canvas()
