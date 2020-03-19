@@ -106,22 +106,20 @@ InputOutput::~InputOutput()
 
 void InputOutput::handle_resize(Component* component)
 {
-	if (this->is_input_enabled())
+	component->getSize(this->w, this->h);
+	
+	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+	if (isMouseInsideComponent)
 	{
-		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
-		if (isMouseInsideComponent)
+		component->getMousePosition(this->x, this->y);
+
+		if (this->x == -1 || this->y == -1)
 		{
-			component->getMousePosition(this->x, this->y);
-			component->getSize(this->w, this->h);
+			JNIEnv* env = component->getEnv();
 
-			if (this->x == -1 || this->y == -1)
-			{
-				JNIEnv* env = component->getEnv();
-
-				PointerInfo info = PointerInfo::getPointerInfo(env);
-				info.getLocation(this->x, this->y);
-				info.PointToScreen(env, this->x, this->y,component);
-			}
+			PointerInfo info = PointerInfo::getPointerInfo(env);
+			info.getLocation(this->x, this->y);
+			info.PointToScreen(env, this->x, this->y,component);
 		}
 	}
 }
@@ -611,7 +609,7 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 			info.PointToScreen(env, this->x, this->y, &receiver);
 		}
 	}
-	else if (!has_focus())
+	else if (!has_focus() && !is_input_enabled())
 	{
 		Component receiver = control_center->reflect_canvas();
 		this->handle_resize(&receiver);
