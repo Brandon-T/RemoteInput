@@ -1115,7 +1115,7 @@ bool Semaphore::signal()
 	{
 		return false;
 	}
-	
+
 	CloseHandle(hSemaphore);
 	return true;
 	#elif defined(_USE_POSIX_SEMAPHORES)
@@ -1128,7 +1128,7 @@ bool Semaphore::signal()
 		}
 		return true;
 	}
-	
+
 	sem_close(hSem);
 	return true;
 	#elif defined(_USE_SYSTEM_V_SEMAPHORES)
@@ -1152,7 +1152,7 @@ bool Semaphore::signal()
 		}
 		return true;
 	}
-	
+
 	semctl(handle, 0, IPC_RMID);
 	return true;
 	#else
@@ -1165,7 +1165,7 @@ bool Semaphore::signal()
 		}
 		return true;
 	}
-	
+
 	close(shm_fd);
 	return true;
 	#endif
@@ -1181,11 +1181,7 @@ void atomic_signal_sleep(int* count)
 		auto end = start + std::chrono::nanoseconds(1);
 		do {
 			#if defined(_WIN32) || defined(_WIN64)
-				#if defined(_POSIX_THREADS)
-				pthread_yield();
-				#else
-				SwitchToThread();
-				#endif
+            SwitchToThread();
 			#else
 				#if defined(_POSIX_THREADS)
 					#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || defined(_DARWIN_C_SOURCE) || defined(__cplusplus)
@@ -1203,11 +1199,7 @@ void atomic_signal_sleep(int* count)
 	else
 	{
 		#if defined(_WIN32) || defined(_WIN64)
-			#if defined(_POSIX_THREADS)
-			pthread_yield();
-			#else
-			SwitchToThread();
-			#endif
+        SwitchToThread();
 		#else
 			#if defined(_POSIX_THREADS)
 				#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || defined(_DARWIN_C_SOURCE) || defined(__cplusplus)
@@ -1235,7 +1227,7 @@ bool atomic_signal_timedlock(std::atomic_bool* lock, const struct timespec* time
 		auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
 		auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-		struct timespec now = { seconds.count(), nanoseconds.count() };
+		struct timespec now = { static_cast<time_t>(seconds.count()), static_cast<long>(nanoseconds.count()) };
 		if (now.tv_sec >= timeout->tv_sec && now.tv_nsec >= timeout->tv_nsec)
 		{
 			errno = EAGAIN;
@@ -1269,11 +1261,12 @@ AtomicSignal::AtomicSignal(std::string name) : hEvent(nullptr), name(name)
 	{
 		hEvent = CreateEvent(nullptr, false, false, name.c_str());
 	}
-	
+
 	if (!hEvent)
 	{
 		throw std::runtime_error("Cannot Create or Open AtomicSignal");
 	}
+}
 #else
 AtomicSignal::AtomicSignal() : shared(false), lock(new std::atomic_bool(false)), ref(nullptr), name("\0"), shm_fd(-1)
 {
@@ -1283,7 +1276,7 @@ AtomicSignal::AtomicSignal() : shared(false), lock(new std::atomic_bool(false)),
 AtomicSignal::AtomicSignal(std::string name) : shared(true), lock(nullptr), ref(nullptr), name(name), shm_fd(-1)
 {
 	static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Atomic Bool is NOT Lock-Free");
-	
+
 	bool created = true;
 	shm_fd = shm_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXO); //0660 -> S_IRWXU
 	if (shm_fd == -1)
@@ -1404,7 +1397,7 @@ bool AtomicSignal::timed_wait(std::uint32_t milliseconds)
     {
         return wait();
     }
-	
+
 	#if defined(_WIN32) || defined(_WIN64)
 	if (!hEvent) { return false; }
     return WaitForSingleObject(hEvent, milliseconds) == WAIT_OBJECT_0;
@@ -1428,7 +1421,7 @@ bool AtomicSignal::signal()
 	return true;
 	#endif
 }
-	
+
 bool AtomicSignal::is_signalled()
 {
 	#if defined(_WIN32) || defined(_WIN64)

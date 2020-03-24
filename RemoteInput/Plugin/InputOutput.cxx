@@ -90,7 +90,7 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), input_thread(2), mutex(), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), mouse_buttons()
+InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), mouse_buttons()
 {
 	x = std::numeric_limits<std::int32_t>::min();
 	y = std::numeric_limits<std::int32_t>::min();
@@ -107,8 +107,8 @@ InputOutput::~InputOutput()
 void InputOutput::handle_resize(Component* component)
 {
 	component->getSize(this->w, this->h);
-	
-	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+
+	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 	if (isMouseInsideComponent)
 	{
 		component->getMousePosition(this->x, this->y);
@@ -519,7 +519,7 @@ bool InputOutput::has_focus()
 	{
 		return false;
 	}
-	
+
 	Component component = control_center->reflect_canvas();
 	return component.hasFocus();
 }
@@ -536,7 +536,7 @@ void InputOutput::gain_focus()
 	{
 		return;
 	}
-	
+
 	Component component = control_center->reflect_canvas();
 	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
 }
@@ -553,7 +553,7 @@ void InputOutput::lose_focus()
 	{
 		return;
 	}
-	
+
 	Component component = control_center->reflect_canvas();
 	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
 }
@@ -565,7 +565,7 @@ bool InputOutput::is_input_enabled()
 	{
 		return false;
 	}
-	
+
 	return control_center->reflect_applet().isEnabled();
 }
 
@@ -576,7 +576,7 @@ void InputOutput::set_input_enabled(bool enabled)
 	{
 		return;
 	}
-	
+
 	control_center->reflect_applet().setEnabled(enabled);
 }
 
@@ -598,12 +598,12 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 		Component receiver = control_center->reflect_canvas();
 		receiver.getMousePosition(this->x, this->y);
 		receiver.getSize(this->w, this->h);
-		
+
 		if (this->x == -1 || this->y == -1)
 		{
 			Component receiver = control_center->reflect_canvas();
 			JNIEnv* env = receiver.getEnv();
-			
+
 			PointerInfo info = PointerInfo::getPointerInfo(env);
 			info.getLocation(this->x, this->y);
 			info.PointToScreen(env, this->x, this->y, &receiver);
@@ -629,7 +629,7 @@ void InputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y)
 
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
-	
+
 	PointerInfo info = PointerInfo::getPointerInfo(env);
 	info.getLocation(*x, *y);
 	info.PointToScreen(env, *x, *y, &receiver);
@@ -649,10 +649,10 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 
 	std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
-	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 	bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
-	
+
 	if (isRequestedPositionInsideComponent)
 	{
 		if (!this->has_focus(&receiver))
@@ -707,7 +707,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 		{
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
-		
+
 		if (this->has_focus(&receiver))
 		{
 			this->lose_focus(&receiver);
@@ -768,8 +768,8 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-		bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
-		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+		bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 
 		//Button priority is 1 (left), 3 (right), 2 (middle)
 		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = false;
@@ -805,8 +805,8 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 		this->gain_focus(&receiver);
 	}
 
-	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > w || y > h);
-	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > this->w || this->y > this->h);
+	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 
 	if (isRequestedPositionInsideComponent && isMouseInsideComponent)
 	{
@@ -944,7 +944,7 @@ std::int32_t InputOutput::CharToJavaKeyCode(char c)
 		0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF,
 		0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0x0000
 	};
-	return mapping[c];
+	return mapping[static_cast<std::int32_t>(c)];
 }
 
 std::int32_t InputOutput::GetJavaKeyCode(std::int32_t native_key_code)

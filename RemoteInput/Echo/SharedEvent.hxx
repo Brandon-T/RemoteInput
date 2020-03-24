@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <string>
 #include <chrono>
+#include <atomic>
 #include "Time.hxx"
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -166,7 +167,7 @@ private:
 	std::atomic_bool* lock;
 	std::int32_t* ref;
 	#endif
-	
+
 public:
 	AtomicSignal();
 	AtomicSignal(std::string name);
