@@ -241,13 +241,10 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 	GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(module), &this_module);
 
 	HANDLE hThread = CreateThread(nullptr, 0, [](void* lpParam) __stdcall -> DWORD {
-        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-		if (reflector)
-		{
-			control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-			StartHook();
-		}
-
+		StartHook();
+		control_center = std::make_unique<ControlCenter>(getpid(), false, []{
+			return std::unique_ptr<Reflection>(GetNativeReflector());
+		});
 
 		//Decrease our reference count by 1..
 		//So if `FreeLibrary` was called previous, our count reaches 0 and we'll be fred.
@@ -289,12 +286,10 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
     printf("ATTACHED TO: %d\n", getpid());
 
 	std::thread([&] {
-		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-        if (reflector)
-        {
-            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-			StartHook();
-        }
+		StartHook();
+		control_center = std::make_unique<ControlCenter>(getpid(), false, []{
+			return std::unique_ptr<Reflection>(GetNativeReflector());
+		});
 	}).detach();
 }
 

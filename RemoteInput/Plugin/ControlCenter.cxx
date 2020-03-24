@@ -57,7 +57,7 @@ void EIOS_Write(void* &ptr, const std::string &result)
 	ptr = static_cast<char*>(ptr) + 1;
 }
 
-ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid),  is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), reflector(std::move(reflector)), io_controller()
+ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller()
 {
 	if (pid <= 0)
 	{
@@ -68,12 +68,17 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 	{
 		throw std::runtime_error("Cannot Initialize Maps");
 	}
+	
+	if (!init_wait())
+	{
+		throw std::runtime_error("Cannot Initialize Wait Signal");
+	}
 
-//	if (!init_locks())
-//	{
-//		throw std::runtime_error("Cannot Initialize Locks");
-//	}
-
+	/*if (!init_locks())
+	{
+		throw std::runtime_error("Cannot Initialize Locks");
+	}*/
+	
 	if (!init_signals())
 	{
 		throw std::runtime_error("Cannot Initialize Signals");
@@ -83,68 +88,73 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 	{
         this->set_parent_process_id(-1);
         this->set_parent_thread_id(-1);
+		
+		if (this->reflector)
+		{
+			this->sync_signal->signal();
+			
+			std::thread thread = std::thread([&]{
 
-		std::thread thread = std::thread([&]{
+				#if defined(_WIN32) || defined(_WIN64)
+				HANDLE this_process = GetCurrentProcess();
+				SetPriorityClass(this_process, NORMAL_PRIORITY_CLASS);
 
-            #if defined(_WIN32) || defined(_WIN64)
-            HANDLE this_process = GetCurrentProcess();
-            SetPriorityClass(this_process, NORMAL_PRIORITY_CLASS);
-
-            HANDLE this_thread = GetCurrentThread();
-            SetThreadPriority(this_thread, THREAD_PRIORITY_HIGHEST);
-            #else
-            pthread_t this_thread = pthread_self();
-			if (this_thread)
-			{
-				struct sched_param params = {0};
-				params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-				pthread_setschedparam(this_thread, SCHED_FIFO, &params);
-			}
-            #endif // defined
-
-			if (this->reflector->Attach())
-			{
-				this->io_controller = std::make_unique<InputOutput>(this->reflector.get());
-
-				while(!stopped)
-                {
-					if (!command_signal || /*!map_lock ||*/ !response_signal || !memory_map)
-					{
-						break;
-					}
-
-					command_signal->wait();
-
-					/*while(!command_signal->try_wait())
-					{
-						std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-					}*/
-
-					if (stopped)
-					{
-						break;
-					}
-
-					process_command();
-					response_signal->signal();
+				HANDLE this_thread = GetCurrentThread();
+				SetThreadPriority(this_thread, THREAD_PRIORITY_HIGHEST);
+				#else
+				pthread_t this_thread = pthread_self();
+				if (this_thread)
+				{
+					struct sched_param params = {0};
+					params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+					pthread_setschedparam(this_thread, SCHED_FIFO, &params);
 				}
-				
+				#endif // defined
 
-				if (this->io_controller)
-                {
-                    this->io_controller.reset();
-                }
+				if (this->reflector->Attach())
+				{
+					this->io_controller = std::make_unique<InputOutput>(this->reflector.get());
+
+					while(!stopped)
+					{
+						if (!command_signal || /*!map_lock ||*/ !response_signal || !memory_map)
+						{
+							break;
+						}
+
+						command_signal->wait();
+
+						/*while(!command_signal->try_wait())
+						{
+							std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+						}*/
+
+						if (stopped)
+						{
+							break;
+						}
+
+						process_command();
+						response_signal->signal();
+					}
+					
+
+					if (this->io_controller)
+					{
+						this->io_controller.reset();
+					}
 
 
-                if (this->reflector)
-                {
-                    this->reflector->Detach();
-                    this->reflector.reset();
-                }
-			}
-		});
+					if (this->reflector)
+					{
+						this->reflector->Detach();
+						this->reflector.reset();
+					}
+				}
+			});
 
-		thread.detach();
+			thread.detach();
+		}
 	}
 }
 
@@ -771,6 +781,23 @@ bool ControlCenter::init_locks()
     return map_lock != nullptr;
 }
 
+bool ControlCenter::init_wait()
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	char signalName[256] = {0};
+	sprintf(signalName, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	#elif defined(__linux__)
+	char signalName[256] = {0};
+	sprintf(signalName, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	#else
+	char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
+	sprintf(signalName, "/RI_CC_SyncSignal_%d", pid);
+	#endif
+	
+	sync_signal = std::make_unique<AtomicSignal>(signalName);
+	return sync_signal != nullptr;
+}
+
 bool ControlCenter::init_signals()
 {
 	#if defined(_WIN32) || defined(_WIN64)
@@ -948,6 +975,26 @@ void ControlCenter::set_parent_thread_id(std::int32_t tid)
 	if (memory_map && memory_map->is_mapped())
 	{
 		get_image_data()->parent_thread_id = tid;
+	}
+}
+void ControlCenter::wait_for_sync(pid_t pid)
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	char signalName[256] = {0};
+	sprintf(signalName, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	#elif defined(__linux__)
+	char signalName[256] = {0};
+	sprintf(signalName, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	#else
+	char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
+	sprintf(signalName, "/RI_CC_SyncSignal_%d", pid);
+	#endif
+	
+	std::unique_ptr<AtomicSignal> sync_signal = std::make_unique<AtomicSignal>(signalName);
+	
+	if (!sync_signal->is_signalled())
+	{
+		sync_signal->timed_wait(10000); //We shall wait no longer than 10 seconds for initialization of sync signals.
 	}
 }
 

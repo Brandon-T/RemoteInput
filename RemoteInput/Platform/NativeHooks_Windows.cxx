@@ -26,27 +26,56 @@ JavaNativeBlit_t o_JavaNativeBlit;
 
 
 #if defined(_WIN32) || defined(_WIN64)
-/*void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut)
+void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut)
 {
     extern std::unique_ptr<ControlCenter> control_center;
-	if (control_center)
+	if (!control_center)
 	{
-		typedef SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData);
-		static SurfaceData_GetOps GetOps = (SurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_GetOps@8");
+		//Original
+		return o_JavaNativeBlit(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
+	}
+	
+	//Setup Function Pointers
+	typedef SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData);
+	static SurfaceData_GetOps GetOps = (SurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_GetOps@8");
 
-		if (!GetOps)
-		{
-			return;
-		}
+	typedef SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData);
+	static SurfaceData_GetOps GetSrcOps = (SurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_GetOps@8");
 
-		SurfaceDataOps* srcOps = GetOps(env, srcData);
-		SurfaceDataRasInfo srcInfo = {0};
-		srcInfo.bounds.x1 = srcx;
-		srcInfo.bounds.y1 = srcy;
-		srcInfo.bounds.x2 = srcx + width;
-		srcInfo.bounds.y2 = srcy + height;
+	typedef GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData);
+	static GDIWindowSurfaceData_GetOps GetDstOps = (GDIWindowSurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_GDIWindowSurfaceData_GetOps@8");
 
-		if (srcOps->Lock(env, srcOps, &srcInfo, needLut ? (SD_LOCK_READ | SD_LOCK_LUT) : SD_LOCK_READ) == SD_SUCCESS)
+	typedef void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy);
+	static SurfaceData_IntersectBlitBounds IntersectBlitBounds = (SurfaceData_IntersectBlitBounds)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_IntersectBlitBounds@16");
+
+	if (!GetSrcOps || !GetDstOps || !IntersectBlitBounds)
+	{
+		//Original
+		return o_JavaNativeBlit(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
+	}
+
+	//Setup Source Info
+	SurfaceDataOps* srcOps = GetOps(env, srcData);
+	SurfaceDataRasInfo srcInfo = {0};
+	srcInfo.bounds.x1 = srcx;
+	srcInfo.bounds.y1 = srcy;
+	srcInfo.bounds.x2 = srcx + width;
+	srcInfo.bounds.y2 = srcy + height;
+
+	if (srcOps->Lock(env, srcOps, &srcInfo, needLut ? (SD_LOCK_READ | SD_LOCK_LUT) : SD_LOCK_READ) == SD_SUCCESS)
+	{
+		//Setup Destination Clipping Info
+		GDIWinSDOps* dstOps = GetDstOps(env, dstData);
+		SurfaceDataBounds dstBounds = {dstx, dsty, dstx + width, dsty + height};
+		IntersectBlitBounds(&(srcInfo.bounds), &dstBounds, dstx - srcx, dsty - srcy);
+		srcx = srcInfo.bounds.x1;
+		srcy = srcInfo.bounds.y1;
+		dstx = dstBounds.x1;
+		dsty = dstBounds.y1;
+		width = srcInfo.bounds.x2 - srcInfo.bounds.x1;
+		height = srcInfo.bounds.y2 - srcInfo.bounds.y1;
+
+		if (width > 0 && height > 0)
 		{
 			srcOps->GetRasInfo(env, srcOps, &srcInfo);
 			if (srcInfo.rasBase)
@@ -75,292 +104,116 @@ JavaNativeBlit_t o_JavaNativeBlit;
 					}
 				}
 
+				HDC hDC = dstOps->GetDC(env, dstOps, 0, nullptr, clip, nullptr, 0);
+				if (hDC)
+				{
+					//Clone Renderer
+					static jint screenWidth = 0;
+					static jint screenHeight = 0;
+					static std::unique_ptr<std::uint8_t[]> screenBuffer = nullptr;
+
+					if (screenWidth != width || screenHeight != height)
+					{
+						screenBuffer.reset();
+						screenWidth = width;
+						screenHeight = height;
+						screenBuffer = std::make_unique<std::uint8_t[]>(width * height * srcInfo.pixelStride);
+					}
+
+					rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+					if (isRasterAligned)
+					{
+						memcpy(screenBuffer.get(), rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+					}
+					else
+					{
+						for (int i = 0; i < height; ++i)
+						{
+							int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
+							memcpy(screenBuffer.get() + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+							rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+						}
+					}
+
+					//Render Debug Graphics
+					if (control_center->get_debug_graphics())
+					{
+						std::uint8_t* src = control_center->get_debug_image();
+						if (src)
+						{
+							rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+							draw_image(rasBase, src, width, height, srcInfo.pixelStride);
+						}
+					}
+
+					//Render Cursor
+					std::int32_t x = -1;
+					std::int32_t y = -1;
+					control_center->get_applet_mouse_position(&x, &y);
+
+					if (x > -1 && y > -1)
+					{
+						static const std::int32_t radius = 2;
+						rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+						draw_circle(x, y, radius, rasBase, width, height, 4, true, 0xFF0000FF);
+					}
+
+					//Render Screen
+					BmiType bmi = {0};
+					long dwHeight = srcInfo.bounds.y2 - srcInfo.bounds.y1;
+					bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+					bmi.bmiHeader.biWidth = srcInfo.scanStride / srcInfo.pixelStride;
+					bmi.bmiHeader.biHeight = isRasterAligned ? -dwHeight : -1;
+					bmi.bmiHeader.biPlanes = 1;
+					bmi.bmiHeader.biBitCount = srcInfo.pixelStride * 8;
+					bmi.bmiHeader.biCompression = srcInfo.pixelStride != 2 ? BI_RGB : BI_BITFIELDS;
+					bmi.bmiHeader.biSizeImage = (bmi.bmiHeader.biWidth * dwHeight * srcInfo.pixelStride);
+					bmi.bmiHeader.biXPelsPerMeter = 0;
+					bmi.bmiHeader.biYPelsPerMeter = 0;
+					bmi.bmiHeader.biClrUsed = 0;
+					bmi.bmiHeader.biClrImportant = 0;
+					bmi.colors.dwMasks[0] = 0x00FF0000;
+					bmi.colors.dwMasks[1] = 0x0000FF00;
+					bmi.colors.dwMasks[2] = 0x000000FF;
+
+					rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+
+					if (isRasterAligned)
+					{
+						if (::IsWindowVisible(dstOps->window))
+						{
+							SetDIBitsToDevice(hDC, dstx, dsty, width, height, 0, 0, 0, height, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
+						}
+					}
+					else
+					{
+						for (jint i = 0; i < height; i += 1)
+						{
+							if (::IsWindowVisible(dstOps->window))
+							{
+								SetDIBitsToDevice(hDC, dstx, dsty + i, width, 1, 0, 0, 0, 1, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
+								rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+
+					dstOps->ReleaseDC(env, dstOps, hDC);
+				}
+
 				if (srcOps->Release)
 				{
 					srcOps->Release(env, srcOps, &srcInfo);
 				}
 			}
-
-			if (srcOps->Unlock)
-			{
-				srcOps->Unlock(env, srcOps, &srcInfo);
-			}
-		}
-	}
-
-    //Original
-    o_JavaNativeBlit(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
-
-
-    if (control_center)
-	{
-		typedef GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData);
-		static GDIWindowSurfaceData_GetOps GetOps = (GDIWindowSurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_GDIWindowSurfaceData_GetOps@8");
-
-		if (!GetOps)
-		{
-			return;
 		}
 
-		GDIWinSDOps* dstOps = GetOps(env, dstData);
-		HDC hdc = dstOps->GetDC(env, dstOps, 0, nullptr, clip, nullptr, 0);
-        if (hdc == nullptr)
-        {
-            return;
-        }
-
-        BmiType bmi = {0};
-        bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-        bmi.bmiHeader.biWidth = width;
-        bmi.bmiHeader.biHeight = -height;
-        bmi.bmiHeader.biPlanes = 1;
-        bmi.bmiHeader.biBitCount = 32;
-        bmi.bmiHeader.biCompression = BI_RGB;
-        bmi.bmiHeader.biSizeImage = width * height * 4;
-        bmi.bmiHeader.biXPelsPerMeter = 0;
-        bmi.bmiHeader.biYPelsPerMeter = 0;
-        bmi.bmiHeader.biClrUsed = 0;
-        bmi.bmiHeader.biClrImportant = 0;
-        bmi.redMask = 0x00FF0000;
-        bmi.greenMask = 0x0000FF00;
-        bmi.blueMask = 0x000000FF;
-        bmi.alphaMask = 0xFF000000;
-
-        std::uint8_t* pBuffer = nullptr;
-        HDC memDC = CreateCompatibleDC(nullptr);
-        HBITMAP hBmp = CreateDIBSection(memDC, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS, reinterpret_cast<void**>(&pBuffer), nullptr, 0x0);
-        HGDIOBJ old = SelectObject(memDC, hBmp);
-        SetBkColor(memDC, RGB(0, 0, 0));
-
-        //Render Debug Graphics
-        if (control_center->get_debug_graphics())
-        {
-            std::uint8_t* src = control_center->get_debug_image();
-            if (src)
-            {
-                if (::IsWindowVisible(dstOps->window))
-                {
-                    draw_image(pBuffer, src, width, height, 4);
-                }
-            }
-        }
-
-        if (::IsWindowVisible(dstOps->window))
-        {
-            //Render Cursor
-            std::int32_t x = -1;
-            std::int32_t y = -1;
-            control_center->get_applet_mouse_position(&x, &y);
-
-            if (x > -1 && y > -1)
-            {
-                static const std::int32_t radius = 2;
-                draw_circle(x, y, radius, pBuffer, width, height, 4, true, 0xFF0000FF);
-            }
-        }
-
-        #ifdef ALPHA_BLEND
-        BLENDFUNCTION BlendInfo = {0};
-        BlendInfo.BlendOp = AC_SRC_OVER;
-        BlendInfo.BlendFlags = 0;
-        BlendInfo.SourceConstantAlpha = 0xFF;
-        BlendInfo.AlphaFormat = AC_SRC_ALPHA;
-        AlphaBlend(hdc, 0, 0, width, height, memDC, 0, 0, width, height, BlendInfo);
-        #else
-        TransparentBlt(hdc, 0, 0, width, height, memDC, 0, 0, width, height, 0x00000000);
-        #endif
-
-        SelectObject(memDC, old);
-        DeleteObject(hBmp);
-        DeleteDC(memDC);
-        dstOps->ReleaseDC(env, dstOps, hdc);
-	}
-}*/
-
-void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut)
-{
-    extern std::unique_ptr<ControlCenter> control_center;
-	if (control_center)
-	{
-        //Setup Function Pointers
-		typedef SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData);
-		static SurfaceData_GetOps GetOps = (SurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_GetOps@8");
-
-        typedef SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData);
-        static SurfaceData_GetOps GetSrcOps = (SurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_GetOps@8");
-
-        typedef GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData);
-        static GDIWindowSurfaceData_GetOps GetDstOps = (GDIWindowSurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_GDIWindowSurfaceData_GetOps@8");
-
-        typedef void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy);
-        static SurfaceData_IntersectBlitBounds IntersectBlitBounds = (SurfaceData_IntersectBlitBounds)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_IntersectBlitBounds@16");
-
-        if (!GetSrcOps || !GetDstOps || !IntersectBlitBounds)
-        {
-            return;
-        }
-
-        //Setup Source Info
-		SurfaceDataOps* srcOps = GetOps(env, srcData);
-		SurfaceDataRasInfo srcInfo = {0};
-		srcInfo.bounds.x1 = srcx;
-		srcInfo.bounds.y1 = srcy;
-		srcInfo.bounds.x2 = srcx + width;
-		srcInfo.bounds.y2 = srcy + height;
-
-		if (srcOps->Lock(env, srcOps, &srcInfo, needLut ? (SD_LOCK_READ | SD_LOCK_LUT) : SD_LOCK_READ) == SD_SUCCESS)
+		if (srcOps->Unlock)
 		{
-            //Setup Destination Clipping Info
-            GDIWinSDOps* dstOps = GetDstOps(env, dstData);
-            SurfaceDataBounds dstBounds = {dstx, dsty, dstx + width, dsty + height};
-            IntersectBlitBounds(&(srcInfo.bounds), &dstBounds, dstx - srcx, dsty - srcy);
-            srcx = srcInfo.bounds.x1;
-            srcy = srcInfo.bounds.y1;
-            dstx = dstBounds.x1;
-            dsty = dstBounds.y1;
-            width = srcInfo.bounds.x2 - srcInfo.bounds.x1;
-            height = srcInfo.bounds.y2 - srcInfo.bounds.y1;
-
-            if (width > 0 && height > 0)
-            {
-                srcOps->GetRasInfo(env, srcOps, &srcInfo);
-                if (srcInfo.rasBase)
-                {
-                    void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-                    bool isRasterAligned = !(srcInfo.scanStride & 0x03);
-
-                    control_center->update_dimensions(width, height);
-                    std::uint8_t* dest = control_center->get_image();
-
-                    //Render to Shared Memory
-                    if (dest)
-                    {
-                        if (isRasterAligned)
-                        {
-                            memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-                        }
-                        else
-                        {
-                            for (int i = 0; i < height; ++i)
-                            {
-                                int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-                                memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
-                                rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
-                            }
-                        }
-                    }
-
-                    HDC hDC = dstOps->GetDC(env, dstOps, 0, nullptr, clip, nullptr, 0);
-                    if (hDC)
-                    {
-                        //Clone Renderer
-                        static jint screenWidth = 0;
-                        static jint screenHeight = 0;
-                        static std::unique_ptr<std::uint8_t[]> screenBuffer = nullptr;
-
-                        if (screenWidth != width || screenHeight != height)
-                        {
-                            screenBuffer.reset();
-                            screenWidth = width;
-                            screenHeight = height;
-                            screenBuffer = std::make_unique<std::uint8_t[]>(width * height * srcInfo.pixelStride);
-                        }
-
-                        rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-                        if (isRasterAligned)
-                        {
-                            memcpy(screenBuffer.get(), rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-                        }
-                        else
-                        {
-                            for (int i = 0; i < height; ++i)
-                            {
-                                int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-                                memcpy(screenBuffer.get() + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
-                                rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
-                            }
-                        }
-
-                        //Render Debug Graphics
-                        if (control_center->get_debug_graphics())
-                        {
-                            std::uint8_t* src = control_center->get_debug_image();
-                            if (src)
-                            {
-                                rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-                                draw_image(rasBase, src, width, height, srcInfo.pixelStride);
-                            }
-                        }
-
-                        //Render Cursor
-                        std::int32_t x = -1;
-                        std::int32_t y = -1;
-                        control_center->get_applet_mouse_position(&x, &y);
-
-                        if (x > -1 && y > -1)
-                        {
-                            static const std::int32_t radius = 2;
-                            rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-                            draw_circle(x, y, radius, rasBase, width, height, 4, true, 0xFF0000FF);
-                        }
-
-                        //Render Screen
-                        BmiType bmi = {0};
-                        long dwHeight = srcInfo.bounds.y2 - srcInfo.bounds.y1;
-                        bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-                        bmi.bmiHeader.biWidth = srcInfo.scanStride / srcInfo.pixelStride;
-                        bmi.bmiHeader.biHeight = isRasterAligned ? -dwHeight : -1;
-                        bmi.bmiHeader.biPlanes = 1;
-                        bmi.bmiHeader.biBitCount = srcInfo.pixelStride * 8;
-                        bmi.bmiHeader.biCompression = srcInfo.pixelStride != 2 ? BI_RGB : BI_BITFIELDS;
-                        bmi.bmiHeader.biSizeImage = (bmi.bmiHeader.biWidth * dwHeight * srcInfo.pixelStride);
-                        bmi.bmiHeader.biXPelsPerMeter = 0;
-                        bmi.bmiHeader.biYPelsPerMeter = 0;
-                        bmi.bmiHeader.biClrUsed = 0;
-                        bmi.bmiHeader.biClrImportant = 0;
-                        bmi.colors.dwMasks[0] = 0x00FF0000;
-                        bmi.colors.dwMasks[1] = 0x0000FF00;
-                        bmi.colors.dwMasks[2] = 0x000000FF;
-
-                        rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-
-                        if (isRasterAligned)
-                        {
-                            if (::IsWindowVisible(dstOps->window))
-                            {
-                                SetDIBitsToDevice(hDC, dstx, dsty, width, height, 0, 0, 0, height, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
-                            }
-                        }
-                        else
-                        {
-                            for (jint i = 0; i < height; i += 1)
-                            {
-                                if (::IsWindowVisible(dstOps->window))
-                                {
-                                    SetDIBitsToDevice(hDC, dstx, dsty + i, width, 1, 0, 0, 0, 1, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
-                                    rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                        }
-
-                        dstOps->ReleaseDC(env, dstOps, hDC);
-                    }
-
-                    if (srcOps->Release)
-                    {
-                        srcOps->Release(env, srcOps, &srcInfo);
-                    }
-                }
-            }
-
-			if (srcOps->Unlock)
-			{
-				srcOps->Unlock(env, srcOps, &srcInfo);
-			}
+			srcOps->Unlock(env, srcOps, &srcInfo);
 		}
 	}
 }

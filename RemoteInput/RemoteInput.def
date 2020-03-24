@@ -12,6 +12,7 @@ EXPORTS
     EIOS_ReleaseMouse=EIOS_ReleaseMouse@16
     EIOS_ReleaseTarget=EIOS_ReleaseTarget@4
     EIOS_RequestTarget=EIOS_RequestTarget@4
+    EIOS_ScrollMouse=EIOS_ScrollMouse@16
     EIOS_SendString=EIOS_SendString@16
     EIOS_UpdateImageBuffer=EIOS_UpdateImageBuffer@4
     GetFunctionCount

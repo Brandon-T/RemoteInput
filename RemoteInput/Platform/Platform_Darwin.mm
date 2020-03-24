@@ -82,7 +82,7 @@ std::vector<pid_t> get_pids(const char* process_name)
 	return result;
 }
 
-void InjectProcess(pid_t pid)
+pid_t InjectProcess(pid_t pid)
 {
 	Dl_info info = {0};
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
@@ -93,33 +93,42 @@ void InjectProcess(pid_t pid)
 		if (!dll)
 		{
 			printf("Cannot find libRemoteInputBootstrap\n");
-			return;
+			return -1;
 		}
 		
 		void* bootstrap = dlsym(dll, "LoadLibrary");
 		if (!bootstrap)
 		{
 			printf("Cannot find LoadLibrary\n");
-			return;
+			return -1;
 		}
 		
 		mach_error_t err = mach_inject(reinterpret_cast<mach_inject_entry>(bootstrap), info.dli_fname, strlen(info.dli_fname) + 1, pid, 0);
 		if (err)
 		{
 			printf("Error Injecting: %d!\n", err);
+			dlclose(dll);
+			return -1;
 		}
 		
 		dlclose(dll);
+		return pid;
     }
+	return -1;
 }
 
-void InjectProcesses(const char* process_name)
+std::vector<pid_t> InjectProcesses(const char* process_name)
 {
+	std::vector<pid_t> result;
     std::vector<pid_t> pids = get_pids(process_name);
     for (pid_t pid : pids)
     {
-        InjectProcess(pid);
+        if (InjectProcess(pid) != -1)
+		{
+			result.push_back(pid);
+		}
     }
+	return result;
 }
 
 pid_t PIDFromWindow(void* window)
@@ -146,6 +155,16 @@ pid_t PIDFromWindow(void* window)
 
 Reflection* GetNativeReflector()
 {
+//	auto ModuleLoaded = [](std::string name) -> bool {
+//		void* lib = dlopen(name.c_str(), RTLD_GLOBAL | RTLD_NOLOAD);
+//		if (lib)
+//		{
+//			dlclose(lib);
+//			return true;
+//		}
+//		return false;
+//	};
+	
 	auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
 		auto start = std::chrono::high_resolution_clock::now();
 		while(!run())
@@ -160,7 +179,7 @@ Reflection* GetNativeReflector()
 		return true;
 	};
 	
-//	if (!TimeOut(20, []{ return dlopen("libawt_lwawt.dylib", RTLD_NOLOAD); })) {
+//	if (!TimeOut(20, [&]{ return ModuleLoaded("libjvm.dylib"); })) {
 //		return nullptr;
 //	}
 	
@@ -227,5 +246,68 @@ void disable_app_nap()
 			printf("Disable App-Nap: %p\n", app_nap_token);
 		});
 	});
+}
+
+//@interface MenuInterface: NSObject
+//@end
+//
+//@implementation MenuInterface
+//+ (void)onInputChanged:(NSMenuItem *)menuItem {
+//	printf("WE GUCCI!\n");
+////	extern std::unique_ptr<ControlCenter> control_center;
+////	if (control_center)
+////	{
+////		if (control_center->is_input_enabled())
+////		{
+////			[menuItem setTitle:@"Disable Input"];
+////			control_center->set_input_enabled(false);
+////		}
+////		else
+////		{
+////			[menuItem setTitle:@"Enable Input"];
+////			control_center->set_input_enabled(true);
+////		}
+////	}
+//}
+//@end
+//
+//void add_menu_items()
+//{
+//	dispatch_async(dispatch_get_main_queue(), ^{
+//		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+//
+//		NSMenu *debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
+//
+//		NSMenuItem *newMenu = [[NSMenuItem alloc] initWithTitle:@"Disable Input" action:nil keyEquivalent:@"D"];
+//		//[newMenu setAllowsKeyEquivalentWhenHidden:true];
+//		[newMenu setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+//		[newMenu setTarget:[MenuInterface class]];
+//		[newMenu setAction:@selector(onInputChanged:)];
+//
+////		[newMenu setMenu:debugMenu];
+//		[debugMenu addItem: newMenu];
+//
+//		NSMenuItem *debugMenuItem = [[NSMenuItem alloc] initWithTitle:@"Debug" action:nil keyEquivalent:@""];
+//		[debugMenuItem setSubmenu: debugMenu];
+//		[[NSApp mainMenu] addItem: debugMenuItem];
+//
+//	});
+//}
+
+
+void add_overlay()
+{
+//	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+//		NSView *view = [[NSView alloc] init];
+//		
+//		view.wantsLayer = true;
+//		view.layer.backgroundColor = [[NSColor blueColor] CGColor];
+//		
+//		NSWindow* window = [NSApp mainWindow];
+//		window.contentView = view;
+//	});
+//	dispatch_async(dispatch_get_main_queue(), ^{
+//		
+//	});
 }
 #endif // defined
