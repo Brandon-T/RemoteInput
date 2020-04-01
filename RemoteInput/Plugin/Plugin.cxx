@@ -26,6 +26,35 @@ std::unique_ptr<ControlCenter> control_center;
 
 // MARK: - EXPORTS
 
+void EIOS_Inject(const char* process_name)
+{
+	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+    if (process_name)
+    {
+        extern std::vector<pid_t> InjectProcesses(const char* process_name);
+        std::vector<pid_t> result = InjectProcesses(process_name);
+		for (pid_t pid : result)
+		{
+			ControlCenter::wait_for_sync(pid);
+		}
+    }
+	#endif
+}
+
+void EIOS_Inject_PID(std::int32_t pid)
+{
+	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+    if (pid != -1)
+    {
+        extern pid_t InjectProcess(pid_t);
+        if (InjectProcess(pid) != -1)
+		{
+			ControlCenter::wait_for_sync(pid);
+		}
+    }
+	#endif
+}
+
 EIOS* Reflect_GetEIOS(std::int32_t pid)
 {
 	extern std::unordered_map<std::int32_t, EIOS*> clients;

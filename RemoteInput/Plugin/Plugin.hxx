@@ -25,6 +25,8 @@ extern "C"
 {
 #endif
 
+EXPORT void EIOS_Inject(const char* process_name);
+EXPORT void EIOS_Inject_PID(std::int32_t pid);
 EXPORT EIOS* Reflect_GetEIOS(std::int32_t pid);
 EXPORT jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second);
