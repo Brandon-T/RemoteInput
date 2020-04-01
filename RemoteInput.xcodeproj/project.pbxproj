@@ -846,6 +846,7 @@
 		5E6281EC2421B776006BA298 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -859,6 +860,7 @@
 		5E6281ED2421B776006BA298 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -873,6 +875,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YTT3U95S25;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -908,6 +911,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YTT3U95S25;
 				DYLIB_COMPATIBILITY_VERSION = 1;

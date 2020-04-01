@@ -26,6 +26,16 @@ std::unique_ptr<ControlCenter> control_center;
 
 // MARK: - EXPORTS
 
+EIOS* Reflect_GetEIOS(std::int32_t pid)
+{
+	extern std::unordered_map<std::int32_t, EIOS*> clients;
+	if (clients.count(pid))
+	{
+		return clients[pid];
+	}
+	return nullptr;
+}
+
 jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
 {
 	if (eios)
@@ -180,40 +190,40 @@ std::size_t Reflect_Array_Size(EIOS* eios, jarray array)
 	return 0;
 }
 
-void Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length, void* buffer)
+void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index(array, type, index, length);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index(array, type, index, length);
 	}
+	return nullptr;
 }
 
-void Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, void* buffer)
+void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index2d(array, type, length, x, y);
 	}
+	return nullptr;
 }
 
-void Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, void* buffer)
+void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
 	}
+	return nullptr;
 }
 
-void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w, void* buffer)
+void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
 	}
+	return nullptr;
 }
 
 
