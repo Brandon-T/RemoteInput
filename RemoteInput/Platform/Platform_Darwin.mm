@@ -155,7 +155,9 @@ void* GetModuleHandle(const char* module_name)
 		const char* name = _dyld_get_image_name(i);
 		if (strcasestr(name, module_name))
 		{
-			const struct mach_header* header = _dyld_get_image_header(i);
+			return dlopen(name, RTLD_NOLOAD);
+			
+			/*const struct mach_header* header = _dyld_get_image_header(i);
 			//std::intptr_t offset = _dyld_get_image_vmaddr_slide(i);
 			
 			const struct load_command* cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char *>(header) + sizeof(struct mach_header));
@@ -187,7 +189,7 @@ void* GetModuleHandle(const char* module_name)
 				}
 				
 				cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char*>(cmd) + cmd->cmdsize);
-			}
+			}*/
 		}
 	}
 	return dlopen(module_name, RTLD_NOLOAD);

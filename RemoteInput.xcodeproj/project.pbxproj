@@ -378,11 +378,11 @@
 				5EBD6697235CF15400D183B1 /* DebugConsole.hxx */,
 				5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */,
 				5EC942EA23D4A81B00E42B21 /* Platform_Darwin.mm */,
+				5EBD66A1235CF15400D183B1 /* Platform_Windows.cxx */,
 				5EBD669A235CF15400D183B1 /* Platform.hxx */,
 				5EBD669B235CF15400D183B1 /* NativeHooks.hxx */,
 				5EBD669F235CF15400D183B1 /* DebugConsole.cxx */,
 				5EBD66A0235CF15400D183B1 /* JavaInternal.hxx */,
-				5EBD66A1235CF15400D183B1 /* Platform_Windows.cxx */,
 				5E6281EF2421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx */,
 			);
 			path = Platform;
