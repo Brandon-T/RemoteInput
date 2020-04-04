@@ -147,7 +147,11 @@
 	<errno.h>
 	<unistd.h>
 
+<<<<<<< HEAD
+1584650214 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+=======
 1585077447 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.cxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	"SimbaPlugin.hxx"
 	<memory>
 	<cstring>
@@ -155,13 +159,21 @@
 	<type_traits>
 	"ControlCenter.hxx"
 
+<<<<<<< HEAD
+1584650214 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
+=======
 1585077447 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\simbaplugin.hxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	<cstdint>
 	<cstdio>
 	"EIOS.hxx"
 	"TMemoryManager.hxx"
 
+<<<<<<< HEAD
+1584650214 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+=======
 1585077447 c:\users\brandon\desktop\remoteinput\remoteinput\eios.hxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	<cstdint>
 	<stdint.h>
 	"ControlCenter.hxx"
@@ -185,7 +197,11 @@
 1585077447 c:\users\brandon\desktop\remoteinput\remoteinput\platform\javainternal.hxx
 	<jni.h>
 
+<<<<<<< HEAD
+1584650214 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+=======
 1585077447 source:c:\users\brandon\desktop\remoteinput\remoteinput\eios.cxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	"EIOS.hxx"
 	<cstdio>
 	<unordered_map>
@@ -226,8 +242,12 @@
 1581533456 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\graphics.hxx
 	<cstdint>
 
+<<<<<<< HEAD
+1584650214 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
+=======
 1585083700 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.hxx
 	<memory>
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	<atomic>
 	"Signal.hxx"
 	"Reflection.hxx"
@@ -245,7 +265,11 @@
 	"EIOS.hxx"
 	"Graphics.hxx"
 
+<<<<<<< HEAD
+1584650214 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+=======
 1585077447 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\controlcenter.cxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	"ControlCenter.hxx"
 	<thread>
 	<unordered_map>
@@ -334,7 +358,11 @@
 	"EIOS.hxx"
 	<windows.h>
 
+<<<<<<< HEAD
+1584650214 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.hxx
+=======
 1585077447 c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.hxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	<cstdint>
 	<list>
 	<atomic>
@@ -352,7 +380,11 @@
 	<jni.h>
 	"Component.hxx"
 
+<<<<<<< HEAD
+1584650214 c:\users\brandon\desktop\remoteinput\remoteinput\java\component.hxx
+=======
 1585077447 c:\users\brandon\desktop\remoteinput\remoteinput\java\component.hxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	<jni.h>
 	<cstdint>
 	<cstddef>
@@ -380,7 +412,11 @@
 	"AWTEventAccessor.hxx"
 	<utility>
 
+<<<<<<< HEAD
+1584650214 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\component.cxx
+=======
 1585077447 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\component.cxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	"Component.hxx"
 	<utility>
 
@@ -451,7 +487,11 @@
 	<jni.h>
 	"EventQueue.hxx"
 
+<<<<<<< HEAD
+1584650214 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
+=======
 1585084704 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	"InputOutput.hxx"
 	"ControlCenter.hxx"
 	"Platform.hxx"
@@ -533,11 +573,19 @@
 	<stdexcept>
 	<vector>
 
+<<<<<<< HEAD
+1584481371 c:\users\brandon\desktop\remoteinput\remoteinput\java\pointerinfo.hxx
+	<jni.h>
+	"Component.hxx"
+
+1584481371 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\pointerinfo.cxx
+=======
 1585077447 c:\users\brandon\desktop\remoteinput\remoteinput\java\pointerinfo.hxx
 	<jni.h>
 	"Component.hxx"
 
 1585077447 source:c:\users\brandon\desktop\remoteinput\remoteinput\java\pointerinfo.cxx
+>>>>>>> b42a7a9eb951068d6ebd1812307eac0a2f2f33f4
 	"PointerInfo.hxx"
 	<utility>
 

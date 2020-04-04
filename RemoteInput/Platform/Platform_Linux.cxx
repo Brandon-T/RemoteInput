@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <proc/readproc.h>
+#include <libproc.h>
+#include <link.h>
 
 #include <functional>
 #include <cstring>
@@ -282,6 +284,23 @@ pid_t PIDFromWindow(void* window)
     XCloseDisplay(display);
     return pid;
 }
+
+void* GetModuleHandle(const char* module_name)
+{
+	void* result = nullptr;
+	dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
+		if (info)
+		{
+			if (strcasestr(module_name, info->dlpi_name))
+			{
+				*reinterpret_cast<void**>(data) = dlopen(info->dlpi_name, RTLD_NOLOAD);
+				return 1;
+			}
+		}
+		return 0;
+	}, reinterpret_cast<void*>(&result));
+	return result ?: dlopen(info->module_name, RTLD_NOLOAD);
+}
 #endif
 
 #if defined(__linux__)
@@ -329,7 +348,8 @@ Reflection* GetNativeReflector()
 	};
 
 	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-		return reflection->GetClassType(object) == "java.awt.Frame";
+		std::string class_type = reflection->GetClassType(object);
+		return class_type == "java.awt.Frame" || class_type == "javax.swing.JFrame";
 	};
 
 	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))

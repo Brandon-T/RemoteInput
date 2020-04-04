@@ -309,7 +309,8 @@ Reflection* GetNativeReflector()
 	};
 
 	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-		return reflection->GetClassType(object) == "java.awt.Frame";
+		std::string class_type = reflection->GetClassType(object);
+		return class_type == "java.awt.Frame" || class_type == "javax.swing.JFrame";
     };
 
 	auto GetMainWindow = [&] {
