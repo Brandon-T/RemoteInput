@@ -3,14 +3,15 @@
 #include <cstring>
 #include <memory>
 
-#if defined(__APPLE__)
+#if defined(_WIN32) || defined(_WIN64)
+#elif defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLMacro.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #else
-#include <gl/gl.h>
-#include <gl/glext.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
 #endif
 
 std::uint32_t RGBA(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a)

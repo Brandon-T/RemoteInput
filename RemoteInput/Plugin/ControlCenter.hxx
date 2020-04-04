@@ -28,7 +28,7 @@ enum class ReflectionArrayType: std::uint8_t
 
 class ControlCenter final {
 private:
-	using Signal = Signal<Semaphore>;
+	using Signal = ::Signal<Semaphore>;
 
 	pid_t pid;
 	bool is_controller;

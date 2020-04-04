@@ -3,8 +3,12 @@
 #if defined(__linux__)
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
+
 #include <signal.h>
-#include <libproc.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <proc/readproc.h>
 
 #include <functional>
 #include <cstring>
@@ -22,7 +26,11 @@ void GetDesktopResolution(int &width, int &height)
 
 std::int32_t GetCurrentThreadID()
 {
+    #ifdef SYS_gettid
+    return syscall(SYS_gettid);
+    #else
 	return gettid();
+	#endif
 }
 
 bool IsProcessAlive(pid_t pid)
@@ -37,8 +45,22 @@ bool IsThreadAlive(std::int32_t tid)
 
 std::vector<pid_t> get_pids()
 {
-	std::vector<pid_t> pids(2048);
-	pids.resize(proc_listpids(PROC_ALL_PIDS, 0, &pids[0], 2048 * sizeof(pid_t)) / sizeof(pid_t));
+	std::vector<pid_t> pids;
+
+    proc_t proc_info = {0};
+	PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
+	if (proc_tab)
+	{
+        while (readproc(proc_tab, &proc_info))
+        {
+            //task id, the POSIX thread ID (see also: tgid)
+            pids.push_back(proc_info.tid); //proc_info.cmd
+        }
+
+        closeproc(proc_tab);
+    }
+
+
 	std::vector<pid_t>(pids).swap(pids);
 	return pids;
 }
@@ -46,18 +68,22 @@ std::vector<pid_t> get_pids()
 std::vector<pid_t> get_pids(const char* process_name)
 {
 	std::vector<pid_t> result;
-	std::vector<pid_t> pids = get_pids();
-	
-    for (std::size_t i = 0; i < pids.size(); ++i)
+
+	proc_t proc_info = {0};
+	PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
+	if (proc_tab)
 	{
-        struct proc_bsdinfo proc;
-        if (proc_pidinfo(pids[i], PROC_PIDTBSDINFO, 0, &proc, PROC_PIDTBSDINFO_SIZE) == PROC_PIDTBSDINFO_SIZE)
-		{
-            if (!strcmp(process_name, proc.pbi_name))
+        while (readproc(proc_tab, &proc_info))
+        {
+            //basename of executable file in call to exec(2)
+            if (!strcasecmp(process_name, proc_info.cmd))
 			{
-				result.push_back(pids[i]);
+                //task id, the POSIX thread ID (see also: tgid)
+				result.push_back(proc_info.tid);
             }
         }
+
+        closeproc(proc_tab);
     }
 	return result;
 }
@@ -252,7 +278,7 @@ pid_t PIDFromWindow(void* window)
 {
     pid_t pid = 0;
     Display* display = XOpenDisplay(nullptr);
-    GetWindowThreadProcessId(display, static_cast<Window>(window), &pid);
+    GetWindowThreadProcessId(display, reinterpret_cast<Window>(window), &pid);
     XCloseDisplay(display);
     return pid;
 }
@@ -278,6 +304,16 @@ bool EnumWindowsProc(Display* display, Window window, void* other)
 
 Reflection* GetNativeReflector()
 {
+    auto ModuleLoaded = [](std::string name) -> bool {
+        void* lib = dlopen(name.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+        if (lib)
+        {
+            dlclose(lib);
+            return true;
+        }
+        return false;
+    };
+
 	auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
 		auto start = std::chrono::high_resolution_clock::now();
 		while(!run())
@@ -291,20 +327,20 @@ Reflection* GetNativeReflector()
 		}
 		return true;
 	};
-	
-//	if (!TimeOut(20, []{ return dlopen("libawt_lwawt.so", RTLD_NOLOAD); })) {
-//		return nullptr;
-//	}
-	
+
 	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
 		return reflection->GetClassType(object) == "java.awt.Frame";
 	};
-	
+
 	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
 	{
 		return nullptr;
 	}
-	
+
+	if (!TimeOut(20, [&]{ return ModuleLoaded("libawt_xawt.so"); })) {
+        return nullptr;
+    }
+
     auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_NEXT, "awt_GetComponent"));
     if (!awt_GetComponent)
     {
@@ -313,17 +349,21 @@ Reflection* GetNativeReflector()
 
 	auto GetMainWindow = [&]() -> Window {
 		Display* display = XOpenDisplay(nullptr);
-		Window windowFrame = 0;
-		EnumWindows(display, EnumWindowsProc, &windowFrame);
-		XCloseDisplay(display);
-		return windowFrame;
+        if (display)
+        {
+		    Window windowFrame = 0;
+		    EnumWindows(display, EnumWindowsProc, &windowFrame);
+		    XCloseDisplay(display);
+		    return windowFrame;
+        }
+        return 0;
 	};
 
     Reflection* reflection = new Reflection();
     if (reflection->Attach())
     {
 		auto hasReflection = TimeOut(20, [&]{
-			void* windowFrame = static_cast<void*>(GetMainWindow());
+			void* windowFrame = reinterpret_cast<void*>(GetMainWindow());
 			if (windowFrame)
 			{
 				jobject object = awt_GetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
@@ -331,13 +371,13 @@ Reflection* GetNativeReflector()
 			}
 			return false;
 		});
-		
+
 		if (hasReflection)
 		{
 			reflection->Detach();
 			return reflection;
 		}
-        
+
         reflection->Detach();
     }
 

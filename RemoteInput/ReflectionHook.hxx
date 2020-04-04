@@ -9,7 +9,7 @@
 #ifndef ReflectionHook_HXX_INCLUDED
 #define ReflectionHook_HXX_INCLUDED
 
-#include <string>
+#include <cstring>
 #include <jni.h>
 
 struct ReflectionHook
@@ -24,7 +24,7 @@ struct ReflectionHook
 	void read(void* input)
 	{
 		std::uint8_t* ptr = static_cast<std::uint8_t*>(input);
-		memcpy(&object, ptr, sizeof(jobject));
+		std::memcpy(&object, ptr, sizeof(jobject));
 		ptr += sizeof(jobject);
 		
 		read_string(ptr, cls);

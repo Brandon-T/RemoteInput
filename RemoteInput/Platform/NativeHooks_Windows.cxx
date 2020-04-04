@@ -12,10 +12,10 @@
 #include "JavaInternal.hxx"
 #include "EIOS.hxx"
 #include "Graphics.hxx"
-#endif
 
 #if __has_include("MinHook.h")
 #include "MinHook.h"
+#endif
 #endif
 
 
@@ -34,7 +34,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobj
 		//Original
 		return o_JavaNativeBlit(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
 	}
-	
+
 	//Setup Function Pointers
 	typedef SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData);
 	static SurfaceData_GetOps GetOps = (SurfaceData_GetOps)GetProcAddress(GetModuleHandle("awt.dll"), "_SurfaceData_GetOps@8");

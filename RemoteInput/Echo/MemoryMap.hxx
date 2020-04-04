@@ -97,6 +97,7 @@ bool MemoryMap<char_type>::open()
     hMap = std::is_same<char_type, wchar_t>::value ? OpenFileMappingW(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const wchar_t*>(path.c_str())) : OpenFileMappingA(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const char*>(path.c_str()));
     return hMap != nullptr;
     #else
+    physical = false;
 	owner = (!read_only && pSize > 0);
     int dwFlags = read_only ? O_RDONLY : O_RDWR;
     dwFlags |= (!read_only && pSize > 0) ? (O_CREAT | O_EXCL | O_TRUNC) : 0;
@@ -128,7 +129,7 @@ bool MemoryMap<char_type>::open()
 				if (ftruncate(hFile, pSize) != -1)
 				{
 					struct stat info = {0};
-					return fstat(hFile, &info) != -1 ? info.st_size >= pSize : false;
+					return fstat(hFile, &info) != -1 ? info.st_size >= static_cast<std::int64_t>(pSize) : false;
 				}
 				return false;
 			}
@@ -212,7 +213,7 @@ bool MemoryMap<char_type>::open_file()
         if(!read_only && pSize > 0 && ftruncate(hFile, pSize) != -1)
         {
             struct stat info = {0};
-            return fstat(hFile, &info) != -1 ? pSize == info.st_size : false;
+            return fstat(hFile, &info) != -1 ? info.st_size >= static_cast<std::int64_t>(pSize) : false;
         }
 
         pSize = 0;
@@ -260,28 +261,23 @@ bool MemoryMap<char_type>::map(std::size_t amount)
 template<typename char_type>
 bool MemoryMap<char_type>::unmap()
 {
-    bool result = true;
-    #if defined(_WIN32) || defined(_WIN64)
-    result = UnmapViewOfFile(pData);
-    pData = nullptr;
-    #else
-    result = !munmap(pData, pSize);
-    pData = nullptr;
-    #endif
-    return result;
+    return unmap(pSize);
 }
 
 template<typename char_type>
 bool MemoryMap<char_type>::unmap(std::size_t amount)
 {
     bool result = true;
-    #if defined(_WIN32) || defined(_WIN64)
-    result = UnmapViewOfFile(pData);
-    pData = nullptr;
-    #else
-    result = !munmap(pData, amount);
-    pData = nullptr;
-    #endif
+    if (pData)
+    {
+        #if defined(_WIN32) || defined(_WIN64)
+        result = UnmapViewOfFile(pData);
+        pData = nullptr;
+        #else
+        result = !munmap(pData, amount);
+        pData = nullptr;
+        #endif
+    }
     return result;
 }
 
@@ -302,12 +298,12 @@ bool MemoryMap<char_type>::close()
 	if (physical || !owner)
 	{
 		result = ::close(hFile) != -1 && result;
+		hFile = -1;
 	}
 
 	if (!physical && owner)
 	{
 		result = !shm_unlink(path.c_str()) && result;
-		result = ::close(hFile) != -1 && result;
 	}
     physical = false;
 	owner = false;
@@ -321,7 +317,7 @@ bool MemoryMap<char_type>::is_open() const
     #if defined(_WIN32) || defined(_WIN64)
     return hMap || (hFile != INVALID_HANDLE_VALUE);
     #else
-    return hFile != nullptr;
+    return hFile != -1;
     #endif
 }
 

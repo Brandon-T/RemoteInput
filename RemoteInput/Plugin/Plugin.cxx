@@ -287,13 +287,24 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 {
     printf("ATTACHED TO: %d\n", getpid());
 
-	std::thread([&] {
+    //Increase our reference count by 1..
+	//So that if someone calls `dlclose` before the thread exists, we won't get a crash.
+	//Later on we will call `dlclose` on a detached thread.
+
+	Dl_info this_info = {0};
+    dladdr(reinterpret_cast<void*>(&__load), &this_info);
+    void* this_module = dlopen(this_info.dli_fname, RTLD_LAZY);
+
+    std::thread([&] {
+
 		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
 			StartHook();
         }
+
+        std::thread([this_module]{ if (this_module) { dlclose(this_module); } }).detach();
 	}).detach();
 }
 

@@ -43,7 +43,10 @@ private:
     auto make_safe(jobject object) -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
     {
 		auto deleter = [&](T ptr){
-            jvm->DeleteGlobalRef(static_cast<jobject>(ptr));
+            if (jvm && ptr) 
+            {
+                jvm->DeleteGlobalRef(static_cast<jobject>(ptr));
+            }
         };
 
         return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
@@ -53,7 +56,10 @@ private:
     auto make_safe_local(U object) -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
     {
 		auto deleter = [&](T ptr){
-            jvm->DeleteLocalRef(static_cast<jobject>(ptr));
+            if (jvm && ptr) 
+            {
+                jvm->DeleteLocalRef(static_cast<jobject>(ptr));
+            }
         };
 
         return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};

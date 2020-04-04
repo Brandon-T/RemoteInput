@@ -8,6 +8,11 @@
  */
 
 #include <jni.h>
+#if defined(__linux__)
+    #ifdef X11_BLIT_LOOPS
+    #include <X11/extensions/Xrender.h>
+    #endif
+#endif
 
 typedef struct {
     jint x1;
@@ -145,6 +150,157 @@ typedef struct tagBitmapHeader {
         RGBQUAD palette[256];
     } colors;
 } BmiType;
+#endif
+
+#if defined(__linux__)
+
+#ifndef X11_BLIT_LOOPS
+typedef unsigned int juint;
+
+typedef struct _CompositeInfo {
+    jint        rule;
+    union {
+        jfloat  extraAlpha;
+        jint    xorPixel;
+    } details;
+    juint alphaMask;
+} CompositeInfo;
+
+typedef void (JNICALL CompInfoFunc)(JNIEnv *env,
+                                    CompositeInfo *pCompInfo,
+                                    jobject Composite);
+
+typedef struct _SurfCompHdr {
+    char                *Name;
+    jobject             Object;
+} SurfCompHdr;
+
+typedef struct _CompositeType {
+    SurfCompHdr         hdr;
+    CompInfoFunc        *getCompInfo;
+    jint                dstflags;
+} CompositeType;
+
+struct _NativePrimitive;
+
+typedef void (AnyFunc)();
+
+typedef void (BlitFunc)(void *pSrc, void *pDst,
+                        juint width, juint height,
+                        SurfaceDataRasInfo *pSrcInfo,
+                        SurfaceDataRasInfo *pDstInfo,
+                        struct _NativePrimitive *pPrim,
+                        CompositeInfo *pCompInfo);
+
+typedef struct _NativePrimitive {
+    void                *pPrimType;
+    void                *pSrcType;
+    CompositeType       *pCompType;
+    void                *pDstType;
+    union {
+        AnyFunc                 *initializer;
+        BlitFunc                *blit;
+        AnyFunc                 *blitbg;
+        AnyFunc                 *scaledblit;
+        AnyFunc                 *fillrect;
+        AnyFunc                 *fillspans;
+        AnyFunc                 *fillparallelogram;
+        void                    *drawparallelogram;
+        AnyFunc                 *drawline;
+        AnyFunc                 *maskfill;
+        AnyFunc                 *maskblit;
+        AnyFunc                 *drawglyphlist;
+        AnyFunc                 *drawglyphlistaa;
+        AnyFunc                 *drawglyphlistlcd;
+        void                    *transformhelpers;
+    } funcs, funcs_c;
+    jint                srcflags;
+    jint                dstflags;
+} NativePrimitive;
+
+typedef struct {
+    SurfaceDataBounds   bounds;
+    jint                endIndex;
+    jobject             bands;
+    jint                index;
+    jint                numrects;
+    jint                *pBands;
+} RegionData;
+#else
+typedef struct _X11SDOps X11SDOps;
+
+typedef Drawable GetPixmapBgFunc(JNIEnv *env,
+                                 X11SDOps *xsdo,
+                                 jint pixel);
+
+typedef void ReleasePixmapBgFunc(JNIEnv *env,
+                                 X11SDOps *xsdo);
+
+#ifdef MITSHM
+typedef struct {
+    XShmSegmentInfo     *shmSegInfo;
+    jint                bytesPerLine;
+    jboolean            xRequestSent;
+    jint                pmSize;
+
+    jboolean            usingShmPixmap;
+    Drawable            pixmap;
+    Drawable            shmPixmap;
+    jint                numBltsSinceRead;
+    jint                pixelsReadSinceBlt;
+    jint                pixelsReadThreshold;
+    jint                numBltsThreshold;
+} ShmPixmapData;
+#endif
+
+typedef struct {
+    jint        lox;
+    jint        loy;
+    jint        hix;
+    jint        hiy;
+} JDgaBounds;
+
+typedef struct {
+    void        *basePtr;
+    jint        surfaceScan;
+    jint        surfaceWidth;
+    jint        surfaceHeight;
+    jint        surfaceDepth;
+    JDgaBounds  window;
+    JDgaBounds  visible;
+
+} JDgaSurfaceInfo;
+
+struct _X11SDOps {
+    SurfaceDataOps      sdOps;
+    GetPixmapBgFunc     *GetPixmapWithBg;
+    ReleasePixmapBgFunc *ReleasePixmapWithBg;
+    jboolean            invalid;
+    jboolean            isPixmap;
+    jobject             peer;
+    Drawable            drawable;
+    void*               widget;
+    GC                  javaGC;
+    GC                  cachedGC;
+    jint                depth;
+    jint                pixelmask;
+    JDgaSurfaceInfo     surfInfo;
+    void*               configData;
+    void               *cData;
+    jboolean            dgaAvailable;
+    void                *dgaDev;
+    Pixmap              bitmask;
+    jint                bgPixel;
+    jboolean            isBgInitialized;
+    jint                pmWidth;
+    jint                pmHeight;
+    Picture             xrPic;
+
+    #ifdef MITSHM
+    ShmPixmapData       shmPMData;
+    #endif
+};
+#endif
 #endif
 
 #endif // JAVAINTERNAL_HXX_INCLUDED

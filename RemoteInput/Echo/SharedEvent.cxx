@@ -8,6 +8,7 @@
 
 #include "SharedEvent.hxx"
 #include <tuple>
+#include <string.h>
 
 #if !(_POSIX_TIMEOUTS >= 200112L)
 int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
@@ -349,7 +350,7 @@ bool Mutex::timed_lock(std::uint32_t milliseconds)
 	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
 	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-	struct timespec ts = { seconds.count(), nanoseconds.count() };
+	struct timespec ts = { static_cast<time_t>(seconds.count()), static_cast<long>(nanoseconds.count()) };
 	return mutex && !pthread_mutex_timedlock(mutex, &ts);
     #endif
 }
@@ -819,12 +820,9 @@ bool Semaphore::wait()
 		if (hSem == nullptr) { return false; }
 		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), DISPATCH_TIME_FOREVER);
 	}
+	#endif
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_wait(static_cast<sem_t*>(hSem));
-	#else
-	if (hSem == SEM_FAILED) { return false; }
-	return !sem_wait(hSem);
-	#endif
     #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
@@ -864,12 +862,9 @@ bool Semaphore::try_wait()
 		if (hSem == nullptr) { return false; }
 		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), DISPATCH_TIME_NOW);
 	}
+	#endif
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_trywait(static_cast<sem_t*>(hSem));
-	#else
-	if (hSem == SEM_FAILED) { return false; }
-	return !sem_trywait(hSem);
-	#endif
     #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
@@ -934,22 +929,15 @@ bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_r
 		dispatch_time_t time_out = dispatch_time(DISPATCH_TIME_NOW, (absolute_time - now).count());
 		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), time_out);
 	}
+	#endif
 
 	if (hSem == SEM_FAILED) { return false; }
+
 	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
     std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
 
 	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
 	return !sem_timedwait(static_cast<sem_t*>(hSem), &ts);
-	#else
-	if (hSem == SEM_FAILED) { return false; }
-
-	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-	return !sem_timedwait(hSem, &ts);
-	#endif
     #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
     std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
@@ -1016,14 +1004,15 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
 		dispatch_time_t time_out = dispatch_time(DISPATCH_TIME_NOW, duration.count());
 		return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), time_out);
 	}
+	#endif
 	if (hSem == SEM_FAILED) { return false; }
+
 	auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
 	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
 	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
 	struct timespec ts = { seconds.count(), nanoseconds.count() };
 	return !sem_timedwait(static_cast<sem_t*>(hSem), &ts);
-	#endif
     #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 
@@ -1081,9 +1070,9 @@ bool Semaphore::signal()
 		if (hSem == nullptr) { return false; }
 		return !dispatch_semaphore_signal(static_cast<dispatch_semaphore_t>(hSem));
 	}
+	#endif
 	if (hSem == SEM_FAILED) { return false; }
 	return !sem_post(static_cast<sem_t*>(hSem));
-	#endif
     #elif defined(_USE_SYSTEM_V_SEMAPHORES)
 	if (handle == -1) { return false; }
 	struct sembuf operations[1];
@@ -1182,17 +1171,15 @@ void atomic_signal_sleep(int* count)
 		do {
 			#if defined(_WIN32) || defined(_WIN64)
             SwitchToThread();
-			#else
-				#if defined(_POSIX_THREADS)
-					#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || defined(_DARWIN_C_SOURCE) || defined(__cplusplus)
-					pthread_yield_np();
-					#else
-					pthread_yield();
-					#endif
-				#else
-				sched_yield();
-				#endif
-			#endif
+			#elif defined(_POSIX_THREADS)
+                #if defined(__APPLE__)
+                pthread_yield_np();
+                #else
+                pthread_yield();
+                #endif
+            #else
+            sched_yield();
+            #endif
 		} while (std::chrono::high_resolution_clock::now() < end);
 		*count = 0;
 	}
@@ -1200,17 +1187,15 @@ void atomic_signal_sleep(int* count)
 	{
 		#if defined(_WIN32) || defined(_WIN64)
         SwitchToThread();
-		#else
-			#if defined(_POSIX_THREADS)
-				#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || defined(_DARWIN_C_SOURCE) || defined(__cplusplus)
-				pthread_yield_np();
-				#else
-				pthread_yield();
-				#endif
-			#else
-			sched_yield();
-			#endif
-		#endif
+		#elif defined(_POSIX_THREADS)
+            #if defined(__APPLE__)
+            pthread_yield_np();
+            #else
+            pthread_yield();
+            #endif
+        #else
+        sched_yield();
+        #endif
 	}
 }
 
@@ -1268,12 +1253,12 @@ AtomicSignal::AtomicSignal(std::string name) : hEvent(nullptr), name(name)
 	}
 }
 #else
-AtomicSignal::AtomicSignal() : shared(false), lock(new std::atomic_bool(false)), ref(nullptr), name("\0"), shm_fd(-1)
+AtomicSignal::AtomicSignal() : shared(false), shm_fd(-1), name("\0"), lock(new std::atomic_bool(false)), ref(nullptr)
 {
 	static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Atomic Bool is NOT Lock-Free");
 }
 
-AtomicSignal::AtomicSignal(std::string name) : shared(true), lock(nullptr), ref(nullptr), name(name), shm_fd(-1)
+AtomicSignal::AtomicSignal(std::string name) : shared(true), shm_fd(-1), name(name), lock(nullptr), ref(nullptr)
 {
 	static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Atomic Bool is NOT Lock-Free");
 
@@ -1406,7 +1391,7 @@ bool AtomicSignal::timed_wait(std::uint32_t milliseconds)
 	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
 	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-	struct timespec ts = { seconds.count(), nanoseconds.count() };
+	struct timespec ts = { static_cast<time_t>(seconds.count()), static_cast<long>(nanoseconds.count()) };
 	return atomic_signal_timedlock(lock, &ts);
 	#endif
 }

@@ -97,18 +97,18 @@ bool Reflection::Initialize(jobject awtFrame)
 
 bool Reflection::Attach()
 {
-    return this->jvm->AttachCurrentThread() == JNI_OK;
+    return this->jvm && this->jvm->AttachCurrentThread() == JNI_OK;
 }
 
 bool Reflection::AttachAsDaemon()
 {
 	//JVM can shut down without waiting for our thread to detach..
-	return this->jvm->AttachCurrentThreadAsDaemon() == JNI_OK;
+	return this->jvm && this->jvm->AttachCurrentThreadAsDaemon() == JNI_OK;
 }
 
 bool Reflection::Detach()
 {
-    return this->jvm->DetachCurrentThread() == JNI_OK;
+    return this->jvm && this->jvm->DetachCurrentThread() == JNI_OK;
 }
 
 void Reflection::PrintClasses()
