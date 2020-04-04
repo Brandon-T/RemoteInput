@@ -26,6 +26,45 @@ std::unique_ptr<ControlCenter> control_center;
 
 // MARK: - EXPORTS
 
+void EIOS_Inject(const char* process_name)
+{
+	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+    if (process_name)
+    {
+        extern std::vector<pid_t> InjectProcesses(const char* process_name);
+        std::vector<pid_t> result = InjectProcesses(process_name);
+		for (pid_t pid : result)
+		{
+			ControlCenter::wait_for_sync(pid);
+		}
+    }
+	#endif
+}
+
+void EIOS_Inject_PID(std::int32_t pid)
+{
+	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+    if (pid != -1)
+    {
+        extern pid_t InjectProcess(pid_t);
+        if (InjectProcess(pid) != -1)
+		{
+			ControlCenter::wait_for_sync(pid);
+		}
+    }
+	#endif
+}
+
+EIOS* Reflect_GetEIOS(std::int32_t pid)
+{
+	extern std::unordered_map<std::int32_t, EIOS*> clients;
+	if (clients.count(pid))
+	{
+		return clients[pid];
+	}
+	return nullptr;
+}
+
 jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
 {
 	if (eios)
@@ -180,40 +219,40 @@ std::size_t Reflect_Array_Size(EIOS* eios, jarray array)
 	return 0;
 }
 
-void Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length, void* buffer)
+void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index(array, type, index, length);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index(array, type, index, length);
 	}
+	return nullptr;
 }
 
-void Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, void* buffer)
+void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index2d(array, type, length, x, y);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index2d(array, type, length, x, y);
 	}
+	return nullptr;
 }
 
-void Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, void* buffer)
+void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
 	}
+	return nullptr;
 }
 
-void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w, void* buffer)
+void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w)
 {
 	if (eios)
 	{
-		void* result = eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
-		std::memcpy(buffer, result, ControlCenter::reflect_size_for_type(type) * length);
+		return eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
 	}
+	return nullptr;
 }
 
 
@@ -241,13 +280,12 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 	GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(module), &this_module);
 
 	HANDLE hThread = CreateThread(nullptr, 0, [](void* lpParam) __stdcall -> DWORD {
-        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-		if (reflector)
-		{
-			control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+        if (reflector)
+        {
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
 			StartHook();
-		}
-
+        }
 
 		//Decrease our reference count by 1..
 		//So if `FreeLibrary` was called previous, our count reaches 0 and we'll be fred.
@@ -265,11 +303,11 @@ void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, s
 [[gnu::constructor]] void __load()
 {
     printf("ATTACHED TO: %d\n", getpid());
-	
+
 	extern void disable_app_nap();
 	std::thread([&] {
 		disable_app_nap();
-		
+
 		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {

@@ -25,6 +25,8 @@ extern "C"
 {
 #endif
 
+EXPORT void EIOS_Inject(const char* process_name);
+EXPORT void EIOS_Inject_PID(std::int32_t pid);
 EXPORT EIOS* Reflect_GetEIOS(std::int32_t pid);
 EXPORT jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second);
@@ -43,13 +45,13 @@ EXPORT jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const c
 EXPORT jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_size, const char* cls, const char* field, const char* desc);
 EXPORT std::size_t Reflect_Array_Size(EIOS* eios, jarray array);
 
-EXPORT void Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length, void* buffer);
+EXPORT void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length);
 
-EXPORT void Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, void* buffer);
+EXPORT void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y);
 
-EXPORT void Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, void* buffer);
+EXPORT void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z);
 
-EXPORT void Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w, void* buffer);
+EXPORT void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
 
 #ifdef __cplusplus
 }

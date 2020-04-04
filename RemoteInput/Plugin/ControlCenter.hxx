@@ -1,6 +1,7 @@
 #ifndef ControlCenter_HXX_INCLUDED
 #define ControlCenter_HXX_INCLUDED
 
+#include <memory>
 #include <atomic>
 #include "Signal.hxx"
 #include "Reflection.hxx"
@@ -35,12 +36,14 @@ private:
 	std::unique_ptr<Mutex> map_lock;
 	std::unique_ptr<Signal> command_signal;
 	std::unique_ptr<Signal> response_signal;
+	std::unique_ptr<AtomicSignal> sync_signal;
 	std::unique_ptr<Reflection> reflector;
 	std::unique_ptr<MemoryMap<char>> memory_map;
 	std::unique_ptr<InputOutput> io_controller;
 
 	bool init_maps();
 	bool init_locks();
+	bool init_wait();
 	bool init_signals();
 	void process_command();
 
@@ -57,7 +60,8 @@ public:
 	void set_parent_process_id(std::int32_t pid);
 	void set_parent_thread_id(std::int32_t tid);
 	void update_dimensions(std::int32_t width, std::int32_t height);
-	
+
+	static void wait_for_sync(pid_t pid);
 	static bool controller_exists(pid_t pid);
 	static bool controller_is_paired(pid_t pid, bool* exists);
 	void kill_process(pid_t pid);

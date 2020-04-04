@@ -221,11 +221,11 @@ bool InjectSelf(pid_t pid)
                                 //More than enough time to wait for a proccess to create a thread..
                                 WaitForSingleObject(hThread, 5000);
                                 CloseHandle(hThread);
+								
+								VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
+								CloseHandle(ProcessHandle);
+								return true;
                             }
-
-                            VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
-                            CloseHandle(ProcessHandle);
-                            return true;
                         }
 
                         VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
@@ -238,29 +238,32 @@ bool InjectSelf(pid_t pid)
     return false;
 }
 
-void InjectProcess(pid_t pid)
+pid_t InjectProcess(pid_t pid)
 {
     extern HMODULE module;
 	MODULEENTRY32 info = GetModuleInfo(pid, module);
 	if (info.dwSize == 0)
 	{
-		InjectSelf(pid);
+		if (InjectSelf(pid))
+		{
+			return pid;
+		}
 	}
+	return -1;
 }
 
-void InjectProcesses(const char* process_name)
+std::vector<pid_t> InjectProcesses(const char* process_name)
 {
-    extern HMODULE module;
-
+	std::vector<pid_t> result;
     std::vector<pid_t> pids = get_pids(process_name);
     for (pid_t pid : pids)
     {
-        MODULEENTRY32 info = GetModuleInfo(pid, module);
-        if (info.dwSize == 0)
-        {
-            InjectSelf(pid);
-        }
+        if (InjectProcess(pid) != -1)
+		{
+			result.push_back(pid);
+		}
     }
+	return result;
 }
 
 pid_t PIDFromWindow(void* window)
@@ -306,7 +309,8 @@ Reflection* GetNativeReflector()
 	};
 
 	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-		return reflection->GetClassType(object) == "java.awt.Frame";
+		std::string class_type = reflection->GetClassType(object);
+		return class_type == "java.awt.Frame" || class_type == "javax.swing.JFrame";
     };
 
 	auto GetMainWindow = [&] {

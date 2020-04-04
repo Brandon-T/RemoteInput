@@ -1,7 +1,6 @@
 #include "JVM.hxx"
 
-
-JVM::JVM() : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(false)
+JVM::JVM() : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(false), module(nullptr)
 {
     #if defined(_WIN32) || defined(_WIN64)
     this->module = GetModuleHandleW(L"jvm.dll");
@@ -11,21 +10,35 @@ JVM::JVM() : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(false)
         this->module = LoadLibraryW(L"jvm.dll");
     }
     #elif defined(__APPLE__)
+	extern void* GetModuleHandle(const char*);
     this->loadedJNI = true;
-    this->module = dlopen("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server/libjvm.dylib", RTLD_NOW);
+	this->module = GetModuleHandle("libjvm.dylib");
 
     ///Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server/libjvm.dylib
     ///Library/Java/JavaVirtualMachines/jdk1.8.0_66.jdk/Contents/Home/jre/lib/server/libjvm.dylib
     #else
+	extern void* GetModuleHandle(const char*);
     this->loadedJNI = true;
     this->module = dlopen("libjvm.so", RTLD_NOW);
     #endif // defined
 
+	#if defined(_WIN32) || defined(_WIN64)
     if (!this->module)
     {
         return;
     }
-
+	#else
+	if (!module && !dlsym(RTLD_NEXT, "JNI_GetCreatedJavaVMs"))
+	{
+		return;
+	}
+	
+	if (!module)
+	{
+		this->loadedJNI = false;
+		module = RTLD_NEXT;
+	}
+	#endif
 
     this->createdVM = false;
     jint num_vms = 0;
@@ -44,12 +57,12 @@ JVM::JVM() : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(false)
     }
 }
 
-JVM::JVM(JNIEnv* env) : env(env), vm(nullptr), createdVM(false)
+JVM::JVM(JNIEnv* env) : env(env), vm(nullptr), createdVM(false), module(nullptr)
 {
     this->env->GetJavaVM(&this->vm);
 }
 
-JVM::JVM(int argc, const char* argv[]) : env(nullptr), vm(nullptr), createdVM(false)
+JVM::JVM(int argc, const char* argv[]) : env(nullptr), vm(nullptr), createdVM(false), module(nullptr)
 {
     if (argc)
     {

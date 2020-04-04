@@ -378,11 +378,11 @@
 				5EBD6697235CF15400D183B1 /* DebugConsole.hxx */,
 				5EBD6698235CF15400D183B1 /* Platform_Linux.cxx */,
 				5EC942EA23D4A81B00E42B21 /* Platform_Darwin.mm */,
+				5EBD66A1235CF15400D183B1 /* Platform_Windows.cxx */,
 				5EBD669A235CF15400D183B1 /* Platform.hxx */,
 				5EBD669B235CF15400D183B1 /* NativeHooks.hxx */,
 				5EBD669F235CF15400D183B1 /* DebugConsole.cxx */,
 				5EBD66A0235CF15400D183B1 /* JavaInternal.hxx */,
-				5EBD66A1235CF15400D183B1 /* Platform_Windows.cxx */,
 				5E6281EF2421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx */,
 			);
 			path = Platform;
@@ -846,6 +846,7 @@
 		5E6281EC2421B776006BA298 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -859,6 +860,7 @@
 		5E6281ED2421B776006BA298 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -873,6 +875,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YTT3U95S25;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -908,6 +911,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_WARN_ATOMIC_IMPLICIT_SEQ_CST = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YTT3U95S25;
 				DYLIB_COMPATIBILITY_VERSION = 1;

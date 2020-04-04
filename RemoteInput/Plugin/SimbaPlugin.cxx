@@ -728,8 +728,12 @@ void Pascal_Inject(void** Params, void** Result)
     const char* process_name = PascalRead<const char*>(Params[0]);
     if (process_name)
     {
-        extern void InjectProcesses(const char* process_name);
-        InjectProcesses(process_name);
+        extern std::vector<pid_t> InjectProcesses(const char* process_name);
+        std::vector<pid_t> result = InjectProcesses(process_name);
+		for (pid_t pid : result)
+		{
+			ControlCenter::wait_for_sync(pid);
+		}
     }
 	#endif
 }
@@ -740,8 +744,11 @@ void Pascal_Inject_PID(void** Params, void** Result)
     pid_t pid = PascalRead<pid_t>(Params[0]);
     if (pid)
     {
-        extern void InjectProcess(pid_t);
-        InjectProcess(pid);
+        extern pid_t InjectProcess(pid_t);
+        if (InjectProcess(pid) != -1)
+		{
+			ControlCenter::wait_for_sync(pid);
+		}
     }
 	#endif
 }

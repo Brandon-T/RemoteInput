@@ -1106,3 +1106,362 @@ bool Semaphore::signal()
     return false;
     #endif
 }
+
+/*bool Semaphore::exists(std::string name)
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	HANDLE hSemaphore = OpenSemaphore(0, false, name.c_str());
+	if (!hSemaphore)
+	{
+		return false;
+	}
+
+	CloseHandle(hSemaphore);
+	return true;
+	#elif defined(_USE_POSIX_SEMAPHORES)
+	sem_t* hSem = sem_open(name.c_str(), O_RDWR, S_IRWXU, 0);
+	if (hSem != SEM_FAILED)
+	{
+		if (errno == ENOENT)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	sem_close(hSem);
+	return true;
+	#elif defined(_USE_SYSTEM_V_SEMAPHORES)
+	union semun {
+		int val;
+		struct semid_ds* buf;
+		unsigned short* array;
+
+		#if defined(__linux__)
+		struct seminfo* info;
+		#endif
+	} argument;
+
+	id = std::hash<std::string>{}(name);
+	int handle = semget(id, 1, IPC_R | IPC_W | IPC_M);
+	if (handle == -1)
+	{
+		if (errno == ENOENT)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	semctl(handle, 0, IPC_RMID);
+	return true;
+	#else
+	shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU); //0660 -> S_IRWXU
+	if (shm_fd == -1)
+	{
+		if (errno == ENOENT)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	close(shm_fd);
+	return true;
+	#endif
+}*/
+
+
+
+void atomic_signal_sleep(int* count)
+{
+	if (*count++ >= 500)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		auto end = start + std::chrono::nanoseconds(1);
+		do {
+			#if defined(_WIN32) || defined(_WIN64)
+            SwitchToThread();
+			#else
+				#if defined(_POSIX_THREADS)
+					#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || defined(_DARWIN_C_SOURCE) || defined(__cplusplus)
+					pthread_yield_np();
+					#else
+					pthread_yield();
+					#endif
+				#else
+				sched_yield();
+				#endif
+			#endif
+		} while (std::chrono::high_resolution_clock::now() < end);
+		*count = 0;
+	}
+	else
+	{
+		#if defined(_WIN32) || defined(_WIN64)
+        SwitchToThread();
+		#else
+			#if defined(_POSIX_THREADS)
+				#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || defined(_DARWIN_C_SOURCE) || defined(__cplusplus)
+				pthread_yield_np();
+				#else
+				pthread_yield();
+				#endif
+			#else
+			sched_yield();
+			#endif
+		#endif
+	}
+}
+
+bool atomic_signal_timedlock(std::atomic_bool* lock, const struct timespec* timeout)
+{
+	struct timespec sleeptime;
+	sleeptime.tv_sec = 0;
+	sleeptime.tv_nsec = 1000000; //1ms
+	sleeptime.tv_nsec *= 5; //5ms
+
+    while (lock->load(std::memory_order_acquire) != true)
+    {
+		auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
+		auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+		auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+		struct timespec now = { static_cast<time_t>(seconds.count()), static_cast<long>(nanoseconds.count()) };
+		if (now.tv_sec >= timeout->tv_sec && now.tv_nsec >= timeout->tv_nsec)
+		{
+			errno = EAGAIN;
+			return false;
+		}
+
+		nanosleep (&sleeptime, nullptr);
+    }
+	return true;
+}
+
+template<typename T>
+T* atomic_variable_cast(void* &ptr)
+{
+	std::uint8_t* it = static_cast<std::uint8_t*>(ptr);
+	T* result = static_cast<T*>(ptr);
+	ptr = (it + sizeof(T));
+	return result;
+}
+
+#if defined(_WIN32) || defined(_WIN64)
+AtomicSignal::AtomicSignal() : hEvent(nullptr), name("\0")
+{
+	hEvent = CreateEvent(nullptr, false, false, nullptr);
+}
+
+AtomicSignal::AtomicSignal(std::string name) : hEvent(nullptr), name(name)
+{
+	hEvent = OpenEvent(0, false, name.c_str());
+	if (!hEvent)
+	{
+		hEvent = CreateEvent(nullptr, false, false, name.c_str());
+	}
+
+	if (!hEvent)
+	{
+		throw std::runtime_error("Cannot Create or Open AtomicSignal");
+	}
+}
+#else
+AtomicSignal::AtomicSignal() : shared(false), lock(new std::atomic_bool(false)), ref(nullptr), name("\0"), shm_fd(-1)
+{
+	static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Atomic Bool is NOT Lock-Free");
+}
+
+AtomicSignal::AtomicSignal(std::string name) : shared(true), lock(nullptr), ref(nullptr), name(name), shm_fd(-1)
+{
+	static_assert(ATOMIC_BOOL_LOCK_FREE == 2, "Atomic Bool is NOT Lock-Free");
+
+	bool created = true;
+	shm_fd = shm_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXO); //0660 -> S_IRWXU
+	if (shm_fd == -1)
+	{
+		if (errno == EEXIST)
+		{
+			created = false;
+			shm_fd = shm_open(name.c_str(), O_RDWR, S_IRWXU | S_IRWXO);
+		}
+	}
+
+	if (shm_fd == -1)
+	{
+		perror(strerror(errno));
+		throw std::runtime_error("Cannot create or open memory map");
+	}
+
+	if (created && ftruncate(shm_fd, sizeof(*this)) == -1)
+	{
+		shm_unlink(name.c_str());
+		shm_fd = -1;
+		throw std::runtime_error("Cannot truncate memory map");
+	}
+
+	void* mapping = mmap(nullptr, sizeof(*this), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (mapping == MAP_FAILED)
+	{
+		if (created)
+		{
+			shm_unlink(name.c_str());
+		}
+		shm_fd = -1;
+		throw std::runtime_error("Mapping into process memory failed");
+	}
+
+	void* data = mapping;
+	std::atomic_bool* lock = atomic_variable_cast<std::atomic_bool>(data);
+	std::int32_t* ref = atomic_variable_cast<std::int32_t>(data);
+
+	if (created)
+	{
+		new(lock) std::atomic_bool(false);
+	}
+
+	*ref += 1;
+	this->lock = lock;
+	this->ref = ref;
+	msync(ref, sizeof(*ref), MS_SYNC);
+}
+#endif
+
+AtomicSignal::~AtomicSignal()
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	CloseHandle(hEvent);
+	#else
+	if (lock && shared)
+    {
+        void* data = static_cast<void*>(lock);
+        std::atomic_bool* lock = atomic_variable_cast<std::atomic_bool>(data);
+        std::int32_t* ref = atomic_variable_cast<std::int32_t>(data);
+        *ref -= 1;
+		msync(ref, sizeof(*ref), MS_SYNC);
+
+        if (*ref == 0)
+        {
+			lock->~atomic();
+            shm_unlink(name.c_str());
+        }
+        munmap(lock, sizeof(*this));
+    }
+
+	if (lock && !shared)
+	{
+		delete lock;
+	}
+
+    if (shm_fd != -1)
+    {
+        close(shm_fd);
+    }
+
+    lock = nullptr;
+    ref = nullptr;
+    shm_fd = -1;
+	#endif
+}
+
+bool AtomicSignal::wait()
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	return WaitForSingleObject(hEvent, INFINITE) == WAIT_OBJECT_0;
+	#else
+	static int cnt = 0;
+	while (!lock->load(std::memory_order_acquire)) { atomic_signal_sleep(&cnt); }
+	lock->store(false, std::memory_order_release);
+	return true;
+	#endif
+}
+
+bool AtomicSignal::try_wait()
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	return WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0;
+	#else
+	if (!lock->load(std::memory_order_acquire))
+	{
+		lock->store(false, std::memory_order_release);
+		return true;
+	}
+	return false;
+	#endif
+}
+
+bool AtomicSignal::timed_wait(std::uint32_t milliseconds)
+{
+	if(!milliseconds)
+    {
+        return wait();
+    }
+
+	#if defined(_WIN32) || defined(_WIN64)
+	if (!hEvent) { return false; }
+    return WaitForSingleObject(hEvent, milliseconds) == WAIT_OBJECT_0;
+	#else
+	auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+	auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+	struct timespec ts = { seconds.count(), nanoseconds.count() };
+	return atomic_signal_timedlock(lock, &ts);
+	#endif
+}
+
+bool AtomicSignal::signal()
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	if (!hEvent) { return false; }
+    return SetEvent(hEvent);
+	#else
+	lock->store(true, std::memory_order_release);
+	return true;
+	#endif
+}
+
+bool AtomicSignal::is_signalled()
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	if (!hEvent) { return false; }
+	return WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0;
+	#else
+	return lock->load(std::memory_order_relaxed);
+	#endif
+}
+
+template<typename Rep, typename Period>
+bool AtomicSignal::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time)
+{
+	std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
+    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
+    {
+        ++rtime;
+    }
+    return try_wait_until(std::chrono::steady_clock::now() + rtime);
+}
+
+template<typename Duration>
+bool AtomicSignal::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time)
+{
+	#if defined(_WIN32) || defined(_WIN64)
+	if (!hEvent) { return false; }
+
+    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
+    return WaitForSingleObject(hEvent, msec.time_since_epoch().count()) == WAIT_OBJECT_0;
+	#else
+	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
+    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
+
+	struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
+	return atomic_signal_timedlock(lock, &ts);
+	#endif
+}
+
+template<typename Clock, typename Duration>
+bool AtomicSignal::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time)
+{
+	return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
+}
