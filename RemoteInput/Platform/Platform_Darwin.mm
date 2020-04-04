@@ -269,7 +269,6 @@ Reflection* GetNativeReflector()
 				jobject object = [view awtComponent:reflection->getEnv()];  //java.awt.Frame
 				if (IsValidFrame(reflection, object) && reflection->Initialize(object))
 				{
-					fprintf(stderr, "FOUND REFLECTION\n");
 					return true;
 				}
 			}

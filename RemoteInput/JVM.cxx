@@ -39,9 +39,6 @@ JVM::JVM() : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(false), modu
 		module = RTLD_NEXT;
 	}
 	#endif
-	
-	fprintf(stderr, "MODULE %p\n", dlsym(RTLD_NEXT, "JNI_GetCreatedJavaVMs"));
-
 
     this->createdVM = false;
     jint num_vms = 0;
