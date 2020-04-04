@@ -5,6 +5,7 @@
 #include <X11/Xatom.h>
 #include <signal.h>
 #include <libproc.h>
+#include <link.h>
 
 #include <functional>
 #include <cstring>
@@ -255,6 +256,13 @@ pid_t PIDFromWindow(void* window)
     GetWindowThreadProcessId(display, static_cast<Window>(window), &pid);
     XCloseDisplay(display);
     return pid;
+}
+
+void* GetModuleHandle(const char* module_name)
+{
+	dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
+		
+	}, nullptr);
 }
 #endif
 

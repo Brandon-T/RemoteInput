@@ -16,6 +16,7 @@ extern "C" {
 #include <signal.h>
 #include <libproc.h>
 #include <sys/syscall.h>
+#include <mach-o/dyld.h>
 #endif // defined
 
 #if defined(__APPLE__)
@@ -145,6 +146,52 @@ pid_t PIDFromWindow(void* window)
 	}
 	return 0;
 }
+
+void* GetModuleHandle(const char* module_name)
+{
+	std::uint32_t count = _dyld_image_count();
+	for (std::uint32_t i = 0; i < count; ++i)
+	{
+		const char* name = _dyld_get_image_name(i);
+		if (strcasestr(name, module_name))
+		{
+			const struct mach_header* header = _dyld_get_image_header(i);
+			//std::intptr_t offset = _dyld_get_image_vmaddr_slide(i);
+			
+			const struct load_command* cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char *>(header) + sizeof(struct mach_header));
+			if (header->magic == MH_MAGIC_64)
+			{
+				cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char *>(header) + sizeof(struct mach_header_64));
+			}
+			
+			for (std::uint32_t j = 0; j < header->ncmds; ++j)
+			{
+				if (cmd->cmd == LC_SEGMENT)
+				{
+					const struct segment_command* seg = reinterpret_cast<const struct segment_command*>(cmd);
+					void* base_addr = reinterpret_cast<void*>(seg->vmaddr); //seg->vmaddr + offset;
+					
+					Dl_info info = {0};
+					dladdr(base_addr, &info);
+					return dlopen(info.dli_fname, RTLD_NOLOAD);
+				}
+				
+				if (cmd->cmd == LC_SEGMENT_64)
+				{
+					const struct segment_command_64* seg = reinterpret_cast<const struct segment_command_64*>(cmd);
+					void* base_addr = reinterpret_cast<void*>(seg->vmaddr); //seg->vmaddr + offset;
+					
+					Dl_info info = {0};
+					dladdr(base_addr, &info);
+					return dlopen(info.dli_fname, RTLD_NOLOAD);
+				}
+				
+				cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char*>(cmd) + cmd->cmdsize);
+			}
+		}
+	}
+	return dlopen(module_name, RTLD_NOLOAD);
+}
 #endif // defined
 
 
@@ -184,7 +231,8 @@ Reflection* GetNativeReflector()
 //	}
 	
 	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-		return reflection->GetClassType(object) == "java.awt.Frame";
+		std::string class_type = reflection->GetClassType(object);
+		return class_type == "java.awt.Frame" || class_type == "javax.swing.JFrame";
     };
 	
 	auto GetWindowViews = [&]() -> std::vector<NSView*> {
@@ -192,6 +240,7 @@ Reflection* GetNativeReflector()
 		dispatch_sync(dispatch_get_main_queue(), ^{
 			for (NSWindow* window in NSApplication.sharedApplication.windows)
 			{
+				//NSLog(@"Window: %@ -- %@", NSStringFromClass([window class]), NSStringFromClass([window.contentView class]));
 				if ([window isKindOfClass:NSClassFromString(@"AWTWindow_Normal")] && [window.contentView isKindOfClass:NSClassFromString(@"AWTView")])
 				{
 					NSView* view = window.contentView;
@@ -211,13 +260,14 @@ Reflection* GetNativeReflector()
 	
 	if (reflection->Attach())
 	{
-		auto hasReflection = TimeOut(300, [&]{
+		auto hasReflection = TimeOut(20, [&]{
 			for (auto&& view : GetWindowViews())
 			{
 				//TODO: Check if we can call "awt_GetComponent" from the JDK like on Linux
 				jobject object = [view awtComponent:reflection->getEnv()];  //java.awt.Frame
 				if (IsValidFrame(reflection, object) && reflection->Initialize(object))
 				{
+					fprintf(stderr, "FOUND REFLECTION\n");
 					return true;
 				}
 			}
