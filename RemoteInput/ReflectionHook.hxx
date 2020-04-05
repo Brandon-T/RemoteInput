@@ -10,6 +10,7 @@
 #define ReflectionHook_HXX_INCLUDED
 
 #include <cstring>
+#include <string>
 #include <jni.h>
 
 struct ReflectionHook

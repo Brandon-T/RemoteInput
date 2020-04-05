@@ -8,12 +8,20 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <link.h>
+
+#if __has_include("libproc.h") && __has_include("proc/readproc.h")
 #include <proc/readproc.h>
 #include <libproc.h>
-#include <link.h>
+#else
+#include <dirent.h>
+#include <unistd.h>
+#endif
 
 #include <functional>
 #include <cstring>
+#include <vector>
+#include <algorithm>
 #endif // defined
 
 #if defined(__linux__)
@@ -45,6 +53,7 @@ bool IsThreadAlive(std::int32_t tid)
     return !syscall(SYS_tkill, tid, 0);
 }
 
+#if __has_include("libproc.h") && __has_include("proc/readproc.h")
 std::vector<pid_t> get_pids()
 {
 	std::vector<pid_t> pids;
@@ -89,6 +98,89 @@ std::vector<pid_t> get_pids(const char* process_name)
     }
 	return result;
 }
+#else
+std::vector<pid_t> get_pids(const char* process_name)
+{
+    std::vector<pid_t> result;
+    DIR* proc_dir = opendir("/proc");
+    if (proc_dir)
+    {
+        auto is_number = [](const std::string& s) -> bool {
+            return !s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
+        };
+
+        #if defined(__x86_64__) || defined(__ppc64__)
+        while(struct dirent64* entry = readdir64(proc_dir))
+        #else
+        while(struct dirent* entry = readdir())
+        #endif
+        {
+            if (entry->d_type == DT_DIR)
+            {
+                if (is_number(entry->d_name))
+                {
+                    std::string pid = entry->d_name;
+                    std::string path = std::string(PATH_MAX, '\0');
+                    ssize_t len = readlink(("/proc/" + pid + "/exe").c_str(), &path[0], PATH_MAX - 1);
+
+                    if (len != -1)
+                    {
+                        std::string::size_type pos = path.find_last_of("/\\");
+                        if (pos != std::string::npos)
+                        {
+                            //Strip path components
+                            path = path.substr(pos + 1);
+                            pos = path.find_last_of('.');
+
+                            //Strip extension
+                            path = pos > 0 && pos != std::string::npos ? path.substr(0, pos) : path;
+
+                            if (!strcasecmp(path.c_str(), process_name))
+                            {
+                                result.push_back(std::stoi(entry->d_name));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        closedir(proc_dir);
+    }
+    return result;
+}
+
+std::vector<pid_t> get_pids()
+{
+    std::vector<pid_t> result;
+    DIR* proc_dir = opendir("/proc");
+    if (proc_dir)
+    {
+        auto is_number = [](const std::string& s) -> bool {
+            return !s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
+        };
+
+        #if defined(__x86_64__) || defined(__ppc64__)
+        while(struct dirent64* entry = readdir64(proc_dir))
+        #else
+        while(struct dirent* entry = readdir())
+        #endif
+        {
+            if (entry->d_type == DT_DIR)
+            {
+                if (is_number(entry->d_name))
+                {
+                    pid_t pid = std::stoi(entry->d_name);
+                    result.push_back(pid);
+                }
+            }
+        }
+
+        closedir(proc_dir);
+    }
+    return result;
+}
+#endif
 #endif
 
 #if defined(__linux__)
@@ -287,19 +379,20 @@ pid_t PIDFromWindow(void* window)
 
 void* GetModuleHandle(const char* module_name)
 {
-	void* result = nullptr;
+    struct Module { const char* module_name; void* result; } module_info;
 	dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
 		if (info)
 		{
-			if (strcasestr(module_name, info->dlpi_name))
+		    Module* module_info = static_cast<Module*>(data);
+			if (strcasestr(module_info->module_name, info->dlpi_name))
 			{
-				*reinterpret_cast<void**>(data) = dlopen(info->dlpi_name, RTLD_NOLOAD);
+				module_info->result = dlopen(info->dlpi_name, RTLD_NOLOAD);
 				return 1;
 			}
 		}
 		return 0;
-	}, reinterpret_cast<void*>(&result));
-	return result ?: dlopen(info->module_name, RTLD_NOLOAD);
+	}, reinterpret_cast<void*>(&module_info));
+	return module_info.result ?: dlopen(module_name, RTLD_NOLOAD);
 }
 #endif
 

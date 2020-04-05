@@ -3,7 +3,7 @@
 //   Some rights reserved: http://opensource.org/licenses/mit
 //   https://github.com/rentzsch/mach_inject
 
-#include	"mach_inject.h"
+#include    "../include/mach_inject.h"
 
 #include <mach-o/dyld.h>
 #include <mach-o/getsect.h>

@@ -12,7 +12,7 @@ include_directories(Plugin)
 
 
 # PACKAGES
-#find_package(Java 1.8 REQUIRED)
+find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS})
 
@@ -25,6 +25,7 @@ IF(WIN32)
 ELSEIF(APPLE)
     include_directories(Thirdparty/rd_route/include)
 ELSE()
+    include_directories(Thirdparty/linux_detours/include)
 ENDIF()
 
 
@@ -64,6 +65,8 @@ ELSEIF(APPLE)
             ${COCOA_INCLUDES}
             ${OPENGL_INCLUDES})
 ELSE()
+    set(EXTRA_INCLUDES
+            ${OPENGL_INCLUDES})
 ENDIF()
 
 IF(WIN32)
@@ -79,6 +82,10 @@ ELSEIF(APPLE)
             ${COCOA}
             ${OPENGL})
 ELSE()
+    set(EXTRA_LIBRARIES
+            dl
+            pthread
+            GL)
 ENDIF()
 
 # LIBRARIES
@@ -112,15 +119,13 @@ ELSEIF(APPLE)
             ${Java_JAWT_EXTENDED_LIBRARY}
             ${OTHER_LDFLAGS})
 ELSE()
-    find_library(Java_JAWT_LIBRARY
-            NAMES libawt.so
-            HIMES ${_JAVA_HINTS}
-            PATHS ${_JAVA_HOME}/lib)
+    set(Java_JAWT_LIBRARY
+            ${JAVA_AWT_LIBRARY})
 
     find_library(Java_JAWT_EXTENDED_LIBRARY
-            NAMES libawt_lwawt.so
+            NAMES libawt_xawt.so
             HIMES ${_JAVA_HINTS}
-            PATHS ${_JAVA_HOME}/lib)
+            PATHS ${JAVA_AWT_LIBRARY}/..)
 
     set(LIBRARIES_LIST
             ${Java_JAWT_LIBRARY}
@@ -218,11 +223,25 @@ IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
-set(CMAKE_CXX_FLAGS_DEBUG
-        "${CMAKE_CXX_FLAGS_DEBUG} -g -static -static-libgcc -static-libstdc++")
+IF(WIN32)
+    set(CMAKE_CXX_FLAGS_DEBUG
+            "${CMAKE_CXX_FLAGS_DEBUG} -g -static -static-libgcc -static-libstdc++")
 
-set(CMAKE_CXX_FLAGS_RELEASE
-        "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s -static -static-libgcc -static-libstdc++")
+    set(CMAKE_CXX_FLAGS_RELEASE
+            "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s -static -static-libgcc -static-libstdc++")
+ELSEIF(APPLE)
+    set(CMAKE_CXX_FLAGS_DEBUG
+            "${CMAKE_CXX_FLAGS_DEBUG} -g -static -static-libgcc -static-libstdc++")
+
+    set(CMAKE_CXX_FLAGS_RELEASE
+            "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s -static -static-libgcc -static-libstdc++")
+ELSE()
+    set(CMAKE_CXX_FLAGS_DEBUG
+            "${CMAKE_CXX_FLAGS_DEBUG} -g -static-libgcc -static-libstdc++")
+
+    set(CMAKE_CXX_FLAGS_RELEASE
+            "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s -static-libgcc -static-libstdc++")
+ENDIF()
 
 IF(APPLE)
     set(SRC_LIST

@@ -416,21 +416,12 @@ Semaphore::Semaphore(std::int32_t count) : shared(false), owned(true), hSem(SEM_
 	{
 		throw std::runtime_error("Cannot create or open semaphore");
 	}
-	#else
-	hSem = sem_open(nullptr, O_CREAT | O_EXCL | O_RDWR, S_IRWXU, count); //sem_init with `pshared = 0`
-	if (hSem == SEM_FAILED && errno == EEXIST)
-	{
-		owned = false;
-		hSem = sem_open(nullptr, O_RDWR, S_IRWXU, count);
-	}
-
-	if (hSem != SEM_FAILED)
-	{
-		if (sem_init(static_cast<sem_t*>(hSem), false, count) == -1)
-		{
-			throw std::runtime_error("Cannot initialize semaphore");
-		}
-	}
+    #else
+	hSem = new sem_t();
+    if (sem_init(static_cast<sem_t*>(hSem), false, count) == -1)
+    {
+        throw std::runtime_error("Cannot initialize semaphore");
+    }
 
 	if (hSem == SEM_FAILED)
 	{
@@ -481,6 +472,7 @@ Semaphore::~Semaphore()
 		if (!shared && name == "\0")
 		{
 			sem_destroy(static_cast<sem_t*>(hSem));
+			delete static_cast<sem_t*>(hSem);
 			hSem = SEM_FAILED;
 		}
 		else if (shared && name != "\0")
