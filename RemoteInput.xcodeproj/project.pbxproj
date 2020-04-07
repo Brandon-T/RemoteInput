@@ -1170,4 +1170,21 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5EC5950D232D956B00922111 /* Debug */,
-				5
+				5EC5950E232D956B00922111 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5EC5950F232D956B00922111 /* Build configuration list for PBXNativeTarget "RemoteInput" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5EC59510232D956B00922111 /* Debug */,
+				5EC59511232D956B00922111 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5EC594FE232D956B00922111 /* Project object */;
+}
