@@ -78,26 +78,27 @@ IF(WIN32)
     set(LIBRARIES_LIST
             ${JAVA_AWT_LIBRARY})
 ELSEIF(APPLE)
-    set(JAVA_JNI_LIBRARY_PATH
-            /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib)
+#    set(JAVA_JNI_LIBRARY_PATH
+#            /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib)
+#
+#    set(JAVA_JNI_LIBRARY_RPATH
+#            "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib")
 
-    set(JAVA_JNI_LIBRARY_RPATH
-            "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib")
-
-    find_library(Java_JAWT_LIBRARY
-            NAMES libawt.dylib
-            HIMES ${_JAVA_HINTS}
-            PATHS ${JAVA_JNI_LIBRARY_PATH})
-
-    find_library(Java_JAWT_EXTENDED_LIBRARY
-            NAMES libawt_lwawt.dylib
-            HIMES ${_JAVA_HINTS}
-            PATHS ${JAVA_JNI_LIBRARY_PATH})
-
-    set(LIBRARIES_LIST
-            ${Java_JAWT_LIBRARY}
-            ${Java_JAWT_EXTENDED_LIBRARY}
-            ${OTHER_LDFLAGS})
+#    find_library(Java_JAWT_LIBRARY
+#            NAMES libawt.dylib
+#            HIMES ${_JAVA_HINTS}
+#            PATHS ${JAVA_JNI_LIBRARY_PATH})
+#
+#    find_library(Java_JAWT_EXTENDED_LIBRARY
+#            NAMES libawt_lwawt.dylib
+#            HIMES ${_JAVA_HINTS}
+#            PATHS ${JAVA_JNI_LIBRARY_PATH})
+#
+#    set(LIBRARIES_LIST
+#            ${Java_JAWT_LIBRARY}
+#            ${Java_JAWT_EXTENDED_LIBRARY}
+#            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}\""
+#            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}/server\"")
 ELSE()
     set(Java_JAWT_LIBRARY
             ${JAVA_AWT_LIBRARY})
@@ -230,15 +231,6 @@ ELSEIF(APPLE)
     target_link_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-static>
             $<$<CONFIG:RELEASE>:-s -static>)
-
-#    target_link_options(${PROJECT_NAME} PRIVATE
-#            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}\""
-#            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}/server\"")
-
-    set(OTHER_LDFLAGS
-            ${OTHER_LDFLAGS}
-            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}\""
-            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}/server\"")
 ELSE()
     target_compile_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-g>

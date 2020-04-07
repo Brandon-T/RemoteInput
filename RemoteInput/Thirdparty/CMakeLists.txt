@@ -98,7 +98,7 @@ ELSEIF(APPLE)
 
     target_compile_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-Wno-multichar -Wno-null-conversion -g -O0 -fno-omit-frame-pointer>
-            $<$<CONFIG:RELEASE>:-Wno-multichar -Wno-null-conversion -s -O0 -fno-omit-frame-pointer>)
+            $<$<CONFIG:RELEASE>:-Wno-multichar -Wno-null-conversion -O0 -fno-omit-frame-pointer>)
     target_link_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-static>
             $<$<CONFIG:RELEASE>:-s -static>)
