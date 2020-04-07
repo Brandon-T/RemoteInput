@@ -49,7 +49,9 @@ ENDIF()
 # ----------------------------- LINKER -----------------------------
 IF(WIN32)
     set(EXTRA_LIBRARIES
-            OpenGL32)
+            user32
+            opengl32
+            gdi32)
 ELSEIF(APPLE)
     find_library(FOUNDATION Foundation)
     find_library(COCOA Cocoa)
@@ -124,8 +126,6 @@ set(SRC_LIST
         #RemoteInput/Echo/SpinLock.hxx
         RemoteInput/Echo/Time.cxx
         RemoteInput/Echo/Time.hxx
-        RemoteInput/Hooks/Hooks.cpp
-        RemoteInput/Hooks/Hooks.hpp
         #RemoteInput/Hooks/ModelRendering.cpp
         #RemoteInput/Hooks/ModelRendering.hpp
         RemoteInput/Java/Applet.cxx
@@ -195,7 +195,9 @@ set(SRC_LIST
         RemoteInput/ThreadPool.cxx
         RemoteInput/ThreadPool.hxx)
 
-IF(APPLE)
+IF(WIN32)
+
+ELSEIF(APPLE)
     set(SRC_LIST
             ${SRC_LIST}
             RemoteInput/Platform/Platform_Darwin.mm)
@@ -214,12 +216,18 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLI
 
 IF(WIN32)
     target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g -static -static-libgcc -static-libstdc++>
-            $<$<CONFIG:RELEASE>:-O3 -s -static -static-libgcc -static-libstdc++>)
+            $<$<CONFIG:DEBUG>:-Wl,--input-def=RemoteInput/RemoteInput.def>
+            $<$<CONFIG:RELEASE>:-Wl,--input-def=RemoteInput/RemoteInput.def>)
+    target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at>
+            $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at>)
 ELSEIF(APPLE)
     target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g -static>
-            $<$<CONFIG:RELEASE>:-O3 -s -static>)
+            $<$<CONFIG:DEBUG>:-g>
+            $<$<CONFIG:RELEASE>:-O3>)
+    target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:DEBUG>:-static>
+            $<$<CONFIG:RELEASE>:-s -static>)
 
 #    target_link_options(${PROJECT_NAME} PRIVATE
 #            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}\""
@@ -231,8 +239,11 @@ ELSEIF(APPLE)
             "-rpath \"${JAVA_JNI_LIBRARY_RPATH}/server\"")
 ELSE()
     target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g -static-libgcc -static-libstdc++>
-            $<$<CONFIG:RELEASE>:-O3 -s -static-libgcc -static-libstdc++>)
+            $<$<CONFIG:DEBUG>:-g>
+            $<$<CONFIG:RELEASE>:-O3>)
+    target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:DEBUG>:-static-libgcc -static-libstdc++>
+            $<$<CONFIG:RELEASE>:-s -static-libgcc -static-libstdc++>)
 ENDIF()
 
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})

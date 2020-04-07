@@ -4,6 +4,8 @@
 #include <memory>
 
 #if defined(_WIN32) || defined(_WIN64)
+#include <GL/gl.h>
+#include <GL/glext.h>
 #elif defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLMacro.h>

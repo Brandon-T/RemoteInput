@@ -1,6 +1,7 @@
 #include "Platform.hxx"
 #include <string>
 #include <chrono>
+#include "Thirdparty/main.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>

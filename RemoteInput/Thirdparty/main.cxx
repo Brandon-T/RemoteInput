@@ -7,6 +7,7 @@
 #include <cstring>
 
 #if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
 #include <MinHook.h>
 #elif defined(__APPLE__)
 #include <rd_route.h>
@@ -101,7 +102,7 @@ void Hook::remove()
 		kr = mach_vm_write(mach_task_self(), reinterpret_cast<mach_vm_address_t>(original), reinterpret_cast<vm_offset_t>(&data[0]), size_of_jump);
 		kr = mach_vm_protect(mach_task_self(), reinterpret_cast<mach_vm_address_t>(original), size_of_jump, FALSE, VM_PROT_READ | VM_PROT_EXECUTE);
 	}
-	
+
 	std::memset(&data[0], 0, sizeof(data));
 }
 #else
@@ -179,7 +180,7 @@ bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap)
                                 WaitForSingleObject(hThread, 5000);
                                 CloseHandle(hThread);
 
-								VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
+								VirtualFreeEx(ProcessHandle, RemoteAddress, module_path.size() * sizeof(char), MEM_RELEASE);
 								CloseHandle(ProcessHandle);
 								return true;
                             }

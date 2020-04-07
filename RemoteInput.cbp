@@ -133,6 +133,8 @@
 		<Unit filename="RemoteInput/Reflection.hxx" />
 		<Unit filename="RemoteInput/RemoteInput.def" />
 		<Unit filename="RemoteInput/RemoteInput.h" />
+		<Unit filename="RemoteInput/Thirdparty/main.cxx" />
+		<Unit filename="RemoteInput/Thirdparty/main.hxx" />
 		<Unit filename="RemoteInput/Thirdparty/min_hook/include/MinHook.h" />
 		<Unit filename="RemoteInput/Thirdparty/min_hook/src/buffer.c">
 			<Option compilerVar="CC" />
