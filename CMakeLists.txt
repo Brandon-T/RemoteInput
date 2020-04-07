@@ -60,7 +60,9 @@ ELSEIF(APPLE)
     set(EXTRA_LIBRARIES
             ${FOUNDATION}
             ${COCOA}
-            ${OPENGL})
+            ${OPENGL}
+            dl
+            pthread)
 ELSE()
     set(EXTRA_LIBRARIES
             dl
