@@ -59,7 +59,11 @@
 #endif
 #include <elf.h>
 #include <link.h>
-#include "plthook.h"
+#include "../include/plthook.h"
+
+#ifndef PATH_MAX
+#define PATH_MAX pathconf("/", _PC_PATH_MAX)
+#endif
 
 #ifndef __GNUC__
 #define __attribute__(arg)

@@ -7,12 +7,12 @@ extern "C" {
 
 #include <Foundation/Foundation.h>
 #include <Cocoa/Cocoa.h>
-#include "mach_inject.h"
 
 #if defined(__cplusplus)
 }
 #endif
 
+#include <Thirdparty/main.hxx>
 #include <signal.h>
 #include <libproc.h>
 #include <sys/syscall.h>
@@ -103,17 +103,14 @@ pid_t InjectProcess(pid_t pid)
 			printf("Cannot find LoadLibrary\n");
 			return -1;
 		}
-		
-		mach_error_t err = mach_inject(reinterpret_cast<mach_inject_entry>(bootstrap), info.dli_fname, strlen(info.dli_fname) + 1, pid, 0);
-		if (err)
-		{
-			printf("Error Injecting: %d!\n", err);
-			dlclose(dll);
-			return -1;
-		}
-		
+
+		if (Injector::Inject(info.dli_fname, pid, bootstrap))
+        {
+		    dlclose(dll);
+		    return pid;
+        }
+
 		dlclose(dll);
-		return pid;
     }
 	return -1;
 }
@@ -297,68 +294,5 @@ void disable_app_nap()
 			printf("Disable App-Nap: %p\n", app_nap_token);
 		});
 	});
-}
-
-//@interface MenuInterface: NSObject
-//@end
-//
-//@implementation MenuInterface
-//+ (void)onInputChanged:(NSMenuItem *)menuItem {
-//	printf("WE GUCCI!\n");
-////	extern std::unique_ptr<ControlCenter> control_center;
-////	if (control_center)
-////	{
-////		if (control_center->is_input_enabled())
-////		{
-////			[menuItem setTitle:@"Disable Input"];
-////			control_center->set_input_enabled(false);
-////		}
-////		else
-////		{
-////			[menuItem setTitle:@"Enable Input"];
-////			control_center->set_input_enabled(true);
-////		}
-////	}
-//}
-//@end
-//
-//void add_menu_items()
-//{
-//	dispatch_async(dispatch_get_main_queue(), ^{
-//		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-//
-//		NSMenu *debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
-//
-//		NSMenuItem *newMenu = [[NSMenuItem alloc] initWithTitle:@"Disable Input" action:nil keyEquivalent:@"D"];
-//		//[newMenu setAllowsKeyEquivalentWhenHidden:true];
-//		[newMenu setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
-//		[newMenu setTarget:[MenuInterface class]];
-//		[newMenu setAction:@selector(onInputChanged:)];
-//
-////		[newMenu setMenu:debugMenu];
-//		[debugMenu addItem: newMenu];
-//
-//		NSMenuItem *debugMenuItem = [[NSMenuItem alloc] initWithTitle:@"Debug" action:nil keyEquivalent:@""];
-//		[debugMenuItem setSubmenu: debugMenu];
-//		[[NSApp mainMenu] addItem: debugMenuItem];
-//
-//	});
-//}
-
-
-void add_overlay()
-{
-//	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-//		NSView *view = [[NSView alloc] init];
-//		
-//		view.wantsLayer = true;
-//		view.layer.backgroundColor = [[NSColor blueColor] CGColor];
-//		
-//		NSWindow* window = [NSApp mainWindow];
-//		window.contentView = view;
-//	});
-//	dispatch_async(dispatch_get_main_queue(), ^{
-//		
-//	});
 }
 #endif // defined

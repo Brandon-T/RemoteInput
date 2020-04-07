@@ -196,44 +196,7 @@ bool InjectSelf(pid_t pid)
             return false;
         }
 
-        HMODULE hKernel32 = nullptr;
-        void* RemoteAddress = nullptr;
-        HANDLE ProcessHandle, hThread = nullptr;
-        LPTHREAD_START_ROUTINE LoadLibraryHandle = nullptr;
-
-        if ((ProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, false, pid)))
-        {
-            if ((hKernel32 = GetModuleHandle("Kernel32.dll")))
-            {
-                PrintProcessInfo(pid);
-
-                LoadLibraryHandle = reinterpret_cast<LPTHREAD_START_ROUTINE>(GetProcAddress(hKernel32, "LoadLibraryA"));
-                if (LoadLibraryHandle)
-                {
-                    RemoteAddress = VirtualAllocEx(ProcessHandle, nullptr, File.size() * sizeof(char), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-                    if (RemoteAddress)
-                    {
-                        if (WriteProcessMemory(ProcessHandle, RemoteAddress, &File[0], File.size() * sizeof(char), nullptr))
-                        {
-                            hThread = CreateRemoteThread(ProcessHandle, nullptr, 0, LoadLibraryHandle, RemoteAddress, 0, nullptr);
-                            if (hThread)
-                            {
-                                //More than enough time to wait for a proccess to create a thread..
-                                WaitForSingleObject(hThread, 5000);
-                                CloseHandle(hThread);
-								
-								VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
-								CloseHandle(ProcessHandle);
-								return true;
-                            }
-                        }
-
-                        VirtualFreeEx(ProcessHandle, RemoteAddress, File.size() * sizeof(char), MEM_RELEASE);
-                    }
-                }
-            }
-            CloseHandle(ProcessHandle);
-        }
+        return Injector::Inject(File, pid, nullptr);
     }
     return false;
 }

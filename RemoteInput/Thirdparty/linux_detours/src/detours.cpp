@@ -5,14 +5,13 @@
 //
 
 #define _ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE 1
-#include "types.h"
-#include "limits.h"
-#include "plthook.h"
+#include "../include/types.h"
+#include "../include/plthook.h"
 
 //#define DETOUR_DEBUG 1
 #define DETOURS_INTERNAL
 
-#include "detours.h"
+#include "../include/detours.h"
 
 #define NOTHROW
 
@@ -2884,7 +2883,7 @@ LONG DetourAttachEx(_Inout_ PVOID *ppPointer,
 #ifdef DETOURS_ARM
         LONG lExtra = IsThumbTarget;
 #else
-        LONG lExtra = NULL;
+        LONG lExtra = 0;
 #endif
         DETOUR_TRACE((" DetourCopyInstruction(%p,%p)\n",
             pbTrampoline, pbSrc));

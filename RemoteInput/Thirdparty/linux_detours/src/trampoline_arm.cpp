@@ -1,4 +1,4 @@
-#include "detours.h"
+#include "../include/detours.h"
 
 #if defined(DETOURS_ARM) 
 __attribute__((naked))

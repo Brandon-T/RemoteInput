@@ -44,10 +44,6 @@
 		5E5B3F8F239D39FD00F07DD1 /* Hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5B3F84239D367F00F07DD1 /* Hooks.cpp */; };
 		5E5FC02B237264840048997B /* ControlCenter.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FC029237264840048997B /* ControlCenter.cxx */; };
 		5E5FC02C237264840048997B /* ControlCenter.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E5FC02A237264840048997B /* ControlCenter.hxx */; };
-		5E6281CB242182EB006BA298 /* mach_inject.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E6281C9242182EB006BA298 /* mach_inject.h */; };
-		5E6281CC242182EB006BA298 /* mach_inject.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E6281CA242182EB006BA298 /* mach_inject.c */; };
-		5E6281CD24218314006BA298 /* mach_inject.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E6281C9242182EB006BA298 /* mach_inject.h */; };
-		5E6281CE24218316006BA298 /* mach_inject.c in Sources */ = {isa = PBXBuildFile; fileRef = 5E6281CA242182EB006BA298 /* mach_inject.c */; };
 		5E6281F12421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E6281EF2421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx */; };
 		5E667F9A23C8D1BB00931DEC /* libawt_lwawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */; };
 		5E667F9E23C8D1C000931DEC /* libawt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E667F9D23C8D1C000931DEC /* libawt.dylib */; };
@@ -176,6 +172,14 @@
 		5EC5950C232D956B00922111 /* RemoteInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EC5950A232D956B00922111 /* RemoteInput.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5EC942EB23D4A81B00E42B21 /* Platform_Darwin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5EC942EA23D4A81B00E42B21 /* Platform_Darwin.mm */; };
 		5EC942EC23D4A8AA00E42B21 /* Platform_Darwin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5EC942EA23D4A81B00E42B21 /* Platform_Darwin.mm */; };
+		5EE7DD94243BD9E5008FDC5D /* mach_inject.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EE7DD91243BD9E5008FDC5D /* mach_inject.h */; };
+		5EE7DD95243BD9E5008FDC5D /* mach_inject.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EE7DD91243BD9E5008FDC5D /* mach_inject.h */; };
+		5EE7DD96243BD9E5008FDC5D /* mach_inject.c in Sources */ = {isa = PBXBuildFile; fileRef = 5EE7DD93243BD9E5008FDC5D /* mach_inject.c */; };
+		5EE7DD97243BD9E5008FDC5D /* mach_inject.c in Sources */ = {isa = PBXBuildFile; fileRef = 5EE7DD93243BD9E5008FDC5D /* mach_inject.c */; };
+		5EE7DD9A243BD9F7008FDC5D /* main.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EE7DD98243BD9F7008FDC5D /* main.hxx */; };
+		5EE7DD9B243BD9F7008FDC5D /* main.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EE7DD98243BD9F7008FDC5D /* main.hxx */; };
+		5EE7DD9C243BD9F7008FDC5D /* main.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EE7DD99243BD9F7008FDC5D /* main.cxx */; };
+		5EE7DD9D243BD9F7008FDC5D /* main.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EE7DD99243BD9F7008FDC5D /* main.cxx */; };
 		5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */; };
 		5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */; };
 		5EFF49BE23A703C700DC83D1 /* SpinLock.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5EFF49BD23A703C700DC83D1 /* SpinLock.cxx */; };
@@ -208,8 +212,6 @@
 		5E5B3F89239D36A400F07DD1 /* ModelRendering.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ModelRendering.hpp; sourceTree = "<group>"; };
 		5E5FC029237264840048997B /* ControlCenter.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ControlCenter.cxx; sourceTree = "<group>"; };
 		5E5FC02A237264840048997B /* ControlCenter.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ControlCenter.hxx; sourceTree = "<group>"; };
-		5E6281C9242182EB006BA298 /* mach_inject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mach_inject.h; sourceTree = "<group>"; };
-		5E6281CA242182EB006BA298 /* mach_inject.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mach_inject.c; sourceTree = "<group>"; };
 		5E6281EB2421B776006BA298 /* libRemoteInputBootstrap.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libRemoteInputBootstrap.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E6281EF2421B79E006BA298 /* RemoteInputBootstrap_Darwin.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RemoteInputBootstrap_Darwin.cxx; sourceTree = "<group>"; };
 		5E667F9923C8D1BB00931DEC /* libawt_lwawt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libawt_lwawt.dylib; path = "../../../../Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/libawt_lwawt.dylib"; sourceTree = "<group>"; };
@@ -278,6 +280,10 @@
 		5EC5950A232D956B00922111 /* RemoteInput.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RemoteInput.h; sourceTree = "<group>"; };
 		5EC5950B232D956B00922111 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5EC942EA23D4A81B00E42B21 /* Platform_Darwin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Platform_Darwin.mm; sourceTree = "<group>"; };
+		5EE7DD91243BD9E5008FDC5D /* mach_inject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mach_inject.h; sourceTree = "<group>"; };
+		5EE7DD93243BD9E5008FDC5D /* mach_inject.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mach_inject.c; sourceTree = "<group>"; };
+		5EE7DD98243BD9F7008FDC5D /* main.hxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = main.hxx; sourceTree = "<group>"; };
+		5EE7DD99243BD9F7008FDC5D /* main.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cxx; sourceTree = "<group>"; };
 		5EFF49B223A6EF4100DC83D1 /* SpinLock.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SpinLock.hxx; sourceTree = "<group>"; };
 		5EFF49BD23A703C700DC83D1 /* SpinLock.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SpinLock.cxx; sourceTree = "<group>"; };
 		5EFF49C123A704DF00DC83D1 /* Signal.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Signal.hxx; sourceTree = "<group>"; };
@@ -326,19 +332,12 @@
 			path = Hooks;
 			sourceTree = "<group>";
 		};
-		5E6281C8242182D1006BA298 /* mach_inject */ = {
-			isa = PBXGroup;
-			children = (
-				5E6281C9242182EB006BA298 /* mach_inject.h */,
-				5E6281CA242182EB006BA298 /* mach_inject.c */,
-			);
-			path = mach_inject;
-			sourceTree = "<group>";
-		};
 		5E667F9223C8C60000931DEC /* Thirdparty */ = {
 			isa = PBXGroup;
 			children = (
-				5E6281C8242182D1006BA298 /* mach_inject */,
+				5EE7DD99243BD9F7008FDC5D /* main.cxx */,
+				5EE7DD98243BD9F7008FDC5D /* main.hxx */,
+				5EE7DD8F243BD9E5008FDC5D /* mach_inject */,
 				5E6EA10523C91371003CB0B5 /* rd_route */,
 			);
 			path = Thirdparty;
@@ -521,6 +520,31 @@
 			path = RemoteInput;
 			sourceTree = "<group>";
 		};
+		5EE7DD8F243BD9E5008FDC5D /* mach_inject */ = {
+			isa = PBXGroup;
+			children = (
+				5EE7DD90243BD9E5008FDC5D /* include */,
+				5EE7DD92243BD9E5008FDC5D /* src */,
+			);
+			path = mach_inject;
+			sourceTree = "<group>";
+		};
+		5EE7DD90243BD9E5008FDC5D /* include */ = {
+			isa = PBXGroup;
+			children = (
+				5EE7DD91243BD9E5008FDC5D /* mach_inject.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		5EE7DD92243BD9E5008FDC5D /* src */ = {
+			isa = PBXGroup;
+			children = (
+				5EE7DD93243BD9E5008FDC5D /* mach_inject.c */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -541,7 +565,7 @@
 				5EBE1AAE23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
 				5EBE1AB423C7C84800B99E32 /* Applet.hxx in Headers */,
 				5E4D644E241F47990010EDBE /* PointerInfo.hxx in Headers */,
-				5E6281CD24218314006BA298 /* mach_inject.h in Headers */,
+				5EE7DD95243BD9E5008FDC5D /* mach_inject.h in Headers */,
 				5EBE1ABA23C7C84800B99E32 /* Component.hxx in Headers */,
 				5E6B9A0A2394C57600E6720C /* JVM.hxx in Headers */,
 				5E6B9A1C2394C58500E6720C /* Graphics.hxx in Headers */,
@@ -554,6 +578,7 @@
 				5EBE1ABE23C7C84800B99E32 /* InputEvent.hxx in Headers */,
 				5E6B9A052394C57600E6720C /* Time.hxx in Headers */,
 				5E6B9A142394C57A00E6720C /* JavaInternal.hxx in Headers */,
+				5EE7DD9B243BD9F7008FDC5D /* main.hxx in Headers */,
 				5E0F52AF23AE8EAD002518AF /* Plugin.hxx in Headers */,
 				5EBE1AB623C7C84800B99E32 /* AWTEventAccessor.hxx in Headers */,
 				5EBE1A9A23C7C84800B99E32 /* KeyEvent.hxx in Headers */,
@@ -590,7 +615,7 @@
 				5EBE1AAD23C7C84800B99E32 /* AWTAccessor.hxx in Headers */,
 				5EBE1AB323C7C84800B99E32 /* Applet.hxx in Headers */,
 				5EBE1AB923C7C84800B99E32 /* Component.hxx in Headers */,
-				5E6281CB242182EB006BA298 /* mach_inject.h in Headers */,
+				5EE7DD94243BD9E5008FDC5D /* mach_inject.h in Headers */,
 				5EBD66C4235CF15400D183B1 /* Reflection.hxx in Headers */,
 				5EBD66C7235CF15400D183B1 /* EIOS.hxx in Headers */,
 				5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */,
@@ -603,6 +628,7 @@
 				5E07A6C12378B1B100EB4CDF /* Graphics.hxx in Headers */,
 				5EBD66BD235CF15400D183B1 /* NativeHooks.hxx in Headers */,
 				5E0F52AE23AE8EAD002518AF /* Plugin.hxx in Headers */,
+				5EE7DD9A243BD9F7008FDC5D /* main.hxx in Headers */,
 				5EBE1AB523C7C84800B99E32 /* AWTEventAccessor.hxx in Headers */,
 				5EBE1A9923C7C84800B99E32 /* KeyEvent.hxx in Headers */,
 				5EBD66C2235CF15400D183B1 /* JavaInternal.hxx in Headers */,
@@ -767,7 +793,8 @@
 				5EC942EC23D4A8AA00E42B21 /* Platform_Darwin.mm in Sources */,
 				5EBE1AA823C7C84800B99E32 /* MouseEvent.cxx in Sources */,
 				5E6B9A092394C57600E6720C /* JVM.cxx in Sources */,
-				5E6281CE24218316006BA298 /* mach_inject.c in Sources */,
+				5EE7DD97243BD9E5008FDC5D /* mach_inject.c in Sources */,
+				5EE7DD9D243BD9F7008FDC5D /* main.cxx in Sources */,
 				5EFF49BF23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E6B9A152394C57A00E6720C /* Platform_Windows.cxx in Sources */,
 				5E6B9A132394C57A00E6720C /* DebugConsole.cxx in Sources */,
@@ -815,7 +842,8 @@
 				5EBE1AA723C7C84800B99E32 /* MouseEvent.cxx in Sources */,
 				5EC942EB23D4A81B00E42B21 /* Platform_Darwin.mm in Sources */,
 				5EBD66C1235CF15400D183B1 /* DebugConsole.cxx in Sources */,
-				5E6281CC242182EB006BA298 /* mach_inject.c in Sources */,
+				5EE7DD96243BD9E5008FDC5D /* mach_inject.c in Sources */,
+				5EE7DD9C243BD9F7008FDC5D /* main.cxx in Sources */,
 				5EFF49BE23A703C700DC83D1 /* SpinLock.cxx in Sources */,
 				5E4CDC1F2381F40700A05869 /* NativeHooks_Windows.cxx in Sources */,
 				5EBD66C9235CF15400D183B1 /* SimbaPlugin.cxx in Sources */,
@@ -1066,6 +1094,11 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"USE_DETOURS=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include",
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include/darwin",
@@ -1093,6 +1126,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREPROCESSOR_DEFINITIONS = "USE_DETOURS=1";
 				HEADER_SEARCH_PATHS = (
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include",
 					"/Library/Java/JavaVirtualMachines/jdk-12.0.2.jdk/Contents/Home/include/darwin",
@@ -1136,21 +1170,4 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5EC5950D232D956B00922111 /* Debug */,
-				5EC5950E232D956B00922111 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		5EC5950F232D956B00922111 /* Build configuration list for PBXNativeTarget "RemoteInput" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				5EC59510232D956B00922111 /* Debug */,
-				5EC59511232D956B00922111 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-/* End XCConfigurationList section */
-	};
-	rootObject = 5EC594FE232D956B00922111 /* Project object */;
-}
+				5

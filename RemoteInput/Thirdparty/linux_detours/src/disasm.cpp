@@ -5,9 +5,9 @@
 
 
 #define _ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE 1
-#include "types.h"
+#include "../include/types.h"
 #include <limits.h>
-#include "detours.h"
+#include "../include/detours.h"
 
 // #define DETOUR_DEBUG 1
 #define DETOURS_INTERNAL
