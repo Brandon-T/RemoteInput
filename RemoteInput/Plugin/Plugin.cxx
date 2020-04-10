@@ -344,7 +344,7 @@ void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, 
     dladdr(reinterpret_cast<void*>(&__load), &this_info);
     void* this_module = dlopen(this_info.dli_fname, RTLD_LAZY);
 
-    std::thread([&] {
+    std::thread([&](void* this_module) {
 
 		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
@@ -353,8 +353,9 @@ void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, 
 			StartHook();
         }
 
-        std::thread([this_module]{ if (this_module) { dlclose(this_module); } }).detach();
-	}).detach();
+        //std::thread([this_module]{ if (this_module) { dlclose(this_module); } }).detach();
+        dlclose(this_module);
+	}, this_module).detach();
 }
 
 [[gnu::destructor]] void __unload()
