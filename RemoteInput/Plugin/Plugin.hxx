@@ -33,6 +33,7 @@ EXPORT jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second)
 EXPORT jboolean Reflect_InstanceOf(EIOS* eios, jobject object, const char* cls);
 EXPORT void Reflect_Release_Object(EIOS* eios, jobject object);
 EXPORT void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount);
+EXPORT bool Reflect_Bool(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT std::uint8_t Reflect_Byte(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);
 EXPORT std::int16_t Reflect_Short(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc);

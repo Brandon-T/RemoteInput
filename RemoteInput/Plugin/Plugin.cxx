@@ -109,6 +109,16 @@ void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount)
 	}
 }
 
+bool Reflect_Bool(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+{
+    if (eios)
+    {
+        ReflectionHook hook{object, cls, field, desc};
+        return eios->control_center->reflect_boolean(hook);
+    }
+    return false;
+}
+
 char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
 {
 	if (eios)
