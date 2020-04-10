@@ -169,6 +169,12 @@ std::string Reflection::GetClassType(jobject object)
 	return getClassType(object);
 }
 
+bool Reflection::IsDecendentOf(jobject object, const char* className)
+{
+    auto cls = make_safe_local<jclass>(jvm->FindClass(className));
+    return jvm->IsInstanceOf(object, cls.get());
+}
+
 jclass Reflection::LoadClass(const char* clsToLoad)
 {
     auto cls = make_safe_local<jclass>(jvm->GetObjectClass(classLoader));

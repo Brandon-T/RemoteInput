@@ -90,6 +90,7 @@ public:
 
     std::string GetClassName(jobject object);
     std::string GetClassType(jobject object);
+    bool IsDecendentOf(jobject object, const char* className);
     jclass LoadClass(const char* clsToLoad);
 
 	jobject getApplet();
