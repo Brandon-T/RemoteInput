@@ -45,8 +45,8 @@ Reflection& Reflection::operator = (Reflection&& other)
 
 bool Reflection::Initialize(jobject awtFrame)
 {
-    std::function<jobject(jobject)> findClient = [&](jobject component) {
-		jobject result = nullptr;
+    using Result = std::unique_ptr<typename std::remove_pointer<jobject>::type, std::function<void(jobject)>>;
+    std::function<Result(jobject)> findClient = [&](jobject component) -> Result {
         auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
         jmethodID mid = jvm->GetMethodID(cls.get(), "getComponents", "()[Ljava/awt/Component;");
 
@@ -59,15 +59,16 @@ bool Reflection::Initialize(jobject awtFrame)
 			{
 				//Some java.awt.Panel.
                 auto component = make_safe_local<jobject>(jvm->GetObjectArrayElement(components.get(), i));
-				if (jvm->IsInstanceOf(component.get(), jvm->FindClass("java/applet/Applet")))
+                auto cls = make_safe_local<jclass>(jvm->FindClass("java/applet/Applet"));
+				if (jvm->IsInstanceOf(component.get(), cls.get()))
 				{
-					return jvm->NewGlobalRef(component.get());
+					return component;
 				}
 
-                result = findClient(component.get());
+                auto result = findClient(component.get());
 				if (result)
 				{
-					return result;
+					return std::move(result);
 				}
             }
         }
@@ -77,10 +78,11 @@ bool Reflection::Initialize(jobject awtFrame)
 
     //Find Client Class.
 	this->frame = jvm->NewGlobalRef(awtFrame);
-    this->applet = findClient(awtFrame);
+    this->applet = findClient(awtFrame).release();
 
     if (this->applet)
     {
+        jvm->DeleteLocalRef(std::exchange(this->applet, jvm->NewGlobalRef(this->applet)));
         auto cls = make_safe_local<jclass>(jvm->GetObjectClass(this->applet));
         jmethodID mid = jvm->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
         auto clsObj = make_safe_local<jobject>(jvm->CallObjectMethod(this->applet, mid));

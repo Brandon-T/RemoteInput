@@ -36,14 +36,14 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
     #define PtrCoord(p, x, xinc, y, yinc)   PtrAddBytes(p, (y)*(yinc) + (x)*(xinc))
 
     static HMODULE module = GetModuleHandle("awt.dll");
-	static NativePrimitive* (*GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(GetProcAddress(module, "GetNativePrim"));
-	static SurfaceDataOps* (*SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "SurfaceData_GetOps"));
-	static jint (*Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(GetProcAddress(module, "Region_GetInfo"));
-    static void (*SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(GetProcAddress(module, "SurfaceData_IntersectBounds"));
-    static void (*SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "SurfaceData_IntersectBlitBounds"));
-    static void (*Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(GetProcAddress(module, "Region_StartIteration"));
-    static jint (*Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(GetProcAddress(module, "Region_NextIteration"));
-    static void (*Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(GetProcAddress(module, "Region_EndIteration"));
+	static NativePrimitive* (__stdcall *GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(GetProcAddress(module, "GetNativePrim"));
+	static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "SurfaceData_GetOps"));
+	static jint (__stdcall *Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(GetProcAddress(module, "Region_GetInfo"));
+    static void (__stdcall *SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(GetProcAddress(module, "SurfaceData_IntersectBounds"));
+    static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "SurfaceData_IntersectBlitBounds"));
+    static void (__stdcall *Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(GetProcAddress(module, "Region_StartIteration"));
+    static jint (__stdcall *Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(GetProcAddress(module, "Region_NextIteration"));
+    static void (__stdcall *Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(GetProcAddress(module, "Region_EndIteration"));
 
 	if (!GetNativePrim || !SurfaceData_GetOps || !Region_GetInfo || !SurfaceData_IntersectBounds || !SurfaceData_IntersectBlitBounds || !Region_StartIteration || !Region_NextIteration || !Region_EndIteration || width <= 0 || height <= 0)
     {
@@ -432,51 +432,38 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 					static jint screenHeight = 0;
 					static std::unique_ptr<std::uint8_t[]> screenBuffer = nullptr;
 
-					if (screenWidth != width || screenHeight != height)
+					if (screenWidth < width || screenHeight < height)
 					{
-						screenBuffer.reset();
-						screenWidth = width;
-						screenHeight = height;
-						screenBuffer = std::make_unique<std::uint8_t[]>(width * height * srcInfo.pixelStride);
+                        screenWidth = width;
+                        screenHeight = height;
+						screenBuffer = std::make_unique<std::uint8_t[]>((srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
 					}
 
-					rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-					if (isRasterAligned)
+					if (screenBuffer)
 					{
-						memcpy(screenBuffer.get(), rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-					}
-					else
-					{
-						for (int i = 0; i < height; ++i)
-						{
-							int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-							memcpy(screenBuffer.get() + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
-							rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
-						}
-					}
+                        memcpy(screenBuffer.get(), dest, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
 
-					//Render Debug Graphics
-					if (control_center->get_debug_graphics())
-					{
-						std::uint8_t* src = control_center->get_debug_image();
-						if (src)
-						{
-							rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-							draw_image(rasBase, src, width, height, srcInfo.pixelStride);
-						}
-					}
+                        //Render Debug Graphics
+                        if (control_center->get_debug_graphics())
+                        {
+                            std::uint8_t* src = control_center->get_debug_image();
+                            if (src)
+                            {
+                                draw_image(screenBuffer.get(), src, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride);
+                            }
+                        }
 
-					//Render Cursor
-					std::int32_t x = -1;
-					std::int32_t y = -1;
-					control_center->get_applet_mouse_position(&x, &y);
+                        //Render Cursor
+                        std::int32_t x = -1;
+                        std::int32_t y = -1;
+                        control_center->get_applet_mouse_position(&x, &y);
 
-					if (x > -1 && y > -1)
-					{
-						static const std::int32_t radius = 2;
-						rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-						draw_circle(x, y, radius, rasBase, width, height, 4, true, 0xFF0000FF);
-					}
+                        if (x > -1 && y > -1)
+                        {
+                            static const std::int32_t radius = 2;
+                            draw_circle(x, y, radius, screenBuffer.get(), (srcInfo.scanStride / srcInfo.pixelStride), height, 4, true, 0xFF0000FF);
+                        }
+                    }
 
 					//Render Screen
 					BmiType bmi = {0};
@@ -496,7 +483,7 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 					bmi.colors.dwMasks[1] = 0x0000FF00;
 					bmi.colors.dwMasks[2] = 0x000000FF;
 
-					rasBase = screenBuffer.get() + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+					rasBase = screenBuffer.get();
 
 					if (isRasterAligned)
 					{
@@ -798,21 +785,22 @@ void InitialiseHooks()
 		#if defined(USE_DETOURS)
 		HMODULE module = GetModuleHandle("awt.dll");
 
-		//Hook X11 Blit
-		void* blit = reinterpret_cast<void*>(GetProcAddress(module, "Java_sun_java2d_loops_Blit_Blit"));
-		if (blit)
-		{
-			native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeBlit));
-			native_hook->apply();
-		}
+
+        //Hook X11 Blit
+        void* blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_windows_GDIBlitLoops_nativeBlit@60") ?: GetProcAddress(module, "Java_sun_java2d_windows_GDIBlitLoops_nativeBlit"));
+        if (blit)
+        {
+            native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeGDIBlit));
+            native_hook->apply();
+        }
 		else
 		{
-			blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_windows_GDIBlitLoops_nativeBlit@60") ?: GetProcAddress(module, "Java_sun_java2d_windows_GDIBlitLoops_nativeBlit"));
-			if (blit)
-			{
-				native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeGDIBlit));
-				native_hook->apply();
-			}
+            blit = reinterpret_cast<void*>(GetProcAddress(module, "Java_sun_java2d_loops_Blit_Blit"));
+            if (blit)
+            {
+                native_hook = std::make_unique<Hook>(reinterpret_cast<void *>(blit), reinterpret_cast<void *>(JavaNativeBlit));
+                native_hook->apply();
+            }
 		}
 
 		//Hook OpenGL Blit
