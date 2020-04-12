@@ -176,17 +176,15 @@ struct _D3DSDOps {
 
 class D3DResource : public IManagedResource {
 public:
-    D3DResource(IDirect3DResource9 *pRes)
-    { Init(pRes, NULL); }
-    D3DResource(IDirect3DSwapChain9 *pSC)
-    { Init(NULL, pSC); }
-    IDirect3DResource9*  GetResource() { return pResource; }
-    IDirect3DTexture9*   GetTexture() { return pTexture; }
-    IDirect3DSurface9*   GetSurface() { return pSurface; }
-    IDirect3DSwapChain9* GetSwapChain() { return pSwapChain; }
-    D3DSDOps*            GetSDOps() { return pOps; }
+    D3DResource(IDirect3DResource9 *pRes);
+    D3DResource(IDirect3DSwapChain9 *pSC);
+    IDirect3DResource9*  GetResource();
+    IDirect3DTexture9*   GetTexture();
+    IDirect3DSurface9*   GetSurface();
+    IDirect3DSwapChain9* GetSwapChain();
+    D3DSDOps*            GetSDOps();
     void                 SetSDOps(D3DSDOps *pOps);
-    D3DSURFACE_DESC*     GetDesc() { return &desc; }
+    D3DSURFACE_DESC*     GetDesc();
     virtual BOOL         IsDefaultPool();
 
 protected:

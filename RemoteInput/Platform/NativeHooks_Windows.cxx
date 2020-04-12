@@ -530,19 +530,27 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 //Java_sun_java2d_d3d_D3DRenderQueue_flushBuffer -> D3DRQ_FlushBuffer -> sun_java2d_pipe_BufferedOpCodes_BLIT -> D3DBlitLoops_Blit -> D3DBlitToSurfaceViaTexture -> D3DBL_CopyImageToIntXrgbSurface
 HRESULT __stdcall JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInfo, int srctype, D3DResource *pDstSurfaceRes, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty)
 {
+    //std::size_t pResourceOffset = (sizeof(void*) * 3); //vtable + its members
+    std::size_t pResourceOffset = (reinterpret_cast<std::uintptr_t>(pDstSurfaceRes) + sizeof(D3DResource)) - sizeof(D3DSURFACE_DESC) - (sizeof(void*) * 5);
 
     printf("SOURCE TYPE: %d\n", srctype);
-    printf("Resource: %p\n", pDstSurfaceRes->GetResource());
-    printf("Swap Chain: %p\n", pDstSurfaceRes->GetSwapChain());
-    printf("Surface: %p\n", pDstSurfaceRes->GetSurface());
-    printf("Texture: %p\n", pDstSurfaceRes->GetTexture());
 
-    if (pDstSurfaceRes->GetSDOps())
-    {
-        IDirect3DDevice9* device = nullptr;
-        pDstSurfaceRes->GetTexture()->GetDevice(&device);
-        printf("Device: %p\n", device);
-    }
+
+    IDirect3DResource9* pResource = reinterpret_cast<IDirect3DResource9*>(pResourceOffset + (sizeof(void*) * 0));
+    IDirect3DSwapChain9* pSwapChain = reinterpret_cast<IDirect3DSwapChain9*>(pResourceOffset + (sizeof(void*) * 1));
+    IDirect3DSurface9* pSurface = reinterpret_cast<IDirect3DSurface9*>(pResourceOffset + (sizeof(void*) * 2));
+    IDirect3DTexture9* pTexture = reinterpret_cast<IDirect3DTexture9*>(pResourceOffset + (sizeof(void*) * 3));
+    D3DSDOps* pOps = reinterpret_cast<D3DSDOps*>(pResourceOffset + (sizeof(void*) * 4));
+
+    printf("Resource: %p\n", pResource);
+    printf("Swap Chain: %p\n", pSwapChain);
+    printf("Surface: %p\n", pSurface);
+    printf("Texture: %p\n", pTexture);
+    printf("D3DSDOps: %p\n", pOps);
+
+    IDirect3DDevice9* device = nullptr;
+    pTexture->GetDevice(&device);
+    printf("Device: %p\n", device);
 
     return directx_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
 
