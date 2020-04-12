@@ -144,6 +144,67 @@ typedef struct tagBitmapHeader {
         RGBQUAD palette[256];
     } colors;
 } BmiType;
+
+
+#include <d3d9.h>
+
+class IManagedResource {
+public:
+    virtual BOOL IsDefaultPool() = 0;
+protected:
+    IManagedResource() { pPrev = pNext = NULL; };
+    virtual     ~IManagedResource() { pPrev = pNext = NULL; };
+    virtual void Release() = 0;
+private:
+    IManagedResource& operator=(const IManagedResource&);
+
+    IManagedResource* pPrev;
+    IManagedResource* pNext;
+};
+
+typedef struct _D3DSDOps D3DSDOps;
+
+class D3DResource;
+struct _D3DSDOps {
+    SurfaceDataOps sdOps;
+    jint adapter;
+    jint width, height;
+    jint xoff, yoff;
+    D3DSWAPEFFECT swapEffect;
+    D3DResource  *pResource;
+};
+
+class D3DResource : public IManagedResource {
+public:
+    D3DResource(IDirect3DResource9 *pRes)
+    { Init(pRes, NULL); }
+    D3DResource(IDirect3DSwapChain9 *pSC)
+    { Init(NULL, pSC); }
+    IDirect3DResource9*  GetResource() { return pResource; }
+    IDirect3DTexture9*   GetTexture() { return pTexture; }
+    IDirect3DSurface9*   GetSurface() { return pSurface; }
+    IDirect3DSwapChain9* GetSwapChain() { return pSwapChain; }
+    D3DSDOps*            GetSDOps() { return pOps; }
+    void                 SetSDOps(D3DSDOps *pOps);
+    D3DSURFACE_DESC*     GetDesc() { return &desc; }
+    virtual BOOL         IsDefaultPool();
+
+protected:
+    virtual                 ~D3DResource();
+    virtual void             Release();
+    void                 Init(IDirect3DResource9*, IDirect3DSwapChain9*);
+
+private:
+    D3DResource() {}
+    D3DResource&         operator=(const D3DResource&);
+
+    IDirect3DResource9*  pResource;
+    IDirect3DSwapChain9* pSwapChain;
+    IDirect3DSurface9*   pSurface;
+    IDirect3DTexture9*   pTexture;
+    D3DSDOps*            pOps;
+    D3DSURFACE_DESC      desc;
+};
 #endif
 
 typedef unsigned int juint;

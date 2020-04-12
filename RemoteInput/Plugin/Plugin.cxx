@@ -271,6 +271,11 @@ void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, 
 #if defined(_WIN32) || defined(_WIN64)
 [[gnu::stdcall]] void __load()
 {
+    AllocConsole();
+    FILE *fDummy;
+    freopen_s(&fDummy, "CONOUT$", "w", stderr);
+    freopen_s(&fDummy, "CONOUT$", "w", stdout);
+
     printf("ATTACHED TO: %d\n", getpid());
 
 	//std::thread not working well on Windows when called from DLL main and the library is freed immediately..
@@ -307,6 +312,7 @@ void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, 
 
 [[gnu::stdcall]] void __unload()
 {
+    FreeConsole();
     control_center.reset();
 }
 #elif defined(__APPLE__)
