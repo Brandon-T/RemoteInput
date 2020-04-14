@@ -528,33 +528,17 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 
 //Java_sun_java2d_d3d_D3DRenderQueue_flushBuffer -> D3DRQ_FlushBuffer -> sun_java2d_pipe_BufferedOpCodes_BLIT -> D3DBlitLoops_Blit -> D3DBlitSwToTexture -> D3DBL_CopyImageToIntXrgbSurface
 //Java_sun_java2d_d3d_D3DRenderQueue_flushBuffer -> D3DRQ_FlushBuffer -> sun_java2d_pipe_BufferedOpCodes_BLIT -> D3DBlitLoops_Blit -> D3DBlitToSurfaceViaTexture -> D3DBL_CopyImageToIntXrgbSurface
-HRESULT __stdcall JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInfo, int srctype, D3DResource *pDstSurfaceRes, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty)
+HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInfo, int srctype, D3DResource *pDstSurfaceRes, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty)
 {
-    //std::size_t pResourceOffset = (sizeof(void*) * 3); //vtable + its members
-    std::size_t pResourceOffset = (reinterpret_cast<std::uintptr_t>(pDstSurfaceRes) + sizeof(D3DResource)) - sizeof(D3DSURFACE_DESC) - (sizeof(void*) * 5);
+    extern std::unique_ptr<ControlCenter> control_center;
+    if (!control_center)
+    {
+        //Original
+        return directx_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
+    }
 
-    printf("SOURCE TYPE: %d\n", srctype);
-
-
-    IDirect3DResource9* pResource = reinterpret_cast<IDirect3DResource9*>(pResourceOffset + (sizeof(void*) * 0));
-    IDirect3DSwapChain9* pSwapChain = reinterpret_cast<IDirect3DSwapChain9*>(pResourceOffset + (sizeof(void*) * 1));
-    IDirect3DSurface9* pSurface = reinterpret_cast<IDirect3DSurface9*>(pResourceOffset + (sizeof(void*) * 2));
-    IDirect3DTexture9* pTexture = reinterpret_cast<IDirect3DTexture9*>(pResourceOffset + (sizeof(void*) * 3));
-    D3DSDOps* pOps = reinterpret_cast<D3DSDOps*>(pResourceOffset + (sizeof(void*) * 4));
-
-    printf("Resource: %p\n", pResource);
-    printf("Swap Chain: %p\n", pSwapChain);
-    printf("Surface: %p\n", pSurface);
-    printf("Texture: %p\n", pTexture);
-    printf("D3DSDOps: %p\n", pOps);
-
-    IDirect3DDevice9* device = nullptr;
-    pTexture->GetDevice(&device);
-    printf("Device: %p\n", device);
-
-    return directx_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
-
-    /*#define PtrAddBytes(p, b)               ((void *) (((intptr_t) (p)) + (b)))
+    //Hook
+    #define PtrAddBytes(p, b)               ((void *) (((intptr_t) (p)) + (b)))
     #define PtrCoord(p, x, xinc, y, yinc)   PtrAddBytes(p, (y)*(yinc) + (x)*(xinc))
 
     static const int ST_INT_ARGB        = 0;
@@ -568,20 +552,51 @@ HRESULT __stdcall JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcI
     static const int ST_BYTE_INDEXED_BM = 8;
     static const int ST_3BYTE_BGR       = 9;
 
+    //Types we don't support in our hook.. so let the jvm handle it and we read from dest instead of source..
+    switch(srctype)
+    {
+        case ST_INT_ARGB_BM:
+        case ST_USHORT_565_RGB:
+        case ST_USHORT_555_RGB:
+        case ST_BYTE_INDEXED:
+        case ST_BYTE_INDEXED_BM:
+        {
+            printf("CALLED\n");
+            directx_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
+        }
+            break;
+    }
+
+    //Retrieve data pointers and v-table from the D3DResource structure..
+    auto get_data_pointer = [](D3DResource* base) -> void* {
+        return reinterpret_cast<void**>((reinterpret_cast<char*>(base) + sizeof(D3DResource)) - sizeof(D3DSURFACE_DESC) - (sizeof(void*) * 5));
+    };
+
+    auto get_offset = [](void* data_ptr, std::uintptr_t index) -> void* {
+        return *reinterpret_cast<void**>(reinterpret_cast<char*>(data_ptr) + (sizeof(void*) * index));
+    };
+
+    void* base_ptr = get_data_pointer(pDstSurfaceRes);
+    IDirect3DResource9* pResource = reinterpret_cast<IDirect3DResource9*>(get_offset(base_ptr, 0));
+    IDirect3DSwapChain9* pSwapChain = reinterpret_cast<IDirect3DSwapChain9*>(get_offset(base_ptr, 1));
+    IDirect3DSurface9* pSurface = reinterpret_cast<IDirect3DSurface9*>(get_offset(base_ptr, 2));
+    IDirect3DTexture9* pTexture = reinterpret_cast<IDirect3DTexture9*>(get_offset(base_ptr, 3));
+    D3DSDOps* pOps = reinterpret_cast<D3DSDOps*>(get_offset(base_ptr, 4));
+    D3DSURFACE_DESC* pSurfaceDesc = reinterpret_cast<D3DSURFACE_DESC*>(reinterpret_cast<char*>(base_ptr) + (sizeof(void*) * 5));
+
     HRESULT res = S_OK;
     D3DLOCKED_RECT lockedRect;
-    RECT r = { dstx, dsty, dstx + srcWidth, dsty + srcHeight };
-    RECT* pR = &r;
+    RECT r = { dstx, dsty, dstx+srcWidth, dsty+srcHeight };
+    RECT *pR = &r;
     SurfaceDataRasInfo dstInfo;
-    IDirect3DSurface9 *pDstSurface = pDstSurfaceRes->GetSurface();
-    D3DSURFACE_DESC *pDesc = pDstSurfaceRes->GetDesc();
+    IDirect3DSurface9 *pDstSurface = pSurface;
+    D3DSURFACE_DESC *pDesc = pSurfaceDesc;
     DWORD dwLockFlags = D3DLOCK_NOSYSLOCK;
-
 
     if (pDesc->Usage == D3DUSAGE_DYNAMIC)
     {
         dwLockFlags |= D3DLOCK_DISCARD;
-        pR = nullptr;
+        pR = NULL;
     }
     else
     {
@@ -590,7 +605,11 @@ HRESULT __stdcall JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcI
     }
 
     res = pDstSurface->LockRect(&lockedRect, pR, dwLockFlags);
-    RETURN_STATUS_IF_FAILED(res);
+    if (FAILED(res))
+    {
+        printf("CALLED\n");
+        return directx_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
+    }
 
     ZeroMemory(&dstInfo, sizeof(SurfaceDataRasInfo));
     dstInfo.bounds.x2 = srcWidth;
@@ -598,46 +617,218 @@ HRESULT __stdcall JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcI
     dstInfo.scanStride = lockedRect.Pitch;
     dstInfo.pixelStride = 4;
 
-    void *pSrcBase = PtrCoord(pSrcInfo->rasBase, srcx, pSrcInfo->pixelStride, srcy, pSrcInfo->scanStride);
-    void *pDstBase = PtrCoord(lockedRect.pBits, dstx, dstInfo.pixelStride, dsty, dstInfo.scanStride);
+    void *pSrcBase = PtrCoord(pSrcInfo->rasBase,
+                              srcx, pSrcInfo->pixelStride,
+                              srcy, pSrcInfo->scanStride);
+    void *pDstBase = PtrCoord(lockedRect.pBits,
+                              dstx, dstInfo.pixelStride,
+                              dsty, dstInfo.scanStride);
 
-    switch (srctype)
+    uint8_t* source = static_cast<uint8_t*>(pSrcBase);
+    uint8_t* dest = static_cast<uint8_t*>(pDstBase);
+
+    printf("SOURCE: %d %d %d %d\n", srcx, srcy, srcWidth, srcWidth);
+    printf("SOURCE BOUNDS: %d %d %d %d\n", pSrcInfo->bounds.x1, pSrcInfo->bounds.y1, pSrcInfo->bounds.x2, pSrcInfo->bounds.y2);
+    printf("SOURCE SCAN: %d\n", pSrcInfo->scanStride);
+    printf("DEST: %d %d %d %d\n", dstx, dsty, srcWidth, srcWidth);
+    printf("DEST SCAN: %d\n", dstInfo.scanStride);
+
+    control_center->update_dimensions(pSrcInfo->bounds.x2 - pSrcInfo->bounds.x1, pSrcInfo->bounds.y2 - pSrcInfo->bounds.y1);
+    std::uint8_t* destImage = control_center->get_image();
+    std::uint8_t* debugImage = control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr;
+
+    switch(srctype)
     {
         case ST_INT_ARGB:
-            IntArgbToIntArgbPreConvert(pSrcBase, pDstBase,
-                    srcWidth, srcHeight,
-                    pSrcInfo, &dstInfo, NULL, NULL);
+        {
+            for (jint i = 0; i < srcHeight; ++i)
+            {
+                for (jint j = 0; j < srcWidth; ++j)
+                {
+                    dest[4 * j + 0] = source[4 * j + 0];
+                    dest[4 * j + 1] = source[4 * j + 1];
+                    dest[4 * j + 2] = source[4 * j + 2];
+                    dest[4 * j + 3] = source[4 * j + 3];
+
+                    //Render to Shared Memory
+                    if (destImage)
+                    {
+                        destImage[4 * j + 3] = dest[4 * j + 1];
+                        destImage[4 * j + 2] = dest[4 * j + 2];
+                        destImage[4 * j + 1] = dest[4 * j + 3];
+                        destImage[4 * j + 0] = dest[4 * j + 0];
+                    }
+
+                    //Render Debug Graphics
+                    if (debugImage)
+                    {
+                        dest[4 * j + 1] = (debugImage[4 * j + 0] == 0 && debugImage[4 * j + 1] == 0 && debugImage[4 * j + 2] == 0) ? 0x00 : 0xFF;
+                        if (dest[4 * j + 0] != 0)
+                        {
+                            //dest[4 * j + 0] = source[4 * j + 3];
+                            dest[4 * j + 1] = debugImage[4 * j + 2];
+                            dest[4 * j + 2] = debugImage[4 * j + 1];
+                            dest[4 * j + 3] = debugImage[4 * j + 0];
+                        }
+                    }
+                }
+            }
+        }
             break;
+
         case ST_INT_ARGB_PRE:
-            AnyIntIsomorphicCopy(pSrcBase, pDstBase,
-                    srcWidth, srcHeight,
-                    pSrcInfo, &dstInfo, NULL, NULL);
+        {
+            for (jint i = 0; i < srcHeight; ++i)
+            {
+                for (jint j = 0; j < srcWidth; ++j)
+                {
+                    dest[4 * j + 0] = source[4 * j + 0];
+                    dest[4 * j + 1] = source[4 * j + 1];
+                    dest[4 * j + 2] = source[4 * j + 2];
+                    dest[4 * j + 3] = source[4 * j + 3];
+
+                    //Render to Shared Memory
+                    if (destImage)
+                    {
+                        destImage[4 * j + 3] = dest[4 * j + 1];
+                        destImage[4 * j + 2] = dest[4 * j + 2];
+                        destImage[4 * j + 1] = dest[4 * j + 3];
+                        destImage[4 * j + 0] = dest[4 * j + 0];
+                    }
+
+                    //Render Debug Graphics
+                    if (debugImage)
+                    {
+                        dest[4 * j + 1] = (debugImage[4 * j + 0] == 0 && debugImage[4 * j + 1] == 0 && debugImage[4 * j + 2] == 0) ? 0x00 : 0xFF;
+                        if (dest[4 * j + 0] != 0)
+                        {
+                            //dest[4 * j + 0] = source[4 * j + 3];
+                            dest[4 * j + 1] = debugImage[4 * j + 2];
+                            dest[4 * j + 2] = debugImage[4 * j + 1];
+                            dest[4 * j + 3] = debugImage[4 * j + 0];
+                        }
+                    }
+                }
+            }
+        }
             break;
+
         case ST_INT_RGB:
-            IntRgbToIntArgbConvert(pSrcBase, pDstBase,
-                    srcWidth, srcHeight,
-                    pSrcInfo, &dstInfo, NULL, NULL);
+        {
+            std::uint8_t* pDstBase = reinterpret_cast<std::uint8_t*>(PtrCoord(control_center->get_image(), dstx, dstInfo.pixelStride, dsty, dstInfo.scanStride));
+
+            for (jint i = 0; i < srcHeight; ++i)
+            {
+                for (jint j = 0; j < srcWidth; ++j)
+                {
+                    dest[4 * j + 0] = source[4 * j + 0];
+                    dest[4 * j + 1] = source[4 * j + 1];
+                    dest[4 * j + 2] = source[4 * j + 2];
+                    dest[4 * j + 3] = source[4 * j + 3];
+
+                    pDstBase[4 * j + 0] = source[4 * j + 0];
+                    pDstBase[4 * j + 1] = source[4 * j + 1];
+                    pDstBase[4 * j + 2] = source[4 * j + 2];
+                    pDstBase[4 * j + 3] = source[4 * j + 3];
+                }
+
+                source += pSrcInfo->scanStride;
+                dest += dstInfo.scanStride;
+            }
+        }
             break;
+
         case ST_INT_BGR:
-            IntBgrToIntArgbConvert(pSrcBase, pDstBase,
-                    srcWidth, srcHeight,
-                    pSrcInfo, &dstInfo, NULL, NULL);
+        {
+            for (jint i = 0; i < srcHeight; ++i)
+            {
+                for (jint j = 0; j < srcWidth; ++j)
+                {
+                    dest[4 * j + 0] = source[4 * j + 0];
+                    dest[4 * j + 1] = source[4 * j + 3];
+                    dest[4 * j + 2] = source[4 * j + 2];
+                    dest[4 * j + 3] = source[4 * j + 1];
+
+                    //Render to Shared Memory
+                    if (destImage)
+                    {
+                        destImage[4 * j + 3] = dest[4 * j + 1];
+                        destImage[4 * j + 2] = dest[4 * j + 2];
+                        destImage[4 * j + 1] = dest[4 * j + 3];
+                        destImage[4 * j + 0] = dest[4 * j + 0];
+                    }
+
+                    //Render Debug Graphics
+                    if (debugImage)
+                    {
+                        dest[4 * j + 1] = (debugImage[4 * j + 0] == 0 && debugImage[4 * j + 1] == 0 && debugImage[4 * j + 2] == 0) ? 0x00 : 0xFF;
+                        if (dest[4 * j + 0] != 0)
+                        {
+                            //dest[4 * j + 0] = source[4 * j + 3];
+                            dest[4 * j + 1] = debugImage[4 * j + 2];
+                            dest[4 * j + 2] = debugImage[4 * j + 1];
+                            dest[4 * j + 3] = debugImage[4 * j + 0];
+                        }
+                    }
+                }
+
+                source += pSrcInfo->scanStride;
+                dest += dstInfo.scanStride;
+            }
+        }
             break;
-        case ST_3BYTE_BGR:
-            ThreeByteBgrToIntArgbConvert(pSrcBase, pDstBase,
-                    srcWidth, srcHeight,
-                    pSrcInfo, &dstInfo, NULL, NULL);
-            break;
+
+        case ST_INT_ARGB_BM:
+        case ST_USHORT_565_RGB:
+        case ST_USHORT_555_RGB:
         case ST_BYTE_INDEXED:
-            ByteIndexedToIntArgbPreConvert(pSrcBase, pDstBase,
-                    srcWidth, srcHeight,
-                    pSrcInfo, &dstInfo, NULL, NULL);
+        case ST_BYTE_INDEXED_BM:
             break;
-        default:
+
+        case ST_3BYTE_BGR:
+        {
+            for (jint i = 0; i < srcHeight; ++i)
+            {
+                for (jint j = 0; j < srcWidth; ++j)
+                {
+                    dest[4 * j + 0] = 0x00;
+                    dest[4 * j + 1] = source[4 * j + 3];
+                    dest[4 * j + 2] = source[4 * j + 2];
+                    dest[4 * j + 3] = source[4 * j + 1];
+
+                    //Render to Shared Memory
+                    if (destImage)
+                    {
+                        destImage[4 * j + 3] = dest[4 * j + 1];
+                        destImage[4 * j + 2] = dest[4 * j + 2];
+                        destImage[4 * j + 1] = dest[4 * j + 3];
+                        destImage[4 * j + 0] = dest[4 * j + 0];
+                    }
+
+                    //Render Debug Graphics
+                    if (debugImage)
+                    {
+                        dest[4 * j + 1] = (debugImage[4 * j + 0] == 0 && debugImage[4 * j + 1] == 0 && debugImage[4 * j + 2] == 0) ? 0x00 : 0xFF;
+                        if (dest[4 * j + 0] != 0)
+                        {
+                            //dest[4 * j + 0] = source[4 * j + 3];
+                            dest[4 * j + 1] = debugImage[4 * j + 2];
+                            dest[4 * j + 2] = debugImage[4 * j + 1];
+                            dest[4 * j + 3] = debugImage[4 * j + 0];
+                        }
+                    }
+                }
+
+                source += pSrcInfo->scanStride;
+                dest += dstInfo.scanStride;
+            }
+        }
             break;
     }
 
-    return pDstSurface->UnlockRect();*/
+
+
+    return pDstSurface->UnlockRect();
 }
 #endif
 

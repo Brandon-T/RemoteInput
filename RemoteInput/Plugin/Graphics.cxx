@@ -394,3 +394,49 @@ void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_
 		glDisable(GL_POINT_SMOOTH);
 	}
 }
+
+void dx_draw_point(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t argb_colour)
+{
+    auto argb_to_abgr = [](std::int32_t argb_colour){
+        return ((argb_colour & 0xFF000000) >> 0) |
+               ((argb_colour & 0x00FF0000) >>  16) |
+               ((argb_colour & 0x0000FF00) <<  0) |
+               ((argb_colour & 0x000000FF) << 16);
+    };
+    return draw_circle(x, y, radius, buffer, width, height, stride, filled, argb_to_abgr(argb_colour));
+}
+
+void dx_draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride)
+{
+    typedef struct bgra_t
+    {
+        std::uint8_t b;
+        std::uint8_t g;
+        std::uint8_t r;
+        std::uint8_t a;
+    } bgra;
+
+    typedef struct argb_t
+    {
+        std::uint8_t a;
+        std::uint8_t r;
+        std::uint8_t g;
+        std::uint8_t b;
+    } argb;
+
+    bgra* dest = static_cast<bgra*>(dest_buffer);
+    bgra* source = static_cast<bgra*>(source_buffer);
+
+    for (std::int32_t i = 0; i < width * height * stride; i += stride)
+    {
+        dest->a = (source->b == 0x00 && source->g == 0x00 && source->r == 0x00) ? 0x00 : 0xFF;
+        if (dest->a != 0x00)
+        {
+            dest->b = source->b;
+            dest->g = source->g;
+            dest->r = source->r;
+        }
+        ++source;
+        ++dest;
+    }
+}
