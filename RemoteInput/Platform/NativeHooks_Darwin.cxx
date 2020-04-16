@@ -582,7 +582,10 @@ void InitialiseHooks()
 		#endif
 		#else
 		DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
-		#endif
+        #endif
+
+		//Signal that all hooks are finished initializing..
+		ControlCenter::signal_sync(getpid());
 	}).detach();
 }
 

@@ -61,6 +61,7 @@ public:
 	void set_parent_thread_id(std::int32_t tid);
 	void update_dimensions(std::int32_t width, std::int32_t height);
 
+	static void signal_sync(pid_t pid);
 	static void wait_for_sync(pid_t pid);
 	static bool controller_exists(pid_t pid);
 	static bool controller_is_paired(pid_t pid, bool* exists);

@@ -205,6 +205,36 @@ private:
 };
 #endif
 
+typedef struct _OGLSDOps OGLSDOps;
+
+typedef struct {
+    GLenum   format;
+    GLenum   type;
+    jint     alignment;
+    jboolean hasAlpha;
+    jboolean isPremult;
+} OGLPixelFormat;
+
+struct _OGLSDOps {
+    SurfaceDataOps               sdOps;
+    void                         *privOps;
+    jint                         drawableType;
+    GLenum                       activeBuffer;
+    jboolean                     isOpaque;
+    jboolean                     needsInit;
+    jint                         xOffset;
+    jint                         yOffset;
+    jint                         width;
+    jint                         height;
+    GLuint                       textureID;
+    jint                         textureWidth;
+    jint                         textureHeight;
+    GLenum                       textureTarget;
+    GLint                        textureFilter;
+    GLuint                       fbobjectID;
+    GLuint                       depthID;
+};
+
 typedef unsigned int juint;
 
 typedef struct _CompositeInfo {
