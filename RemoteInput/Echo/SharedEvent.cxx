@@ -1228,7 +1228,7 @@ T* atomic_variable_cast(void* &ptr)
 #if defined(_WIN32) || defined(_WIN64)
 AtomicSignal::AtomicSignal() : hEvent(nullptr), name("\0")
 {
-	hEvent = CreateEvent(nullptr, false, false, nullptr);
+	hEvent = CreateEvent(nullptr, true, false, nullptr);
 }
 
 AtomicSignal::AtomicSignal(std::string name) : hEvent(nullptr), name(name)
@@ -1236,7 +1236,7 @@ AtomicSignal::AtomicSignal(std::string name) : hEvent(nullptr), name(name)
 	hEvent = OpenEvent(0, false, name.c_str());
 	if (!hEvent)
 	{
-		hEvent = CreateEvent(nullptr, false, false, name.c_str());
+		hEvent = CreateEvent(nullptr, true, false, name.c_str());
 	}
 
 	if (!hEvent)

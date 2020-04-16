@@ -91,8 +91,6 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 		
 		if (this->reflector)
 		{
-			this->sync_signal->signal();
-			
 			std::thread thread = std::thread([&]{
 
 				#if defined(_WIN32) || defined(_WIN64)
@@ -977,6 +975,28 @@ void ControlCenter::set_parent_thread_id(std::int32_t tid)
 		get_image_data()->parent_thread_id = tid;
 	}
 }
+
+void ControlCenter::signal_sync(pid_t pid)
+{
+    #if defined(_WIN32) || defined(_WIN64)
+    char signalName[256] = {0};
+    sprintf(signalName, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
+    #elif defined(__linux__)
+    char signalName[256] = {0};
+	sprintf(signalName, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	#else
+	char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
+	sprintf(signalName, "/RI_CC_SyncSignal_%d", pid);
+    #endif
+
+    std::unique_ptr<AtomicSignal> sync_signal = std::make_unique<AtomicSignal>(signalName);
+
+    if (!sync_signal->is_signalled())
+    {
+        sync_signal->signal();
+    }
+}
+
 void ControlCenter::wait_for_sync(pid_t pid)
 {
 	#if defined(_WIN32) || defined(_WIN64)
@@ -989,13 +1009,14 @@ void ControlCenter::wait_for_sync(pid_t pid)
 	char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
 	sprintf(signalName, "/RI_CC_SyncSignal_%d", pid);
 	#endif
-	
+
 	std::unique_ptr<AtomicSignal> sync_signal = std::make_unique<AtomicSignal>(signalName);
-	
-	if (!sync_signal->is_signalled())
-	{
-		sync_signal->timed_wait(10000); //We shall wait no longer than 10 seconds for initialization of sync signals.
-	}
+
+    if (!sync_signal->is_signalled())
+    {
+        //We shall wait no longer than 5 seconds for initialization of sync signals.
+        sync_signal->timed_wait(5000);
+    }
 }
 
 bool ControlCenter::controller_exists(pid_t pid)

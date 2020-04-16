@@ -293,12 +293,7 @@ Reflection* GetNativeReflector()
 		return nullptr;
 	}
 
-    auto DSGetComponent = reinterpret_cast<jobject __stdcall (*)(JNIEnv*, void*)>(GetProcAddress(awt, "DSGetComponent"));
-    if (!DSGetComponent)
-    {
-        DSGetComponent = reinterpret_cast<jobject __stdcall (*)(JNIEnv*, void*)>(GetProcAddress(awt, "_DSGetComponent@8"));
-    }
-
+    auto DSGetComponent = reinterpret_cast<jobject __stdcall (*)(JNIEnv*, void*)>(GetProcAddress(awt, "_DSGetComponent@8") ?: GetProcAddress(awt, "DSGetComponent"));
     if (!DSGetComponent)
     {
         int ordinal = 146;

@@ -73,7 +73,7 @@ bool Reflection::Initialize(jobject awtFrame)
             }
         }
 
-        return result;
+        return {};
     };
 
     //Find Client Class.

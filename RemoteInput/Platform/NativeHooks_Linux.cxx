@@ -590,6 +590,9 @@ void InitialiseHooks()
             opengl_hook->apply();
         }
         #endif
+
+        //Signal that all hooks are finished initializing..
+		ControlCenter::signal_sync(getpid());
     }).detach();
     #endif
 }

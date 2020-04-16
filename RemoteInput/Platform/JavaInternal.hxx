@@ -144,7 +144,96 @@ typedef struct tagBitmapHeader {
         RGBQUAD palette[256];
     } colors;
 } BmiType;
+
+
+#include <d3d9.h>
+
+class IManagedResource {
+public:
+    virtual BOOL IsDefaultPool() = 0;
+protected:
+    IManagedResource() { pPrev = pNext = NULL; };
+    virtual     ~IManagedResource() { pPrev = pNext = NULL; };
+    virtual void Release() = 0;
+private:
+    IManagedResource& operator=(const IManagedResource&);
+
+    IManagedResource* pPrev;
+    IManagedResource* pNext;
+};
+
+typedef struct _D3DSDOps D3DSDOps;
+
+class D3DResource;
+struct _D3DSDOps {
+    SurfaceDataOps sdOps;
+    jint adapter;
+    jint width, height;
+    jint xoff, yoff;
+    D3DSWAPEFFECT swapEffect;
+    D3DResource  *pResource;
+};
+
+class D3DResource : public IManagedResource {
+public:
+    D3DResource(IDirect3DResource9 *pRes);
+    D3DResource(IDirect3DSwapChain9 *pSC);
+    IDirect3DResource9*  GetResource();
+    IDirect3DTexture9*   GetTexture();
+    IDirect3DSurface9*   GetSurface();
+    IDirect3DSwapChain9* GetSwapChain();
+    D3DSDOps*            GetSDOps();
+    void                 SetSDOps(D3DSDOps *pOps);
+    D3DSURFACE_DESC*     GetDesc();
+    virtual BOOL         IsDefaultPool();
+
+protected:
+    virtual                 ~D3DResource();
+    virtual void             Release();
+    void                 Init(IDirect3DResource9*, IDirect3DSwapChain9*);
+
+private:
+    D3DResource() {}
+    D3DResource&         operator=(const D3DResource&);
+
+    IDirect3DResource9*  pResource;
+    IDirect3DSwapChain9* pSwapChain;
+    IDirect3DSurface9*   pSurface;
+    IDirect3DTexture9*   pTexture;
+    D3DSDOps*            pOps;
+    D3DSURFACE_DESC      desc;
+};
 #endif
+
+typedef struct _OGLSDOps OGLSDOps;
+
+typedef struct {
+    GLenum   format;
+    GLenum   type;
+    jint     alignment;
+    jboolean hasAlpha;
+    jboolean isPremult;
+} OGLPixelFormat;
+
+struct _OGLSDOps {
+    SurfaceDataOps               sdOps;
+    void                         *privOps;
+    jint                         drawableType;
+    GLenum                       activeBuffer;
+    jboolean                     isOpaque;
+    jboolean                     needsInit;
+    jint                         xOffset;
+    jint                         yOffset;
+    jint                         width;
+    jint                         height;
+    GLuint                       textureID;
+    jint                         textureWidth;
+    jint                         textureHeight;
+    GLenum                       textureTarget;
+    GLint                        textureFilter;
+    GLuint                       fbobjectID;
+    GLuint                       depthID;
+};
 
 typedef unsigned int juint;
 
