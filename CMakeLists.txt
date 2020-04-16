@@ -226,15 +226,15 @@ IF(WIN32)
             $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at>)
 ELSEIF(APPLE)
     target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g>
-            $<$<CONFIG:RELEASE>:-O3>)
+            $<$<CONFIG:DEBUG>:-g -fvisibility=hidden>
+            $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-static>
             $<$<CONFIG:RELEASE>:-s -static>)
 ELSE()
     target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g>
-            $<$<CONFIG:RELEASE>:-O3>)
+            $<$<CONFIG:DEBUG>:-g -fvisibility=hidden>
+            $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-static-libgcc -static-libstdc++>
             $<$<CONFIG:RELEASE>:-s -static-libgcc -static-libstdc++>)
