@@ -89,28 +89,12 @@ pid_t InjectProcess(pid_t pid)
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
 	{
 		char path[256] = {0};
-		realpath((std::string(info.dli_fname) + "/../libRemoteInputBootstrap.dylib").c_str(), path);
-		void* dll = dlopen(path, RTLD_NOW | RTLD_LOCAL);
-		if (!dll)
-		{
-			printf("Cannot find libRemoteInputBootstrap\n");
-			return -1;
-		}
-		
-		void* bootstrap = dlsym(dll, "LoadLibrary");
-		if (!bootstrap)
-		{
-			printf("Cannot find LoadLibrary\n");
-			return -1;
-		}
+		realpath(info.dli_fname, path);
 
-		if (Injector::Inject(info.dli_fname, pid, bootstrap))
+		if (Injector::Inject(info.dli_fname, pid, nullptr))
         {
-		    dlclose(dll);
 		    return pid;
         }
-
-		dlclose(dll);
     }
 	return -1;
 }

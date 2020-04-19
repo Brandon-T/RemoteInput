@@ -56,9 +56,7 @@ IF(WIN32)
 ELSEIF(APPLE)
     set(LIB_SRC_LIST
             rd_route/include/rd_route.h
-            rd_route/src/rd_route.c
-            mach_inject/include/mach_inject.h
-            mach_inject/src/mach_inject.c)
+            rd_route/src/rd_route.c)
 ELSE()
     set(LIB_SRC_LIST
             linux_detours/include/detours.h

@@ -1349,7 +1349,7 @@ bool AtomicSignal::wait()
 	#else
 	static int cnt = 0;
 	while (!lock->load(std::memory_order_acquire)) { atomic_signal_sleep(&cnt); }
-	lock->store(false, std::memory_order_release);
+	//lock->store(false, std::memory_order_release);
 	return true;
 	#endif
 }
@@ -1361,7 +1361,7 @@ bool AtomicSignal::try_wait()
 	#else
 	if (!lock->load(std::memory_order_acquire))
 	{
-		lock->store(false, std::memory_order_release);
+		//lock->store(false, std::memory_order_release);
 		return true;
 	}
 	return false;
