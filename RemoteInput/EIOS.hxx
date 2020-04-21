@@ -48,6 +48,11 @@ enum class EIOSCommand: std::uint32_t
 	RELEASE_KEY,
 	IS_KEY_HELD,
 
+    GET_KEYBOARD_SPEED,
+    SET_KEYBOARD_SPEED,
+    GET_KEYBOARD_REPEAT_DELAY,
+    SET_KEYBOARD_REPEAT_DELAY,
+
 	REFLECT_OBJECT,
     REFLECT_COMPARE_OBJECTS,
 	REFLECT_INSTANCE_OF,
@@ -69,7 +74,8 @@ enum class EIOSCommand: std::uint32_t
 	REFLECT_ARRAY_INDEX,
 	REFLECT_ARRAY_INDEX2D,
 	REFLECT_ARRAY_INDEX3D,
-	REFLECT_ARRAY_INDEX4D
+	REFLECT_ARRAY_INDEX4D,
+    REFLECT_ARRAY_INDICES
 };
 
 typedef struct ImageData
@@ -150,6 +156,10 @@ EXPORT void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait
 EXPORT void EIOS_HoldKey(EIOS* eios, std::int32_t key);
 EXPORT void EIOS_ReleaseKey(EIOS* eios, std::int32_t key);
 EXPORT bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key);
+EXPORT std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios);
+EXPORT void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed);
+EXPORT std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios);
+EXPORT void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay);
 EXPORT EIOS* EIOS_PairClient(pid_t pid);
 EXPORT void EIOS_KillClientPID(pid_t pid);
 EXPORT void EIOS_KillClient(EIOS* eios);

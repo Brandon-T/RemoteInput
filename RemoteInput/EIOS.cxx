@@ -218,6 +218,40 @@ bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key)
 	return false;
 }
 
+std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios)
+{
+    if (eios)
+    {
+        return eios->control_center->get_keyboard_speed();
+    }
+    return -1;
+}
+
+void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed)
+{
+    if (eios)
+    {
+        eios->control_center->set_keyboard_speed(speed);
+    }
+}
+
+std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios)
+{
+    if (eios)
+    {
+        return eios->control_center->get_keyboard_repeat_delay();
+    }
+    return -1;
+}
+
+void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay)
+{
+    if (eios)
+    {
+        eios->control_center->set_keyboard_repeat_delay(delay);
+    }
+}
+
 EIOS* EIOS_PairClient(pid_t pid)
 {
 	std::int32_t tid = GetCurrentThreadID();

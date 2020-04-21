@@ -670,6 +670,54 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
 	}
 }
 
+void Pascal_Reflect_Array_Indices(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+    if (eios)
+    {
+        std::size_t length = 0;
+        jarray array = PascalRead<jarray>(Params[1]);
+        ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
+        std::int32_t* indices = GetArray<std::int32_t>(PascalRead<void*>(Params[1]), &length);
+
+        if (!indices || length == 0)
+        {
+            return;
+        }
+
+        void* result = eios->control_center->reflect_array_indices(array, type, indices, length);
+
+        if (type == ReflectionArrayType::STRING)
+        {
+            std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+            void** buffer = AllocateArray<void*>(length, element_size);
+
+            for (std::size_t i = 0; i < length; ++i)
+            {
+                buffer[i] = nullptr;
+                std::string string = PascalRead(result);
+                if (!string.empty())
+                {
+                    char* output = AllocateString<char>(string.length());
+                    std::memcpy(output, &string[0], string.length());
+                    output[string.length()] = '\0';
+
+                    buffer[i] = output;
+                }
+            }
+
+            PascalWrite(Result, buffer);
+            return;
+        }
+
+        std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+        void* buffer = AllocateArray<void>(length, element_size);
+        std::memcpy(buffer, result, length * element_size);
+        PascalWrite(Result, buffer);
+    }
+}
+
 void Pascal_GetDebugImageBuffer(void** Params, void** Result)
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
@@ -822,6 +870,44 @@ void Pascal_GetRealMousePosition(void** Params, void** Result)
 	}
 }
 
+void Pascal_GetKeyboardSpeed(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        PascalWrite(Result, EIOS_GetKeyboardSpeed(eios));
+    }
+}
+
+void Pascal_SetKeyboardSpeed(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        std::int32_t speed = PascalRead<std::int32_t>(Params[1]);
+        EIOS_SetKeyboardSpeed(eios, speed);
+    }
+}
+
+void Pascal_GetKeyboardRepeatDelay(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        PascalWrite(Result, EIOS_GetKeyboardRepeatDelay(eios));
+    }
+}
+
+void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        std::int32_t delay = PascalRead<std::int32_t>(Params[1]);
+        EIOS_SetKeyboardRepeatDelay(eios, delay);
+    }
+}
+
 template<typename T>
 int PascalHigh(T* Arr)
 {
@@ -858,6 +944,7 @@ template<typename T>
 T* GetArray(void* ptr, std::size_t* size)
 {
     PascalArray* mem = static_cast<PascalArray*>(ptr);
+    *size = mem->length;
     return reinterpret_cast<T*>((--mem)->data);
 }
 

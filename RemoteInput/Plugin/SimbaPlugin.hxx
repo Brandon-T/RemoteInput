@@ -46,6 +46,7 @@ static const char* PascalExports[] =
 	//Array 4-D
 	"Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z, w: Int32): Pointer; overload; native;",
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Indices", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; indices: Array of Int32): Pointer; overload; native;",
 
 	//Graphics
 	"Pascal_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
@@ -68,7 +69,11 @@ static const char* PascalExports[] =
 	"Pascal_LoseFocus", "Procedure EIOS_LoseFocus(eios: Pointer); native;",
 	"Pascal_IsInputEnabled", "Function EIOS_IsInputEnabled(eios: Pointer): Boolean; native;",
 	"Pascal_SetInputEnabled", "Function EIOS_SetInputEnabled(eios: Pointer; enabled: Boolean): Boolean; native;",
-	"Pascal_GetRealMousePosition", "Procedure EIOS_GetRealMousePosition(eios: Pointer; var x, y: Int32); native;"
+	"Pascal_GetRealMousePosition", "Procedure EIOS_GetRealMousePosition(eios: Pointer; var x, y: Int32); native;",
+    "Pascal_GetKeyboardSpeed", "Function EIOS_GetKeyboardSpeed(eios: Pointer): Int32; native;",
+    "Pascal_SetKeyboardSpeed", "Procedure EIOS_SetKeyboardSpeed(eios: Pointer; speed: Int32); native;",
+    "Pascal_GetKeyboardRepeatDelay", "Function EIOS_GetKeyboardRepeatDelay(eios: Pointer): Int32; native;",
+    "Pascal_SetKeyboardRepeatDelay", "Procedure EIOS_SetKeyboardRepeatDelay(eios: Pointer; delay: Int32); native;"
 };
 
 static const char* PascalTypes[] =
@@ -133,6 +138,7 @@ EXPORT void Pascal_Reflect_Array_Index(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_Index2D(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_Index3D(void** Params, void** Result);
 EXPORT void Pascal_Reflect_Array_Index4D(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Array_Indices(void** Params, void** Result);
 
 EXPORT void Pascal_GetDebugImageBuffer(void** Params, void** Result);
 EXPORT void Pascal_SetGraphicsDebugging(void** Params, void** Result);
@@ -151,6 +157,11 @@ EXPORT void Pascal_LoseFocus(void** Params, void** Result);
 EXPORT void Pascal_IsInputEnabled(void** Params, void** Result);
 EXPORT void Pascal_SetInputEnabled(void** Params, void** Result);
 EXPORT void Pascal_GetRealMousePosition(void** Params, void** Result);
+
+EXPORT void Pascal_GetKeyboardSpeed(void** Params, void** Result);
+EXPORT void Pascal_SetKeyboardSpeed(void** Params, void** Result);
+EXPORT void Pascal_GetKeyboardRepeatDelay(void** Params, void** Result);
+EXPORT void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result);
 
 #ifdef __cplusplus
 }

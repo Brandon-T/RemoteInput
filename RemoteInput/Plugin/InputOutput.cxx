@@ -90,11 +90,57 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), mouse_buttons()
+InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
 {
 	x = std::numeric_limits<std::int32_t>::min();
 	y = std::numeric_limits<std::int32_t>::min();
-	keyboard_speed = Random::instance()->generate_random_int(15, 70);
+
+    auto scale_to_range = [](float value, float fromMin, float fromMax, float toMin, float toMax) -> float {
+        return (((toMax - toMin) * (value - fromMin)) / (fromMax - fromMin)) + toMin;
+    };
+
+    #if defined(_WIN32) || defined(_WIN64)
+        #if defined(WINDOWS_SYSTEM_INPUT_INFO)
+        //0 (approximately 250 ms delay) through 3 (approximately 1 second delay).
+        std::int32_t keyboard_delay = 0;
+        SystemParametersInfo(SPI_GETKEYBOARDDELAY, 0, reinterpret_cast<void*>(&keyboard_delay), 0);
+
+        //Small variance in delay due to electrical signal, lag, hardware, etc..
+        std::int32_t min_delay = Random::instance()->generate_random_int(248, 252);
+        std::int32_t max_delay = Random::instance()->generate_random_int(998, 1002);
+        this->keyboard_repeat_delay = scale_to_range(keyboard_delay, 0, 3, min_delay, max_delay);
+
+        //0 (approximately 2.5 repetitions per second) through 31 (approximately 30 repetitions per second).
+        //The actual repeat rates are hardware-dependent and may vary from a linear scale by as much as 20%
+        std::int32_t keyboard_repeat_speed = 0;
+        SystemParametersInfo(SPI_GETKEYBOARDSPEED, 0, reinterpret_cast<void*>(&keyboard_repeat_speed), 0);
+
+        float repeat_rate = scale_to_range(keyboard_repeat_speed, 0, 31, 2.5, 30);
+        repeat_rate += repeat_rate * Random::instance()->generate_random_float(0.0, 0.20);
+        this->keyboard_speed = round(60.0 / repeat_rate);
+        #else
+        //Windows default is 250ms delay and 24ms repeat rate
+        this->keyboard_repeat_delay = scale_to_range(0, 0, 3, 250, 1000) + Random::instance()->generate_random_int(-2, 2);
+
+        float repeat_rate = scale_to_range(0, 0, 31, 2.5, 30);
+        repeat_rate += repeat_rate * Random::instance()->generate_random_float(0.0, 0.20);
+        this->keyboard_speed = round(60.0 / repeat_rate);
+        #endif
+    #elif defined(__APPLE__)
+        //MacOS default is 225ms delay and 15ms repeat rate
+        this->keyboard_repeat_delay = scale_to_range(15, 15, 120, 225, 1800) + Random::instance()->generate_random_int(-2, 2);
+
+        float repeat_rate = scale_to_range(1, 2, 120, 30, 1800);
+        repeat_rate += repeat_rate * Random::instance()->generate_random_float(0.0, 0.20);
+        this->keyboard_speed = round(repeat_rate);
+    #else
+        //Linux default is 660ms delay and 25ms repeat rate
+        this->keyboard_repeat_delay = scale_to_range(44, 15, 120, 225, 1800) + Random::instance()->generate_random_int(-2, 2);
+
+        float repeat_rate = scale_to_range(2, 2, 120, 25, 1800);
+        repeat_rate += repeat_rate * Random::instance()->generate_random_float(0.0, 0.20);
+        this->keyboard_speed = round(repeat_rate);
+    #endif
 }
 
 InputOutput::~InputOutput()
@@ -170,7 +216,7 @@ void InputOutput::hold_key(std::int32_t code)
 		else
 		{
 			//Key already being pressed so just replace it
-			if (currently_held_key != -1)
+			if (currently_held_key != -1 && this->keyboard_speed >= 0 && this->keyboard_repeat_delay >= 0)
 			{
 				std::lock_guard<std::mutex>(this->mutex);
 
@@ -209,6 +255,11 @@ void InputOutput::hold_key(std::int32_t code)
 									0,
 									NativeKeyCodeToChar(code, modifiers),
 									KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+
+				if (this->keyboard_repeat_delay > 0)
+				{
+                    yield_thread(std::chrono::milliseconds(this->keyboard_repeat_delay));
+                }
 			}
 			else
 			{
@@ -250,52 +301,68 @@ void InputOutput::hold_key(std::int32_t code)
 									KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 				this->mutex.unlock();
 
+				if (this->keyboard_speed >= 0 && this->keyboard_repeat_delay >= 0)
+                {
+                    input_thread.add_task([&](std::atomic_bool &stopped) {
+                        if (this->keyboard_repeat_delay > 0)
+                        {
+                            yield_thread(std::chrono::milliseconds(this->keyboard_repeat_delay));
+                        }
 
-				input_thread.add_task([&](std::atomic_bool &stopped){
-					JNIEnv* env = nullptr;
-					this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
+                        JNIEnv* env = nullptr;
+                        this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
 
-					Applet applet{env, this->applet, false};
-					Component receiver = applet.getComponent(0);
+                        Applet applet{env, this->applet, false};
+                        Component receiver = applet.getComponent(0);
 
-					while (!stopped && currently_held_key != -1)
-					{
-						std::lock_guard<std::mutex>(this->mutex);
-						yield_thread(std::chrono::milliseconds(this->keyboard_speed));
-						std::int32_t code = currently_held_key;
+                        while (!stopped && currently_held_key != -1)
+                        {
+                            std::lock_guard<std::mutex>(this->mutex);
+                            if (this->keyboard_speed > 0)
+                            {
+                                yield_thread(std::chrono::milliseconds(this->keyboard_speed));
+                            }
 
-						//Dispatch Event
-						if (!this->has_focus(&receiver))
-						{
-							this->gain_focus(&receiver);
-						}
+                            if (currently_held_key == -1)
+                            {
+                                break;
+                            }
 
-						std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-						std::int32_t modifiers = GetActiveKeyModifiers();
-						std::int32_t keycode = GetJavaKeyCode(code);
-						std::int32_t location = GetKeyLocation(code);
+                            std::int32_t code = currently_held_key;
 
-						KeyEvent::Dispatch(env,
-										   &receiver,
-										   &receiver,
-										   KeyEvent::KeyCodes::KEY_PRESSED,
-										   when,
-										   modifiers,
-										   keycode,
-										   NativeKeyCodeToChar(code, modifiers),
-										   location);
+                            //Dispatch Event
+                            if (!this->has_focus(&receiver))
+                            {
+                                this->gain_focus(&receiver);
+                            }
 
-						KeyEvent::Dispatch(env,
-											&receiver,
-											&receiver,
-											KeyEvent::KeyCodes::KEY_TYPED,
-											when,
-											modifiers,
-											0,
-											NativeKeyCodeToChar(code, modifiers),
-											KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
-					}
-				});
+                            std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                            std::int32_t modifiers = GetActiveKeyModifiers();
+                            std::int32_t keycode = GetJavaKeyCode(code);
+                            std::int32_t location = GetKeyLocation(code);
+
+                            KeyEvent::Dispatch(env,
+                                               &receiver,
+                                               &receiver,
+                                               KeyEvent::KeyCodes::KEY_PRESSED,
+                                               when,
+                                               modifiers,
+                                               keycode,
+                                               NativeKeyCodeToChar(code, modifiers),
+                                               location);
+
+                            KeyEvent::Dispatch(env,
+                                                &receiver,
+                                                &receiver,
+                                                KeyEvent::KeyCodes::KEY_TYPED,
+                                                when,
+                                                modifiers,
+                                                0,
+                                                NativeKeyCodeToChar(code, modifiers),
+                                                KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+                        }
+                    });
+				}
 			}
 		}
 	}
@@ -441,7 +508,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 								   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
 								   location);
 
-				yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(50, 70) + keymodwait));
+				yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keymodwait)));
 			}
 		}
 
@@ -471,7 +538,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 							static_cast<jchar>(c),
 							KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 
-		yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70) + keywait));
+        yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keywait)));
 		when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
 		KeyEvent::Dispatch(env,
@@ -484,7 +551,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 						   static_cast<jchar>(c),
 						   location);
 
-		yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(15, 70) + keywait));
+        yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keywait)));
 
 		//Modifier Key
 		if ((isShiftDown && i == string.length() - 1) || (n != '\0' && !(this->ModifiersForChar(n) & InputEvent::InputEventMasks::SHIFT_DOWN_MASK)))
@@ -507,7 +574,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 							   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
 							   location);
 
-			yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(50, 70) + keymodwait));
+            yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keymodwait)));
 		}
 	}
 }
@@ -578,6 +645,26 @@ void InputOutput::set_input_enabled(bool enabled)
 	}
 
 	control_center->reflect_applet().setEnabled(enabled);
+}
+
+std::int32_t InputOutput::get_keyboard_speed()
+{
+    return this->keyboard_speed;
+}
+
+void InputOutput::set_keyboard_speed(std::int32_t speed)
+{
+    this->keyboard_speed = speed;
+}
+
+std::int32_t InputOutput::get_keyboard_repeat_delay()
+{
+    return this->keyboard_repeat_delay;
+}
+
+void InputOutput::set_keyboard_repeat_delay(std::int32_t delay)
+{
+    this->keyboard_repeat_delay = delay;
 }
 
 void InputOutput::lose_focus(Component* component)

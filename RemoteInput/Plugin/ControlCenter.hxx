@@ -49,6 +49,7 @@ private:
 
 	ImageData* get_image_data() const;
 	bool send_command(std::function<void(ImageData*)> &&writer);
+    void process_reflect_array_indices(jarray array, void* &arguments, void* &response);
 	void process_reflect_array_index(jarray array, void* &arguments, void* &response, int dimensions);
 
 public:
@@ -94,6 +95,10 @@ public:
 	void hold_key(std::int32_t key);
 	void release_key(std::int32_t key);
 	bool is_key_held(std::int32_t key);
+    std::int32_t get_keyboard_speed();
+    void set_keyboard_speed(std::int32_t speed);
+    std::int32_t get_keyboard_repeat_delay();
+    void set_keyboard_repeat_delay(std::int32_t delay);
 
 	bool reflect_is_objects_equal(const jobject first, const jobject second);
 	bool reflect_instance_of(const jobject object, std::string cls);
@@ -117,6 +122,7 @@ public:
 	void* reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y);
 	void* reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z);
 	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w);
+    void* reflect_array_indices(const jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length);
 
 	static std::size_t reflect_size_for_type(ReflectionArrayType type);
 

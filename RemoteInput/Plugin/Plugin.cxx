@@ -265,6 +265,15 @@ void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, 
 	return nullptr;
 }
 
+void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length)
+{
+    if (eios)
+    {
+        return eios->control_center->reflect_array_indices(array, type, indices, length);
+    }
+    return nullptr;
+}
+
 
 // MARK: - MAIN
 

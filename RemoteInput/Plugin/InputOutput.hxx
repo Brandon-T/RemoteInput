@@ -35,6 +35,7 @@ private:
 	std::size_t h;
 	std::int32_t click_count;
 	std::size_t keyboard_speed;
+	std::size_t keyboard_repeat_delay;
 	bool mouse_buttons[3];
 
 	// MARK: - Functions
@@ -64,6 +65,11 @@ public:
 	bool is_input_enabled();
 	void set_input_enabled(bool enabled);
 
+	std::int32_t get_keyboard_speed();
+	void set_keyboard_speed(std::int32_t speed);
+	std::int32_t get_keyboard_repeat_delay();
+	void set_keyboard_repeat_delay(std::int32_t delay);
+
 	void hold_key(std::int32_t code);
 	void release_key(std::int32_t code);
 	bool is_key_held(std::int32_t code);
@@ -78,7 +84,8 @@ public:
 	bool is_mouse_held(std::int32_t button);
 
 
-	//Internal
+private:
+    friend class ControlCenter;
 	void get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::int32_t &width, std::int32_t &height);
 	void get_applet_mouse_position(std::int32_t &x, std::int32_t &y);
 };

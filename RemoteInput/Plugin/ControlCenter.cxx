@@ -32,6 +32,22 @@ std::string EIOS_Read(void* &ptr)
 }
 
 template<typename T>
+std::vector<T> EIOS_Read_Vector(void* &ptr)
+{
+    std::size_t length = *static_cast<std::size_t*>(ptr);
+    ptr = static_cast<std::size_t*>(ptr) + 1;
+
+    if (length > 0)
+    {
+        std::vector<T> result = std::vector<T>(length);
+        std::memcpy(&result[0], ptr, length);
+        ptr = static_cast<char*>(ptr) + (result.size() * sizeof(T));
+        return result;
+    }
+    return std::vector<T>();
+}
+
+template<typename T>
 void EIOS_Write(void* &ptr, T result)
 {
 	*static_cast<T*>(ptr) = result;
@@ -55,6 +71,23 @@ void EIOS_Write(void* &ptr, const std::string &result)
 
 	*static_cast<char*>(ptr) = '\0';
 	ptr = static_cast<char*>(ptr) + 1;
+}
+
+template<typename T>
+void EIOS_Write(void* &ptr, const std::vector<T> &result)
+{
+    if (result.empty())
+    {
+        *static_cast<std::size_t*>(ptr) = 0;
+        ptr = static_cast<std::size_t*>(ptr) + 1;
+        return;
+    }
+
+    *static_cast<std::size_t*>(ptr) = result.length();
+    ptr = static_cast<std::size_t*>(ptr) + 1;
+
+    memcpy(ptr, &result[0], result.length() * sizeof(T));
+    ptr = static_cast<char*>(ptr) + (result.length() * sizeof(T));
 }
 
 ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller()
@@ -360,6 +393,34 @@ void ControlCenter::process_command()
 		}
 			break;
 
+	    case EIOSCommand::GET_KEYBOARD_SPEED:
+        {
+            std::int32_t speed = io_controller->get_keyboard_speed();
+            EIOS_Write(response, speed);
+        }
+            break;
+
+        case EIOSCommand::SET_KEYBOARD_SPEED:
+        {
+            std::int32_t speed = EIOS_Read<std::int32_t>(arguments);
+            io_controller->set_keyboard_speed(speed);
+        }
+            break;
+
+        case EIOSCommand::GET_KEYBOARD_REPEAT_DELAY:
+        {
+            std::int32_t delay = io_controller->get_keyboard_repeat_delay();
+            EIOS_Write(response, delay);
+        }
+            break;
+
+        case EIOSCommand::SET_KEYBOARD_REPEAT_DELAY:
+        {
+            std::int32_t delay = EIOS_Read<std::int32_t>(arguments);
+            io_controller->set_keyboard_repeat_delay(delay);
+        }
+            break;
+
 		case EIOSCommand::REFLECT_OBJECT:
 		{
 			ReflectionHook hook;
@@ -587,7 +648,149 @@ void ControlCenter::process_command()
 			process_reflect_array_index(array, arguments, response, 4);
 		}
 			break;
+
+	    case EIOSCommand::REFLECT_ARRAY_INDICES:
+        {
+            jarray array = EIOS_Read<jarray>(arguments);
+            process_reflect_array_indices(array, arguments, response);
+        }
+            break;
 	}
+}
+
+void ControlCenter::process_reflect_array_indices(jarray array, void* &arguments, void* &response)
+{
+    auto write_result = [this](jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length, void* &response) -> void {
+        if (!array)
+        {
+            return EIOS_Write(response, nullptr);
+        }
+
+        if (length == 0)
+        {
+            //length = reflector->getEnv()->GetArrayLength(array);
+            return EIOS_Write(response, nullptr);
+        }
+
+        //Maybe better to use GetPrimitiveArrayCritical + memcpy
+        switch (type)
+        {
+            case ReflectionArrayType::CHAR:
+            {
+                jchar* result = reflector->getEnv()->GetCharArrayElements(static_cast<jcharArray>(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseCharArrayElements(static_cast<jcharArray>(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::BYTE:
+            {
+                jbyte* result = reflector->getEnv()->GetByteArrayElements(static_cast<jbyteArray>(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseByteArrayElements(static_cast<jbyteArray>(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::BOOL:
+            {
+                jboolean* result = reflector->getEnv()->GetBooleanArrayElements(static_cast<jbooleanArray>(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseBooleanArrayElements(static_cast<jbooleanArray>(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::SHORT:
+            {
+                jshort* result = reflector->getEnv()->GetShortArrayElements(static_cast<jshortArray>(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseShortArrayElements(static_cast<jshortArray>(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::INT:
+            {
+                jint* result = reflector->getEnv()->GetIntArrayElements(static_cast<jintArray>(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseIntArrayElements(static_cast<jintArray>(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::LONG:
+            {
+                jlong* result = reflector->getEnv()->GetLongArrayElements(static_cast<jlongArray>(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseLongArrayElements(static_cast<jlongArray>(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::FLOAT:
+            {
+                jfloat* result = reflector->getEnv()->GetFloatArrayElements(static_cast<jfloatArray>(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseFloatArrayElements(static_cast<jfloatArray>(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::DOUBLE:
+            {
+                jdouble* result = reflector->getEnv()->GetDoubleArrayElements(static_cast<jdoubleArray >(array), nullptr);
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    EIOS_Write(response, result[indices[i]]);
+                }
+                reflector->getEnv()->ReleaseDoubleArrayElements(static_cast<jdoubleArray >(array), result, JNI_ABORT);
+            }
+                break;
+
+            case ReflectionArrayType::STRING:
+            {
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    auto element = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
+                    std::string result = reflector->getField<std::string>(static_cast<jstring>(element));
+                    EIOS_Write(response, result);
+                    reflector->getEnv()->DeleteLocalRef(element);
+                }
+            }
+                break;
+
+            case ReflectionArrayType::OBJECT:
+            {
+                for (std::size_t i = 0; i < length; ++i)
+                {
+                    auto result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
+                    EIOS_Write(response, result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
+                    reflector->getEnv()->DeleteLocalRef(result);
+                }
+            }
+                break;
+        }
+    };
+
+    ReflectionArrayType type = EIOS_Read<ReflectionArrayType>(arguments);
+    std::vector<std::int32_t> indices = EIOS_Read_Vector<std::int32_t>(arguments);
+    write_result(array, type, &indices[0], indices.size(), response);
 }
 
 void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, void* &response, int dimensions)
@@ -605,7 +808,8 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
         }
 
 		//Maybe better to use GetPrimitiveArrayCritical + memcpy
-		switch (type) {
+		switch (type)
+		{
 			case ReflectionArrayType::CHAR:
 			{
 				reflector->getEnv()->GetCharArrayRegion(static_cast<jcharArray>(array), index, length, static_cast<jchar*>(response));
@@ -1296,6 +1500,52 @@ bool ControlCenter::is_key_held(std::int32_t key)
 	return false;
 }
 
+std::int32_t ControlCenter::get_keyboard_speed()
+{
+    auto result = send_command([](ImageData* image_data) {
+        image_data->command = EIOSCommand::GET_KEYBOARD_SPEED;
+    });
+
+    if (result)
+    {
+        void* arguments = get_image_data()->args;
+        return EIOS_Read<std::int32_t>(arguments);
+    }
+    return -1;
+}
+
+void ControlCenter::set_keyboard_speed(std::int32_t speed)
+{
+    send_command([speed](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::SET_KEYBOARD_SPEED;
+        EIOS_Write<std::int32_t>(arguments, speed);
+    });
+}
+
+std::int32_t ControlCenter::get_keyboard_repeat_delay()
+{
+    auto result = send_command([](ImageData* image_data) {
+        image_data->command = EIOSCommand::GET_KEYBOARD_REPEAT_DELAY;
+    });
+
+    if (result)
+    {
+        void* arguments = get_image_data()->args;
+        return EIOS_Read<std::int32_t>(arguments);
+    }
+    return -1;
+}
+
+void ControlCenter::set_keyboard_repeat_delay(std::int32_t delay)
+{
+    send_command([delay](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::SET_KEYBOARD_REPEAT_DELAY;
+        EIOS_Write<std::int32_t>(arguments, delay);
+    });
+}
+
 bool ControlCenter::reflect_is_objects_equal(const jobject first, const jobject second)
 {
     auto result = send_command([&](ImageData* image_data) {
@@ -1665,6 +1915,24 @@ void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayTy
 		return get_image_data()->args;
 	}
 	return nullptr;
+}
+
+void* ControlCenter::reflect_array_indices(const jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length)
+{
+    auto result = send_command([&](ImageData* image_data) {
+       void* arguments = image_data->args;
+       image_data->command = EIOSCommand::REFLECT_ARRAY_INDICES;
+       EIOS_Write(arguments, array);
+       EIOS_Write(arguments, type);
+       EIOS_Write(arguments, length);
+       std::memcpy(arguments, indices, length * sizeof(std::int32_t));
+    });
+
+    if (result)
+    {
+        return get_image_data()->args;
+    }
+    return nullptr;
 }
 
 std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
