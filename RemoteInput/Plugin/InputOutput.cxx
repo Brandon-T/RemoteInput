@@ -794,6 +794,10 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 		{
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
+        else
+        {
+            MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
+        }
 
 		if (this->has_focus(&receiver))
 		{
