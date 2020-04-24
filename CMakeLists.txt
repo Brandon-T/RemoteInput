@@ -75,8 +75,8 @@ ENDIF()
 
 # ------------------------- JAVA LINKER -------------------------
 IF(WIN32)
-    set(LIBRARIES_LIST
-            ${JAVA_AWT_LIBRARY})
+#    set(LIBRARIES_LIST
+#            ${JAVA_AWT_LIBRARY})
 ELSEIF(APPLE)
 #    set(JAVA_JNI_LIBRARY_PATH
 #            /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib)
@@ -100,17 +100,17 @@ ELSEIF(APPLE)
 #            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}\""
 #            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}/server\"")
 ELSE()
-    set(Java_JAWT_LIBRARY
-            ${JAVA_AWT_LIBRARY})
-
-    find_library(Java_JAWT_EXTENDED_LIBRARY
-            NAMES libawt_xawt.so
-            HIMES ${_JAVA_HINTS}
-            PATHS ${JAVA_AWT_LIBRARY}/..)
-
-    set(LIBRARIES_LIST
-            ${Java_JAWT_LIBRARY}
-            ${Java_JAWT_EXTENDED_LIBRARY})
+#    set(Java_JAWT_LIBRARY
+#            ${JAVA_AWT_LIBRARY})
+#
+#    find_library(Java_JAWT_EXTENDED_LIBRARY
+#            NAMES libawt_xawt.so
+#            HIMES ${_JAVA_HINTS}
+#            PATHS ${JAVA_AWT_LIBRARY}/..)
+#
+#    set(LIBRARIES_LIST
+#            ${Java_JAWT_LIBRARY}
+#            ${Java_JAWT_EXTENDED_LIBRARY})
 ENDIF()
 
 

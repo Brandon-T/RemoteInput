@@ -205,7 +205,7 @@ private:
 };
 #endif
 
-typedef struct _OGLSDOps OGLSDOps;
+/*typedef struct _OGLSDOps OGLSDOps;
 
 typedef struct {
     GLenum   format;
@@ -233,7 +233,7 @@ struct _OGLSDOps {
     GLint                        textureFilter;
     GLuint                       fbobjectID;
     GLuint                       depthID;
-};
+};*/
 
 typedef unsigned int juint;
 

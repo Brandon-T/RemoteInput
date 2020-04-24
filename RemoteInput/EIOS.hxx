@@ -126,6 +126,10 @@ EXPORT [[gnu::stdcall]] void EIOS_SendString(EIOS* eios, const char* string, std
 EXPORT [[gnu::stdcall]] void EIOS_HoldKey(EIOS* eios, std::int32_t key);
 EXPORT [[gnu::stdcall]] void EIOS_ReleaseKey(EIOS* eios, std::int32_t key);
 EXPORT [[gnu::stdcall]] bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key);
+EXPORT [[gnu::stdcall]] std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios);
+EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed);
+EXPORT [[gnu::stdcall]] std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios);
+EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay);
 EXPORT [[gnu::stdcall]] EIOS* EIOS_PairClient(pid_t pid);
 EXPORT [[gnu::stdcall]] void EIOS_KillClientPID(pid_t pid);
 EXPORT [[gnu::stdcall]] void EIOS_KillClient(EIOS* eios);

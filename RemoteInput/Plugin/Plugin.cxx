@@ -288,7 +288,7 @@ void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, 
 	HMODULE this_module = nullptr;
 	GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(module), &this_module);
 
-	std::thread([](HMODULE* module){
+	std::thread([](HMODULE module){
 	    auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
