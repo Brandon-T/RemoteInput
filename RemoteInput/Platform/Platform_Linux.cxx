@@ -163,7 +163,7 @@ std::vector<pid_t> get_pids()
         #if defined(__x86_64__) || defined(__ppc64__)
         while(struct dirent64* entry = readdir64(proc_dir))
         #else
-        while(struct dirent* entry = readdir())
+        while(struct dirent* entry = readdir(proc_dir))
         #endif
         {
             if (entry->d_type == DT_DIR)
