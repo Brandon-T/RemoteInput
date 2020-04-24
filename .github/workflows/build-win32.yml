@@ -1,0 +1,124 @@
+name: Windows-i686
+
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }} Build
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        config: 
+          - os: windows-latest
+            name: Windows 32
+            other_linker_flags: '-m32'
+            arch: i686
+            output: libRemoteInput-i686.dll
+            
+    steps:
+    - uses: actions/checkout@v1
+      if: matrix.config.arch == 'i686'
+      with:
+        submodules: true
+
+    - name: Cache
+      if: matrix.config.arch == 'i686'
+      id: cache-msys32
+      uses: actions/cache@v1
+      with:
+        path: msys32
+        key: msys2_i686
+    
+    # Set Path workaround for https://github.com/actions/virtual-environments/issues/263
+    - name: Set Environment Path
+      if: matrix.config.arch == 'i686'
+      run: |
+        echo "::add-path::C:\Program Files\Git\mingw64\bin"
+        echo "::add-path::C:\Program Files\Git\usr\bin"
+        echo "::add-path::C:\Program Files\Git\bin"
+        echo "::add-path::${{ github.workspace }}/msys32/mingw32/bin"
+
+    - name: Install MSYS2
+      if: steps.cache-msys32.outputs.cache-hit != 'true' && matrix.config.arch == 'i686'
+      run: |
+        curl -fsSL http://repo.msys2.org/distrib/i686/msys2-base-i686-20190524.tar.xz -o msys2.tar.xz
+        tar xf msys2.tar.xz -C $env:GITHUB_WORKSPACE.Replace("\", "/")
+
+    - name: Update Pacman
+      if: steps.cache-msys32.outputs.cache-hit != 'true' && matrix.config.arch == 'i686'
+      run: |
+        $env:MSYSTEM = "MINGW32"
+        $env:MSYS2_PATH_TYPE = "strict"
+        $script = @'
+          pacman -Syu --noconfirm
+        '@
+        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+        
+    - name: Install Tools
+      if: steps.cache-msys32.outputs.cache-hit != 'true' && matrix.config.arch == 'i686'
+      run: |
+        $env:MSYSTEM = "MINGW32"
+        $env:MSYS2_PATH_TYPE = "strict"
+        $script = @'
+          #pacman --noconfirm -R cmake
+          #pacman --noconfirm -R make
+          pacman --noconfirm -Syu msys/gcc
+          if [ "$MSYSTEM" = "MINGW32" ]; then
+            pacman --noconfirm -Syu mingw32/mingw-w64-i686-gcc
+            #packman --noconfirm -Syu mingw-w64-i686-clang
+            pacman --noconfirm -Syu mingw-w64-i686-make
+            pacman --noconfirm -Syu mingw-w64-i686-cmake
+          else
+            pacman --noconfirm -Syu mingw64/mingw-w64-x86_64-gcc
+            #packman --noconfirm -Syu mingw-w64-x86_64-clang
+            pacman --noconfirm -Syu mingw-w64-x86_64-make
+            pacman --noconfirm -Syu mingw-w64-x86_64-cmake
+          fi
+        '@
+        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+
+    - name: CMake Generate Build Files
+      if: matrix.config.arch == 'i686'
+      env:
+        CMAKE: "${{ github.workspace }}/msys32/mingw32/bin/cmake.exe"
+        MAKE: "${{ github.workspace }}/msys32/mingw32/bin/mingw32-make.exe"
+      run: |
+        $env:MSYSTEM = "MINGW32"
+        $env:MSYS2_PATH_TYPE = "strict"
+        $script = @'
+          cd $OLDPWD
+          ${CMAKE} -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_MAKE_PROGRAM=${MAKE} -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles" 
+        '@
+        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+        
+    - name: CMake Generate Build Files
+      if: matrix.config.arch == 'i686'
+      env:
+        CMAKE: "${{ github.workspace }}/msys32/mingw32/bin/cmake.exe"
+        MAKE: "${{ github.workspace }}/msys32/mingw32/bin/mingw32-make.exe"
+      run: |
+        $env:MSYSTEM = "MINGW32"
+        $env:MSYS2_PATH_TYPE = "strict"
+        $script = @'
+          cd $OLDPWD
+          ${CMAKE} -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_MAKE_PROGRAM=${MAKE} -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles" 
+        '@
+        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+
+    - name: Build
+      if: matrix.config.arch == 'i686'
+      env:
+        CMAKE: "${{ github.workspace }}/msys32/mingw32/bin/cmake.exe"
+        MAKE: "${{ github.workspace }}/msys32/mingw32/bin/mingw32-make.exe"
+      run: |
+        $env:MSYSTEM = "MINGW32"
+        $env:MSYS2_PATH_TYPE = "strict"
+        $script = @'
+          ${CMAKE} --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
+        '@
+        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script

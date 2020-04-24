@@ -1,0 +1,37 @@
+name: Windows-x86_64
+
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }} Build
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        config: 
+          - os: windows-latest
+            name: Windows 64
+            other_linker_flags: '-m64'
+            arch: x86_64
+            output: libRemoteInput-x86_64.dll
+    
+    steps:
+    - uses: actions/checkout@v1
+      if: matrix.config.arch == 'x86_64'
+      with:
+        submodules: true
+ 
+    - name: CMake Generate Build Files
+      if: matrix.config.arch == 'x86_64'
+      run: |
+        cmake -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
+
+    - name: Build
+      if: matrix.config.arch == 'x86_64'
+      run: |
+        cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4

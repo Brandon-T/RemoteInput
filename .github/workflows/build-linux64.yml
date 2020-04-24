@@ -1,0 +1,42 @@
+name: Linux-x86_64
+
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }} Build
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        config: 
+          - os: ubuntu-latest
+            name: Linux 64
+            other_linker_flags: '-m64'
+            arch: x86_64
+            output: libRemoteInput-x86_64.so
+    
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+
+    - name: Dependencies - Linux
+      if: matrix.config.arch == 'x86_64'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libprocps-dev mesa-common-dev libglu1-mesa libglu1-mesa-dev libgl1-mesa-glx libgl1-mesa-dev clang cmake g++
+        
+    - name: CMake Generate Build Files
+      if: matrix.config.arch == 'x86_64'
+      run: |
+        cmake -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
+
+    - name: Build
+      if: matrix.config.arch == 'x86_64'
+      run: |
+        cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4

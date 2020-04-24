@@ -1,0 +1,58 @@
+name: Linux-aarch64
+
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }} Build
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        config: 
+          - os: ubuntu-latest
+            name: Linux aarch64
+            other_linker_flags: '-L/usr/aarch64-linux-gnu/local/lib'
+            arch: aarch64
+            output: libRemoteInput-aarch64.so
+    
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+        
+    - name: Update Sources - Linux aarch64
+      if: matrix.config.arch == 'aarch64'
+      run: |
+        sudo sed -Ei 's/^deb /deb \[arch=amd64\,i386\] /' /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic main restricted" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-updates main restricted" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-updates universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-updates multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+        
+        sudo dpkg --add-architecture arm64
+        sudo apt-get update
+        
+    - name: Dependencies - Linux aarch64
+      if: matrix.config.arch == 'aarch64'
+      run: |
+        sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        #sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+        sudo apt-get install libprocps-dev:arm64 mesa-common-dev:arm64 libglu1-mesa:arm64 libglu1-mesa-dev:arm64 libgl1-mesa-glx:arm64 libgl1-mesa-dev:arm64 libglfw3-dev:arm64 cmake
+
+    - name: CMake Generate Build Files
+      if: matrix.config.arch == 'aarch64'
+      run: |
+        cmake -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_COMPILER=/usr/bin/aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=/usr/bin/aarch64-linux-gnu-g++ -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
+
+    - name: Build
+      if: matrix.config.arch == 'aarch64'
+      run: |
+        cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
