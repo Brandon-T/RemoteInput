@@ -46,42 +46,94 @@ Reflection& Reflection::operator = (Reflection&& other)
 bool Reflection::Initialize(jobject awtFrame)
 {
     using Result = std::unique_ptr<typename std::remove_pointer<jobject>::type, std::function<void(jobject)>>;
-    std::function<Result(jobject)> findClient = [&](jobject component) -> Result {
-        auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
-        jmethodID mid = jvm->GetMethodID(cls.get(), "getComponents", "()[Ljava/awt/Component;");
+    std::function<Result(jobject)> findApplet = [&](jobject component) -> Result {
+        if (component && this->IsDecendentOf(component, "java/awt/Container"))
+        {
+            auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
+            jmethodID mid = jvm->GetMethodID(cls.get(), "getComponents", "()[Ljava/awt/Component;");
 
-        if (mid)
-		{
-            auto components = make_safe_local<jobjectArray>(jvm->CallObjectMethod(component, mid));
-            jint len = jvm->GetArrayLength(components.get());
+            if (mid)
+            {
+                auto components = make_safe_local<jobjectArray>(jvm->CallObjectMethod(component, mid));
+                jint len = jvm->GetArrayLength(components.get());
 
-            for (jint i = 0; i < len; ++i)
-			{
-				//Some java.awt.Panel.
-                auto component = make_safe_local<jobject>(jvm->GetObjectArrayElement(components.get(), i));
-                auto cls = make_safe_local<jclass>(jvm->FindClass("java/applet/Applet"));
-				if (jvm->IsInstanceOf(component.get(), cls.get()))
-				{
-					return component;
-				}
+                for (jint i = 0; i < len; ++i)
+                {
+                    //Some java.awt.Panel.
+                    auto component = make_safe_local<jobject>(jvm->GetObjectArrayElement(components.get(), i));
+                    auto applet_class = make_safe_local<jclass>(jvm->FindClass("java/applet/Applet"));
+                    if (jvm->IsInstanceOf(component.get(), applet_class.get()))
+                    {
+                        return component;
+                    }
 
-                auto result = findClient(component.get());
-				if (result)
-				{
-					return std::move(result);
-				}
+                    auto result = findApplet(component.get());
+                    if (result)
+                    {
+                        return result;
+                    }
+                }
             }
         }
 
         return {};
     };
 
-    //Find Client Class.
-	this->frame = jvm->NewGlobalRef(awtFrame);
-    this->applet = findClient(awtFrame).release();
+    std::function<Result(jobject)> findCanvas = [&](jobject component) -> Result {
+        if (component && this->IsDecendentOf(component, "java/awt/Container"))
+        {
+            auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
+            jmethodID mid = jvm->GetMethodID(cls.get(), "getComponents", "()[Ljava/awt/Component;");
 
+            if (mid)
+            {
+                auto components = make_safe_local<jobjectArray>(jvm->CallObjectMethod(component, mid));
+                jint len = jvm->GetArrayLength(components.get());
+
+                for (jint i = 0; i < len; ++i)
+                {
+                    //Some java.awt.Panel.
+                    auto component = make_safe_local<jobject>(jvm->GetObjectArrayElement(components.get(), i));
+                    auto canvas_class = make_safe_local<jclass>(jvm->FindClass("java/awt/Canvas"));
+                    if (jvm->IsInstanceOf(component.get(), canvas_class.get()))
+                    {
+                        return component;
+                    }
+
+                    auto result = findCanvas(component.get());
+                    if (result)
+                    {
+                        return result;
+                    }
+                }
+            }
+        }
+
+        return {};
+    };
+
+    std::function<Result(jobject)> getParent = [&](jobject component) -> Result {
+        if (component)
+        {
+            auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
+            if (cls)
+            {
+                jmethodID mid = jvm->GetMethodID(cls.get(), "getParent", "()Ljava/awt/Container;");
+                if (mid)
+                {
+                    return make_safe_local<jobject>(jvm->CallObjectMethod(component, mid));
+                }
+            }
+        }
+        return {};
+    };
+
+    //Find Client Class.
+    this->applet = findApplet(awtFrame).release() ?: getParent(findCanvas(awtFrame).get()).release();
     if (this->applet)
     {
+        this->frame = jvm->NewGlobalRef(awtFrame);
+
         jvm->DeleteLocalRef(std::exchange(this->applet, jvm->NewGlobalRef(this->applet)));
         auto cls = make_safe_local<jclass>(jvm->GetObjectClass(this->applet));
         jmethodID mid = jvm->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
@@ -143,10 +195,14 @@ std::string Reflection::GetClassName(jobject object)
 		jmethodID mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
 		auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(object, mid));
 
-		const char* str = jvm->GetStringUTFChars(strObj.get(), nullptr);
-		std::string class_name = str;
-		jvm->ReleaseStringUTFChars(strObj.get(), str);
-		return class_name;
+		if (strObj)
+		{
+            const char *str = jvm->GetStringUTFChars(strObj.get(), nullptr);
+            std::string class_name = str;
+            jvm->ReleaseStringUTFChars(strObj.get(), str);
+            return class_name;
+        }
+		return std::string();
 	};
 	return getClassName(object);
 }
@@ -162,10 +218,14 @@ std::string Reflection::GetClassType(jobject object)
 		mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
 		auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(clsObj.get(), mid));
 
-		const char* str = jvm->GetStringUTFChars(strObj.get(), nullptr);
-		std::string class_name = str;
-		jvm->ReleaseStringUTFChars(strObj.get(), str);
-		return class_name;
+		if (strObj)
+		{
+            const char *str = jvm->GetStringUTFChars(strObj.get(), nullptr);
+            std::string class_name = str;
+            jvm->ReleaseStringUTFChars(strObj.get(), str);
+            return class_name;
+        }
+		return std::string();
 	};
 
 	return getClassType(object);
