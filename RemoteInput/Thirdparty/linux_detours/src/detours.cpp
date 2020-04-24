@@ -2362,7 +2362,13 @@ LONG DetourTransactionCommitEx(_Out_opt_ PVOID **pppFailedPointer)
                 //error, handle this better
                 DETOUR_TRACE(("detours: TrampolineSize > DETOUR_TRAMPOLINE_CODE_SIZE (%08X != %08X)",
                     TrampolineSize, DETOUR_TRAMPOLINE_CODE_SIZE));
+                #ifdef DETOUR_LOGGING
                 LOG(FATAL) << "Invalid trampoline size: " << TrampolineSize;
+                #else
+                char err_buff[128] = {0};
+                sprintf(err_buff, "Invalid trampoline size: %u", TrampolineSize);
+                perror(err_buff);
+                #endif
 
             }
             PBYTE endOfTramp = (PBYTE)&o->pTrampoline->rbTrampolineCode;
@@ -2404,7 +2410,13 @@ LONG DetourTransactionCommitEx(_Out_opt_ PVOID **pppFailedPointer)
                 //error, handle this better
                 DETOUR_TRACE(("detours: TrampolineSize > DETOUR_TRAMPOLINE_CODE_SIZE (%08X != %08X)",
                     TrampolineSize, DETOUR_TRAMPOLINE_CODE_SIZE));
+                #ifdef DETOUR_LOGGING
                 LOG(FATAL) << "Invalid trampoline size: " << TrampolineSize;
+                #else
+                char err_buff[128] = {0};
+                sprintf(err_buff, "Invalid trampoline size: %u", TrampolineSize);
+                perror(err_buff);
+                #endif
             }
 
             PBYTE endOfTramp = (PBYTE)&o->pTrampoline->rbTrampolineCode;
@@ -2449,7 +2461,13 @@ LONG DetourTransactionCommitEx(_Out_opt_ PVOID **pppFailedPointer)
                 //error, handle this better
                 DETOUR_TRACE(("detours: TrampolineSize > DETOUR_TRAMPOLINE_CODE_SIZE (%08X != %08X)",
                     TrampolineSize, DETOUR_TRAMPOLINE_CODE_SIZE));
+                #ifdef DETOUR_LOGGING
                 LOG(FATAL) << "Invalid trampoline size: " << TrampolineSize;
+                #else
+                char err_buff[128] = {0};
+                sprintf(err_buff, "Invalid trampoline size: %u", TrampolineSize);
+                perror(err_buff);
+                #endif
             }
             PBYTE endOfTramp = (PBYTE)&o->pTrampoline->rbTrampolineCode;
             memcpy(endOfTramp, trampolineStart, TrampolineSize);

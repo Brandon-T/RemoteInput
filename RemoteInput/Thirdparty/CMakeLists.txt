@@ -101,7 +101,17 @@ ELSEIF(APPLE)
             $<$<CONFIG:DEBUG>:-static>
             $<$<CONFIG:RELEASE>:-s -static>)
 ELSE()
-    target_compile_definitions(${PROJECT_NAME} PRIVATE _AMD64_=1 _UNIX64=1)
+    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _AMD64_=1 _UNIX64=1)
+    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _X86_=1)
+    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*|ARM64.*)")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _ARM64_=1 _UNIX64=1)
+    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _ARM_=1)
+    ELSE()
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _AMD64_=1 _UNIX64=1)
+    ENDIF()
 
     target_compile_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-Wno-multichar -Wno-null-conversion -g -O0 -fno-omit-frame-pointer -fvisibility=hidden>
