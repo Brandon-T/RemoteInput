@@ -282,24 +282,14 @@ void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, 
 {
     printf("ATTACHED TO: %d\n", getpid());
 
-	//std::thread not working well on Windows when called from DLL main and the library is freed immediately..
-	/*std::thread([&] {
-		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-        if (reflector)
-        {
-            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
-			StartHook();
-        }
-	}).detach();*/
-
 	//Increase our reference count by 1..
 	//So that if someone calls `FreeLibrary` before the thread exists, we won't get a crash.
 	//Later on we will call `FreeLibraryAndExitThread`
 	HMODULE this_module = nullptr;
 	GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(module), &this_module);
 
-	HANDLE hThread = CreateThread(nullptr, 0, [](void* lpParam) __stdcall -> DWORD {
-		auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+	std::thread([](HMODULE* module){
+	    auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
@@ -309,9 +299,7 @@ void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, 
 		//Decrease our reference count by 1..
 		//So if `FreeLibrary` was called previous, our count reaches 0 and we'll be fred.
 		FreeLibraryAndExitThread(module, 0);
-		return 0;
-	}, nullptr, 0, nullptr);
-	CloseHandle(hThread);
+	}, this_module).detach();
 }
 
 [[gnu::stdcall]] void __unload()
