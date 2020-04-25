@@ -18,7 +18,9 @@ jobs:
             name: Windows 32
             other_linker_flags: '-m32'
             arch: i686
-            output: libRemoteInput-i686.dll
+            output: libRemoteInput.dll
+            release: libRemoteInput-i686.dll
+            target_release_repo: Reflection
             
     steps:
     - uses: actions/checkout@v1
@@ -122,3 +124,34 @@ jobs:
           ${CMAKE} --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
         '@
         & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+
+    - name: Upload Autobuild
+      if: matrix.config.arch == 'i686' && !startsWith(github.ref, 'refs/tags/v')
+      uses: ollydev/upload-release-action@master
+      with:
+        repo_token: ${{ secrets.CI_RELEASE_TOKEN }}
+        file: '${{ github.workspace }}/cmake-build-release/${{ matrix.config.output }}'
+        asset_name: '${{ matrix.config.release }}'
+        tag: autobuild
+        owner: '${{ github.repository_owner }}'
+        repo: '${{ matrix.config.target_release_repo }}'
+        overwrite: true
+
+    - name: Upload Artifacts 
+      if: matrix.config.arch == 'i686' && startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-artifact@v1
+      with:
+        name: "${{ matrix.config.output }}"
+        path: '${{ github.workspace }}/cmake-build-release/${{ matrix.config.output }}'
+
+    - name: Upload Release Build
+      if: matrix.config.arch == 'i686' && startsWith(github.ref, 'refs/tags/v')
+      uses: ollydev/upload-release-action@master
+      with:
+        repo_token: ${{ secrets.CI_RELEASE_TOKEN }}
+        file: '${{ github.workspace }}/cmake-build-release/${{ matrix.config.output }}'
+        asset_name: '${{ matrix.config.release }}'
+        tag: '${{ github.ref }}'
+        owner: '${{ github.repository_owner }}'
+        repo: '${{ matrix.config.target_release_repo }}'
+        overwrite: true
