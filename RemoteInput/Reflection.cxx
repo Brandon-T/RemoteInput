@@ -1,14 +1,14 @@
 #include "Reflection.hxx"
 
-Reflection::Reflection() : jvm(new JVM()), frame(nullptr), applet(nullptr), classLoader(nullptr)
+Reflection::Reflection() noexcept : jvm(new JVM()), frame(nullptr), applet(nullptr), classLoader(nullptr)
 {
 }
 
-Reflection::Reflection(JNIEnv* env) : jvm(new JVM(env)), frame(nullptr), applet(nullptr), classLoader(nullptr)
+Reflection::Reflection(JNIEnv* env) noexcept : jvm(new JVM(env)), frame(nullptr), applet(nullptr), classLoader(nullptr)
 {
 }
 
-Reflection::Reflection(Reflection&& other) : jvm(other.jvm), frame(other.frame), applet(other.applet), classLoader(other.classLoader)
+Reflection::Reflection(Reflection&& other) noexcept : jvm(other.jvm), frame(other.frame), applet(other.applet), classLoader(other.classLoader)
 {
     other.jvm = nullptr;
     other.frame = nullptr;
@@ -16,7 +16,7 @@ Reflection::Reflection(Reflection&& other) : jvm(other.jvm), frame(other.frame),
     other.classLoader = nullptr;
 }
 
-Reflection::~Reflection()
+Reflection::~Reflection() noexcept
 {
 	#if defined(__APPLE__)
 	printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
@@ -34,7 +34,7 @@ Reflection::~Reflection()
     jvm = nullptr;
 }
 
-Reflection& Reflection::operator = (Reflection&& other)
+Reflection& Reflection::operator = (Reflection&& other) noexcept
 {
     std::swap(jvm, other.jvm);
     std::swap(frame, other.frame);
@@ -43,7 +43,7 @@ Reflection& Reflection::operator = (Reflection&& other)
     return *this;
 }
 
-bool Reflection::Initialize(jobject awtFrame)
+bool Reflection::Initialize(jobject awtFrame) noexcept
 {
     using Result = std::unique_ptr<typename std::remove_pointer<jobject>::type, std::function<void(jobject)>>;
     std::function<Result(jobject)> findApplet = [&](jobject component) -> Result {
@@ -149,23 +149,23 @@ bool Reflection::Initialize(jobject awtFrame)
     return false;
 }
 
-bool Reflection::Attach()
+bool Reflection::Attach() const noexcept
 {
     return this->jvm && this->jvm->AttachCurrentThread() == JNI_OK;
 }
 
-bool Reflection::AttachAsDaemon()
+bool Reflection::AttachAsDaemon() const noexcept
 {
 	//JVM can shut down without waiting for our thread to detach..
 	return this->jvm && this->jvm->AttachCurrentThreadAsDaemon() == JNI_OK;
 }
 
-bool Reflection::Detach()
+bool Reflection::Detach() const noexcept
 {
     return this->jvm && this->jvm->DetachCurrentThread() == JNI_OK;
 }
 
-void Reflection::PrintClasses()
+void Reflection::PrintClasses() const noexcept
 {
     if (this->classLoader)
     {
@@ -188,7 +188,7 @@ void Reflection::PrintClasses()
     }
 }
 
-std::string Reflection::GetClassName(jobject object)
+std::string Reflection::GetClassName(jobject object) const noexcept
 {
     std::function<std::string(jobject)> getClassName = [&](jobject object) {
 		auto cls = make_safe_local<jclass>(jvm->GetObjectClass(object));
@@ -207,7 +207,7 @@ std::string Reflection::GetClassName(jobject object)
 	return getClassName(object);
 }
 
-std::string Reflection::GetClassType(jobject object)
+std::string Reflection::GetClassType(jobject object) const noexcept
 {
     std::function<std::string(jobject)> getClassType = [&](jobject component) {
 		auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
@@ -231,13 +231,13 @@ std::string Reflection::GetClassType(jobject object)
 	return getClassType(object);
 }
 
-bool Reflection::IsDecendentOf(jobject object, const char* className)
+bool Reflection::IsDecendentOf(jobject object, const char* className) const noexcept
 {
     auto cls = make_safe_local<jclass>(jvm->FindClass(className));
     return jvm->IsInstanceOf(object, cls.get());
 }
 
-jclass Reflection::LoadClass(const char* clsToLoad)
+jclass Reflection::LoadClass(const char* clsToLoad) const noexcept
 {
     auto cls = make_safe_local<jclass>(jvm->GetObjectClass(classLoader));
     jmethodID loadClass = jvm->GetMethodID(cls.get(), "loadClass", "(Ljava/lang/String;Z)Ljava/lang/Class;");
@@ -245,17 +245,17 @@ jclass Reflection::LoadClass(const char* clsToLoad)
     return static_cast<jclass>(jvm->CallObjectMethod(classLoader, loadClass, className.get(), true));
 }
 
-jobject Reflection::getApplet()
+jobject Reflection::getApplet() const noexcept
 {
 	return this->applet;
 }
 
-JVM* Reflection::getVM()
+JVM* Reflection::getVM() const noexcept
 {
 	return this->jvm;
 }
 
-JNIEnv* Reflection::getEnv()
+JNIEnv* Reflection::getEnv() const noexcept
 {
     return this->jvm->getENV();
 }

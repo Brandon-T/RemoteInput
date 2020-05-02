@@ -21,22 +21,22 @@ private:
     std::atomic_bool stop;
 
 public:
-    ThreadPool();
-	ThreadPool(std::size_t max_threads);
-    ~ThreadPool();
+    ThreadPool() noexcept;
+	ThreadPool(std::size_t max_threads) noexcept;
+    ~ThreadPool() noexcept;
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator = (const ThreadPool&) = delete;
 	
-	void terminate();
+	void terminate() noexcept;
 
     void add_task(std::function<void()> &&task);
 
     template<typename Task, typename... Args>
-    auto enqueue(Task &&task, Args&&... args) -> std::future<std::invoke_result_t<Task, Args...>>;
+    auto enqueue(Task &&task, Args&&... args) noexcept -> std::future<std::invoke_result_t<Task, Args...>>;
 };
 
 template<typename Task, typename... Args>
-auto ThreadPool::enqueue(Task &&task, Args&&... args) -> std::future<std::invoke_result_t<Task, Args...>>
+auto ThreadPool::enqueue(Task &&task, Args&&... args) noexcept -> std::future<std::invoke_result_t<Task, Args...>>
 {
     auto packaged_task = std::make_shared<std::packaged_task<std::invoke_result_t<Task, Args...>(Args&&...)>>(
         std::bind(std::forward<Task>(task), std::forward<Args>(args)...)

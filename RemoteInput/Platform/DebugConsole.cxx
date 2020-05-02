@@ -1,7 +1,9 @@
 #include "DebugConsole.hxx"
+
+#if defined(DEBUG)
 #include <iostream>
 
-DebugConsole::DebugConsole()
+DebugConsole::DebugConsole( noexcept
 {
     inbuffer = std::cin.rdbuf();
     outbuffer = std::cout.rdbuf();
@@ -14,7 +16,7 @@ DebugConsole::DebugConsole()
     std::cerr.rdbuf(error.rdbuf());
 }
 
-DebugConsole::~DebugConsole()
+DebugConsole::~DebugConsole() noexcept
 {
     input.close();
     output.close();
@@ -26,3 +28,4 @@ DebugConsole::~DebugConsole()
     outbuffer = nullptr;
     errbuffer = nullptr;
 }
+#endif

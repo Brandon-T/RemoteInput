@@ -1,7 +1,7 @@
 #include "NativeHooks.hxx"
 #if defined(__linux__)
 
-#include <Thirdparty/main.hxx>
+#include <Thirdparty/Hook.hxx>
 
 #include <memory>
 #include <thread>
@@ -21,7 +21,7 @@ std::unique_ptr<Hook> native_hook{nullptr};
 std::unique_ptr<Hook> opengl_hook{nullptr};
 std::unique_ptr<Hook> flush_buffer_hook{nullptr};
 
-void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height)
+void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -188,7 +188,7 @@ void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData,
     }
 }
 
-void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2)
+void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (control_center)
@@ -282,7 +282,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
     }
 }
 
-void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, jint limit)
+void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, jint limit) noexcept
 {
     #define NEXT_VAL(buf, type) (((type *)((buf) += sizeof(type)))[-1])
     #define NEXT_INT(buf)       NEXT_VAL(buf, jint)
@@ -356,7 +356,7 @@ void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, 
 
 #if defined(__linux__)
 #if !defined(USE_DETOURS)
-extern "C" [[gnu::visibility("default")]] Bool XShmPutImage(Display *display, Drawable d, GC gc, XImage *image, int src_x, int src_y, int dest_x, int dest_y, unsigned int width, unsigned int height, bool send_event)
+extern "C" [[gnu::visibility("default")]] Bool XShmPutImage(Display *display, Drawable d, GC gc, XImage *image, int src_x, int src_y, int dest_x, int dest_y, unsigned int width, unsigned int height, bool send_event) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (control_center)
@@ -412,7 +412,7 @@ extern "C" [[gnu::visibility("default")]] Bool XShmPutImage(Display *display, Dr
 #endif
 
 #if defined(__linux__)
-void GeneratePixelBuffers(GLXDrawable ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
+void GeneratePixelBuffers(GLXDrawable ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
     static int w = 0;
     static int h = 0;
@@ -444,7 +444,7 @@ void GeneratePixelBuffers(GLXDrawable ctx, GLuint (&pbo)[2], GLint width, GLint 
     }
 }
 
-void ReadPixelBuffers(GLXDrawable ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
+void ReadPixelBuffers(GLXDrawable ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
     static int index = 0;
     static int nextIndex = 0;
@@ -481,9 +481,9 @@ void ReadPixelBuffers(GLXDrawable ctx, GLubyte* dest, GLuint (&pbo)[2], GLint wi
 }
 
 #if defined(USE_DETOURS)
-void glXSwapBuffersHook(Display* dpy, GLXDrawable drawable)
+void glXSwapBuffersHook(Display* dpy, GLXDrawable drawable) noexcept
 #else
-extern "C" [[gnu::visibility("default")]] void glXSwapBuffers(Display* dpy, GLXDrawable drawable)
+extern "C" [[gnu::visibility("default")]] void glXSwapBuffers(Display* dpy, GLXDrawable drawable) noexcept
 #endif
 {
     extern std::unique_ptr<ControlCenter> control_center;
@@ -543,12 +543,16 @@ extern "C" [[gnu::visibility("default")]] void glXSwapBuffers(Display* dpy, GLXD
 #endif
 
 #if defined(__linux__)
-void InitialiseHooks()
+void InitialiseHooks() noexcept
 {
     #if defined(USE_DETOURS)
     std::thread([&]{
+        extern void* GetModuleHandle(const char*);
+        void* libawt = GetModuleHandle("libawt.so");
+        void* libxawt = GetModuleHandle("libawt_xawt.so");
+
         //Hook Native Blit
-        void* blit = dlsym(RTLD_NEXT, "Java_sun_java2d_loops_Blit_Blit");
+        void* blit = dlsym(libawt ?: RTLD_NEXT, "Java_sun_java2d_loops_Blit_Blit");
         if (blit)
         {
             native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeBlit));
@@ -557,7 +561,7 @@ void InitialiseHooks()
 
         //Hook OpenGL Blit
         #if defined(HOOK_OPENGL_BLIT)
-        blit = dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
+        blit = dlsym(libxawt ?: RTLD_NEXT, "OGLBlitLoops_Blit");
         if (blit)
         {
             opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
@@ -565,7 +569,7 @@ void InitialiseHooks()
         }
         else
         {
-            blit = dlsym(RTLD_NEXT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
+            blit = dlsym(libxawt ?: RTLD_NEXT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
             if (blit)
             {
                 flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
@@ -591,13 +595,23 @@ void InitialiseHooks()
         }
         #endif
 
+        if (libawt)
+        {
+            dlclose(libawt);
+        }
+
+        if (libxawt)
+        {
+            dlclose(libxawt);
+        }
+
         //Signal that all hooks are finished initializing..
 		ControlCenter::signal_sync(getpid());
     }).detach();
     #endif
 }
 
-void StartHook()
+void StartHook() noexcept
 {
     InitialiseHooks();
 }

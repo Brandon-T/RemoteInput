@@ -1,8 +1,11 @@
 #ifndef TMEMORYMANAGER_HXX_INCLUDED
 #define TMEMORYMANAGER_HXX_INCLUDED
 
-#define DELPHI_CALLING_CONVENTION __attribute__((regparm(3)))
+#if !defined(_MSC_VER) && __has_attribute(regparm)
+#define PASCAL_CALLING_CONVENTION __attribute__((regparm(3)))
+#endif
 
+#if defined(PASCAL_CALLING_CONVENTION)
 typedef struct
 {
     std::uint32_t TotalAddressSpace;
@@ -29,44 +32,42 @@ typedef struct
 typedef struct
 {
     bool NeedLock;
-    void* (*GetMem)(std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    std::intptr_t (*FreeMem)(void* &ptr) DELPHI_CALLING_CONVENTION;
-    std::intptr_t (*FreeMemSize)(void* &ptr, std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    void* (*AllocMem)(std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    void* (*ReAllocMem)(void* &ptr, std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    std::intptr_t (*MemSize)(void* ptr) DELPHI_CALLING_CONVENTION;
+    void* (*GetMem)(std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    std::intptr_t (*FreeMem)(void* &ptr) PASCAL_CALLING_CONVENTION;
+    std::intptr_t (*FreeMemSize)(void* &ptr, std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    void* (*AllocMem)(std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    void* (*ReAllocMem)(void* &ptr, std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    std::intptr_t (*MemSize)(void* ptr) PASCAL_CALLING_CONVENTION;
 
-    void (*InitThread)() DELPHI_CALLING_CONVENTION;
-    void (*DoneThread)() DELPHI_CALLING_CONVENTION;
-    void (*RelocateHeap)() DELPHI_CALLING_CONVENTION;
-    THeapStatus (*GetHeapStatus)() DELPHI_CALLING_CONVENTION;
-    TFPCHeapStatus (*GetFPCHeapStatus)() DELPHI_CALLING_CONVENTION;
+    void (*InitThread)() PASCAL_CALLING_CONVENTION;
+    void (*DoneThread)() PASCAL_CALLING_CONVENTION;
+    void (*RelocateHeap)() PASCAL_CALLING_CONVENTION;
+    THeapStatus (*GetHeapStatus)() PASCAL_CALLING_CONVENTION;
+    TFPCHeapStatus (*GetFPCHeapStatus)() PASCAL_CALLING_CONVENTION;
 } TMemoryManager;
-
 
 typedef struct
 {
     bool NeedLock;
-    void* (*GetMem)(std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    std::intptr_t (*FreeMem)(void* &ptr) DELPHI_CALLING_CONVENTION;
-    std::intptr_t (*FreeMemSize)(void* &ptr, std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    void* (*AllocMem)(std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    void* (*ReAllocMem)(void* &ptr, std::intptr_t size) DELPHI_CALLING_CONVENTION;
-    std::intptr_t (*MemSize)(void* ptr) DELPHI_CALLING_CONVENTION;
+    void* (*GetMem)(std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    std::intptr_t (*FreeMem)(void* &ptr) PASCAL_CALLING_CONVENTION;
+    std::intptr_t (*FreeMemSize)(void* &ptr, std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    void* (*AllocMem)(std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    void* (*ReAllocMem)(void* &ptr, std::intptr_t size) PASCAL_CALLING_CONVENTION;
+    std::intptr_t (*MemSize)(void* ptr) PASCAL_CALLING_CONVENTION;
 
-    void (*InitThread)() DELPHI_CALLING_CONVENTION;
-    void (*DoneThread)() DELPHI_CALLING_CONVENTION;
-    void (*RelocateHeap)() DELPHI_CALLING_CONVENTION;
-    THeapStatus (*GetHeapStatus)() DELPHI_CALLING_CONVENTION;
-    TFPCHeapStatus (*GetFPCHeapStatus)() DELPHI_CALLING_CONVENTION;
+    void (*InitThread)() PASCAL_CALLING_CONVENTION;
+    void (*DoneThread)() PASCAL_CALLING_CONVENTION;
+    void (*RelocateHeap)() PASCAL_CALLING_CONVENTION;
+    THeapStatus (*GetHeapStatus)() PASCAL_CALLING_CONVENTION;
+    TFPCHeapStatus (*GetFPCHeapStatus)() PASCAL_CALLING_CONVENTION;
 } __attribute__((__packed__)) TCMemoryManager;
-
+#endif
 
 typedef struct
 {
 	void (*Sync)(void(*synchronize_method)(void*), void* data);
 } __attribute__((__packed__)) TSimbaMethods;
-
 
 typedef struct
 {

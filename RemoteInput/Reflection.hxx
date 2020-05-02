@@ -40,7 +40,7 @@ private:
 	}
 
     template<typename T>
-    auto make_safe(jobject object) -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
+    auto make_safe(jobject object) const noexcept -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
     {
 		auto deleter = [&](T ptr){
             if (jvm && ptr) 
@@ -53,7 +53,7 @@ private:
     }
 
 	template<typename T, typename U>
-    auto make_safe_local(U object) -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
+    auto make_safe_local(U object) const noexcept -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
     {
 		auto deleter = [&](T ptr){
             if (jvm && ptr) 
@@ -70,87 +70,87 @@ private:
     jobject applet;
     jobject classLoader;
 
-    void PrintClasses();
+    void PrintClasses() const noexcept;
 
 public:
-    Reflection();
-    Reflection(JNIEnv* env);
+    Reflection() noexcept;
+    Reflection(JNIEnv* env) noexcept;
     Reflection(const Reflection& other) = delete;
-    Reflection(Reflection&& other);
-    ~Reflection();
+    Reflection(Reflection&& other) noexcept;
+    ~Reflection() noexcept;
 
     Reflection& operator = (const Reflection& other) = delete;
-    Reflection& operator = (Reflection&& other);
+    Reflection& operator = (Reflection&& other) noexcept;
 
-    bool Initialize(jobject awtFrame);
+    bool Initialize(jobject awtFrame) noexcept;
 
-    bool Attach();
-	bool AttachAsDaemon();
-    bool Detach();
+    bool Attach() const noexcept;
+	bool AttachAsDaemon() const noexcept;
+    bool Detach() const noexcept;
 
-    std::string GetClassName(jobject object);
-    std::string GetClassType(jobject object);
-    bool IsDecendentOf(jobject object, const char* className);
-    jclass LoadClass(const char* clsToLoad);
+    std::string GetClassName(jobject object) const noexcept;
+    std::string GetClassType(jobject object) const noexcept;
+    bool IsDecendentOf(jobject object, const char* className) const noexcept;
+    jclass LoadClass(const char* clsToLoad) const noexcept;
 
-	jobject getApplet();
+	jobject getApplet() const noexcept;
 
-	JVM* getVM();
-    JNIEnv* getEnv();
+	JVM* getVM() const noexcept;
+    JNIEnv* getEnv() const noexcept;
 
 	template<typename T>
     typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jstring object);
+    getField(jstring object) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jobject object, ReflectionHook hook);
+    getField(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jobject object, ReflectionHook hook);
+    getField(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>>::type
-    getFieldSafe(jobject object, ReflectionHook hook);
+    getFieldSafe(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jint, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jlong, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jboolean, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 
 	template<typename T>
     typename std::enable_if<std::is_same<jbyte, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jchar, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jshort, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jfloat, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jdouble, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook);
+    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
 };
 
 
 template<typename T>
 typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jstring string)
+Reflection::getField(jstring string) const noexcept
 {
     if (string)
     {
@@ -171,7 +171,7 @@ Reflection::getField(jstring string)
 
 template<typename T>
 typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jobject object, ReflectionHook hook)
+Reflection::getField(jobject object, ReflectionHook hook) const noexcept
 {
     if (!object)
     {
@@ -226,7 +226,7 @@ Reflection::getField(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jobject object, ReflectionHook hook)
+Reflection::getField(jobject object, ReflectionHook hook) const noexcept
 {
     if (!object)
     {
@@ -246,7 +246,7 @@ Reflection::getField(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>>::type
-Reflection::getFieldSafe(jobject object, ReflectionHook hook)
+Reflection::getFieldSafe(jobject object, ReflectionHook hook) const noexcept
 {
     if (!object)
     {
@@ -266,7 +266,7 @@ Reflection::getFieldSafe(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jint, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {
@@ -286,7 +286,7 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jlong, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {
@@ -306,7 +306,7 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jboolean, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {
@@ -326,7 +326,7 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jbyte, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {
@@ -346,7 +346,7 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jchar, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {
@@ -366,7 +366,7 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jshort, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {
@@ -386,7 +386,7 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jfloat, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {
@@ -406,7 +406,7 @@ Reflection::getPrimitive(jobject object, ReflectionHook hook)
 
 template<typename T>
 typename std::enable_if<std::is_same<jdouble, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook)
+Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
 {
     if (object)
     {

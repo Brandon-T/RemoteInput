@@ -23,36 +23,36 @@ protected:
 	bool canDelete;
 	
 public:
-	Component(JNIEnv* env, jobject component, bool canDelete = true);
-	Component(JNIEnv* env, jclass cls, jobject component, bool canDelete = true);
-	Component(Component&& other);
+	Component(JNIEnv* env, jobject component, bool canDelete = true) noexcept;
+	Component(JNIEnv* env, jclass cls, jobject component, bool canDelete = true) noexcept;
+	Component(Component&& other) noexcept;
 	Component(const Component& other) = delete;
-	virtual ~Component();
+	virtual ~Component() noexcept;
 
 
-	Component& operator = (Component&& other);
+	Component& operator = (Component&& other) noexcept;
 	Component& operator = (const Component& other) = delete;
 	
-	JNIEnv* getEnv();
-	jobject get();
+	JNIEnv* getEnv() const noexcept;
+	jobject get() const noexcept;
 	
-	void getLocationOnScreen(std::int32_t &x, std::int32_t &y);
-	void getMousePosition(std::int32_t &x, std::int32_t &y);
-	void getLocation(std::int32_t &x, std::int32_t &y);
-	void getSize(std::size_t &width, std::size_t &height);
-	Component getComponentAt(std::int32_t x, std::int32_t y);
-	void dispatchEvent(AWTEvent* event);
-	void dispatchEvent(jobject event);
+	void getLocationOnScreen(std::int32_t &x, std::int32_t &y) const noexcept;
+	void getMousePosition(std::int32_t &x, std::int32_t &y) const noexcept;
+	void getLocation(std::int32_t &x, std::int32_t &y) const noexcept;
+	void getSize(std::size_t &width, std::size_t &height) const noexcept;
+	Component getComponentAt(std::int32_t x, std::int32_t y) const noexcept;
+	void dispatchEvent(AWTEvent* event) const noexcept;
+	void dispatchEvent(jobject event) const noexcept;
 	
 	
-	bool isVisible();
-	bool isValid();
-	bool isEnabled();
-	void setEnabled(bool enabled);
+	bool isVisible() const noexcept;
+	bool isValid() const noexcept;
+	bool isEnabled() const noexcept;
+	void setEnabled(bool enabled) const noexcept;
 	
-	bool hasFocus();
-	bool requestFocusInWindow();
-	void requestFocus();
+	bool hasFocus() const noexcept;
+	bool requestFocusInWindow() const noexcept;
+	void requestFocus() const noexcept;
 };
 
 #endif /* COMPONENT_HXX_INCLUDED */

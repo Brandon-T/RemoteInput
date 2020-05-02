@@ -10,7 +10,10 @@
 extern HMODULE module;
 #endif
 
+#if defined(DELPHI_PASCAL_CALLING_CONVENTION)
 TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
+#endif
+
 TSimbaMethods PLUGIN_SYNC_METHODS = {0};
 TSimbaMemoryAllocators PLUGIN_MEMORY_ALLOCATORS = {0};
 extern std::unique_ptr<ControlCenter> control_center;
@@ -19,52 +22,52 @@ extern std::unique_ptr<ControlCenter> control_center;
 // MARK: - DECLARATIONS
 
 template<typename T>
-int PascalHigh(T* Arr);
+int PascalHigh(T* Arr) noexcept;
 
 template<typename T>
-int PascalLength(T* Arr);
+int PascalLength(T* Arr) noexcept;
 
 template<typename T>
-T* AllocateArray(std::size_t size, std::size_t element_size = sizeof(T));
+T* AllocateArray(std::size_t size, std::size_t element_size = sizeof(T)) noexcept;
 
 template<typename T>
-T* GetArray(void* ptr, std::size_t* size);
+T* GetArray(void* ptr, std::size_t* size) noexcept;
 
 template<typename T>
-T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T));
+T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T)) noexcept;
 
 template<typename T>
-T* GetString(void* ptr);
+T* GetString(void* ptr) noexcept;
 
 template<typename T>
-T PascalRead(void* ptr);
+T PascalRead(void* ptr) noexcept;
 
-std::string PascalRead(void* &ptr);
+std::string PascalRead(void* &ptr) noexcept;
 
 template<typename T>
-void PascalWrite(void* ptr, T result);
+void PascalWrite(void* ptr, T result) noexcept;
 
-void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionArrayType type);
+void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionArrayType type) noexcept;
 
 
 // MARK: - EXPORTS
 
-int GetPluginABIVersion()
+int GetPluginABIVersion() noexcept
 {
     return 2;
 }
 
-int GetFunctionCount()
+int GetFunctionCount() noexcept
 {
     return PascalExportCount;
 }
 
-int GetTypeCount()
+int GetTypeCount() noexcept
 {
 	return PascalTypeCount;
 }
 
-int GetFunctionInfo(int Index, void** Address, char** Definition)
+int GetFunctionInfo(int Index, void** Address, char** Definition) noexcept
 {
     if (Index < PascalExportCount)
     {
@@ -79,7 +82,7 @@ int GetFunctionInfo(int Index, void** Address, char** Definition)
     return -1;
 }
 
-int GetTypeInfo(int Index, char** Type, char** Definition)
+int GetTypeInfo(int Index, char** Type, char** Definition) noexcept
 {
 	if (Index < PascalTypeCount)
 	{
@@ -90,28 +93,30 @@ int GetTypeInfo(int Index, char** Type, char** Definition)
 	return -1;
 }
 
-void SetPluginMemManager(TMemoryManager MemMgr)
+#if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+void SetPluginMemManager(TMemoryManager MemMgr) noexcept
 {
     PLUGIN_MEMORY_MANAGER = MemMgr;
 }
+#endif
 
-void SetPluginSimbaMethods(TSimbaMethods Methods)
+void SetPluginSimbaMethods(TSimbaMethods Methods) noexcept
 {
 	PLUGIN_SYNC_METHODS = Methods;
 }
 
-void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators)
+void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators) noexcept
 {
 	PLUGIN_MEMORY_ALLOCATORS = Allocators;
 }
 
-void OnAttach(void* info)
+void OnAttach(void* info) noexcept
 {
     control_center.reset();
 	EIOS_KillZombieClients();
 }
 
-void OnDetach()
+void OnDetach() noexcept
 {
 	control_center.reset();
 	EIOS_KillZombieClients();
@@ -166,7 +171,7 @@ struct __attribute__((__packed__)) StaticPascalArray
 
 // MARK: Single Functions
 
-void Pascal_Reflect_Equal(void** Params, void** Result)
+void Pascal_Reflect_Equal(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
     if (eios)
@@ -178,7 +183,7 @@ void Pascal_Reflect_Equal(void** Params, void** Result)
     }
 }
 
-void Pascal_Reflect_InstanceOf(void** Params, void** Result)
+void Pascal_Reflect_InstanceOf(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
     if (eios)
@@ -190,7 +195,7 @@ void Pascal_Reflect_InstanceOf(void** Params, void** Result)
     }
 }
 
-void Pascal_Reflect_Object(void** Params, void** Result)
+void Pascal_Reflect_Object(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -203,7 +208,7 @@ void Pascal_Reflect_Object(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Release_Object(void** Params, void** Result)
+void Pascal_Reflect_Release_Object(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -213,7 +218,7 @@ void Pascal_Reflect_Release_Object(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Release_Objects(void** Params, void** Result)
+void Pascal_Reflect_Release_Objects(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -224,7 +229,7 @@ void Pascal_Reflect_Release_Objects(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Boolean(void** Params, void** Result)
+void Pascal_Reflect_Boolean(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -237,7 +242,7 @@ void Pascal_Reflect_Boolean(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Char(void** Params, void** Result)
+void Pascal_Reflect_Char(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -250,7 +255,7 @@ void Pascal_Reflect_Char(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Byte(void** Params, void** Result)
+void Pascal_Reflect_Byte(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -263,7 +268,7 @@ void Pascal_Reflect_Byte(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Short(void** Params, void** Result)
+void Pascal_Reflect_Short(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -276,7 +281,7 @@ void Pascal_Reflect_Short(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Int(void** Params, void** Result)
+void Pascal_Reflect_Int(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -289,7 +294,7 @@ void Pascal_Reflect_Int(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Long(void** Params, void** Result)
+void Pascal_Reflect_Long(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -302,7 +307,7 @@ void Pascal_Reflect_Long(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Float(void** Params, void** Result)
+void Pascal_Reflect_Float(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -315,7 +320,7 @@ void Pascal_Reflect_Float(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Double(void** Params, void** Result)
+void Pascal_Reflect_Double(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -328,7 +333,7 @@ void Pascal_Reflect_Double(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_String(void** Params, void** Result)
+void Pascal_Reflect_String(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -354,7 +359,7 @@ void Pascal_Reflect_String(void** Params, void** Result)
 
 // MARK: - Array Functions
 
-void Pascal_Reflect_Array(void** Params, void** Result)
+void Pascal_Reflect_Array(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -368,7 +373,7 @@ void Pascal_Reflect_Array(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_With_Size(void** Params, void** Result)
+void Pascal_Reflect_Array_With_Size(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -383,7 +388,7 @@ void Pascal_Reflect_Array_With_Size(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_Size(void** Params, void** Result)
+void Pascal_Reflect_Array_Size(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -394,7 +399,7 @@ void Pascal_Reflect_Array_Size(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_Index_Size(void** Params, void** Result)
+void Pascal_Reflect_Array_Index_Size(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -406,7 +411,55 @@ void Pascal_Reflect_Array_Index_Size(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result)
+void Pascal_Reflect_Array_Indices(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+    if (eios)
+    {
+        std::size_t length = 0;
+        jarray array = PascalRead<jarray>(Params[1]);
+        ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
+        std::int32_t* indices = GetArray<std::int32_t>(PascalRead<void*>(Params[3]), &length);
+
+        if (!indices || length == 0)
+        {
+            return;
+        }
+
+        void* result = eios->control_center->reflect_array_indices(array, type, indices, length);
+
+        if (type == ReflectionArrayType::STRING)
+        {
+            std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+            void** buffer = AllocateArray<void*>(length, element_size);
+
+            for (std::size_t i = 0; i < length; ++i)
+            {
+                buffer[i] = nullptr;
+                std::string string = PascalRead(result);
+                if (!string.empty())
+                {
+                    char* output = AllocateString<char>(string.length());
+                    std::memcpy(output, &string[0], string.length());
+                    output[string.length()] = '\0';
+
+                    buffer[i] = output;
+                }
+            }
+
+            PascalWrite(Result, buffer);
+            return;
+        }
+
+        std::size_t element_size = ControlCenter::reflect_size_for_type(type);
+        void* buffer = AllocateArray<void>(length, element_size);
+        std::memcpy(buffer, result, length * element_size);
+        PascalWrite(Result, buffer);
+    }
+}
+
+void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -421,7 +474,7 @@ void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result)
+void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -437,7 +490,7 @@ void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result)
+void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -454,7 +507,7 @@ void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result)
+void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -472,7 +525,7 @@ void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_Index(void** Params, void** Result)
+void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -520,7 +573,7 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
+void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -569,7 +622,7 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
+void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -619,7 +672,7 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
+void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 
@@ -670,55 +723,7 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result)
 	}
 }
 
-void Pascal_Reflect_Array_Indices(void** Params, void** Result)
-{
-    EIOS* eios = PascalRead<EIOS*>(Params[0]);
-
-    if (eios)
-    {
-        std::size_t length = 0;
-        jarray array = PascalRead<jarray>(Params[1]);
-        ReflectionArrayType type = PascalRead<ReflectionArrayType>(Params[2]);
-        std::int32_t* indices = GetArray<std::int32_t>(PascalRead<void*>(Params[1]), &length);
-
-        if (!indices || length == 0)
-        {
-            return;
-        }
-
-        void* result = eios->control_center->reflect_array_indices(array, type, indices, length);
-
-        if (type == ReflectionArrayType::STRING)
-        {
-            std::size_t element_size = ControlCenter::reflect_size_for_type(type);
-            void** buffer = AllocateArray<void*>(length, element_size);
-
-            for (std::size_t i = 0; i < length; ++i)
-            {
-                buffer[i] = nullptr;
-                std::string string = PascalRead(result);
-                if (!string.empty())
-                {
-                    char* output = AllocateString<char>(string.length());
-                    std::memcpy(output, &string[0], string.length());
-                    output[string.length()] = '\0';
-
-                    buffer[i] = output;
-                }
-            }
-
-            PascalWrite(Result, buffer);
-            return;
-        }
-
-        std::size_t element_size = ControlCenter::reflect_size_for_type(type);
-        void* buffer = AllocateArray<void>(length, element_size);
-        std::memcpy(buffer, result, length * element_size);
-        PascalWrite(Result, buffer);
-    }
-}
-
-void Pascal_GetDebugImageBuffer(void** Params, void** Result)
+void Pascal_GetDebugImageBuffer(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -727,7 +732,7 @@ void Pascal_GetDebugImageBuffer(void** Params, void** Result)
 	}
 }
 
-void Pascal_SetGraphicsDebugging(void** Params, void** Result)
+void Pascal_SetGraphicsDebugging(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -737,13 +742,13 @@ void Pascal_SetGraphicsDebugging(void** Params, void** Result)
 	}
 }
 
-void Pascal_PairClient(void** Params, void** Result)
+void Pascal_PairClient(void** Params, void** Result) noexcept
 {
     pid_t pid = PascalRead<pid_t>(Params[0]);
     PascalWrite(Result, EIOS_PairClient(pid));
 }
 
-void Pascal_KillClientPID(void** Params, void** Result)
+void Pascal_KillClientPID(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -752,25 +757,25 @@ void Pascal_KillClientPID(void** Params, void** Result)
 	}
 }
 
-void Pascal_KillClient(void** Params, void** Result)
+void Pascal_KillClient(void** Params, void** Result) noexcept
 {
     pid_t pid = PascalRead<pid_t>(Params[0]);
     EIOS_KillClientPID(pid);
 }
 
-void Pascal_GetClients(void** Params, void** Result)
+void Pascal_GetClients(void** Params, void** Result) noexcept
 {
     bool unpaired_only = PascalRead<bool>(Params[0]);
     PascalWrite(Result, EIOS_GetClients(unpaired_only));
 }
 
-void Pascal_GetClientPID(void** Params, void** Result)
+void Pascal_GetClientPID(void** Params, void** Result) noexcept
 {
     std::size_t index = PascalRead<std::size_t>(Params[0]);
     PascalWrite(Result, EIOS_GetClientPID(index));
 }
 
-void Pascal_Inject(void** Params, void** Result)
+void Pascal_Inject(void** Params, void** Result) noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
     const char* process_name = PascalRead<const char*>(Params[0]);
@@ -786,7 +791,7 @@ void Pascal_Inject(void** Params, void** Result)
 	#endif
 }
 
-void Pascal_Inject_PID(void** Params, void** Result)
+void Pascal_Inject_PID(void** Params, void** Result) noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
     pid_t pid = PascalRead<pid_t>(Params[0]);
@@ -801,7 +806,7 @@ void Pascal_Inject_PID(void** Params, void** Result)
 	#endif
 }
 
-void Pascal_HasFocus(void** Params, void** Result)
+void Pascal_HasFocus(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -810,7 +815,7 @@ void Pascal_HasFocus(void** Params, void** Result)
 	}
 }
 
-void Pascal_GainFocus(void** Params, void** Result)
+void Pascal_GainFocus(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -819,7 +824,7 @@ void Pascal_GainFocus(void** Params, void** Result)
 	}
 }
 
-void Pascal_LoseFocus(void** Params, void** Result)
+void Pascal_LoseFocus(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -828,7 +833,7 @@ void Pascal_LoseFocus(void** Params, void** Result)
 	}
 }
 
-void Pascal_IsInputEnabled(void** Params, void** Result)
+void Pascal_IsInputEnabled(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -837,7 +842,7 @@ void Pascal_IsInputEnabled(void** Params, void** Result)
 	}
 }
 
-void Pascal_SetInputEnabled(void** Params, void** Result)
+void Pascal_SetInputEnabled(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
@@ -847,7 +852,7 @@ void Pascal_SetInputEnabled(void** Params, void** Result)
 	}
 }
 
-void Pascal_GetRealMousePosition(void** Params, void** Result)
+void Pascal_GetRealMousePosition(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	std::int32_t* x = static_cast<std::int32_t*>(Params[1]);
@@ -870,7 +875,7 @@ void Pascal_GetRealMousePosition(void** Params, void** Result)
 	}
 }
 
-void Pascal_GetKeyboardSpeed(void** Params, void** Result)
+void Pascal_GetKeyboardSpeed(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
     if (eios)
@@ -879,7 +884,7 @@ void Pascal_GetKeyboardSpeed(void** Params, void** Result)
     }
 }
 
-void Pascal_SetKeyboardSpeed(void** Params, void** Result)
+void Pascal_SetKeyboardSpeed(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
     if (eios)
@@ -889,7 +894,7 @@ void Pascal_SetKeyboardSpeed(void** Params, void** Result)
     }
 }
 
-void Pascal_GetKeyboardRepeatDelay(void** Params, void** Result)
+void Pascal_GetKeyboardRepeatDelay(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
     if (eios)
@@ -898,7 +903,7 @@ void Pascal_GetKeyboardRepeatDelay(void** Params, void** Result)
     }
 }
 
-void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result)
+void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
     if (eios)
@@ -909,59 +914,67 @@ void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result)
 }
 
 template<typename T>
-int PascalHigh(T* Arr)
+int PascalHigh(T* Arr) noexcept
 {
     return reinterpret_cast<int*>(Arr)[-1];
 }
 
 template<typename T>
-int PascalLength(T* Arr)
+int PascalLength(T* Arr) noexcept
 {
     return PascalHigh<T>(Arr) + 1;
 }
 
 template<typename T>
-T* AllocateArray(std::size_t size, std::size_t element_size)
+T* AllocateArray(std::size_t size, std::size_t element_size) noexcept
 {
     std::size_t new_size = (size * element_size) + sizeof(PascalArray);
+    #if defined(DELPHI_PASCAL_CALLING_CONVENTION)
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
+    #else
+    PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size));
+    #endif
     ptr->refCount = 1;
     ptr->length = size - 1;
     return reinterpret_cast<T*>(++ptr);
 }
 
 template<typename T>
-T* AllocateString(std::size_t size, std::size_t element_size)
+T* AllocateString(std::size_t size, std::size_t element_size) noexcept
 {
     std::size_t new_size = (size * element_size) + sizeof(PascalString);
-    PascalString* ptr = static_cast<PascalString*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size + 1));
+    #if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+    PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
+    #else
+    PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size));
+    #endif
     ptr->refCount = 1;
     ptr->length = size;
     return reinterpret_cast<T*>(++ptr);
 }
 
 template<typename T>
-T* GetArray(void* ptr, std::size_t* size)
+T* GetArray(void* ptr, std::size_t* size) noexcept
 {
-    PascalArray* mem = static_cast<PascalArray*>(ptr);
+    PascalArray* mem = static_cast<PascalArray*>(ptr) - 1;
     *size = mem->length;
-    return reinterpret_cast<T*>((--mem)->data);
+    return reinterpret_cast<T*>(mem->data);
 }
 
 template<typename T>
-T* GetString(void* ptr)
+T* GetString(void* ptr) noexcept
 {
     PascalString* mem = static_cast<PascalString*>(ptr);
     return reinterpret_cast<T*>((--mem)->data);
 }
 
 template<typename T>
-T PascalRead(void* ptr)
+T PascalRead(void* ptr) noexcept
 {
     return *static_cast<T*>(ptr);
 }
 
-std::string PascalRead(void* &ptr)
+std::string PascalRead(void* &ptr) noexcept
 {
 	std::size_t length = *static_cast<std::size_t*>(ptr);
 	ptr = static_cast<std::size_t*>(ptr) + 1;
@@ -977,20 +990,20 @@ std::string PascalRead(void* &ptr)
 }
 
 template<typename T>
-void PascalWrite(void* ptr, T result)
+void PascalWrite(void* ptr, T result) noexcept
 {
     *static_cast<T*>(ptr) = result;
 }
 
 template<typename T>
-void PascalProcess(EIOS* eios, void* ptr, void* result)
+void PascalProcess(EIOS* eios, void* ptr, void* result) noexcept
 {
 	T* buffer = reinterpret_cast<T*>(&eios->local_storage);
 	*buffer = PascalRead<T>(result);
 	PascalWrite(ptr, buffer);
 }
 
-void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionArrayType type)
+void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionArrayType type) noexcept
 {
 	switch (type)
 	{

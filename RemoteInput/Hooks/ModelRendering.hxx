@@ -9,6 +9,7 @@
 #ifndef ModelRendering_hpp
 #define ModelRendering_hpp
 
+#if defined(DEBUG)
 #include <cstdint>
 #include <jni.h>
 #include <cmath>
@@ -231,5 +232,6 @@ public:
 
 void draw_polygon(std::uint8_t* dest, std::int32_t npoints, std::int32_t* xpoints, std::int32_t* ypoints, std::int32_t width, std::int32_t height);
 void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t height)> renderer);
+#endif
 
 #endif /* ModelRendering_hpp */

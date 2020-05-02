@@ -26,36 +26,30 @@ std::unique_ptr<ControlCenter> control_center;
 
 // MARK: - EXPORTS
 
-void EIOS_Inject(const char* process_name)
+void EIOS_Inject(const char* process_name) noexcept
 {
-	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
     if (process_name)
     {
-        extern std::vector<pid_t> InjectProcesses(const char* process_name);
         std::vector<pid_t> result = InjectProcesses(process_name);
 		for (pid_t pid : result)
 		{
 			ControlCenter::wait_for_sync(pid);
 		}
     }
-	#endif
 }
 
-void EIOS_Inject_PID(std::int32_t pid)
+void EIOS_Inject_PID(std::int32_t pid) noexcept
 {
-	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
     if (pid != -1)
     {
-        extern pid_t InjectProcess(pid_t);
         if (InjectProcess(pid) != -1)
 		{
 			ControlCenter::wait_for_sync(pid);
 		}
     }
-	#endif
 }
 
-EIOS* Reflect_GetEIOS(std::int32_t pid)
+EIOS* Reflect_GetEIOS(std::int32_t pid) noexcept
 {
 	extern std::unordered_map<std::int32_t, EIOS*> clients;
 	if (clients.count(pid))
@@ -65,7 +59,7 @@ EIOS* Reflect_GetEIOS(std::int32_t pid)
 	return nullptr;
 }
 
-jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -75,7 +69,7 @@ jobject Reflect_Object(EIOS* eios, jobject object, const char* cls, const char* 
 	return nullptr;
 }
 
-jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second)
+jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second) noexcept
 {
     if (eios)
     {
@@ -84,7 +78,7 @@ jboolean Reflect_IsSame_Object(EIOS* eios, jobject first, jobject second)
     return false;
 }
 
-jboolean Reflect_InstanceOf(EIOS* eios, jobject object, const char* cls)
+jboolean Reflect_InstanceOf(EIOS* eios, jobject object, const char* cls) noexcept
 {
 	if (eios)
 	{
@@ -93,7 +87,7 @@ jboolean Reflect_InstanceOf(EIOS* eios, jobject object, const char* cls)
 	return false;
 }
 
-void Reflect_Release_Object(EIOS* eios, jobject object)
+void Reflect_Release_Object(EIOS* eios, jobject object) noexcept
 {
 	if (eios)
 	{
@@ -101,7 +95,7 @@ void Reflect_Release_Object(EIOS* eios, jobject object)
 	}
 }
 
-void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount)
+void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount) noexcept
 {
 	if (eios)
 	{
@@ -109,7 +103,7 @@ void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount)
 	}
 }
 
-bool Reflect_Bool(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+bool Reflect_Bool(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
     if (eios)
     {
@@ -119,7 +113,7 @@ bool Reflect_Bool(EIOS* eios, jobject object, const char* cls, const char* field
     return false;
 }
 
-char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -129,7 +123,7 @@ char Reflect_Char(EIOS* eios, jobject object, const char* cls, const char* field
 	return '\0';
 }
 
-std::uint8_t Reflect_Byte(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+std::uint8_t Reflect_Byte(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -139,7 +133,7 @@ std::uint8_t Reflect_Byte(EIOS* eios, jobject object, const char* cls, const cha
 	return 0;
 }
 
-std::int16_t Reflect_Short(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+std::int16_t Reflect_Short(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -149,7 +143,7 @@ std::int16_t Reflect_Short(EIOS* eios, jobject object, const char* cls, const ch
 	return -1;
 }
 
-std::int32_t Reflect_Int(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+std::int32_t Reflect_Int(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -159,7 +153,7 @@ std::int32_t Reflect_Int(EIOS* eios, jobject object, const char* cls, const char
 	return -1;
 }
 
-std::int64_t Reflect_Long(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+std::int64_t Reflect_Long(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -169,7 +163,7 @@ std::int64_t Reflect_Long(EIOS* eios, jobject object, const char* cls, const cha
 	return -1;
 }
 
-float Reflect_Float(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+float Reflect_Float(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -179,7 +173,7 @@ float Reflect_Float(EIOS* eios, jobject object, const char* cls, const char* fie
 	return -1.0;
 }
 
-double Reflect_Double(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+double Reflect_Double(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -189,7 +183,7 @@ double Reflect_Double(EIOS* eios, jobject object, const char* cls, const char* f
 	return -1.0;
 }
 
-void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc, char* output, std::size_t output_size)
+void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc, char* output, std::size_t output_size) noexcept
 {
 	if (eios)
 	{
@@ -200,7 +194,7 @@ void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* fie
 	}
 }
 
-jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc)
+jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept
 {
 	if (eios)
 	{
@@ -210,7 +204,7 @@ jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* fi
 	return nullptr;
 }
 
-jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_size, const char* cls, const char* field, const char* desc)
+jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept
 {
     if (eios)
 	{
@@ -220,7 +214,7 @@ jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_s
 	return nullptr;
 }
 
-std::size_t Reflect_Array_Size(EIOS* eios, jarray array)
+std::size_t Reflect_Array_Size(EIOS* eios, jarray array) noexcept
 {
 	if (eios)
 	{
@@ -229,7 +223,7 @@ std::size_t Reflect_Array_Size(EIOS* eios, jarray array)
 	return 0;
 }
 
-void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length)
+void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length) noexcept
 {
 	if (eios)
 	{
@@ -238,7 +232,7 @@ void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, st
 	return nullptr;
 }
 
-void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y)
+void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y) noexcept
 {
 	if (eios)
 	{
@@ -247,7 +241,7 @@ void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, 
 	return nullptr;
 }
 
-void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z)
+void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z) noexcept
 {
 	if (eios)
 	{
@@ -256,7 +250,7 @@ void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, 
 	return nullptr;
 }
 
-void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w)
+void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w) noexcept
 {
 	if (eios)
 	{
@@ -265,7 +259,7 @@ void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, 
 	return nullptr;
 }
 
-void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length)
+void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length) noexcept
 {
     if (eios)
     {
@@ -280,7 +274,9 @@ void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, 
 #if defined(_WIN32) || defined(_WIN64)
 [[gnu::stdcall]] void __load()
 {
+    #if defined(DEBUG)
     printf("ATTACHED TO: %d\n", getpid());
+    #endif
 
 	//Increase our reference count by 1..
 	//So that if someone calls `FreeLibrary` before the thread exists, we won't get a crash.

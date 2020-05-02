@@ -19,19 +19,19 @@ private:
 	jclass cls;
 	jobject toolkit;
 	
-	Toolkit(JNIEnv* env, jclass cls, jobject toolkit);
+	Toolkit(JNIEnv* env, jclass cls, jobject toolkit) noexcept;
 	
 public:
-	Toolkit(Toolkit&& other);
+	Toolkit(Toolkit&& other) noexcept;
 	Toolkit(const Toolkit& other) = delete;
-	~Toolkit();
+	~Toolkit() noexcept;
 	
-	Toolkit& operator = (Toolkit&& other);
+	Toolkit& operator = (Toolkit&& other) noexcept;
 	Toolkit& operator = (const Toolkit& other) = delete;
 	
-	static Toolkit getDefaultToolkit(JNIEnv* env);
+	static Toolkit getDefaultToolkit(JNIEnv* env) noexcept;
 	
-	EventQueue getSystemEventQueue();
+	EventQueue getSystemEventQueue() const noexcept;
 };
 
 #endif /* Toolkit_HXX_INCLUDED */

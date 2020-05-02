@@ -20,12 +20,12 @@ private:
 	jclass cls;
 	
 public:
-	MouseWheelEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation);
-	virtual ~MouseWheelEvent();
+	MouseWheelEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation) noexcept;
+	virtual ~MouseWheelEvent() noexcept;
 	
-	static void Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated = false);
+	static void Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated = false) noexcept;
 	
-	static void Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated = false);
+	static void Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated = false) noexcept;
 	
 	enum MouseWheelEventCodes : std::uint32_t
 	{

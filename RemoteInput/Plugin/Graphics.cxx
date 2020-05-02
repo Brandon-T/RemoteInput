@@ -16,12 +16,12 @@
 #include <GL/glext.h>
 #endif
 
-std::uint32_t RGBA(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a)
+std::uint32_t RGBA(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a) noexcept
 {
 	return (r << 24) + (g << 16) + (b << 8) + (a);
 }
 
-void RGBA(std::uint32_t colour, std::uint8_t& r, std::uint8_t& g, std::uint8_t& b, std::uint8_t& a)
+void RGBA(std::uint32_t colour, std::uint8_t& r, std::uint8_t& g, std::uint8_t& b, std::uint8_t& a) noexcept
 {
 	r = (colour >> 24) & 0xFF;
     g = (colour >> 16) & 0xFF;
@@ -29,7 +29,7 @@ void RGBA(std::uint32_t colour, std::uint8_t& r, std::uint8_t& g, std::uint8_t& 
     a = (colour & 0xFF);
 }
 
-void FlipImageBytes(void* In, void* &Out, int width, int height, uint32_t Bpp)
+void FlipImageBytes(void* In, void* &Out, int width, int height, uint32_t Bpp) noexcept
 {
    unsigned long Chunk = (Bpp > 24 ? width * 4 : width * 3 + width % 4);
    unsigned char* Destination = static_cast<unsigned char*>(Out);
@@ -48,7 +48,7 @@ void FlipImageBytes(void* In, void* &Out, int width, int height, uint32_t Bpp)
    }
 }
 
-void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data)
+void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept
 {
 	struct BGRA
 	{
@@ -72,7 +72,7 @@ void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* 
 	}
 }
 
-void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data)
+void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept
 {
 	const std::size_t stride = width * 4;
 	std::unique_ptr<std::uint8_t[]> row = std::make_unique<std::uint8_t[]>(stride);
@@ -85,7 +85,7 @@ void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t*
 	}
 }
 
-/*void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled)
+/*void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled) noexcept
 {
 	typedef struct bgra_t
 	{
@@ -131,7 +131,7 @@ void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t*
 	}
 }*/
 
-void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t abgr_colour)
+void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t abgr_colour) noexcept
 {
 	typedef struct bgra_t
 	{
@@ -180,7 +180,7 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
 	}
 }
 
-void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride)
+void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride) noexcept
 {
 	typedef struct bgra_t
 	{
@@ -207,7 +207,7 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 	}
 }
 
-void gl_draw_point(void* ctx, float x, float y, float z, float radius)
+void gl_draw_point(void* ctx, float x, float y, float z, float radius) noexcept
 {
 	#define GL_TEXTURE_RECTANGLE              0x84F5
 
@@ -267,7 +267,7 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius)
 	glPointSize(point_size);
 }
 
-void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride)
+void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride) noexcept
 {
 	#define GL_TEXTURE_RECTANGLE              0x84F5
 
@@ -395,7 +395,7 @@ void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_
 	}
 }
 
-void dx_draw_point(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t argb_colour)
+void dx_draw_point(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t argb_colour) noexcept
 {
     auto argb_to_abgr = [](std::int32_t argb_colour){
         return ((argb_colour & 0xFF000000) >> 0) |
@@ -406,7 +406,7 @@ void dx_draw_point(std::int32_t x, std::int32_t y, std::int32_t radius, void* bu
     return draw_circle(x, y, radius, buffer, width, height, stride, filled, argb_to_abgr(argb_colour));
 }
 
-void dx_draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride)
+void dx_draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride) noexcept
 {
     typedef struct bgra_t
     {

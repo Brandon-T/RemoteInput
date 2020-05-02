@@ -1,10 +1,10 @@
 #include "ThreadPool.hxx"
 
-ThreadPool::ThreadPool() : ThreadPool(std::thread::hardware_concurrency())
+ThreadPool::ThreadPool() noexcept : ThreadPool(std::thread::hardware_concurrency())
 {
 }
 
-ThreadPool::ThreadPool(std::size_t max_threads) : mutex(), condition(), tasks(), threads(), stop(false)
+ThreadPool::ThreadPool(std::size_t max_threads) noexcept : mutex(), condition(), tasks(), threads(), stop(false)
 {
     this->threads.reserve(max_threads);
 
@@ -34,7 +34,7 @@ ThreadPool::ThreadPool(std::size_t max_threads) : mutex(), condition(), tasks(),
     }
 }
 
-ThreadPool::~ThreadPool()
+ThreadPool::~ThreadPool() noexcept
 {
 	if (!this->stop)
 	{
@@ -52,7 +52,7 @@ ThreadPool::~ThreadPool()
 	}
 }
 
-void ThreadPool::terminate()
+void ThreadPool::terminate() noexcept
 {
 	if (!this->stop)
 	{

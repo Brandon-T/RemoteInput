@@ -84,20 +84,20 @@ public:
     Mutex(const Mutex &other) = delete;
     Mutex& operator = (const Mutex &other) = delete;
 
-    bool lock();
-    bool try_lock();
-    bool timed_lock(std::uint32_t milliseconds);
-    bool unlock();
+    bool lock() const noexcept;
+    bool try_lock() const noexcept;
+    bool timed_lock(std::uint32_t milliseconds) const noexcept;
+    bool unlock() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_lock_for(const std::chrono::duration<Rep, Period>& relative_time);
+    bool try_lock_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
     template<typename Duration>
-    bool try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+    bool try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
     template<typename Clock, typename Duration>
-    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 class Semaphore
@@ -138,20 +138,20 @@ public:
     Semaphore(const Semaphore &other) = delete;
     Semaphore& operator = (const Semaphore &other) = delete;
 
-    bool wait();
-    bool try_wait();
-    bool timed_wait(std::uint32_t milliseconds);
-    bool signal();
+    bool wait() const noexcept;
+    bool try_wait() const noexcept;
+    bool timed_wait(std::uint32_t milliseconds) const noexcept;
+    bool signal() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time);
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
     template<typename Duration>
-    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
     template<typename Clock, typename Duration>
-    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 class AtomicSignal
@@ -173,22 +173,22 @@ public:
 	AtomicSignal(std::string name);
 	~AtomicSignal();
 
-	bool wait();
-	bool try_wait();
+	bool wait() const noexcept;
+	bool try_wait() const noexcept;
 
-	bool timed_wait(std::uint32_t milliseconds);
-	bool signal();
-	bool is_signalled();
+	bool timed_wait(std::uint32_t milliseconds) const noexcept;
+	bool signal() const noexcept;
+	bool is_signalled() const noexcept;
 
 
 	template<typename Rep, typename Period>
-	bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time);
+	bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
 	template<typename Duration>
-	bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+	bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
 	template<typename Clock, typename Duration>
-	bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+	bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 #endif /* SHAREDEVENT_HXX_INCLUDED */

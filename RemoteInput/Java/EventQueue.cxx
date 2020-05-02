@@ -9,13 +9,13 @@
 #include "EventQueue.hxx"
 #include <utility>
 
-EventQueue::EventQueue(JNIEnv* env, jclass cls, jobject queue) : env(env), cls(cls), queue(queue)
+EventQueue::EventQueue(JNIEnv* env, jclass cls, jobject queue) noexcept : env(env), cls(cls), queue(queue)
 {
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
 	env->DeleteLocalRef(std::exchange(this->queue, env->NewGlobalRef(this->queue)));
 }
 
-EventQueue::~EventQueue()
+EventQueue::~EventQueue() noexcept
 {
 	if (cls)
 	{
@@ -28,14 +28,14 @@ EventQueue::~EventQueue()
 	}
 }
 
-EventQueue::EventQueue(EventQueue&& other) : env(other.env), cls(other.cls), queue(other.queue)
+EventQueue::EventQueue(EventQueue&& other) noexcept : env(other.env), cls(other.cls), queue(other.queue)
 {
 	other.env = nullptr;
 	other.cls = nullptr;
 	other.queue = nullptr;
 }
 
-EventQueue& EventQueue::operator = (EventQueue&& other)
+EventQueue& EventQueue::operator = (EventQueue&& other) noexcept
 {
 	this->env = other.env;
 	this->cls = other.cls;
@@ -46,7 +46,7 @@ EventQueue& EventQueue::operator = (EventQueue&& other)
 	return *this;
 }
 
-void EventQueue::postEvent(AWTEvent* event)
+void EventQueue::postEvent(AWTEvent* event) const noexcept
 {
 	static jmethodID methodId = env->GetMethodID(cls, "postEvent", "(Ljava/awt/AWTEvent;)V");
 	env->CallVoidMethod(queue, methodId, event->get());

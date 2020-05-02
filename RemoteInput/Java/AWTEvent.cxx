@@ -8,31 +8,31 @@
 
 #include "AWTEvent.hxx"
 
-AWTEvent::AWTEvent() : self(nullptr)
+AWTEvent::AWTEvent() noexcept : self(nullptr)
 {
 }
 
-AWTEvent::~AWTEvent()
+AWTEvent::~AWTEvent() noexcept
 {
 }
 
-AWTEvent::AWTEvent(jobject self) : self(self)
+AWTEvent::AWTEvent(jobject self) noexcept : self(self)
 {
 }
 
-AWTEvent::AWTEvent(AWTEvent&& other) : self(other.self)
+AWTEvent::AWTEvent(AWTEvent&& other) noexcept : self(other.self)
 {
 	other.self = nullptr;
 }
 
-AWTEvent& AWTEvent::operator = (AWTEvent&& other)
+AWTEvent& AWTEvent::operator = (AWTEvent&& other) noexcept
 {
 	this->self = other.self;
 	other.self = nullptr;
 	return *this;
 }
 
-jobject AWTEvent::get()
+jobject AWTEvent::get() const noexcept
 {
 	return self;
 }

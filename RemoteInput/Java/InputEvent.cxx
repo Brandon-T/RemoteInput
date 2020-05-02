@@ -8,7 +8,7 @@
 
 #include "InputEvent.hxx"
 
-std::int32_t InputEvent::GetDownMaskForButton(std::int32_t button)
+std::int32_t InputEvent::GetDownMaskForButton(std::int32_t button) noexcept
 {
 	static const std::int32_t masks[] = {
 		InputEventMasks::BUTTON1_DOWN_MASK,

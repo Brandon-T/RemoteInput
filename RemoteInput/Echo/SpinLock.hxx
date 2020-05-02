@@ -31,20 +31,20 @@ public:
     SpinLock(const SpinLock &other) = delete;
     SpinLock& operator = (const SpinLock &other) = delete;
 
-    bool lock();
-    bool try_lock();
-    bool timed_lock(std::uint32_t milliseconds);
-    bool unlock();
+    bool lock() const noexcept;
+    bool try_lock() const noexcept;
+    bool timed_lock(std::uint32_t milliseconds) const noexcept;
+    bool unlock() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_lock_for(const std::chrono::duration<Rep, Period>& relative_time);
+    bool try_lock_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
     template<typename Duration>
-    bool try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+    bool try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
     template<typename Clock, typename Duration>
-    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 class SpinningSemaphore
@@ -65,20 +65,20 @@ public:
     SpinningSemaphore(const SpinningSemaphore &other) = delete;
     SpinningSemaphore& operator = (const SpinningSemaphore &other) = delete;
 
-    bool wait();
-    bool try_wait();
-    bool timed_wait(std::uint32_t milliseconds);
-    bool signal();
+    bool wait() const noexcept;
+    bool try_wait() const noexcept;
+    bool timed_wait(std::uint32_t milliseconds) const noexcept;
+    bool signal() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time);
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
     template<typename Duration>
-    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
     template<typename Clock, typename Duration>
-    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 
@@ -102,20 +102,20 @@ public:
     SpinningSignal(const SpinningSignal &other) = delete;
     SpinningSignal& operator = (const SpinningSignal &other) = delete;
 
-    bool wait();
-    bool try_wait();
-    bool timed_wait(std::uint32_t milliseconds);
-    bool signal();
+    bool wait() const noexcept;
+    bool try_wait() const noexcept;
+    bool timed_wait(std::uint32_t milliseconds) const noexcept;
+    bool signal() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time);
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
     template<typename Duration>
-    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
     template<typename Clock, typename Duration>
-    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 #endif /* SPINLOCK_HXX_INCLUDED */

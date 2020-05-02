@@ -1,6 +1,6 @@
 #ifndef NATIVEHOOKS_HXX_INCLUDED
 #define NATIVEHOOKS_HXX_INCLUDED
 
-void StartHook();
+void StartHook() noexcept;
 
 #endif // NATIVEHOOKS_HXX_INCLUDED

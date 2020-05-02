@@ -28,11 +28,11 @@ public:
 	Random(Random const&) = delete;
     Random& operator = (Random const&) = delete;
 
-	static std::shared_ptr<Random> instance();
+	static std::shared_ptr<Random> instance() noexcept;
 
-	std::size_t generate_random_int(std::size_t min, std::size_t max);
-	float generate_random_float(float min, float max);
-	double generate_random_double(double min, double max);
+	std::size_t generate_random_int(std::size_t min, std::size_t max) noexcept;
+	float generate_random_float(float min, float max) noexcept;
+	double generate_random_double(double min, double max) noexcept;
 };
 
 #endif /* RANDOM_HXX_INCLUDED */

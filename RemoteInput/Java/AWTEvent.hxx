@@ -17,16 +17,16 @@ protected:
 	jobject self;
 	
 public:
-	AWTEvent();
-	AWTEvent(jobject self);
-	AWTEvent(AWTEvent&& other);
+	AWTEvent() noexcept;
+	AWTEvent(jobject self) noexcept;
+	AWTEvent(AWTEvent&& other) noexcept;
 	AWTEvent(const AWTEvent& other) = delete;
-	virtual ~AWTEvent();
+	virtual ~AWTEvent() noexcept;
 	
-	AWTEvent& operator = (AWTEvent&& other);
+	AWTEvent& operator = (AWTEvent&& other) noexcept;
 	AWTEvent& operator = (const AWTEvent& other) = delete;
 	
-	jobject get();
+	jobject get() const noexcept;
 };
 
 #endif /* AWTEvent_HXX_INCLUDED */

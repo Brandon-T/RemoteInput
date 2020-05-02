@@ -1,6 +1,7 @@
 #include "Platform.hxx"
 
 #if defined(__linux__)
+#include "Injection/Injector.hxx"
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -25,7 +26,7 @@
 #endif // defined
 
 #if defined(__linux__)
-void GetDesktopResolution(int &width, int &height)
+void GetDesktopResolution(int &width, int &height) noexcept
 {
     Display* display = XOpenDisplay(nullptr);
     Screen* screen = DefaultScreenOfDisplay(display);
@@ -34,7 +35,7 @@ void GetDesktopResolution(int &width, int &height)
     XCloseDisplay(display);
 }
 
-std::int32_t GetCurrentThreadID()
+std::int32_t GetCurrentThreadID() noexcept
 {
     #ifdef SYS_gettid
     return syscall(SYS_gettid);
@@ -43,18 +44,18 @@ std::int32_t GetCurrentThreadID()
 	#endif
 }
 
-bool IsProcessAlive(pid_t pid)
+bool IsProcessAlive(pid_t pid) noexcept
 {
 	return !kill(pid, 0);
 }
 
-bool IsThreadAlive(std::int32_t tid)
+bool IsThreadAlive(std::int32_t tid) noexcept
 {
     return !syscall(SYS_tkill, tid, 0);
 }
 
 #if __has_include("libproc.h") && __has_include("proc/readproc.h")
-std::vector<pid_t> get_pids()
+std::vector<pid_t> get_pids() noexcept
 {
 	std::vector<pid_t> pids;
 
@@ -76,7 +77,7 @@ std::vector<pid_t> get_pids()
 	return pids;
 }
 
-std::vector<pid_t> get_pids(const char* process_name)
+std::vector<pid_t> get_pids(const char* process_name) noexcept
 {
 	std::vector<pid_t> result;
 
@@ -99,7 +100,7 @@ std::vector<pid_t> get_pids(const char* process_name)
 	return result;
 }
 #else
-std::vector<pid_t> get_pids(const char* process_name)
+std::vector<pid_t> get_pids(const char* process_name) noexcept
 {
     std::vector<pid_t> result;
     DIR* proc_dir = opendir("/proc");
@@ -109,7 +110,7 @@ std::vector<pid_t> get_pids(const char* process_name)
             return !s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
         };
 
-        #if defined(__x86_64__) || defined(__ppc64__)
+        #if defined(__x86_64__) || defined(__aarch64__)
         while(struct dirent64* entry = readdir64(proc_dir))
         #else
         while(struct dirent* entry = readdir(proc_dir))
@@ -150,7 +151,7 @@ std::vector<pid_t> get_pids(const char* process_name)
     return result;
 }
 
-std::vector<pid_t> get_pids()
+std::vector<pid_t> get_pids() noexcept
 {
     std::vector<pid_t> result;
     DIR* proc_dir = opendir("/proc");
@@ -160,7 +161,7 @@ std::vector<pid_t> get_pids()
             return !s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
         };
 
-        #if defined(__x86_64__) || defined(__ppc64__)
+        #if defined(__x86_64__) || defined(__aarch64__)
         while(struct dirent64* entry = readdir64(proc_dir))
         #else
         while(struct dirent* entry = readdir(proc_dir))
@@ -181,10 +182,41 @@ std::vector<pid_t> get_pids()
     return result;
 }
 #endif
+
+pid_t InjectProcess(pid_t pid) noexcept
+{
+	Dl_info info = {0};
+    if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
+	{
+		char path[256] = {0};
+		if (realpath(info.dli_fname, path))
+		{
+            if (Injector::Inject(info.dli_fname, pid, nullptr))
+            {
+                return pid;
+            }
+		}
+    }
+	return -1;
+}
+
+std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
+{
+	std::vector<pid_t> result;
+    std::vector<pid_t> pids = get_pids(process_name);
+    for (pid_t pid : pids)
+    {
+        if (InjectProcess(pid) != -1)
+		{
+			result.push_back(pid);
+		}
+    }
+	return result;
+}
 #endif
 
 #if defined(__linux__)
-int GetClassName(Display* display, Window window, char* lpClassName, int nMaxCount)
+int GetClassName(Display* display, Window window, char* lpClassName, int nMaxCount) noexcept
 {
     if (!lpClassName || !nMaxCount)
     {
@@ -213,7 +245,7 @@ int GetClassName(Display* display, Window window, char* lpClassName, int nMaxCou
     return 0;
 }
 
-int GetWindowText(Display* display, Window window, char* lpString, int nMaxCount)
+int GetWindowText(Display* display, Window window, char* lpString, int nMaxCount) noexcept
 {
     if (!lpString || !nMaxCount)
     {
@@ -234,7 +266,7 @@ int GetWindowText(Display* display, Window window, char* lpString, int nMaxCount
     return 0;
 }
 
-void EnumWindows(Display* display, bool (*EnumWindowsProc)(Display*, Window, void*), void* other)
+void EnumWindows(Display* display, bool (*EnumWindowsProc)(Display*, Window, void*), void* other) noexcept
 {
     if (!EnumWindowsProc)
     {
@@ -264,7 +296,7 @@ void EnumWindows(Display* display, bool (*EnumWindowsProc)(Display*, Window, voi
     }
 }
 
-void EnumChildWindows(Display* display, Window parentWindow, bool (*EnumChildProc)(Display*, Window, void*), void* other)
+void EnumChildWindows(Display* display, Window parentWindow, bool (*EnumChildProc)(Display*, Window, void*), void* other) noexcept
 {
     if (!EnumChildProc)
     {
@@ -291,7 +323,7 @@ void EnumChildWindows(Display* display, Window parentWindow, bool (*EnumChildPro
     }
 }
 
-void GetWindowThreadProcessId(Display* display, Window window, pid_t* pid)
+void GetWindowThreadProcessId(Display* display, Window window, pid_t* pid) noexcept
 {
     if (!pid) { return; }
     *pid = 0;
@@ -318,7 +350,7 @@ void GetWindowThreadProcessId(Display* display, Window window, pid_t* pid)
     }
 }
 
-std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid)
+std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid) noexcept
 {
     // Get Atom PID
     Atom atomPID = XInternAtom(display, "_NET_WM_PID", True);
@@ -368,7 +400,7 @@ std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid)
     return windows;
 }
 
-pid_t PIDFromWindow(void* window)
+pid_t PIDFromWindow(void* window) noexcept
 {
     pid_t pid = 0;
     Display* display = XOpenDisplay(nullptr);
@@ -377,7 +409,7 @@ pid_t PIDFromWindow(void* window)
     return pid;
 }
 
-void* GetModuleHandle(const char* module_name)
+void* GetModuleHandle(const char* module_name) noexcept
 {
     struct Module { const char* module_name; void* result; } module_info;
 	dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
@@ -397,7 +429,7 @@ void* GetModuleHandle(const char* module_name)
 #endif
 
 #if defined(__linux__)
-bool EnumWindowsProc(Display* display, Window window, void* other)
+bool EnumWindowsProc(Display* display, Window window, void* other) noexcept
 {
     pid_t pid = 0;
     GetWindowThreadProcessId(display, window, &pid);
@@ -414,7 +446,7 @@ bool EnumWindowsProc(Display* display, Window window, void* other)
     return true;
 }
 
-Reflection* GetNativeReflector()
+Reflection* GetNativeReflector() noexcept
 {
     auto ModuleLoaded = [](std::string name) -> bool {
         void* lib = dlopen(name.c_str(), RTLD_LAZY | RTLD_NOLOAD);

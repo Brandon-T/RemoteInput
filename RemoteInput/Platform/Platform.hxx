@@ -8,19 +8,21 @@
 #include <vector>
 #include "Reflection.hxx"
 
-void GetDesktopResolution(int &width, int &height);
-Reflection* GetNativeReflector();
+void GetDesktopResolution(int &width, int &height) noexcept;
+Reflection* GetNativeReflector() noexcept;
 
-std::int32_t GetCurrentThreadID();
+std::int32_t GetCurrentThreadID() noexcept;
 
-bool IsProcessAlive(pid_t pid);
-bool IsThreadAlive(std::int32_t tid);
-std::vector<pid_t> get_pids();
-std::vector<pid_t> get_pids(const char* process_name);
-pid_t PIDFromWindow(void* window);
+bool IsProcessAlive(pid_t pid) noexcept;
+bool IsThreadAlive(std::int32_t tid) noexcept;
+std::vector<pid_t> get_pids() noexcept;
+std::vector<pid_t> get_pids(const char* process_name) noexcept;
+pid_t InjectProcess(pid_t) noexcept;
+std::vector<pid_t> InjectProcesses(const char* process_name) noexcept;
+pid_t PIDFromWindow(void* window) noexcept;
 
 template<typename T>
-void yield_thread(std::chrono::duration<std::int64_t, T> time)
+void yield_thread(std::chrono::duration<std::int64_t, T> time) noexcept
 {
     /*auto start = std::chrono::high_resolution_clock::now();
     auto end = start + time;
@@ -32,7 +34,7 @@ void yield_thread(std::chrono::duration<std::int64_t, T> time)
 }
 
 template<typename T>
-std::int64_t elapsed_time(std::chrono::high_resolution_clock::time_point start)
+std::int64_t elapsed_time(std::chrono::high_resolution_clock::time_point start) noexcept
 {
     std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<T>(end - start).count();

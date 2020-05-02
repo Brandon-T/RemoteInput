@@ -9,7 +9,7 @@
 #include "FocusEvent.hxx"
 #include <utility>
 
-FocusEvent::FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause) : AWTEvent(), env(env), cls(nullptr)
+FocusEvent::FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause) noexcept : AWTEvent(), env(env), cls(nullptr)
 {
 	this->cls = env->FindClass("java/awt/event/FocusEvent");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
@@ -19,13 +19,13 @@ FocusEvent::FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool t
 	env->DeleteLocalRef(std::exchange(self, static_cast<jclass>(env->NewGlobalRef(self))));
 }
 
-FocusEvent::~FocusEvent()
+FocusEvent::~FocusEvent() noexcept
 {
 	env->DeleteGlobalRef(cls);
 	env->DeleteGlobalRef(self);
 }
 
-void FocusEvent::Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated)
+void FocusEvent::Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/FocusEvent");
 	if (cls)
@@ -59,7 +59,7 @@ void FocusEvent::Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, boo
 	}
 }
 
-void FocusEvent::Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated)
+void FocusEvent::Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/FocusEvent");
 	if (cls)
@@ -110,7 +110,7 @@ void FocusEvent::Post(JNIEnv* env, Component* receiver, std::int32_t id, bool te
 	}
 }
 
-jobject FocusEvent::GetCauseDescription(JNIEnv* env, Cause cause)
+jobject FocusEvent::GetCauseDescription(JNIEnv* env, Cause cause) noexcept
 {
 	//Java 9+
 	static const char* const causes[] = {

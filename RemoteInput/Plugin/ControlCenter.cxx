@@ -9,14 +9,14 @@
 #include "ReflectionHook.hxx"
 
 template<typename T>
-T EIOS_Read(void* &ptr)
+T EIOS_Read(void* &ptr) noexcept
 {
 	T result = *static_cast<T*>(ptr);
 	ptr = static_cast<T*>(ptr) + 1;
 	return result;
 }
 
-std::string EIOS_Read(void* &ptr)
+std::string EIOS_Read(void* &ptr) noexcept
 {
 	std::size_t length = *static_cast<std::size_t*>(ptr);
 	ptr = static_cast<std::size_t*>(ptr) + 1;
@@ -32,7 +32,7 @@ std::string EIOS_Read(void* &ptr)
 }
 
 template<typename T>
-std::vector<T> EIOS_Read_Vector(void* &ptr)
+std::vector<T> EIOS_Read_Vector(void* &ptr) noexcept
 {
     std::size_t length = *static_cast<std::size_t*>(ptr);
     ptr = static_cast<std::size_t*>(ptr) + 1;
@@ -48,13 +48,13 @@ std::vector<T> EIOS_Read_Vector(void* &ptr)
 }
 
 template<typename T>
-void EIOS_Write(void* &ptr, T result)
+void EIOS_Write(void* &ptr, T result) noexcept
 {
 	*static_cast<T*>(ptr) = result;
 	ptr = static_cast<T*>(ptr) + 1;
 }
 
-void EIOS_Write(void* &ptr, const std::string &result)
+void EIOS_Write(void* &ptr, const std::string &result) noexcept
 {
 	if (result.empty())
 	{
@@ -74,7 +74,7 @@ void EIOS_Write(void* &ptr, const std::string &result)
 }
 
 template<typename T>
-void EIOS_Write(void* &ptr, const std::vector<T> &result)
+void EIOS_Write(void* &ptr, const std::vector<T> &result) noexcept
 {
     if (result.empty())
     {
@@ -206,7 +206,7 @@ ControlCenter::~ControlCenter()
 	}
 }
 
-void ControlCenter::terminate()
+void ControlCenter::terminate() noexcept
 {
 	if (!is_controller)
 	{
@@ -222,7 +222,7 @@ void ControlCenter::terminate()
 	}
 }
 
-void ControlCenter::process_command()
+void ControlCenter::process_command() noexcept
 {
 	ImageData* info = reinterpret_cast<ImageData*>(memory_map->data());
 	EIOSCommand command = info->command;
@@ -658,7 +658,7 @@ void ControlCenter::process_command()
 	}
 }
 
-void ControlCenter::process_reflect_array_indices(jarray array, void* &arguments, void* &response)
+void ControlCenter::process_reflect_array_indices(jarray array, void* &arguments, void* &response) const noexcept
 {
     auto write_result = [this](jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length, void* &response) -> void {
         if (!array)
@@ -793,7 +793,7 @@ void ControlCenter::process_reflect_array_indices(jarray array, void* &arguments
     write_result(array, type, &indices[0], indices.size(), response);
 }
 
-void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, void* &response, int dimensions)
+void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, void* &response, int dimensions) const noexcept
 {
 	auto write_result = [this](jarray array, ReflectionArrayType type, jsize index, jsize length, void* &response) -> void {
 		if (!array)
@@ -931,7 +931,7 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 	reflector->getEnv()->DeleteLocalRef(array);
 }
 
-bool ControlCenter::init_maps()
+bool ControlCenter::init_maps() noexcept
 {
     char mapName[256] = {0};
 	#if defined(_WIN32) || defined(_WIN64)
@@ -966,7 +966,7 @@ bool ControlCenter::init_maps()
 }
 
 
-bool ControlCenter::init_locks()
+bool ControlCenter::init_locks() noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char lockName[256] = {0};
@@ -983,7 +983,7 @@ bool ControlCenter::init_locks()
     return map_lock != nullptr;
 }
 
-bool ControlCenter::init_wait()
+bool ControlCenter::init_wait() noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char signalName[256] = {0};
@@ -1000,7 +1000,7 @@ bool ControlCenter::init_wait()
 	return sync_signal != nullptr;
 }
 
-bool ControlCenter::init_signals()
+bool ControlCenter::init_signals() noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char readName[256] = {0};
@@ -1024,7 +1024,7 @@ bool ControlCenter::init_signals()
     return command_signal && response_signal;
 }
 
-void ControlCenter::kill_zombie_process(pid_t pid)
+void ControlCenter::kill_zombie_process(pid_t pid) noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 
@@ -1065,17 +1065,17 @@ void ControlCenter::kill_zombie_process(pid_t pid)
 	#endif
 }
 
-bool ControlCenter::hasReflector()
+bool ControlCenter::hasReflector() const noexcept
 {
 	return reflector != nullptr;
 }
 
-ImageData* ControlCenter::get_image_data() const
+ImageData* ControlCenter::get_image_data() const noexcept
 {
 	return memory_map && memory_map->is_mapped() ? static_cast<ImageData*>(memory_map->data()) : nullptr;
 }
 
-bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
+bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer) const noexcept
 {
 	writer(get_image_data());
 	command_signal->signal();
@@ -1115,39 +1115,39 @@ bool ControlCenter::send_command(std::function<void(ImageData*)> &&writer)
 	return false;
 }
 
-std::int32_t ControlCenter::parent_process_id() const
+std::int32_t ControlCenter::parent_process_id() const noexcept
 {
     return memory_map && memory_map->is_mapped() ? get_image_data()->parent_process_id : -1;
 }
 
-std::int32_t ControlCenter::parent_thread_id() const
+std::int32_t ControlCenter::parent_thread_id() const noexcept
 {
 	return memory_map && memory_map->is_mapped() ? get_image_data()->parent_thread_id : -1;
 }
 
-std::int32_t ControlCenter::get_width() const
+std::int32_t ControlCenter::get_width() const noexcept
 {
 	return memory_map && memory_map->is_mapped() ? get_image_data()->width : -1;
 }
 
-std::int32_t ControlCenter::get_height() const
+std::int32_t ControlCenter::get_height() const noexcept
 {
 	return memory_map && memory_map->is_mapped() ? get_image_data()->height : -1;
 }
 
-std::uint8_t* ControlCenter::get_image() const
+std::uint8_t* ControlCenter::get_image() const noexcept
 {
 	ImageData* image_data = get_image_data();
 	return image_data ? reinterpret_cast<std::uint8_t*>(image_data) + sizeof(ImageData) : nullptr;
 }
 
-std::uint8_t* ControlCenter::get_debug_image() const
+std::uint8_t* ControlCenter::get_debug_image() const noexcept
 {
 	std::uint8_t* image = get_image();
 	return image ? image + (get_width() * get_height() * 4) : nullptr;
 }
 
-bool ControlCenter::get_debug_graphics() const
+bool ControlCenter::get_debug_graphics() const noexcept
 {
 	if (memory_map && memory_map->is_mapped())
 	{
@@ -1156,7 +1156,7 @@ bool ControlCenter::get_debug_graphics() const
 	return false;
 }
 
-void ControlCenter::set_debug_graphics(bool enabled)
+void ControlCenter::set_debug_graphics(bool enabled) const noexcept
 {
 	if (memory_map && memory_map->is_mapped())
 	{
@@ -1164,7 +1164,7 @@ void ControlCenter::set_debug_graphics(bool enabled)
 	}
 }
 
-void ControlCenter::set_parent_process_id(std::int32_t pid)
+void ControlCenter::set_parent_process_id(std::int32_t pid) const noexcept
 {
     if (memory_map && memory_map->is_mapped())
     {
@@ -1172,7 +1172,7 @@ void ControlCenter::set_parent_process_id(std::int32_t pid)
     }
 }
 
-void ControlCenter::set_parent_thread_id(std::int32_t tid)
+void ControlCenter::set_parent_thread_id(std::int32_t tid) const noexcept
 {
 	if (memory_map && memory_map->is_mapped())
 	{
@@ -1180,7 +1180,7 @@ void ControlCenter::set_parent_thread_id(std::int32_t tid)
 	}
 }
 
-void ControlCenter::signal_sync(pid_t pid)
+void ControlCenter::signal_sync(pid_t pid) noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     char signalName[256] = {0};
@@ -1201,7 +1201,7 @@ void ControlCenter::signal_sync(pid_t pid)
     }
 }
 
-void ControlCenter::wait_for_sync(pid_t pid)
+void ControlCenter::wait_for_sync(pid_t pid) noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char signalName[256] = {0};
@@ -1223,7 +1223,7 @@ void ControlCenter::wait_for_sync(pid_t pid)
     }
 }
 
-bool ControlCenter::controller_exists(pid_t pid)
+bool ControlCenter::controller_exists(pid_t pid) noexcept
 {
 	if (pid == getpid())
 	{
@@ -1240,7 +1240,7 @@ bool ControlCenter::controller_exists(pid_t pid)
 	return MemoryMap<char>(mapName, std::ios::in).open();
 }
 
-bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
+bool ControlCenter::controller_is_paired(pid_t pid, bool* exists) noexcept
 {
 	if (pid == getpid())
 	{
@@ -1286,14 +1286,14 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists)
 	return false;
 }
 
-void ControlCenter::kill_process(pid_t pid)
+void ControlCenter::kill_process(pid_t pid) const noexcept
 {
 	send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::KILL_APPLICATION;
 	});
 }
 
-void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height)
+void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height) const noexcept
 {
 	if (memory_map && memory_map->is_mapped())
 	{
@@ -1302,7 +1302,7 @@ void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height)
 	}
 }
 
-void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* height)
+void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* height) const noexcept
 {
 	if (memory_map && memory_map->is_mapped())
 	{
@@ -1316,7 +1316,7 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 	}
 }
 
-bool ControlCenter::has_focus()
+bool ControlCenter::has_focus() const noexcept
 {
 	auto result = send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::HAS_FOCUS;
@@ -1330,21 +1330,21 @@ bool ControlCenter::has_focus()
 	return false;
 }
 
-void ControlCenter::gain_focus()
+void ControlCenter::gain_focus() const noexcept
 {
 	send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::GAIN_FOCUS;
 	});
 }
 
-void ControlCenter::lose_focus()
+void ControlCenter::lose_focus() const noexcept
 {
 	send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::LOSE_FOCUS;
 	});
 }
 
-bool ControlCenter::is_input_enabled()
+bool ControlCenter::is_input_enabled() const noexcept
 {
 	auto result = send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::IS_INPUT_ENABLED;
@@ -1359,7 +1359,7 @@ bool ControlCenter::is_input_enabled()
 	return false;
 }
 
-void ControlCenter::set_input_enabled(bool enabled)
+void ControlCenter::set_input_enabled(bool enabled) const noexcept
 {
 	send_command([enabled](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1368,7 +1368,7 @@ void ControlCenter::set_input_enabled(bool enabled)
 	});
 }
 
-void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
+void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept
 {
 	auto result = send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::GET_MOUSE;
@@ -1382,7 +1382,7 @@ void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y)
 	}
 }
 
-void ControlCenter::get_real_mouse_position(std::int32_t* x, std::int32_t* y)
+void ControlCenter::get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept
 {
 	auto result = send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::GET_REAL_MOUSE;
@@ -1396,7 +1396,7 @@ void ControlCenter::get_real_mouse_position(std::int32_t* x, std::int32_t* y)
 	}
 }
 
-void ControlCenter::move_mouse(std::int32_t x, std::int32_t y)
+void ControlCenter::move_mouse(std::int32_t x, std::int32_t y) const noexcept
 {
 	send_command([x, y](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1406,7 +1406,7 @@ void ControlCenter::move_mouse(std::int32_t x, std::int32_t y)
 	});
 }
 
-void ControlCenter::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
+void ControlCenter::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button) const noexcept
 {
 	send_command([x, y, button](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1417,7 +1417,7 @@ void ControlCenter::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t butt
 	});
 }
 
-void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
+void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button) const noexcept
 {
 	send_command([x, y, button](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1428,7 +1428,7 @@ void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t b
 	});
 }
 
-void ControlCenter::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines)
+void ControlCenter::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines) const noexcept
 {
 	send_command([x, y, lines](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1439,7 +1439,7 @@ void ControlCenter::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t li
 	});
 }
 
-bool ControlCenter::is_mouse_held(std::int32_t button)
+bool ControlCenter::is_mouse_held(std::int32_t button) const noexcept
 {
 	auto result = send_command([button](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1455,7 +1455,7 @@ bool ControlCenter::is_mouse_held(std::int32_t button)
 	return false;
 }
 
-void ControlCenter::send_string(const char* string, std::int32_t keywait, std::int32_t keymodwait)
+void ControlCenter::send_string(const char* string, std::int32_t keywait, std::int32_t keymodwait) const noexcept
 {
 	send_command([string, keywait, keymodwait](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1466,7 +1466,7 @@ void ControlCenter::send_string(const char* string, std::int32_t keywait, std::i
 	});
 }
 
-void ControlCenter::hold_key(std::int32_t key)
+void ControlCenter::hold_key(std::int32_t key) const noexcept
 {
 	send_command([key](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1475,7 +1475,7 @@ void ControlCenter::hold_key(std::int32_t key)
 	});
 }
 
-void ControlCenter::release_key(std::int32_t key)
+void ControlCenter::release_key(std::int32_t key) const noexcept
 {
 	send_command([key](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1484,7 +1484,7 @@ void ControlCenter::release_key(std::int32_t key)
 	});
 }
 
-bool ControlCenter::is_key_held(std::int32_t key)
+bool ControlCenter::is_key_held(std::int32_t key) const noexcept
 {
 	auto result = send_command([key](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1500,7 +1500,7 @@ bool ControlCenter::is_key_held(std::int32_t key)
 	return false;
 }
 
-std::int32_t ControlCenter::get_keyboard_speed()
+std::int32_t ControlCenter::get_keyboard_speed() const noexcept
 {
     auto result = send_command([](ImageData* image_data) {
         image_data->command = EIOSCommand::GET_KEYBOARD_SPEED;
@@ -1514,7 +1514,7 @@ std::int32_t ControlCenter::get_keyboard_speed()
     return -1;
 }
 
-void ControlCenter::set_keyboard_speed(std::int32_t speed)
+void ControlCenter::set_keyboard_speed(std::int32_t speed) const noexcept
 {
     send_command([speed](ImageData* image_data) {
         void* arguments = image_data->args;
@@ -1523,7 +1523,7 @@ void ControlCenter::set_keyboard_speed(std::int32_t speed)
     });
 }
 
-std::int32_t ControlCenter::get_keyboard_repeat_delay()
+std::int32_t ControlCenter::get_keyboard_repeat_delay() const noexcept
 {
     auto result = send_command([](ImageData* image_data) {
         image_data->command = EIOSCommand::GET_KEYBOARD_REPEAT_DELAY;
@@ -1537,7 +1537,7 @@ std::int32_t ControlCenter::get_keyboard_repeat_delay()
     return -1;
 }
 
-void ControlCenter::set_keyboard_repeat_delay(std::int32_t delay)
+void ControlCenter::set_keyboard_repeat_delay(std::int32_t delay) const noexcept
 {
     send_command([delay](ImageData* image_data) {
         void* arguments = image_data->args;
@@ -1546,7 +1546,7 @@ void ControlCenter::set_keyboard_repeat_delay(std::int32_t delay)
     });
 }
 
-bool ControlCenter::reflect_is_objects_equal(const jobject first, const jobject second)
+bool ControlCenter::reflect_is_objects_equal(const jobject first, const jobject second) const noexcept
 {
     auto result = send_command([&](ImageData* image_data) {
         void* arguments = image_data->args;
@@ -1563,7 +1563,7 @@ bool ControlCenter::reflect_is_objects_equal(const jobject first, const jobject 
     return false;
 }
 
-bool ControlCenter::reflect_instance_of(const jobject object, std::string cls)
+bool ControlCenter::reflect_instance_of(const jobject object, std::string cls) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1580,7 +1580,7 @@ bool ControlCenter::reflect_instance_of(const jobject object, std::string cls)
 	return false;
 }
 
-jobject ControlCenter::reflect_object(const ReflectionHook &hook)
+jobject ControlCenter::reflect_object(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1597,7 +1597,7 @@ jobject ControlCenter::reflect_object(const ReflectionHook &hook)
 	return nullptr;
 }
 
-void ControlCenter::reflect_release_object(const jobject object)
+void ControlCenter::reflect_release_object(const jobject object) const noexcept
 {
 	send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1606,7 +1606,7 @@ void ControlCenter::reflect_release_object(const jobject object)
 	});
 }
 
-void ControlCenter::reflect_release_objects(const jobject* array, std::size_t length)
+void ControlCenter::reflect_release_objects(const jobject* array, std::size_t length) const noexcept
 {
 	send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1616,7 +1616,7 @@ void ControlCenter::reflect_release_objects(const jobject* array, std::size_t le
 	});
 }
 
-char ControlCenter::reflect_char(const ReflectionHook &hook)
+char ControlCenter::reflect_char(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1633,7 +1633,7 @@ char ControlCenter::reflect_char(const ReflectionHook &hook)
 	return '\0';
 }
 
-std::uint8_t ControlCenter::reflect_byte(const ReflectionHook &hook)
+std::uint8_t ControlCenter::reflect_byte(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1650,7 +1650,7 @@ std::uint8_t ControlCenter::reflect_byte(const ReflectionHook &hook)
 	return 0;
 }
 
-bool ControlCenter::reflect_boolean(const ReflectionHook &hook)
+bool ControlCenter::reflect_boolean(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1667,7 +1667,7 @@ bool ControlCenter::reflect_boolean(const ReflectionHook &hook)
 	return false;
 }
 
-std::int16_t ControlCenter::reflect_short(const ReflectionHook &hook)
+std::int16_t ControlCenter::reflect_short(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1684,7 +1684,7 @@ std::int16_t ControlCenter::reflect_short(const ReflectionHook &hook)
 	return -1;
 }
 
-std::int32_t ControlCenter::reflect_int(const ReflectionHook &hook)
+std::int32_t ControlCenter::reflect_int(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1701,7 +1701,7 @@ std::int32_t ControlCenter::reflect_int(const ReflectionHook &hook)
 	return -1;
 }
 
-std::int64_t ControlCenter::reflect_long(const ReflectionHook &hook)
+std::int64_t ControlCenter::reflect_long(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1718,7 +1718,7 @@ std::int64_t ControlCenter::reflect_long(const ReflectionHook &hook)
 	return -1;
 }
 
-float ControlCenter::reflect_float(const ReflectionHook &hook)
+float ControlCenter::reflect_float(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1735,7 +1735,7 @@ float ControlCenter::reflect_float(const ReflectionHook &hook)
 	return -1;
 }
 
-double ControlCenter::reflect_double(const ReflectionHook &hook)
+double ControlCenter::reflect_double(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1752,7 +1752,7 @@ double ControlCenter::reflect_double(const ReflectionHook &hook)
 	return -1;
 }
 
-std::string ControlCenter::reflect_string(const ReflectionHook &hook)
+std::string ControlCenter::reflect_string(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1769,7 +1769,7 @@ std::string ControlCenter::reflect_string(const ReflectionHook &hook)
 	return "";
 }
 
-jarray ControlCenter::reflect_array(const ReflectionHook &hook)
+jarray ControlCenter::reflect_array(const ReflectionHook &hook) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1786,7 +1786,7 @@ jarray ControlCenter::reflect_array(const ReflectionHook &hook)
 	return nullptr;
 }
 
-jarray ControlCenter::reflect_array_with_size(const ReflectionHook &hook, std::size_t* output_size)
+jarray ControlCenter::reflect_array_with_size(const ReflectionHook &hook, std::size_t* output_size) const noexcept
 {
     auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1804,7 +1804,7 @@ jarray ControlCenter::reflect_array_with_size(const ReflectionHook &hook, std::s
 	return nullptr;
 }
 
-std::size_t ControlCenter::reflect_array_size(const jarray array)
+std::size_t ControlCenter::reflect_array_size(const jarray array) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1821,7 +1821,7 @@ std::size_t ControlCenter::reflect_array_size(const jarray array)
 	return 0;
 }
 
-std::size_t ControlCenter::reflect_array_size(const jarray array, std::size_t index)
+std::size_t ControlCenter::reflect_array_size(const jarray array, std::size_t index) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1839,7 +1839,7 @@ std::size_t ControlCenter::reflect_array_size(const jarray array, std::size_t in
 	return 0;
 }
 
-void* ControlCenter::reflect_array_index(const jarray array, ReflectionArrayType type, std::size_t index, std::size_t length)
+void* ControlCenter::reflect_array_index(const jarray array, ReflectionArrayType type, std::size_t index, std::size_t length) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1857,7 +1857,7 @@ void* ControlCenter::reflect_array_index(const jarray array, ReflectionArrayType
 	return nullptr;
 }
 
-void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y)
+void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1876,7 +1876,7 @@ void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayTy
 	return nullptr;
 }
 
-void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z)
+void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1896,7 +1896,7 @@ void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayTy
 	return nullptr;
 }
 
-void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w)
+void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1917,7 +1917,7 @@ void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayTy
 	return nullptr;
 }
 
-void* ControlCenter::reflect_array_indices(const jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length)
+void* ControlCenter::reflect_array_indices(const jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length) const noexcept
 {
     auto result = send_command([&](ImageData* image_data) {
        void* arguments = image_data->args;
@@ -1935,7 +1935,7 @@ void* ControlCenter::reflect_array_indices(const jarray array, ReflectionArrayTy
     return nullptr;
 }
 
-std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
+std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type) noexcept
 {
 	static std::size_t mapping[] = {
 		sizeof(jchar),
@@ -1953,18 +1953,18 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type)
 	return mapping[static_cast<std::uint8_t>(type)];
 }
 
-Applet ControlCenter::reflect_applet()
+Applet ControlCenter::reflect_applet() const noexcept
 {
 	return {reflector->getEnv(), reflector->getApplet(), false};
 }
 
-Component ControlCenter::reflect_canvas()
+Component ControlCenter::reflect_canvas() const noexcept
 {
 	Applet applet{reflector->getEnv(), reflector->getApplet(), false};
 	return applet.getComponent(0);
 }
 
-void ControlCenter::get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::int32_t* width, std::int32_t* height)
+void ControlCenter::get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::size_t* width, std::size_t* height) const noexcept
 {
     if (io_controller)
     {
@@ -1972,7 +1972,7 @@ void ControlCenter::get_applet_dimensions(std::int32_t* x, std::int32_t* y, std:
     }
 }
 
-void ControlCenter::get_applet_mouse_position(std::int32_t* x, std::int32_t* y)
+void ControlCenter::get_applet_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept
 {
     if (io_controller)
     {

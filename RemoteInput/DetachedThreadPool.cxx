@@ -1,20 +1,20 @@
 #include "DetachedThreadPool.hxx"
 
-DetachedThreadPool::DetachedThreadPool() : DetachedThreadPool(std::thread::hardware_concurrency())
+DetachedThreadPool::DetachedThreadPool() noexcept : DetachedThreadPool(std::thread::hardware_concurrency())
 {
 }
 
-DetachedThreadPool::DetachedThreadPool(std::size_t max_threads) : mutex(std::make_shared<std::mutex>()), condition(std::make_shared<std::condition_variable>()), tasks(std::make_shared<std::queue<std::function<void(std::atomic_bool& stopped)>>>()), threads(), stop(std::make_shared<std::atomic_bool>(false)), max_threads(max_threads)
+DetachedThreadPool::DetachedThreadPool(std::size_t max_threads) noexcept : mutex(std::make_shared<std::mutex>()), condition(std::make_shared<std::condition_variable>()), tasks(std::make_shared<std::queue<std::function<void(std::atomic_bool& stopped)>>>()), threads(), stop(std::make_shared<std::atomic_bool>(false)), max_threads(max_threads)
 {
     this->create_threads();
 }
 
-DetachedThreadPool::DetachedThreadPool(DetachedThreadPool&& other) : mutex(std::move(other.mutex)), condition(std::move(other.condition)), tasks(std::move(other.tasks)), threads(std::move(other.threads)), stop(std::move(other.stop)), max_threads(other.max_threads)
+DetachedThreadPool::DetachedThreadPool(DetachedThreadPool&& other) noexcept : mutex(std::move(other.mutex)), condition(std::move(other.condition)), tasks(std::move(other.tasks)), threads(std::move(other.threads)), stop(std::move(other.stop)), max_threads(other.max_threads)
 {
     other.max_threads = 0;
 }
 
-DetachedThreadPool::~DetachedThreadPool()
+DetachedThreadPool::~DetachedThreadPool() noexcept
 {
     if (max_threads == 0)
     {
@@ -24,7 +24,7 @@ DetachedThreadPool::~DetachedThreadPool()
 	this->terminate();
 }
 
-void DetachedThreadPool::create_threads()
+void DetachedThreadPool::create_threads() noexcept
 {
     if (max_threads == 0)
     {
@@ -65,7 +65,7 @@ void DetachedThreadPool::create_threads()
     }
 }
 
-void DetachedThreadPool::terminate()
+void DetachedThreadPool::terminate() noexcept
 {
 	if (stop && !*stop)
 	{

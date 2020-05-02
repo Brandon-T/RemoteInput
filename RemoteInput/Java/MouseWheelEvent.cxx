@@ -9,7 +9,7 @@
 #include "MouseWheelEvent.hxx"
 #include <utility>
 
-MouseWheelEvent::MouseWheelEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation) : AWTEvent(), env(env), cls(nullptr)
+MouseWheelEvent::MouseWheelEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation) noexcept : AWTEvent(), env(env), cls(nullptr)
 {
 	this->cls = env->FindClass("java/awt/event/MouseWheelEvent");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
@@ -19,13 +19,13 @@ MouseWheelEvent::MouseWheelEvent(JNIEnv* env, Component* source, std::int32_t id
 	env->DeleteLocalRef(std::exchange(self, static_cast<jclass>(env->NewGlobalRef(self))));
 }
 
-MouseWheelEvent::~MouseWheelEvent()
+MouseWheelEvent::~MouseWheelEvent() noexcept
 {
 	env->DeleteGlobalRef(cls);
 	env->DeleteGlobalRef(self);
 }
 	
-void MouseWheelEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated)
+void MouseWheelEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/MouseWheelEvent");
 	if (cls)
@@ -58,7 +58,7 @@ void MouseWheelEvent::Dispatch(JNIEnv* env, Component* receiver, Component* sour
 	}
 }
 
-void MouseWheelEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated)
+void MouseWheelEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t xAbs, std::int32_t yAbs, std::int32_t clickCount, bool popupTrigger, std::int32_t scrollType, std::int32_t scrollAmount, std::int32_t wheelRotation, double preciseWheelRotation, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/MouseWheelEvent");
 	if (cls)

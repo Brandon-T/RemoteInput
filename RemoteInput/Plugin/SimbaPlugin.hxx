@@ -30,6 +30,7 @@ static const char* PascalExports[] =
     "Pascal_Reflect_Array_With_Size", "Function RIGetArray(eios: Pointer; instance: Pointer; output_size: ^SizeUInt; constref field: ^const RIField): Pointer; overload; native;",
     "Pascal_Reflect_Array_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer): SizeUInt; native;",
 	"Pascal_Reflect_Array_Index_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer; index: SizeUInt): SizeUInt; overload; native;",
+	"Pascal_Reflect_Array_Indices", "Function RIGetArrayElements(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; indices: Array of Int32): Pointer; overload; native;",
 
 	//Array 1-D
 	"Pascal_Reflect_Array_SingleIndex", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: SizeUInt): Pointer; native;",
@@ -46,7 +47,6 @@ static const char* PascalExports[] =
 	//Array 4-D
 	"Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z, w: Int32): Pointer; overload; native;",
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
-    "Pascal_Reflect_Array_Indices", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; indices: Array of Int32): Pointer; overload; native;",
 
 	//Graphics
 	"Pascal_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
@@ -91,15 +91,20 @@ extern "C"
 {
 #endif
 
-EXPORT int GetPluginABIVersion();
-EXPORT int GetFunctionCount();
-EXPORT int GetTypeCount();
-EXPORT int GetFunctionInfo(int Index, void** Address, char** Definition);
-EXPORT int GetTypeInfo(int Index, char** Type, char** Definition);
+EXPORT int GetPluginABIVersion() noexcept;
+EXPORT int GetFunctionCount() noexcept;
+EXPORT int GetTypeCount() noexcept;
+EXPORT int GetFunctionInfo(int Index, void** Address, char** Definition) noexcept;
+EXPORT int GetTypeInfo(int Index, char** Type, char** Definition) noexcept;
 
-EXPORT void SetPluginMemManager(TMemoryManager MemMgr);
-EXPORT void OnAttach(void* info);
-EXPORT void OnDetach();
+#if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+EXPORT void SetPluginMemManager(TMemoryManager MemMgr) noexcept;
+#endif
+
+EXPORT void SetPluginSimbaMethods(TSimbaMethods Methods) noexcept;
+EXPORT void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators) noexcept;
+EXPORT void OnAttach(void* info) noexcept;
+EXPORT void OnDetach() noexcept;
 
 #ifdef __cplusplus
 }
@@ -110,58 +115,58 @@ extern "C"
 {
 #endif
 
-EXPORT void Pascal_Reflect_Equal(void** Params, void** Result);
-EXPORT void Pascal_Reflect_InstanceOf(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Object(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Release_Object(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Release_Objects(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Boolean(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Char(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Byte(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Short(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Int(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Long(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Float(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Double(void** Params, void** Result);
-EXPORT void Pascal_Reflect_String(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_With_Size(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_Size(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_Index_Size(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Equal(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_InstanceOf(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Object(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Release_Object(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Release_Objects(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Boolean(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Char(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Byte(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Short(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Int(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Long(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Float(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Double(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_String(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_With_Size(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Size(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Index_Size(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Indices(void** Params, void** Result) noexcept;
 
-EXPORT void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result) noexcept;
 
-EXPORT void Pascal_Reflect_Array_Index(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_Index2D(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_Index3D(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_Index4D(void** Params, void** Result);
-EXPORT void Pascal_Reflect_Array_Indices(void** Params, void** Result);
+EXPORT void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept;
 
-EXPORT void Pascal_GetDebugImageBuffer(void** Params, void** Result);
-EXPORT void Pascal_SetGraphicsDebugging(void** Params, void** Result);
-EXPORT void Pascal_PairClient(void** Params, void** Result);
-EXPORT void Pascal_KillClientPID(void** Params, void** Result);
-EXPORT void Pascal_KillClient(void** Params, void** Result);
-EXPORT void Pascal_GetClients(void** Params, void** Result);
-EXPORT void Pascal_GetClientPID(void** Params, void** Result);
+EXPORT void Pascal_GetDebugImageBuffer(void** Params, void** Result) noexcept;
+EXPORT void Pascal_SetGraphicsDebugging(void** Params, void** Result) noexcept;
+EXPORT void Pascal_PairClient(void** Params, void** Result) noexcept;
+EXPORT void Pascal_KillClientPID(void** Params, void** Result) noexcept;
+EXPORT void Pascal_KillClient(void** Params, void** Result) noexcept;
+EXPORT void Pascal_GetClients(void** Params, void** Result) noexcept;
+EXPORT void Pascal_GetClientPID(void** Params, void** Result) noexcept;
 
-EXPORT void Pascal_Inject(void** Params, void** Result);
-EXPORT void Pascal_Inject_PID(void** Params, void** Result);
+EXPORT void Pascal_Inject(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Inject_PID(void** Params, void** Result) noexcept;
 
-EXPORT void Pascal_HasFocus(void** Params, void** Result);
-EXPORT void Pascal_GainFocus(void** Params, void** Result);
-EXPORT void Pascal_LoseFocus(void** Params, void** Result);
-EXPORT void Pascal_IsInputEnabled(void** Params, void** Result);
-EXPORT void Pascal_SetInputEnabled(void** Params, void** Result);
-EXPORT void Pascal_GetRealMousePosition(void** Params, void** Result);
+EXPORT void Pascal_HasFocus(void** Params, void** Result) noexcept;
+EXPORT void Pascal_GainFocus(void** Params, void** Result) noexcept;
+EXPORT void Pascal_LoseFocus(void** Params, void** Result) noexcept;
+EXPORT void Pascal_IsInputEnabled(void** Params, void** Result) noexcept;
+EXPORT void Pascal_SetInputEnabled(void** Params, void** Result) noexcept;
+EXPORT void Pascal_GetRealMousePosition(void** Params, void** Result) noexcept;
 
-EXPORT void Pascal_GetKeyboardSpeed(void** Params, void** Result);
-EXPORT void Pascal_SetKeyboardSpeed(void** Params, void** Result);
-EXPORT void Pascal_GetKeyboardRepeatDelay(void** Params, void** Result);
-EXPORT void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result);
+EXPORT void Pascal_GetKeyboardSpeed(void** Params, void** Result) noexcept;
+EXPORT void Pascal_SetKeyboardSpeed(void** Params, void** Result) noexcept;
+EXPORT void Pascal_GetKeyboardRepeatDelay(void** Params, void** Result) noexcept;
+EXPORT void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result) noexcept;
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@
 std::unordered_map<std::int32_t, EIOS*> clients;
 std::vector<std::int32_t> all_clients;
 
-EIOS* EIOS_RequestTarget(const char* initargs)
+EIOS* EIOS_RequestTarget(const char* initargs) noexcept
 {
     std::size_t pos = 0;
     std::int32_t pid = std::stoi(initargs, &pos);
@@ -31,7 +31,7 @@ EIOS* EIOS_RequestTarget(const char* initargs)
 	return nullptr;
 }
 
-void EIOS_ReleaseTarget(EIOS* eios)
+void EIOS_ReleaseTarget(EIOS* eios) noexcept
 {
     if (eios)
     {
@@ -45,7 +45,7 @@ void EIOS_ReleaseTarget(EIOS* eios)
     }
 }
 
-void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height)
+void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height) noexcept
 {
     if (eios)
     {
@@ -53,7 +53,7 @@ void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* hei
     }
 }
 
-std::uint8_t* EIOS_GetImageBuffer(EIOS* eios)
+std::uint8_t* EIOS_GetImageBuffer(EIOS* eios) noexcept
 {
     if (eios)
     {
@@ -62,7 +62,7 @@ std::uint8_t* EIOS_GetImageBuffer(EIOS* eios)
     return nullptr;
 }
 
-std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios)
+std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios) noexcept
 {
     if (eios)
     {
@@ -71,7 +71,7 @@ std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios)
     return nullptr;
 }
 
-void EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled)
+void EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled) noexcept
 {
 	if (eios)
 	{
@@ -79,12 +79,12 @@ void EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled)
 	}
 }
 
-void EIOS_UpdateImageBuffer(EIOS* eios)
+void EIOS_UpdateImageBuffer(EIOS* eios) noexcept
 {
     //printf("%s\n", __FUNCTION__);
 }
 
-bool EIOS_HasFocus(EIOS* eios)
+bool EIOS_HasFocus(EIOS* eios) noexcept
 {
 	if (eios)
 	{
@@ -93,7 +93,7 @@ bool EIOS_HasFocus(EIOS* eios)
 	return false;
 }
 
-void EIOS_GainFocus(EIOS* eios)
+void EIOS_GainFocus(EIOS* eios) noexcept
 {
 	if (eios)
 	{
@@ -101,7 +101,7 @@ void EIOS_GainFocus(EIOS* eios)
 	}
 }
 
-void EIOS_LoseFocus(EIOS* eios)
+void EIOS_LoseFocus(EIOS* eios) noexcept
 {
 	if (eios)
 	{
@@ -109,7 +109,7 @@ void EIOS_LoseFocus(EIOS* eios)
 	}
 }
 
-bool EIOS_IsInputEnabled(EIOS* eios)
+bool EIOS_IsInputEnabled(EIOS* eios) noexcept
 {
 	if (eios)
 	{
@@ -118,7 +118,7 @@ bool EIOS_IsInputEnabled(EIOS* eios)
 	return false;
 }
 
-void EIOS_SetInputEnabled(EIOS* eios, bool enabled)
+void EIOS_SetInputEnabled(EIOS* eios, bool enabled) noexcept
 {
 	if (eios)
 	{
@@ -126,7 +126,7 @@ void EIOS_SetInputEnabled(EIOS* eios, bool enabled)
 	}
 }
 
-void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
+void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept
 {
 
 	if (eios)
@@ -135,7 +135,7 @@ void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 	}
 }
 
-void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
+void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept
 {
 
 	if (eios)
@@ -144,7 +144,7 @@ void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y)
 	}
 }
 
-void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y)
+void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y) noexcept
 {
 	if (eios)
 	{
@@ -152,7 +152,7 @@ void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y)
 	}
 }
 
-void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button)
+void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept
 {
 	if (eios)
 	{
@@ -160,7 +160,7 @@ void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t but
 	}
 }
 
-void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button)
+void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept
 {
 	if (eios)
 	{
@@ -168,7 +168,7 @@ void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t 
 	}
 }
 
-void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines)
+void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines) noexcept
 {
 	if (eios)
 	{
@@ -176,7 +176,7 @@ void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t l
 	}
 }
 
-bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button)
+bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button) noexcept
 {
 	if (eios)
 	{
@@ -185,7 +185,7 @@ bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button)
 	return false;
 }
 
-void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait)
+void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait) noexcept
 {
 	if (eios)
 	{
@@ -193,7 +193,7 @@ void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::
 	}
 }
 
-void EIOS_HoldKey(EIOS* eios, std::int32_t key)
+void EIOS_HoldKey(EIOS* eios, std::int32_t key) noexcept
 {
 	if (eios)
 	{
@@ -201,7 +201,7 @@ void EIOS_HoldKey(EIOS* eios, std::int32_t key)
 	}
 }
 
-void EIOS_ReleaseKey(EIOS* eios, std::int32_t key)
+void EIOS_ReleaseKey(EIOS* eios, std::int32_t key) noexcept
 {
 	if (eios)
 	{
@@ -209,7 +209,7 @@ void EIOS_ReleaseKey(EIOS* eios, std::int32_t key)
 	}
 }
 
-bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key)
+bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key) noexcept
 {
 	if (eios)
 	{
@@ -218,7 +218,7 @@ bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key)
 	return false;
 }
 
-std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios)
+std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios) noexcept
 {
     if (eios)
     {
@@ -227,7 +227,7 @@ std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios)
     return -1;
 }
 
-void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed)
+void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed) noexcept
 {
     if (eios)
     {
@@ -235,7 +235,7 @@ void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed)
     }
 }
 
-std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios)
+std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios) noexcept
 {
     if (eios)
     {
@@ -244,7 +244,7 @@ std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios)
     return -1;
 }
 
-void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay)
+void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay) noexcept
 {
     if (eios)
     {
@@ -252,7 +252,7 @@ void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay)
     }
 }
 
-EIOS* EIOS_PairClient(pid_t pid)
+EIOS* EIOS_PairClient(pid_t pid) noexcept
 {
 	std::int32_t tid = GetCurrentThreadID();
 
@@ -292,7 +292,7 @@ EIOS* EIOS_PairClient(pid_t pid)
 	return nullptr;
 }
 
-void EIOS_KillClientPID(pid_t pid)
+void EIOS_KillClientPID(pid_t pid) noexcept
 {
 	if (pid != -1 && clients.count(pid) && IsProcessAlive(pid))
 	{
@@ -304,7 +304,7 @@ void EIOS_KillClientPID(pid_t pid)
 	}
 }
 
-void EIOS_KillClient(EIOS* eios)
+void EIOS_KillClient(EIOS* eios) noexcept
 {
 	if (eios && eios->pid != -1 && clients.count(eios->pid) && IsProcessAlive(eios->pid))
 	{
@@ -316,7 +316,7 @@ void EIOS_KillClient(EIOS* eios)
 	}
 }
 
-void EIOS_KillZombieClients()
+void EIOS_KillZombieClients() noexcept
 {
 	std::vector<std::int32_t> dead_clients;
 	for(auto it = clients.begin(); it != clients.end(); ++it)
@@ -334,7 +334,7 @@ void EIOS_KillZombieClients()
 	}
 }
 
-std::size_t EIOS_GetClients(bool unpaired_only)
+std::size_t EIOS_GetClients(bool unpaired_only) noexcept
 {
 	all_clients.clear();
 
@@ -364,7 +364,7 @@ std::size_t EIOS_GetClients(bool unpaired_only)
 	return all_clients.size();
 }
 
-pid_t EIOS_GetClientPID(std::size_t index)
+pid_t EIOS_GetClientPID(std::size_t index) noexcept
 {
 	return index < all_clients.size() && all_clients.size() > 0 ? all_clients[index] : -1;
 }

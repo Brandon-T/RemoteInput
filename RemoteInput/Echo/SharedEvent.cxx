@@ -285,7 +285,7 @@ Mutex::~Mutex()
 }
 #endif
 
-bool Mutex::lock()
+bool Mutex::lock() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     return WaitForSingleObject(hMutex, INFINITE) == WAIT_OBJECT_0;
@@ -294,7 +294,7 @@ bool Mutex::lock()
     #endif
 }
 
-bool Mutex::try_lock()
+bool Mutex::try_lock() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     return WaitForSingleObject(hMutex, 0) == WAIT_OBJECT_0;
@@ -305,7 +305,7 @@ bool Mutex::try_lock()
 
 
 template<typename Rep, typename Period>
-bool Mutex::try_lock_for(const std::chrono::duration<Rep, Period>& relative_time)
+bool Mutex::try_lock_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
 {
     std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
     if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
@@ -316,7 +316,7 @@ bool Mutex::try_lock_for(const std::chrono::duration<Rep, Period>& relative_time
 }
 
 template<typename Duration>
-bool Mutex::try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time)
+bool Mutex::try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
 {
     #if defined (_WIN32) || defined(_WIN64)
     std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
@@ -331,12 +331,12 @@ bool Mutex::try_lock_until(const std::chrono::time_point<std::chrono::high_resol
 }
 
 template<typename Clock, typename Duration>
-bool Mutex::try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time)
+bool Mutex::try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
 {
     return try_lock_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
 }
 
-bool Mutex::timed_lock(std::uint32_t milliseconds)
+bool Mutex::timed_lock(std::uint32_t milliseconds) const noexcept
 {
     if(!milliseconds)
     {
@@ -355,7 +355,7 @@ bool Mutex::timed_lock(std::uint32_t milliseconds)
     #endif
 }
 
-bool Mutex::unlock()
+bool Mutex::unlock() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     return ReleaseMutex(hMutex);
@@ -800,7 +800,7 @@ Semaphore::~Semaphore()
 }
 #endif
 
-bool Semaphore::wait()
+bool Semaphore::wait() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
@@ -842,7 +842,7 @@ bool Semaphore::wait()
     #endif
 }
 
-bool Semaphore::try_wait()
+bool Semaphore::try_wait() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
@@ -893,7 +893,7 @@ bool Semaphore::try_wait()
 
 
 template<typename Rep, typename Period>
-bool Semaphore::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time)
+bool Semaphore::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
 {
     std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
     if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
@@ -904,7 +904,7 @@ bool Semaphore::try_wait_for(const std::chrono::duration<Rep, Period>& relative_
 }
 
 template<typename Duration>
-bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time)
+bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
@@ -972,12 +972,12 @@ bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_r
 }
 
 template<typename Clock, typename Duration>
-bool Semaphore::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time)
+bool Semaphore::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
 {
     return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
 }
 
-bool Semaphore::timed_wait(std::uint32_t milliseconds)
+bool Semaphore::timed_wait(std::uint32_t milliseconds) const noexcept
 {
     if(!milliseconds)
     {
@@ -1050,7 +1050,7 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds)
     #endif
 }
 
-bool Semaphore::signal()
+bool Semaphore::signal() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
 	if (!hSemaphore) { return false; }
@@ -1088,7 +1088,7 @@ bool Semaphore::signal()
     #endif
 }
 
-/*bool Semaphore::exists(std::string name)
+/*bool Semaphore::exists(std::string name) const noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	HANDLE hSemaphore = OpenSemaphore(0, false, name.c_str());
@@ -1342,7 +1342,7 @@ AtomicSignal::~AtomicSignal()
 	#endif
 }
 
-bool AtomicSignal::wait()
+bool AtomicSignal::wait() const noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	return WaitForSingleObject(hEvent, INFINITE) == WAIT_OBJECT_0;
@@ -1354,7 +1354,7 @@ bool AtomicSignal::wait()
 	#endif
 }
 
-bool AtomicSignal::try_wait()
+bool AtomicSignal::try_wait() const noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	return WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0;
@@ -1368,7 +1368,7 @@ bool AtomicSignal::try_wait()
 	#endif
 }
 
-bool AtomicSignal::timed_wait(std::uint32_t milliseconds)
+bool AtomicSignal::timed_wait(std::uint32_t milliseconds) const noexcept
 {
 	if(!milliseconds)
     {
@@ -1388,7 +1388,7 @@ bool AtomicSignal::timed_wait(std::uint32_t milliseconds)
 	#endif
 }
 
-bool AtomicSignal::signal()
+bool AtomicSignal::signal() const noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	if (!hEvent) { return false; }
@@ -1399,7 +1399,7 @@ bool AtomicSignal::signal()
 	#endif
 }
 
-bool AtomicSignal::is_signalled()
+bool AtomicSignal::is_signalled() const noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	if (!hEvent) { return false; }
@@ -1410,7 +1410,7 @@ bool AtomicSignal::is_signalled()
 }
 
 template<typename Rep, typename Period>
-bool AtomicSignal::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time)
+bool AtomicSignal::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
 {
 	std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
     if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
@@ -1421,7 +1421,7 @@ bool AtomicSignal::try_wait_for(const std::chrono::duration<Rep, Period>& relati
 }
 
 template<typename Duration>
-bool AtomicSignal::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time)
+bool AtomicSignal::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	if (!hEvent) { return false; }
@@ -1438,7 +1438,7 @@ bool AtomicSignal::try_wait_until(const std::chrono::time_point<std::chrono::hig
 }
 
 template<typename Clock, typename Duration>
-bool AtomicSignal::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time)
+bool AtomicSignal::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
 {
 	return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
 }

@@ -196,7 +196,12 @@ set(SRC_LIST
         RemoteInput/ReflectionHook.hxx
         RemoteInput/RemoteInput.h
         RemoteInput/ThreadPool.cxx
-        RemoteInput/ThreadPool.hxx)
+        RemoteInput/ThreadPool.hxx
+        RemoteInput/Injection/Injector.hxx
+        RemoteInput/Injection/Injector_Windows.cxx
+        RemoteInput/Injection/Injector_Darwin.cxx
+        RemoteInput/Injection/Injector_Linux.cpp
+        RemoteInput/Injection/Injector_Arm.cpp)
 
 IF(WIN32)
 

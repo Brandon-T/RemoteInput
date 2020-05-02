@@ -12,7 +12,7 @@
 #include "JavaInternal.hxx"
 #include "EIOS.hxx"
 #include "Graphics.hxx"
-#include "Thirdparty/main.hxx"
+#include "Thirdparty/Hook.hxx"
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -23,7 +23,7 @@ std::unique_ptr<Hook> directx_xrgb_hook{nullptr};
 std::unique_ptr<Hook> directx_argb_hook{nullptr};
 std::unique_ptr<Hook> flush_buffer_hook{nullptr};
 
-void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height)
+void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -191,7 +191,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
     }
 }
 
-void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2)
+void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2) noexcept
 {
     if (srctype != 2)
     {
@@ -294,7 +294,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
     }
 }
 
-void __stdcall JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, jint limit)
+void __stdcall JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, jint limit) noexcept
 {
     #define NEXT_VAL(buf, type) (((type *)((buf) += sizeof(type)))[-1])
     #define NEXT_INT(buf)       NEXT_VAL(buf, jint)
@@ -366,7 +366,7 @@ void __stdcall JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, j
     return flush_buffer_hook->call<void, decltype(JavaNativeOGLRenderQueueFlushBuffer)>(env, oglrq, original_buffer, limit);
 }
 
-void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut)
+void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -538,14 +538,14 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 	}
 }
 
-HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface, SurfaceDataRasInfo *pDstInfo, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty)
+HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface, SurfaceDataRasInfo *pDstInfo, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty) noexcept
 {
     return directx_argb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntArgbSurface)>(pSurface, pDstInfo, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
 }
 
 //Java_sun_java2d_d3d_D3DRenderQueue_flushBuffer -> D3DRQ_FlushBuffer -> sun_java2d_pipe_BufferedOpCodes_BLIT -> D3DBlitLoops_Blit -> D3DBlitSwToTexture -> D3DBL_CopyImageToIntXrgbSurface
 //Java_sun_java2d_d3d_D3DRenderQueue_flushBuffer -> D3DRQ_FlushBuffer -> sun_java2d_pipe_BufferedOpCodes_BLIT -> D3DBlitLoops_Blit -> D3DBlitToSurfaceViaTexture -> D3DBL_CopyImageToIntXrgbSurface
-HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInfo, int srctype, D3DResource *pDstSurfaceRes, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty)
+HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInfo, int srctype, D3DResource *pDstSurfaceRes, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -687,7 +687,7 @@ void (__stdcall *glBufferData) (GLenum target, GLsizeiptr size, const GLvoid *da
 void* (__stdcall *glMapBuffer)(GLenum target, GLenum access);
 GLboolean (__stdcall *glUnmapBuffer)(GLenum target);
 
-bool IsGLExtensionsSupported(HDC hdc, std::string extension)
+bool IsGLExtensionsSupported(HDC hdc, std::string extension) noexcept
 {
     static std::vector<std::string> extensions;
     static const char* (__stdcall *wglGetExtensionsString)(HDC hdc) = reinterpret_cast<decltype(wglGetExtensionsString)>(wglGetProcAddress("wglGetExtensionsString") ?: wglGetProcAddress("wglGetExtensionsStringARB"));
@@ -718,7 +718,7 @@ bool IsGLExtensionsSupported(HDC hdc, std::string extension)
     return std::binary_search(extensions.begin(), extensions.end(), extension);
 }
 
-void LoadOpenGLExtensions()
+void LoadOpenGLExtensions() noexcept
 {
     static std::once_flag token = {};
     std::call_once(token, [&]{
@@ -731,7 +731,7 @@ void LoadOpenGLExtensions()
     });
 }
 
-void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
+void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
 	static int w = 0;
 	static int h = 0;
@@ -766,7 +766,7 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 	}
 }
 
-void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
+void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
 	static int index = 0;
 	static int nextIndex = 0;
@@ -802,7 +802,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
-void PushGLContext(HDC hdc, GLint width, GLint height)
+void PushGLContext(HDC hdc, GLint width, GLint height) noexcept
 {
     //Create a context if none exists..
     static std::unordered_map<int, HGLRC> contexts;
@@ -828,14 +828,14 @@ void PushGLContext(HDC hdc, GLint width, GLint height)
     glDisable(GL_DEPTH_TEST);
 }
 
-void PopGLContext(HDC hdc, HGLRC ctx)
+void PopGLContext(HDC hdc, HGLRC ctx) noexcept
 {
     glPopMatrix();
     glPopAttrib();
     wglMakeCurrent(hdc, ctx);
 }
 
-void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data)
+void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
 
@@ -883,7 +883,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
     }
 }
 
-BOOL __stdcall mSwapBuffers(HDC hdc)
+BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 
@@ -975,12 +975,12 @@ BOOL __stdcall mSwapBuffers(HDC hdc)
 typedef HRESULT (__stdcall *Device_Present_t)(IDirect3DDevice9* device, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion);
 Device_Present_t o_DevicePresent;
 
-HRESULT __stdcall Device_Present(IDirect3DDevice9* device, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion)
+HRESULT __stdcall Device_Present(IDirect3DDevice9* device, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion) noexcept
 {
     return o_DevicePresent(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 }
 
-/*HRESULT __stdcall SwapChain_Present(IDirect3DSwapChain9* swapChain, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion, DWORD dwFlags)
+/*HRESULT __stdcall SwapChain_Present(IDirect3DSwapChain9* swapChain, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion, DWORD dwFlags) noexcept
 {
 
 }*/
@@ -988,7 +988,7 @@ HRESULT __stdcall Device_Present(IDirect3DDevice9* device, const RECT* pSourceRe
 
 
 #if defined(_WIN32) || defined(_WIN64)
-DWORD FindPattern(DWORD dwAddress, DWORD dwLen, BYTE *bMask, const char* szMask)
+DWORD FindPattern(DWORD dwAddress, DWORD dwLen, BYTE *bMask, const char* szMask) noexcept
 {
     auto bCompare = [](const BYTE* pData, const BYTE* bMask, const char* szMask) -> bool {
         for(; *szMask; ++szMask, ++pData, ++bMask)
@@ -1011,7 +1011,7 @@ DWORD FindPattern(DWORD dwAddress, DWORD dwLen, BYTE *bMask, const char* szMask)
     return 0;
 }
 
-void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLength)
+void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLength) noexcept
 {
     DWORD dwProt = 0;
     std::uint8_t* jmp = new std::uint8_t[JumpLength + 5];
@@ -1031,7 +1031,7 @@ void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLen
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
-void InitialiseHooks()
+void InitialiseHooks() noexcept
 {
     std::thread([&]{
 		#if defined(USE_DETOURS)
@@ -1134,12 +1134,12 @@ void InitialiseHooks()
     }).detach();*/
 }
 
-void StartHook()
+void StartHook() noexcept
 {
     InitialiseHooks();
 }
 
-/*void limit_render(std::function<void()> render, uint32_t max_frames)
+/*void limit_render(std::function<void()> render, uint32_t max_frames) noexcept
 {
 	render();
 	yield(std::chrono::milliseconds(1000 / max_frames));

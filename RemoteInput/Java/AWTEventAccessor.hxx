@@ -20,16 +20,16 @@ private:
 	jobject accessor;
 	
 public:
-	AWTEventAccessor(JNIEnv* env, jclass cls, jobject accessor);
-	AWTEventAccessor(AWTEventAccessor&& other);
+	AWTEventAccessor(JNIEnv* env, jclass cls, jobject accessor) noexcept;
+	AWTEventAccessor(AWTEventAccessor&& other) noexcept;
 	AWTEventAccessor(const AWTEventAccessor& other) = delete;
-	~AWTEventAccessor();
+	~AWTEventAccessor() noexcept;
 	
-	AWTEventAccessor& operator = (AWTEventAccessor&& other);
+	AWTEventAccessor& operator = (AWTEventAccessor&& other) noexcept;
 	AWTEventAccessor& operator = (const AWTEventAccessor& other) = delete;
 	
-	void setSystemGenerated(AWTEvent* event);
-	void setPosted(AWTEvent* event);
+	void setSystemGenerated(AWTEvent* event) const noexcept;
+	void setPosted(AWTEvent* event) const noexcept;
 };
 
 #endif /* AWTEventAccessor_HXX_INCLUDED */

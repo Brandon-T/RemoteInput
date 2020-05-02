@@ -39,47 +39,47 @@ private:
     std::ios_base::openmode mode;
 
 public:
-    explicit MemoryMap(const char_type* path, std::ios_base::openmode mode = std::ios::in | std::ios::out);
-    explicit MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode = std::ios::in | std::ios::out);
-    ~MemoryMap();
+    explicit MemoryMap(const char_type* path, std::ios_base::openmode mode = std::ios::in | std::ios::out) noexcept;
+    explicit MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode = std::ios::in | std::ios::out) noexcept;
+    ~MemoryMap() noexcept;
 
-    bool open();
-    bool open_file();
-    bool map();
-	bool map(std::size_t amount);
-    bool unmap();
-	bool unmap(std::size_t amount);
-    bool close();
-    bool is_open() const;
-    bool is_mapped() const;
-    std::size_t size() const;
-    void* data() const;
-	void flush() const;
-    std::size_t granularity() const;
+    bool open() noexcept;
+    bool open_file() noexcept;
+    bool map() noexcept;
+	bool map(std::size_t amount) noexcept;
+    bool unmap() noexcept;
+	bool unmap(std::size_t amount) noexcept;
+    bool close() noexcept;
+    bool is_open() const noexcept;
+    bool is_mapped() const noexcept;
+    std::size_t size() const noexcept;
+    void* data() const noexcept;
+	void flush() const noexcept;
+    std::size_t granularity() const noexcept;
 };
 
 #if defined(_WIN32) || defined(_WIN64)
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) noexcept : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
 
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) noexcept : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
 #else
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) noexcept : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
 
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
+MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) noexcept : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
 #endif
 
 template<typename char_type>
-MemoryMap<char_type>::~MemoryMap()
+MemoryMap<char_type>::~MemoryMap() noexcept
 {
     close();
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::open()
+bool MemoryMap<char_type>::open() noexcept
 {
     bool read_only = !(mode & std::ios::out);
     #if defined(_WIN32) || defined(_WIN64)
@@ -141,7 +141,7 @@ bool MemoryMap<char_type>::open()
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::open_file()
+bool MemoryMap<char_type>::open_file() noexcept
 {
     bool read_only = !(mode & std::ios::out);
     #if defined(_WIN32) || defined(_WIN64)
@@ -229,7 +229,7 @@ bool MemoryMap<char_type>::open_file()
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::map()
+bool MemoryMap<char_type>::map() noexcept
 {
     bool read_only = !(mode & std::ios::out);
     #if defined(_WIN32) || defined(_WIN64)
@@ -244,7 +244,7 @@ bool MemoryMap<char_type>::map()
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::map(std::size_t amount)
+bool MemoryMap<char_type>::map(std::size_t amount) noexcept
 {
 	bool read_only = !(mode & std::ios::out);
     #if defined(_WIN32) || defined(_WIN64)
@@ -259,13 +259,13 @@ bool MemoryMap<char_type>::map(std::size_t amount)
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::unmap()
+bool MemoryMap<char_type>::unmap() noexcept
 {
     return unmap(pSize);
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::unmap(std::size_t amount)
+bool MemoryMap<char_type>::unmap(std::size_t amount) noexcept
 {
     bool result = true;
     if (pData)
@@ -282,7 +282,7 @@ bool MemoryMap<char_type>::unmap(std::size_t amount)
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::close()
+bool MemoryMap<char_type>::close() noexcept
 {
     bool result = unmap();
     #if defined(_WIN32) || defined(_WIN64)
@@ -312,7 +312,7 @@ bool MemoryMap<char_type>::close()
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::is_open() const
+bool MemoryMap<char_type>::is_open() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     return hMap || (hFile != INVALID_HANDLE_VALUE);
@@ -322,25 +322,25 @@ bool MemoryMap<char_type>::is_open() const
 }
 
 template<typename char_type>
-bool MemoryMap<char_type>::is_mapped() const
+bool MemoryMap<char_type>::is_mapped() const noexcept
 {
     return pData != nullptr;
 }
 
 template<typename char_type>
-std::size_t MemoryMap<char_type>::size() const
+std::size_t MemoryMap<char_type>::size() const noexcept
 {
     return pSize;
 }
 
 template<typename char_type>
-void* MemoryMap<char_type>::data() const
+void* MemoryMap<char_type>::data() const noexcept
 {
     return pData;
 }
 
 template<typename char_type>
-void MemoryMap<char_type>::flush() const
+void MemoryMap<char_type>::flush() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     FlushViewOfFile(pData, pSize);
@@ -350,7 +350,7 @@ void MemoryMap<char_type>::flush() const
 }
 
 template<typename char_type>
-std::size_t MemoryMap<char_type>::granularity() const
+std::size_t MemoryMap<char_type>::granularity() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     SYSTEM_INFO info = {0};

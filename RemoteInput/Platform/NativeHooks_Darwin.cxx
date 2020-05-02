@@ -4,7 +4,7 @@
 #if defined(XCODE)
 #include "main.hxx"
 #else
-#include "Thirdparty/main.hxx"
+#include "Thirdparty/Hook.hxx"
 #endif
 
 #include <OpenGL/OpenGL.h>
@@ -30,7 +30,7 @@ std::unique_ptr<Hook> native_hook{nullptr};
 std::unique_ptr<Hook> opengl_hook{nullptr};
 std::unique_ptr<Hook> flush_buffer_hook{nullptr};
 
-void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height)
+void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -197,7 +197,7 @@ void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData,
     }
 }
 
-void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2)
+void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (control_center)
@@ -291,7 +291,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
     }
 }
 
-void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, jint limit)
+void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, jint limit) noexcept
 {
     #define NEXT_VAL(buf, type) (((type *)((buf) += sizeof(type)))[-1])
     #define NEXT_INT(buf)       NEXT_VAL(buf, jint)
@@ -364,7 +364,7 @@ void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, 
 #endif
 
 #if defined(__APPLE__)
-void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
+void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
 	static int w = 0;
 	static int h = 0;
@@ -396,7 +396,7 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 	}
 }
 
-void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride)
+void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
 	static int index = 0;
 	static int nextIndex = 0;
@@ -433,7 +433,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 }
 
 #if defined(USE_DETOURS)
-CGLError mCGLFlushDrawable(CGLContextObj ctx)
+CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 
@@ -486,7 +486,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 	return opengl_hook->call<CGLError, decltype(mCGLFlushDrawable)>(ctx);
 }
 #else
-CGLError mCGLFlushDrawable(CGLContextObj ctx)
+CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 
@@ -543,12 +543,16 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx)
 #endif
 
 #if defined(__APPLE__)
-void InitialiseHooks()
+void InitialiseHooks() noexcept
 {
 	std::thread([&]{
+        extern void* GetModuleHandle(const char*);
+        void* libawt = GetModuleHandle("libawt.dylib");
+        void* liblawt = GetModuleHandle("libawt_lwawt.dylib");
+
 		#if defined(USE_DETOURS)
 		//Hook Native Blit
-		void* blit = dlsym(RTLD_NEXT, "Java_sun_java2d_loops_Blit_Blit");
+		void* blit = dlsym(libawt ?: RTLD_NEXT, "Java_sun_java2d_loops_Blit_Blit");
 		if (blit)
 		{
 			native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeBlit));
@@ -557,7 +561,7 @@ void InitialiseHooks()
 
 		//Hook OpenGL Blit
 		#if defined(HOOK_OPENGL_BLIT)
-		blit = dlsym(RTLD_NEXT, "OGLBlitLoops_Blit");
+		blit = dlsym(liblawt ?: RTLD_NEXT, "OGLBlitLoops_Blit");
 		if (blit)
 		{
 			opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
@@ -565,7 +569,7 @@ void InitialiseHooks()
 		}
 		else
 		{
-			blit = dlsym(RTLD_NEXT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
+			blit = dlsym(liblawt ?: RTLD_NEXT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer") ?: dlsym(GetModuleHandle("libawt_lwawt.dylib"), "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
 			if (blit)
 			{
 				flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
@@ -584,12 +588,22 @@ void InitialiseHooks()
 		DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
         #endif
 
+		if (libawt)
+        {
+		    dlclose(libawt);
+        }
+
+        if (liblawt)
+        {
+            dlclose(liblawt);
+        }
+
 		//Signal that all hooks are finished initializing..
 		ControlCenter::signal_sync(getpid());
 	}).detach();
 }
 
-void StartHook()
+void StartHook() noexcept
 {
     InitialiseHooks();
 }

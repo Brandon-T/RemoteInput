@@ -15,9 +15,9 @@
 class Frame final : public Component
 {
 public:
-	Frame(JNIEnv* env, jobject frame, bool canDelete = true);
+	Frame(JNIEnv* env, jobject frame, bool canDelete = true) noexcept;
 	
-	Component getContentPane();
+	Component getContentPane() const noexcept;
 };
 
 #endif /* FRAME_HXX_INCLUDED */

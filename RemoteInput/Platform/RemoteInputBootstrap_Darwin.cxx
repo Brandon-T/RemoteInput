@@ -6,6 +6,7 @@
 //  Copyright © 2020 XIO. All rights reserved.
 //
 
+#if defined(MACH_INJECT)
 #include <cstdio>
 #include <cstring>
 
@@ -71,3 +72,4 @@ void LoadLibrary(ptrdiff_t offset, void* param, size_t psize, void* userp)
     pthread_attr_destroy(&attr);
     thread_suspend(mach_thread_self());
 }
+#endif

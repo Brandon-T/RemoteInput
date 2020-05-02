@@ -8,19 +8,19 @@
 
 #include "Time.hxx"
 
-void timeval_to_timespec(struct timeval* tv, struct timespec* ts)
+void timeval_to_timespec(struct timeval* tv, struct timespec* ts) noexcept
 {
     ts->tv_sec = tv->tv_sec;
     ts->tv_nsec = tv->tv_usec * 1000;
 }
 
-void timespec_to_timeval(struct timespec* ts, struct timeval* tv)
+void timespec_to_timeval(struct timespec* ts, struct timeval* tv) noexcept
 {
     tv->tv_sec = ts->tv_sec;
     tv->tv_usec = static_cast<int>(ts->tv_nsec / 1000);
 }
 
-struct timespec add_timespec(struct timespec* a, struct timespec* b)
+struct timespec add_timespec(struct timespec* a, struct timespec* b) noexcept
 {
     struct timespec result = {a->tv_sec + b->tv_sec, b->tv_nsec + b->tv_nsec};
     if(result.tv_nsec >= 1000000000)
@@ -31,7 +31,7 @@ struct timespec add_timespec(struct timespec* a, struct timespec* b)
     return result;
 }
 
-struct timespec sub_timespec(struct timespec* a, struct timespec* b)
+struct timespec sub_timespec(struct timespec* a, struct timespec* b) noexcept
 {
     struct timespec result = {a->tv_sec - b->tv_sec, 0};
     if (b->tv_nsec > a->tv_nsec)
@@ -44,20 +44,20 @@ struct timespec sub_timespec(struct timespec* a, struct timespec* b)
     return result;
 }
 
-struct timeval filetime_to_timeval(uint64_t filetime)
+struct timeval filetime_to_timeval(uint64_t filetime) noexcept
 {
     uint64_t time = filetime - 116444736000000000ULL;
     return {static_cast<long>(time / 10000000ULL), static_cast<int>(static_cast<long>(time % 10000000ULL) / 10)};
 }
 
-uint64_t timeval_to_filetime(struct timeval* tp)
+uint64_t timeval_to_filetime(struct timeval* tp) noexcept
 {
     uint64_t time = tp->tv_sec * 10000000ULL + tp->tv_usec * 10;
     return time + 116444736000000000ULL;
 }
 
 
-uint64_t get_file_time()
+uint64_t get_file_time() noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     static void __stdcall (*PreciseSystemFileTime)(FILETIME* file_time) = []{
@@ -90,7 +90,7 @@ uint64_t get_file_time()
 }
 
 
-uint64_t get_adjusted_file_time()
+uint64_t get_adjusted_file_time() noexcept
 {
     uint64_t time = get_file_time();
     static uint64_t timestamp = []{

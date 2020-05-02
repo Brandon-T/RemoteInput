@@ -9,13 +9,13 @@
 #include "Applet.hxx"
 #include <utility>
 
-Applet::Applet(JNIEnv* env, jobject applet, bool canDelete) : Component(env, nullptr, applet, canDelete)
+Applet::Applet(JNIEnv* env, jobject applet, bool canDelete) noexcept : Component(env, nullptr, applet, canDelete)
 {
 	this->cls = applet ? env->GetObjectClass(applet) : env->FindClass("java/awt/Applet");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
 }
 
-Component Applet::getComponent(std::int32_t index)
+Component Applet::getComponent(std::int32_t index) const noexcept
 {
 	jclass containerClass = env->FindClass("java/awt/Container");
 	static jmethodID methodId = env->GetMethodID(containerClass, "getComponent", "(I)Ljava/awt/Component;");

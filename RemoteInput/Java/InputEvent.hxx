@@ -26,7 +26,7 @@ struct InputEvent
 		ALT_GRAPH_DOWN_MASK = 1 << 13
 	};
 	
-	static std::int32_t GetDownMaskForButton(std::int32_t button);
+	static std::int32_t GetDownMaskForButton(std::int32_t button) noexcept;
 };
 
 

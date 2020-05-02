@@ -12,14 +12,6 @@
 #include "SpinLock.hxx"
 #include "SharedEvent.hxx"
 
-
-
-
-
-
-
-
-
 template<typename T>
 class Signal
 {
@@ -29,48 +21,48 @@ private:
 	
 public:
 	template<typename U = T, typename = ValidationType>
-	Signal();
+	Signal() noexcept;
 	
 	template<typename U = T, typename = ValidationType>
-    Signal(std::string name);
+    Signal(std::string name) noexcept;
 	
-	~Signal();
+	~Signal() noexcept;
 
     Signal(const Signal &other) = delete;
     Signal& operator = (const Signal &other) = delete;
 
-    bool wait();
-    bool try_wait();
-    bool timed_wait(std::uint32_t milliseconds);
-    bool signal();
+    bool wait() const noexcept;
+    bool try_wait() const noexcept;
+    bool timed_wait(std::uint32_t milliseconds) const noexcept;
+    bool signal() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time);
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
     template<typename Duration>
-    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
     template<typename Clock, typename Duration>
-    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time);
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 template<typename T>
 template<typename U,  typename>
-Signal<T>::Signal()
+Signal<T>::Signal() noexcept
 {
 	underlying_type = new T();
 }
 
 template<typename T>
 template<typename U, typename>
-Signal<T>::Signal(std::string name)
+Signal<T>::Signal(std::string name) noexcept
 {
 	underlying_type = new T(name);
 }
 
 template<typename T>
-Signal<T>::~Signal()
+Signal<T>::~Signal() noexcept
 {
 	delete static_cast<T*>(underlying_type);
 	underlying_type = nullptr;
@@ -78,7 +70,7 @@ Signal<T>::~Signal()
 
 
 template<typename T>
-bool Signal<T>::wait()
+bool Signal<T>::wait() const noexcept
 {
 	if constexpr (std::is_same<T, Semaphore>::value)
 	{
@@ -104,7 +96,7 @@ bool Signal<T>::wait()
 }
 
 template<typename T>
-bool Signal<T>::try_wait()
+bool Signal<T>::try_wait() const noexcept
 {
 	if constexpr (std::is_same<T, Semaphore>::value)
 	{
@@ -130,7 +122,7 @@ bool Signal<T>::try_wait()
 }
 
 template<typename T>
-bool Signal<T>::timed_wait(std::uint32_t milliseconds)
+bool Signal<T>::timed_wait(std::uint32_t milliseconds) const noexcept
 {
 	if constexpr (std::is_same<T, Semaphore>::value)
 	{
@@ -156,7 +148,7 @@ bool Signal<T>::timed_wait(std::uint32_t milliseconds)
 }
 
 template<typename T>
-bool Signal<T>::signal()
+bool Signal<T>::signal() const noexcept
 {
 	if constexpr (std::is_same<T, Semaphore>::value)
 	{
@@ -184,7 +176,7 @@ bool Signal<T>::signal()
 
 template<typename T>
 template<typename Rep, typename Period>
-bool Signal<T>::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time)
+bool Signal<T>::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
 {
 	if constexpr (std::is_same<T, Semaphore>::value)
 	{
@@ -211,7 +203,7 @@ bool Signal<T>::try_wait_for(const std::chrono::duration<Rep, Period>& relative_
 
 template<typename T>
 template<typename Duration>
-bool Signal<T>::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time)
+bool Signal<T>::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
 {
 	if constexpr (std::is_same<T, Semaphore>::value)
 	{
@@ -238,7 +230,7 @@ bool Signal<T>::try_wait_until(const std::chrono::time_point<std::chrono::high_r
 
 template<typename T>
 template<typename Clock, typename Duration>
-bool Signal<T>::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time)
+bool Signal<T>::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
 {
 	if constexpr (std::is_same<T, Semaphore>::value)
 	{

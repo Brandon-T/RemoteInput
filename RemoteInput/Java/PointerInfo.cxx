@@ -9,7 +9,7 @@
 #include "PointerInfo.hxx"
 #include <utility>
 
-PointerInfo::PointerInfo(JNIEnv* env, jclass cls, jobject pointerInfo) : env(env), cls(cls), pointerInfo(pointerInfo)
+PointerInfo::PointerInfo(JNIEnv* env, jclass cls, jobject pointerInfo) noexcept : env(env), cls(cls), pointerInfo(pointerInfo)
 {
 	if (!this->cls)
 	{
@@ -20,7 +20,7 @@ PointerInfo::PointerInfo(JNIEnv* env, jclass cls, jobject pointerInfo) : env(env
 	env->DeleteLocalRef(std::exchange(this->pointerInfo, env->NewGlobalRef(this->pointerInfo)));
 }
 
-PointerInfo::~PointerInfo()
+PointerInfo::~PointerInfo() noexcept
 {
 	if (cls)
 	{
@@ -33,14 +33,14 @@ PointerInfo::~PointerInfo()
 	}
 }
 
-PointerInfo::PointerInfo(PointerInfo&& other) : env(other.env), cls(other.cls), pointerInfo(other.pointerInfo)
+PointerInfo::PointerInfo(PointerInfo&& other) noexcept : env(other.env), cls(other.cls), pointerInfo(other.pointerInfo)
 {
 	other.env = nullptr;
 	other.cls = nullptr;
 	other.pointerInfo = nullptr;
 }
 
-PointerInfo& PointerInfo::operator = (PointerInfo&& other)
+PointerInfo& PointerInfo::operator = (PointerInfo&& other) noexcept
 {
 	this->env = other.env;
 	this->cls = other.cls;
@@ -51,7 +51,7 @@ PointerInfo& PointerInfo::operator = (PointerInfo&& other)
 	return *this;
 }
 
-PointerInfo PointerInfo::getPointerInfo(JNIEnv* env)
+PointerInfo PointerInfo::getPointerInfo(JNIEnv* env) noexcept
 {
 	jclass cls = env->FindClass("java/awt/MouseInfo");
 	static jmethodID methodId = env->GetStaticMethodID(cls, "getPointerInfo", "()Ljava/awt/PointerInfo;");
@@ -59,7 +59,7 @@ PointerInfo PointerInfo::getPointerInfo(JNIEnv* env)
 	return PointerInfo{env, cls, pointerInfo};
 }
 
-void PointerInfo::getLocation(std::int32_t &x, std::int32_t &y)
+void PointerInfo::getLocation(std::int32_t &x, std::int32_t &y) const noexcept
 {
 	jclass pointInfoClass = env->FindClass("java/awt/PointerInfo");
 	static jmethodID methodId = env->GetMethodID(pointInfoClass, "getLocation", "()Ljava/awt/Point;");
@@ -84,7 +84,7 @@ void PointerInfo::getLocation(std::int32_t &x, std::int32_t &y)
 	}
 }
 
-void PointerInfo::PointToScreen(JNIEnv* env, std::int32_t &x, std::int32_t &y, Component* component)
+void PointerInfo::PointToScreen(JNIEnv* env, std::int32_t &x, std::int32_t &y, Component* component) noexcept
 {
 //	jclass swingUtilitiesClass = env->FindClass("javax/swing/SwingUtilities");
 //	static jmethodID methodId = env->GetMethodID(cls, "convertPointFromScreen", "(Ljava/awt/Point;Ljava/awt/Component)");

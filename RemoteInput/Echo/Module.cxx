@@ -9,17 +9,17 @@
 #include "Module.hxx"
 
 #if defined _WIN32 || defined _WIN64
-Module::Module(const char* path) : module(static_cast<void*>(LoadLibraryA(path))) {}
-Module::Module(const wchar_t* path) : module(static_cast<void*>(LoadLibraryW(path))) {}
+Module::Module(const char* path) noexcept : module(static_cast<void*>(LoadLibraryA(path))) {}
+Module::Module(const wchar_t* path) noexcept : module(static_cast<void*>(LoadLibraryW(path))) {}
 
-Module::~Module() {FreeLibrary(static_cast<HMODULE>(module));}
+Module::~Module() noexcept {FreeLibrary(static_cast<HMODULE>(module));}
 #else
-Module::Module(const char* path) : module(dlopen(path, RTLD_LAZY | RTLD_GLOBAL)) {}
-Module::Module(const wchar_t* path) : module(nullptr)
+Module::Module(const char* path) noexcept : module(dlopen(path, RTLD_LAZY | RTLD_GLOBAL)) {}
+Module::Module(const wchar_t* path) noexcept : module(nullptr)
 {
     std::string utf8 = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(path);
     module = dlopen(utf8.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 }
 
-Module::~Module() {dlclose(module);}
+Module::~Module() noexcept {dlclose(module);}
 #endif

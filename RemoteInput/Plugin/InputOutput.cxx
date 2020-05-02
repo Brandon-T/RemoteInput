@@ -90,7 +90,7 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
+InputOutput::InputOutput(Reflection* reflector) noexcept : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
 {
 	x = std::numeric_limits<std::int32_t>::min();
 	y = std::numeric_limits<std::int32_t>::min();
@@ -143,18 +143,18 @@ InputOutput::InputOutput(Reflection* reflector) : vm(reflector->getVM()->getVM()
     #endif
 }
 
-InputOutput::~InputOutput()
+InputOutput::~InputOutput() noexcept
 {
     this->input_thread.terminate();
     this->vm = nullptr;
     this->applet = nullptr;
 }
 
-void InputOutput::handle_resize(Component* component)
+void InputOutput::handle_resize(Component* component) noexcept
 {
 	component->getSize(this->w, this->h);
 
-	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
+	/*bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 	if (isMouseInsideComponent)
 	{
 		component->getMousePosition(this->x, this->y);
@@ -163,14 +163,24 @@ void InputOutput::handle_resize(Component* component)
 		{
 			JNIEnv* env = component->getEnv();
 
+			std::int32_t x = this->x;
+			std::int32_t y = this->y;
+
 			PointerInfo info = PointerInfo::getPointerInfo(env);
-			info.getLocation(this->x, this->y);
-			info.PointToScreen(env, this->x, this->y,component);
+			info.getLocation(x, y);
+			info.PointToScreen(env, x, y,component);
+
+            isMouseInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+            if (isMouseInsideComponent)
+            {
+                this->x = x;
+                this->y = y;
+            }
 		}
-	}
+	}*/
 }
 
-void InputOutput::hold_key(std::int32_t code)
+void InputOutput::hold_key(std::int32_t code) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -368,7 +378,7 @@ void InputOutput::hold_key(std::int32_t code)
 	}
 }
 
-void InputOutput::release_key(std::int32_t code)
+void InputOutput::release_key(std::int32_t code) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -449,19 +459,19 @@ void InputOutput::release_key(std::int32_t code)
 	}
 }
 
-bool InputOutput::is_key_held(std::int32_t code)
+bool InputOutput::is_key_held(std::int32_t code) const noexcept
 {
 	return std::find(std::begin(held_keys), std::end(held_keys), code) != std::end(held_keys);
 }
 
-bool InputOutput::any_key_held(std::array<std::int32_t, 4>&& keys)
+bool InputOutput::any_key_held(std::array<std::int32_t, 4>&& keys) const noexcept
 {
 	return std::any_of(std::cbegin(held_keys), std::cend(held_keys), [&](std::int32_t key){
 		return std::find(std::cbegin(keys), std::cend(keys), key) != std::cend(keys);
 	});
 }
 
-void InputOutput::send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait)
+void InputOutput::send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait) const noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -579,7 +589,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 	}
 }
 
-bool InputOutput::has_focus()
+bool InputOutput::has_focus() const noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -591,12 +601,12 @@ bool InputOutput::has_focus()
 	return component.hasFocus();
 }
 
-bool InputOutput::has_focus(Component* component)
+bool InputOutput::has_focus(Component* component) const noexcept
 {
 	return component->hasFocus();
 }
 
-void InputOutput::gain_focus()
+void InputOutput::gain_focus() const noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -608,12 +618,12 @@ void InputOutput::gain_focus()
 	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
 }
 
-void InputOutput::gain_focus(Component* component)
+void InputOutput::gain_focus(Component* component) const noexcept
 {
 	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
 }
 
-void InputOutput::lose_focus()
+void InputOutput::lose_focus() const noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -625,7 +635,7 @@ void InputOutput::lose_focus()
 	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
 }
 
-bool InputOutput::is_input_enabled()
+bool InputOutput::is_input_enabled() const noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -636,7 +646,7 @@ bool InputOutput::is_input_enabled()
 	return control_center->reflect_applet().isEnabled();
 }
 
-void InputOutput::set_input_enabled(bool enabled)
+void InputOutput::set_input_enabled(bool enabled) const noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -647,32 +657,32 @@ void InputOutput::set_input_enabled(bool enabled)
 	control_center->reflect_applet().setEnabled(enabled);
 }
 
-std::int32_t InputOutput::get_keyboard_speed()
+std::int32_t InputOutput::get_keyboard_speed() const noexcept
 {
     return this->keyboard_speed;
 }
 
-void InputOutput::set_keyboard_speed(std::int32_t speed)
+void InputOutput::set_keyboard_speed(std::int32_t speed) noexcept
 {
     this->keyboard_speed = speed;
 }
 
-std::int32_t InputOutput::get_keyboard_repeat_delay()
+std::int32_t InputOutput::get_keyboard_repeat_delay() const noexcept
 {
     return this->keyboard_repeat_delay;
 }
 
-void InputOutput::set_keyboard_repeat_delay(std::int32_t delay)
+void InputOutput::set_keyboard_repeat_delay(std::int32_t delay) noexcept
 {
     this->keyboard_repeat_delay = delay;
 }
 
-void InputOutput::lose_focus(Component* component)
+void InputOutput::lose_focus(Component* component) const noexcept
 {
 	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
 }
 
-void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
+void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -691,9 +701,15 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 			Component receiver = control_center->reflect_canvas();
 			JNIEnv* env = receiver.getEnv();
 
+			std::int32_t x = this->x;
+			std::int32_t y = this->y;
+
 			PointerInfo info = PointerInfo::getPointerInfo(env);
-			info.getLocation(this->x, this->y);
-			info.PointToScreen(env, this->x, this->y, &receiver);
+			info.getLocation(x, y);
+			info.PointToScreen(env, x, y, &receiver);
+
+            this->x = x;
+            this->y = y;
 		}
 	}
 	else if (!has_focus() && !is_input_enabled())
@@ -706,7 +722,7 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y)
 	*y = this->y;
 }
 
-void InputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y)
+void InputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -722,7 +738,7 @@ void InputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y)
 	info.PointToScreen(env, *x, *y, &receiver);
 }
 
-void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
+void InputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -739,14 +755,6 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
 	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 	bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
-
-	if (isRequestedPositionInsideComponent)
-	{
-		if (!this->has_focus(&receiver))
-		{
-			this->gain_focus(&receiver);
-		}
-	}
 
 	//Button priority is 1 (left), 3 (right), 2 (middle)
 	std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
@@ -768,9 +776,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 	{
 		//MOUSE_EXITED
 		this->x = x; this->y = y;
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
-		this->lose_focus(&receiver);
 	}
 	else if (isRequestedPositionInsideComponent && isMouseInsideComponent)
 	{
@@ -794,19 +800,10 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y)
 		{
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
-        else
-        {
-            MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
-        }
-
-		if (this->has_focus(&receiver))
-		{
-			this->lose_focus(&receiver);
-		}
 	}
 }
 
-void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
+void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button) noexcept
 {
 	if (!this->is_mouse_held(button))
 	{
@@ -816,30 +813,44 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 			return;
 		}
 
-		Component receiver = control_center->reflect_canvas();
-		JNIEnv* env = receiver.getEnv();
+        Component receiver = control_center->reflect_canvas();
+        JNIEnv* env = receiver.getEnv();
 
-		if (!this->has_focus(&receiver))
-		{
-			this->gain_focus(&receiver);
-		}
+        this->x = x; this->y = y;
+        bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+		if (isRequestedPositionInsideComponent)
+        {
+            std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            //Button priority is 1 (left), 3 (right), 2 (middle)
+            mouse_buttons[SimbaMouseButtonToJava(button) - 1] = true;
+            std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
+            std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
+                                      (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
+                                      (mouse_buttons[2] ? InputEvent::GetDownMaskForButton(mouse_buttons[2]) : 0);
 
-		//Button priority is 1 (left), 3 (right), 2 (middle)
-		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = true;
-		std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
-		std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
-								  (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
-								  (mouse_buttons[2] ? InputEvent::GetDownMaskForButton(mouse_buttons[2]) : 0);
+            //Key extended masks
+            buttonMask |= GetActiveKeyModifiers();
+            MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
 
-		//Key extended masks
-		buttonMask |= GetActiveKeyModifiers();
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
+            //Gain Focus
+            if (!this->has_focus(&receiver))
+            {
+                this->gain_focus(&receiver);
+            }
+        }
+		else
+        {
+		    //Lose Focus
+		    if (this->has_focus(&receiver))
+            {
+		        this->lose_focus(&receiver);
+            }
+        }
 	}
 }
 
-void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button)
+void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button) noexcept
 {
 	if (this->is_mouse_held(button))
 	{
@@ -849,21 +860,19 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 			return;
 		}
 
+		this->x = x; this->y = y;
 		Component receiver = control_center->reflect_canvas();
 		JNIEnv* env = receiver.getEnv();
 
-		if (!this->has_focus(&receiver))
-		{
-			this->gain_focus(&receiver);
-		}
-
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-		bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
-		bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
+        bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+        bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
+        bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
 
 		//Button priority is 1 (left), 3 (right), 2 (middle)
 		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = false;
+
 		std::int32_t button = mouse_buttons[0] ? 1 : mouse_buttons[2] ? 3 : mouse_buttons[1] ? 2 : 0;
 		std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
 								  (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
@@ -871,16 +880,19 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 
 		//Key extended masks
 		buttonMask |= GetActiveKeyModifiers();
+
+		//MOUSE_RELEASED
 		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, x, y, click_count, false, button);
 
-		if (isRequestedPositionInsideComponent && isMouseInsideComponent)
+		if (!isDragging && isRequestedPositionInsideComponent && isMouseInsideComponent)
 		{
+		    //MOUSE_CLICKED
 			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, x, y, click_count, false, button);
 		}
 	}
 }
 
-void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines)
+void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines) noexcept
 {
 	extern std::unique_ptr<ControlCenter> control_center;
 	if (!control_center)
@@ -891,16 +903,13 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
 
-	if (!this->has_focus(&receiver))
-	{
-		this->gain_focus(&receiver);
-	}
-
 	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
 	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 
 	if (isRequestedPositionInsideComponent && isMouseInsideComponent)
 	{
+	    this->x = x; this->y = y;
+	    //Relative Mouse Position
 		std::int32_t cx = 0;
 		std::int32_t cy = 0;
 		receiver.getLocationOnScreen(cx, cy);
@@ -937,7 +946,7 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 	}
 }
 
-bool InputOutput::is_mouse_held(std::int32_t button)
+bool InputOutput::is_mouse_held(std::int32_t button) const noexcept
 {
 	switch (button)
 	{
@@ -948,7 +957,7 @@ bool InputOutput::is_mouse_held(std::int32_t button)
 	}
 }
 
-jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers)
+jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers) const noexcept
 {
 	static const std::int32_t mapping[256] = { //char16_t
 		0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -997,7 +1006,7 @@ jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifi
 	return static_cast<jchar>(mapping[keycode]);
 }
 
-std::int32_t InputOutput::CharToJavaKeyCode(char c)
+std::int32_t InputOutput::CharToJavaKeyCode(char c) const noexcept
 {
 	//Convert char to Java VK-Codes
 	//0x00 and 0xFF are not type-able characters..
@@ -1038,7 +1047,7 @@ std::int32_t InputOutput::CharToJavaKeyCode(char c)
 	return mapping[static_cast<std::int32_t>(c)];
 }
 
-std::int32_t InputOutput::GetJavaKeyCode(std::int32_t native_key_code)
+std::int32_t InputOutput::GetJavaKeyCode(std::int32_t native_key_code) const noexcept
 {
 	//Convert WinAPI VK-Codes to Java VK-Codes
 	//0x00 and 0xFF are not type-able characters..
@@ -1079,7 +1088,7 @@ std::int32_t InputOutput::GetJavaKeyCode(std::int32_t native_key_code)
 	return windows_mapping[native_key_code];
 }
 
-std::int32_t InputOutput::GetKeyLocation(std::int32_t keycode)
+std::int32_t InputOutput::GetKeyLocation(std::int32_t keycode) const noexcept
 {
 	if (std::find(std::begin(control_keys), std::end(control_keys), keycode) != std::end(control_keys))
 	{
@@ -1088,7 +1097,7 @@ std::int32_t InputOutput::GetKeyLocation(std::int32_t keycode)
 	return KeyEvent::KeyCodes::KEY_LOCATION_STANDARD;
 }
 
-std::int32_t InputOutput::GetActiveKeyModifiers()
+std::int32_t InputOutput::GetActiveKeyModifiers() const noexcept
 {
 	std::int32_t modifiers = 0;
 
@@ -1120,7 +1129,7 @@ std::int32_t InputOutput::GetActiveKeyModifiers()
 	return modifiers;
 }
 
-std::int32_t InputOutput::ModifiersForChar(char c)
+std::int32_t InputOutput::ModifiersForChar(char c) const noexcept
 {
 	std::int32_t modifiers = 0;
 	static const std::string shift_chars = "~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?";
@@ -1131,14 +1140,14 @@ std::int32_t InputOutput::ModifiersForChar(char c)
 	return modifiers;
 }
 
-std::int32_t InputOutput::SimbaMouseButtonToJava(std::int32_t button)
+std::int32_t InputOutput::SimbaMouseButtonToJava(std::int32_t button) const noexcept
 {
 	//Java Button priority is 1 (left), 3 (right), 2 (middle)
 	//Simba Button priority is 1 (left), 0 (right), 2 (middle)
 	return button == 1 ? 1 : button == 0 ? 3 : button == 2 ? 2 : button;
 }
 
-void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::int32_t &width, std::int32_t &height)
+void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::size_t &width, std::size_t &height) const noexcept
 {
 	JNIEnv* env = nullptr;
 	if (this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr) == JNI_OK)
@@ -1147,14 +1156,18 @@ void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::i
 		//Component receiver = applet.getComponent(0);
 
 		receiver.getLocation(x, y);
-		receiver.getSize(this->w, this->h);
+		receiver.getSize(width, height);
 	}
-
-	width = static_cast<std::int32_t>(this->w);
-	height = static_cast<std::int32_t>(this->h);
+	else
+    {
+	    x = -1;
+	    y = -1;
+        width = static_cast<std::int32_t>(this->w);
+        height = static_cast<std::int32_t>(this->h);
+    }
 }
 
-void InputOutput::get_applet_mouse_position(std::int32_t &x, std::int32_t &y)
+void InputOutput::get_applet_mouse_position(std::int32_t &x, std::int32_t &y) const noexcept
 {
 	x = this->x;
 	y = this->y;

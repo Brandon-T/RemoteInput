@@ -9,7 +9,7 @@
 #include "MouseEvent.hxx"
 #include <utility>
 
-MouseEvent::MouseEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button) : AWTEvent(), env(env), cls(nullptr)
+MouseEvent::MouseEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button) noexcept : AWTEvent(), env(env), cls(nullptr)
 {
 	this->cls = env->FindClass("java/awt/event/MouseEvent");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
@@ -19,13 +19,13 @@ MouseEvent::MouseEvent(JNIEnv* env, Component* source, std::int32_t id, std::int
 	env->DeleteLocalRef(std::exchange(self, static_cast<jclass>(env->NewGlobalRef(self))));
 }
 
-MouseEvent::~MouseEvent()
+MouseEvent::~MouseEvent() noexcept
 {
 	env->DeleteGlobalRef(cls);
 	env->DeleteGlobalRef(self);
 }
 	
-void MouseEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated)
+void MouseEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/MouseEvent");
 	if (cls)
@@ -58,7 +58,7 @@ void MouseEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, s
 	}
 }
 
-void MouseEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated)
+void MouseEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/MouseEvent");
 	if (cls)

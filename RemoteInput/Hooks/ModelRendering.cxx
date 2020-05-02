@@ -6,11 +6,14 @@
 //  Copyright © 2019 XIO. All rights reserved.
 //
 
-#include "ModelRendering.hpp"
+#include "ModelRendering.hxx"
+
+#if defined(DEBUG)
 #include "Hooks.hpp"
 #include "ReflectionHook.hxx"
 #include "ControlCenter.hxx"
 #include <mutex>
+
 
 template<typename T>
 T ReadPointer(void* &ptr)
@@ -1294,3 +1297,4 @@ void draw_player(std::function<void(Polygon* p, std::int32_t width, std::int32_t
 //
 //	DrawLine2(xpoints[size + 1], ypoints[size + 1], xpoints[0], ypoints[0], plot);
 //}
+#endif

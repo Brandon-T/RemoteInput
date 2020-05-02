@@ -2,8 +2,8 @@
 // Created by brandon on 2020-04-06.
 //
 
-#ifndef THIRDPARTY_MAIN_HXX
-#define THIRDPARTY_MAIN_HXX
+#ifndef HOOK_HXX
+#define HOOK_HXX
 
 #include <utility>
 #include <cstdint>
@@ -45,11 +45,4 @@ R Hook::call( Args... args)
 #endif
 }
 
-
-class Injector
-{
-public:
-    static bool Inject(std::string module_path, pid_t pid, void* bootstrap);
-};
-
-#endif //THIRDPARTY_MAIN_HXX
+#endif //HOOK_HXX

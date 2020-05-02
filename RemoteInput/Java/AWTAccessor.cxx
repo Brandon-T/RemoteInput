@@ -9,7 +9,7 @@
 #include "AWTAccessor.hxx"
 #include <utility>
 
-AWTAccessor::AWTAccessor(JNIEnv* env, jclass cls, jobject accessor) : env(env), cls(cls), accessor(accessor)
+AWTAccessor::AWTAccessor(JNIEnv* env, jclass cls, jobject accessor) noexcept : env(env), cls(cls), accessor(accessor)
 {
 	if (!this->cls)
 	{
@@ -20,7 +20,7 @@ AWTAccessor::AWTAccessor(JNIEnv* env, jclass cls, jobject accessor) : env(env), 
 	env->DeleteLocalRef(std::exchange(this->accessor, env->NewGlobalRef(this->accessor)));
 }
 
-AWTAccessor::~AWTAccessor()
+AWTAccessor::~AWTAccessor() noexcept
 {
 	if (cls)
 	{
@@ -33,14 +33,14 @@ AWTAccessor::~AWTAccessor()
 	}
 }
 
-AWTAccessor::AWTAccessor(AWTAccessor&& other) : env(other.env), cls(other.cls), accessor(other.accessor)
+AWTAccessor::AWTAccessor(AWTAccessor&& other) noexcept : env(other.env), cls(other.cls), accessor(other.accessor)
 {
 	other.env = nullptr;
 	other.cls = nullptr;
 	other.accessor = nullptr;
 }
 
-AWTAccessor& AWTAccessor::operator = (AWTAccessor&& other)
+AWTAccessor& AWTAccessor::operator = (AWTAccessor&& other) noexcept
 {
 	this->env = other.env;
 	this->cls = other.cls;
@@ -51,7 +51,7 @@ AWTAccessor& AWTAccessor::operator = (AWTAccessor&& other)
 	return *this;
 }
 
-AWTEventAccessor AWTAccessor::getAWTEventAccessor(JNIEnv* env)
+AWTEventAccessor AWTAccessor::getAWTEventAccessor(JNIEnv* env) noexcept
 {
 	jclass cls = env->FindClass("sun/awt/AWTEventAccessor");
 	static jmethodID methodId = env->GetStaticMethodID(cls, "getAWTEventAccessor", "()Lsun/awt/AWTEventAccessor;");

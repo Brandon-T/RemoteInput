@@ -73,8 +73,8 @@ ENDIF()
 
 set(SRC_LIST
         ${LIB_SRC_LIST}
-        main.hxx
-        main.cxx)
+        Hook.hxx
+        Hook.cxx)
 
 
 # ---------------------------- COMPILE ----------------------------

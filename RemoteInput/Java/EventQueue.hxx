@@ -20,15 +20,15 @@ private:
 	jobject queue;
 	
 public:
-	EventQueue(JNIEnv* env, jclass cls, jobject queue);
-	EventQueue(EventQueue&& other);
+	EventQueue(JNIEnv* env, jclass cls, jobject queue) noexcept;
+	EventQueue(EventQueue&& other) noexcept;
 	EventQueue(const EventQueue& other) = delete;
-	~EventQueue();
+	~EventQueue() noexcept;
 	
-	EventQueue& operator = (EventQueue&& other);
+	EventQueue& operator = (EventQueue&& other) noexcept;
 	EventQueue& operator = (const EventQueue& other) = delete;
 	
-	void postEvent(AWTEvent* event);
+	void postEvent(AWTEvent* event) const noexcept;
 };
 
 #endif /* EventQueue_HXX_INCLUDED */

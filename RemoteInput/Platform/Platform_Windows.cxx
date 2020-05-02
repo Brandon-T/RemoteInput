@@ -1,7 +1,8 @@
 #include "Platform.hxx"
 #include <string>
 #include <chrono>
-#include "Thirdparty/main.hxx"
+#include "Thirdparty/Hook.hxx"
+#include "Injection/Injector.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -9,7 +10,7 @@
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
-void GetDesktopResolution(int &width, int &height)
+void GetDesktopResolution(int &width, int &height) noexcept
 {
     RECT desktop = {0};
     const HWND hDesktop = GetDesktopWindow();
@@ -18,12 +19,12 @@ void GetDesktopResolution(int &width, int &height)
     height = desktop.bottom;
 }
 
-std::int32_t GetCurrentThreadID()
+std::int32_t GetCurrentThreadID() noexcept
 {
 	return GetCurrentThreadId();
 }
 
-bool IsProcessAlive(pid_t pid)
+bool IsProcessAlive(pid_t pid) noexcept
 {
 	HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
 	if (process)
@@ -35,7 +36,7 @@ bool IsProcessAlive(pid_t pid)
     return false;
 }
 
-bool IsThreadAlive(std::int32_t tid)
+bool IsThreadAlive(std::int32_t tid) noexcept
 {
     HANDLE thread = OpenThread(SYNCHRONIZE, FALSE, tid);
     if (thread)
@@ -47,7 +48,7 @@ bool IsThreadAlive(std::int32_t tid)
     return false;
 }
 
-std::vector<pid_t> get_pids()
+std::vector<pid_t> get_pids() noexcept
 {
 	std::vector<pid_t> result;
 	PROCESSENTRY32 processInfo = {0};
@@ -70,7 +71,7 @@ std::vector<pid_t> get_pids()
 	return result;
 }
 
-std::vector<pid_t> get_pids(const char* process_name)
+std::vector<pid_t> get_pids(const char* process_name) noexcept
 {
 	std::vector<pid_t> result;
 	PROCESSENTRY32 processInfo = {0};
@@ -100,7 +101,7 @@ std::vector<pid_t> get_pids(const char* process_name)
 	return result;
 }
 
-PROCESSENTRY32 GetProcessInfo(pid_t pid)
+PROCESSENTRY32 GetProcessInfo(pid_t pid) noexcept
 {
     HANDLE processesSnapshot = nullptr;
     if((processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)) == INVALID_HANDLE_VALUE)
@@ -122,7 +123,7 @@ PROCESSENTRY32 GetProcessInfo(pid_t pid)
     return {0};
 }
 
-MODULEENTRY32 GetModuleInfo(pid_t pid, const char* module_name)
+MODULEENTRY32 GetModuleInfo(pid_t pid, const char* module_name) noexcept
 {
 	HANDLE modulesSnapshot = nullptr;
 	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
@@ -145,7 +146,7 @@ MODULEENTRY32 GetModuleInfo(pid_t pid, const char* module_name)
 	return {0};
 }
 
-MODULEENTRY32 GetModuleInfo(pid_t pid, HMODULE module_handle)
+MODULEENTRY32 GetModuleInfo(pid_t pid, HMODULE module_handle) noexcept
 {
 	HANDLE modulesSnapshot = nullptr;
 	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
@@ -168,7 +169,7 @@ MODULEENTRY32 GetModuleInfo(pid_t pid, HMODULE module_handle)
 	return {0};
 }
 
-void PrintProcessInfo(pid_t pid)
+void PrintProcessInfo(pid_t pid) noexcept
 {
     PROCESSENTRY32 Proc32 = GetProcessInfo(pid);
     if (Proc32.th32ProcessID != 0)
@@ -184,7 +185,7 @@ void PrintProcessInfo(pid_t pid)
     }
 }
 
-bool InjectSelf(pid_t pid)
+bool InjectSelf(pid_t pid) noexcept
 {
     if (IsProcessAlive(pid))
     {
@@ -202,7 +203,7 @@ bool InjectSelf(pid_t pid)
     return false;
 }
 
-pid_t InjectProcess(pid_t pid)
+pid_t InjectProcess(pid_t pid) noexcept
 {
     extern HMODULE module;
 	MODULEENTRY32 info = GetModuleInfo(pid, module);
@@ -216,7 +217,7 @@ pid_t InjectProcess(pid_t pid)
 	return -1;
 }
 
-std::vector<pid_t> InjectProcesses(const char* process_name)
+std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
 {
 	std::vector<pid_t> result;
     std::vector<pid_t> pids = get_pids(process_name);
@@ -230,7 +231,7 @@ std::vector<pid_t> InjectProcesses(const char* process_name)
 	return result;
 }
 
-pid_t PIDFromWindow(void* window)
+pid_t PIDFromWindow(void* window) noexcept
 {
     DWORD pid = 0;
     GetWindowThreadProcessId(static_cast<HWND>(window), &pid);
@@ -239,7 +240,7 @@ pid_t PIDFromWindow(void* window)
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) noexcept
 {
     DWORD pid = 0;
     GetWindowThreadProcessId(hwnd, &pid);
@@ -256,7 +257,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
     return TRUE;
 }
 
-Reflection* GetNativeReflector()
+Reflection* GetNativeReflector() noexcept
 {
     auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
 		auto start = std::chrono::high_resolution_clock::now();

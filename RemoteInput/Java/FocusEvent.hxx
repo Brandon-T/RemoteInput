@@ -21,14 +21,14 @@ public:
 private:
 	JNIEnv* env;
 	jclass cls;
-	static jobject GetCauseDescription(JNIEnv* env, Cause cause);
+	static jobject GetCauseDescription(JNIEnv* env, Cause cause) noexcept;
 
 public:
-	FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause);
-	~FocusEvent();
+	FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause) noexcept;
+	~FocusEvent() noexcept;
 
-	static void Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false);
-	static void Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false);
+	static void Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;
+	static void Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;
 
 	#warning "WINDOWS BS"
 	#if defined(MOUSE_EVENT) && (defined(_WIN32) || defined(_WIN64))

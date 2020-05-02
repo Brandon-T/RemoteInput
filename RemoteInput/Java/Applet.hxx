@@ -15,9 +15,9 @@
 class Applet final : public Component
 {
 public:
-	Applet(JNIEnv* env, jobject applet, bool canDelete = true);
+	Applet(JNIEnv* env, jobject applet, bool canDelete = true) noexcept;
 	
-	Component getComponent(std::int32_t index);
+	Component getComponent(std::int32_t index) const noexcept;
 };
 
 #endif /* APPLET_HXX_INCLUDED */

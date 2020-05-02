@@ -36,7 +36,7 @@ public:
      * @param path const char* Path to the module to be loaded.
      *
      ***********************************************/
-    Module(const char* path);
+    Module(const char* path) noexcept;
 
 
     /********************************************//**
@@ -45,13 +45,13 @@ public:
      * @param path const wchar_t* Path to the module to be loaded.
      *
      ***********************************************/
-    Module(const wchar_t* path);
+    Module(const wchar_t* path) noexcept;
 
 
     /********************************************//**
      * @brief Releases the module.
      ***********************************************/
-    ~Module();
+    ~Module() noexcept;
 
 
 
@@ -70,7 +70,7 @@ public:
      * @param other.module - Module to be moved into this container.
      *
      ***********************************************/
-    Module(Module&& other) : module(other.module) {other.module = nullptr;}
+    Module(Module&& other) noexcept : module(other.module) {other.module = nullptr;}
 
 
     /********************************************//**
@@ -79,7 +79,7 @@ public:
      * @return void* - Handle to the underlying module.
      *
      ***********************************************/
-    explicit operator void*() const {return module;}
+    explicit operator void*() const noexcept {return module;}
 
 
     /********************************************//**
@@ -88,7 +88,7 @@ public:
      * @return bool - Boolean indicating whether the module was loaded successfully.
      *
      ***********************************************/
-    explicit operator bool() const {return module != nullptr;}
+    explicit operator bool() const noexcept {return module != nullptr;}
 
 
     /********************************************//**
@@ -97,7 +97,7 @@ public:
      * @return bool - Boolean indicating whether the module was loaded successfully.
      *
      ***********************************************/
-    bool IsLoaded() const {return module != nullptr;}
+    bool IsLoaded() const noexcept {return module != nullptr;}
 
 
     /********************************************//**
@@ -108,7 +108,7 @@ public:
      *
      ***********************************************/
     template<typename T>
-    T AddressOf(const std::string &FunctionName);
+    T AddressOf(const std::string &FunctionName) const noexcept;
 
 
     /********************************************//**
@@ -120,7 +120,7 @@ public:
      *
      ***********************************************/
     template<typename T>
-    bool AddressOf(T &FunctionDefinition, const std::string &FunctionName);
+    bool AddressOf(T &FunctionDefinition, const std::string &FunctionName) const noexcept;
 
 
     /********************************************//**
@@ -133,7 +133,7 @@ public:
      *
      ***********************************************/
     template<typename... Args>
-    void Call(void* func, Args... args);
+    void Call(void* func, Args... args) const noexcept;
 
 
     /********************************************//**
@@ -147,12 +147,12 @@ public:
      *
      ***********************************************/
     template<typename R, typename... Args>
-    R Call(void* func, Args... args);
+    R Call(void* func, Args... args) const noexcept;
 };
 
 
 template<typename T>
-T Module::AddressOf(const std::string &Name)
+T Module::AddressOf(const std::string &Name) const noexcept
 {
     #if defined _WIN32 || defined _WIN64
     T Result = reinterpret_cast<T>(GetProcAddress(static_cast<HMODULE>(module), Name.c_str()));
@@ -163,13 +163,13 @@ T Module::AddressOf(const std::string &Name)
 }
 
 template<typename T>
-bool Module::AddressOf(T &Definition, const std::string &Name)
+bool Module::AddressOf(T &Definition, const std::string &Name) const noexcept
 {
     return (Definition = AddressOf<T>(Name));
 }
 
 template<typename... Args>
-void Module::Call(void* func, Args... args)
+void Module::Call(void* func, Args... args) const noexcept
 {
 	#if defined(_WIN32)
     return reinterpret_cast<void (__stdcall *)(Args...)>(func)(std::forward<Args>(args)...);
@@ -179,7 +179,7 @@ void Module::Call(void* func, Args... args)
 }
 
 template<typename R, typename... Args>
-R Module::Call(void* func, Args... args)
+R Module::Call(void* func, Args... args) const noexcept
 {
 	#if defined(_WIN32)
     return reinterpret_cast<R(__stdcall *)(Args...)>(func)(std::forward<Args>(args)...);

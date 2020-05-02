@@ -9,7 +9,7 @@
 #include "KeyEvent.hxx"
 #include <utility>
 
-KeyEvent::KeyEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation) : AWTEvent(), env(env), cls(nullptr)
+KeyEvent::KeyEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation) noexcept : AWTEvent(), env(env), cls(nullptr)
 {
 	this->cls = env->FindClass("java/awt/event/KeyEvent");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
@@ -19,13 +19,13 @@ KeyEvent::KeyEvent(JNIEnv* env, Component* source, std::int32_t id, std::int64_t
 	env->DeleteLocalRef(std::exchange(self, static_cast<jclass>(env->NewGlobalRef(self))));
 }
 
-KeyEvent::~KeyEvent()
+KeyEvent::~KeyEvent() noexcept
 {
 	env->DeleteGlobalRef(cls);
 	env->DeleteGlobalRef(self);
 }
 
-void KeyEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation, bool is_system_generated)
+void KeyEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/KeyEvent");
 	if (cls)
@@ -58,7 +58,7 @@ void KeyEvent::Dispatch(JNIEnv* env, Component* receiver, Component* source, std
 	}
 }
 
-void KeyEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation, bool is_system_generated)
+void KeyEvent::Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t keyCode, jchar keyChar, std::int32_t keyLocation, bool is_system_generated) noexcept
 {
 	jclass cls = env->FindClass("java/awt/event/KeyEvent");
 	if (cls)

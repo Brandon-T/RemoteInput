@@ -12,7 +12,8 @@ extern "C" {
 }
 #endif
 
-#include <Thirdparty/main.hxx>
+#include <Thirdparty/Hook.hxx>
+#include <Injection/Injector.hxx>
 #include <signal.h>
 #include <libproc.h>
 #include <sys/syscall.h>
@@ -20,7 +21,7 @@ extern "C" {
 #endif // defined
 
 #if defined(__APPLE__)
-void GetDesktopResolution(int &width, int &height)
+void GetDesktopResolution(int &width, int &height) noexcept
 {
 	auto get_screen_resolution = [&]{
 		NSRect frame = [[NSScreen mainScreen] frame];
@@ -38,7 +39,7 @@ void GetDesktopResolution(int &width, int &height)
 	get_screen_resolution();
 }
 
-std::int32_t GetCurrentThreadID()
+std::int32_t GetCurrentThreadID() noexcept
 {
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -46,17 +47,17 @@ std::int32_t GetCurrentThreadID()
 	#pragma clang diagnostic pop
 }
 
-bool IsProcessAlive(pid_t pid)
+bool IsProcessAlive(pid_t pid) noexcept
 {
 	return !kill(pid, 0);
 }
 
-bool IsThreadAlive(std::int32_t tid)
+bool IsThreadAlive(std::int32_t tid) noexcept
 {
     return !kill(tid, 0);
 }
 
-std::vector<pid_t> get_pids()
+std::vector<pid_t> get_pids() noexcept
 {
 	std::vector<pid_t> pids(2048);
 	pids.resize(proc_listpids(PROC_ALL_PIDS, 0, &pids[0], 2048 * sizeof(pid_t)) / sizeof(pid_t));
@@ -64,7 +65,7 @@ std::vector<pid_t> get_pids()
 	return pids;
 }
 
-std::vector<pid_t> get_pids(const char* process_name)
+std::vector<pid_t> get_pids(const char* process_name) noexcept
 {
 	std::vector<pid_t> result;
 	std::vector<pid_t> pids = get_pids();
@@ -83,23 +84,24 @@ std::vector<pid_t> get_pids(const char* process_name)
 	return result;
 }
 
-pid_t InjectProcess(pid_t pid)
+pid_t InjectProcess(pid_t pid) noexcept
 {
 	Dl_info info = {0};
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
 	{
 		char path[256] = {0};
-		realpath(info.dli_fname, path);
-
-		if (Injector::Inject(info.dli_fname, pid, nullptr))
-        {
-		    return pid;
+		if (realpath(info.dli_fname, path))
+		{
+            if (Injector::Inject(info.dli_fname, pid, nullptr))
+            {
+                return pid;
+            }
         }
     }
 	return -1;
 }
 
-std::vector<pid_t> InjectProcesses(const char* process_name)
+std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
 {
 	std::vector<pid_t> result;
     std::vector<pid_t> pids = get_pids(process_name);
@@ -113,7 +115,7 @@ std::vector<pid_t> InjectProcesses(const char* process_name)
 	return result;
 }
 
-pid_t PIDFromWindow(void* window)
+pid_t PIDFromWindow(void* window) noexcept
 {
     NSArray *windowList = (NSArray *)CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID));
 	
@@ -128,7 +130,7 @@ pid_t PIDFromWindow(void* window)
 	return 0;
 }
 
-void* GetModuleHandle(const char* module_name)
+void* GetModuleHandle(const char* module_name) noexcept
 {
 	std::uint32_t count = _dyld_image_count();
 	for (std::uint32_t i = 0; i < count; ++i)
@@ -183,7 +185,7 @@ void* GetModuleHandle(const char* module_name)
 - (jobject)awtComponent:(JNIEnv*)env;
 @end
 
-Reflection* GetNativeReflector()
+Reflection* GetNativeReflector() noexcept
 {
 //	auto ModuleLoaded = [](std::string name) -> bool {
 //		void* lib = dlopen(name.c_str(), RTLD_GLOBAL | RTLD_NOLOAD);
@@ -268,13 +270,18 @@ Reflection* GetNativeReflector()
 	return nullptr;
 }
 
-void disable_app_nap()
+void disable_app_nap() noexcept
 {
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		dispatch_async(dispatch_get_main_queue(), ^{
-			static NSObject* app_nap_token = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep | NSActivityLatencyCritical reason:@"No nappy time"];
+			static NSObject* app_nap_token __attribute__((used)) = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep | NSActivityLatencyCritical reason:@"No nappy time"];
+
+			#if defined(DEBUG)
 			printf("Disable App-Nap: %p\n", app_nap_token);
+            #else
+            (void)app_nap_token;
+		    #endif
 		});
 	});
 }

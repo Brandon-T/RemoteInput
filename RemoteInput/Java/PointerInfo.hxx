@@ -19,21 +19,21 @@ private:
 	jclass cls;
 	jobject pointerInfo;
 	
-	PointerInfo(JNIEnv* env, jclass cls, jobject pointerInfo);
+	PointerInfo(JNIEnv* env, jclass cls, jobject pointerInfo) noexcept;
 	
 public:
-	PointerInfo(PointerInfo&& other);
+	PointerInfo(PointerInfo&& other) noexcept;
 	PointerInfo(const PointerInfo& other) = delete;
-	~PointerInfo();
+	~PointerInfo() noexcept;
 	
-	PointerInfo& operator = (PointerInfo&& other);
+	PointerInfo& operator = (PointerInfo&& other) noexcept;
 	PointerInfo& operator = (const PointerInfo& other) = delete;
 	
-	static PointerInfo getPointerInfo(JNIEnv* env);
+	static PointerInfo getPointerInfo(JNIEnv* env) noexcept;
 	
-	void getLocation(std::int32_t &x, std::int32_t &y);
+	void getLocation(std::int32_t &x, std::int32_t &y) const noexcept;
 	
-	static void PointToScreen(JNIEnv* env, std::int32_t &x, std::int32_t &y, Component* component);
+	static void PointToScreen(JNIEnv* env, std::int32_t &x, std::int32_t &y, Component* component) noexcept;
 };
 
 #endif /* PointerInfo_HXX_INCLUDED */
