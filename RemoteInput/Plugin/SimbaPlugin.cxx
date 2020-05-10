@@ -777,7 +777,6 @@ void Pascal_GetClientPID(void** Params, void** Result) noexcept
 
 void Pascal_Inject(void** Params, void** Result) noexcept
 {
-	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
     const char* process_name = PascalRead<const char*>(Params[0]);
     if (process_name)
     {
@@ -788,12 +787,10 @@ void Pascal_Inject(void** Params, void** Result) noexcept
 			ControlCenter::wait_for_sync(pid);
 		}
     }
-	#endif
 }
 
 void Pascal_Inject_PID(void** Params, void** Result) noexcept
 {
-	#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
     pid_t pid = PascalRead<pid_t>(Params[0]);
     if (pid)
     {
@@ -803,7 +800,6 @@ void Pascal_Inject_PID(void** Params, void** Result) noexcept
 			ControlCenter::wait_for_sync(pid);
 		}
     }
-	#endif
 }
 
 void Pascal_HasFocus(void** Params, void** Result) noexcept

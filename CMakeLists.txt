@@ -68,7 +68,8 @@ ELSE()
             dl
             pthread
             GL
-            rt)
+            rt
+            X11)
 ENDIF()
 
 
@@ -241,8 +242,8 @@ ELSE()
             $<$<CONFIG:DEBUG>:-g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-static-libgcc -static-libstdc++>
-            $<$<CONFIG:RELEASE>:-s -static-libgcc -static-libstdc++>)
+            $<$<CONFIG:DEBUG>:-g> #-static-libgcc -static-libstdc++
+            $<$<CONFIG:RELEASE>:-s>) #-static-libgcc -static-libstdc++
 ENDIF()
 
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})

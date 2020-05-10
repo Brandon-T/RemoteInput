@@ -188,8 +188,8 @@ pid_t InjectProcess(pid_t pid) noexcept
 	Dl_info info = {0};
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
 	{
-		char path[256] = {0};
-		if (realpath(info.dli_fname, path))
+		std::string path = std::string(PATH_MAX, '\0');
+		if (realpath(info.dli_fname, &path[0]))
 		{
             if (Injector::Inject(info.dli_fname, pid, nullptr))
             {
@@ -411,7 +411,11 @@ pid_t PIDFromWindow(void* window) noexcept
 
 void* GetModuleHandle(const char* module_name) noexcept
 {
-    struct Module { const char* module_name; void* result; } module_info;
+    struct Module { const char* module_name; void* result; };
+	Module module_info = {0};
+	module_info.module_name = module_name;
+	module_info.result = nullptr;
+
 	dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
 		if (info)
 		{

@@ -89,8 +89,8 @@ pid_t InjectProcess(pid_t pid) noexcept
 	Dl_info info = {0};
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
 	{
-		char path[256] = {0};
-		if (realpath(info.dli_fname, path))
+		std::string path = std::string(PATH_MAX, '\0');
+		if (realpath(info.dli_fname, &path[0]))
 		{
             if (Injector::Inject(info.dli_fname, pid, nullptr))
             {

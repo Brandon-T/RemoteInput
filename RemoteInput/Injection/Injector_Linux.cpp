@@ -50,7 +50,11 @@ auto find_library = [](pid_t pid, const char* library_name) -> std::uintptr_t {
 
 auto find_symbol = [](pid_t pid, const char* library_name, void* local_symbol) -> std::uintptr_t {
     std::intptr_t remote_library_address = find_library(pid, library_name);
-    std::intptr_t local_library_address = find_library(getpid(), library_name);
+    std::intptr_t local_library_address = [local_symbol]() -> std::intptr_t {
+        Dl_info info = {0};
+        dladdr(local_symbol, &info);
+        return reinterpret_cast<std::intptr_t>(info.dli_fbase);
+    }();
 
     if (remote_library_address && local_library_address)
     {
@@ -339,6 +343,7 @@ auto remote_dlopen = [](pid_t pid, std::uintptr_t dlopen_address, std::uintptr_t
 #if defined(__linux__) && (defined(__x86_64__) || defined(__i386__))
 bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexcept
 {
+    //Get ASLR address of dlopen
     std::uintptr_t dlopen_address = find_symbol(pid, "libdl", reinterpret_cast<void*>(dlopen));
     if (!dlopen_address)
     {

@@ -121,7 +121,7 @@ EXPORT [[gnu::stdcall]] void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int
 EXPORT [[gnu::stdcall]] void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button) noexcept;
+EXPORT [[gnu::stdcall]] bool EIOS_IsMouseButtonHeld(EIOS* eios, std::int32_t button) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_HoldKey(EIOS* eios, std::int32_t key) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_ReleaseKey(EIOS* eios, std::int32_t key) noexcept;
@@ -155,7 +155,7 @@ EXPORT void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y) noexcept;
 EXPORT void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
 EXPORT void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
 EXPORT void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines) noexcept;
-EXPORT bool EIOS_IsMouseHeld(EIOS* eios, std::int32_t button) noexcept;
+EXPORT bool EIOS_IsMouseButtonHeld(EIOS* eios, std::int32_t button) noexcept;
 EXPORT void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait) noexcept;
 EXPORT void EIOS_HoldKey(EIOS* eios, std::int32_t key) noexcept;
 EXPORT void EIOS_ReleaseKey(EIOS* eios, std::int32_t key) noexcept;
