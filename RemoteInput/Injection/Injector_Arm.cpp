@@ -370,6 +370,12 @@ auto remote_dlopen = [](pid_t pid, std::uintptr_t dlopen_address, std::uintptr_t
 #if defined(__aarch64__) || defined(__arm__)
 bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexcept
 {
+    //Determine if the module is already injected
+    if (find_library(pid, basename(module_path.c_str())))
+    {
+        return false;
+    }
+
     //Get ASLR address of dlopen
     std::uintptr_t dlopen_address = find_symbol(pid, "libdl", reinterpret_cast<void*>(dlopen));
     if (!dlopen_address)

@@ -417,12 +417,12 @@ void* GetModuleHandle(const char* module_name) noexcept
 	module_info.result = nullptr;
 
 	dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
-		if (info)
+		if (info && info->dlpi_name)
 		{
 		    Module* module_info = static_cast<Module*>(data);
-			if (strcasestr(module_info->module_name, info->dlpi_name))
+			if (strcasestr(info->dlpi_name, module_info->module_name))
 			{
-				module_info->result = dlopen(info->dlpi_name, RTLD_NOLOAD);
+				module_info->result = dlopen(module_info->module_name, RTLD_NOLOAD);
 				return 1;
 			}
 		}
@@ -489,7 +489,7 @@ Reflection* GetNativeReflector() noexcept
         return nullptr;
     }
 
-    auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_NEXT, "awt_GetComponent"));
+    auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_DEFAULT, "awt_GetComponent"));
     if (!awt_GetComponent)
     {
         return nullptr;

@@ -137,9 +137,9 @@ auto find_symbol = [](mach_port_t task, mach_vm_address_t library_header_address
 
         //stackoverflow.com/a/40793165/1462718
         //stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
-        mach_vm_address_t seg_linkedit_addr = NULL;
-        mach_vm_address_t seg_text_addr = NULL;
-        mach_vm_address_t symtab_addr = NULL;
+        mach_vm_address_t seg_linkedit_addr = reinterpret_cast<mach_vm_address_t>(nullptr);
+        mach_vm_address_t seg_text_addr = reinterpret_cast<mach_vm_address_t>(nullptr);
+        mach_vm_address_t symtab_addr = reinterpret_cast<mach_vm_address_t>(nullptr);
         mach_vm_address_t load_command_address = library_header_address + sizeof(struct mach_header_64);
 
         //Iterate through all the load commands in the header..
@@ -263,7 +263,7 @@ bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexc
     }
 
     // Allocate and write the path size..
-    mach_vm_address_t remote_path = NULL;
+    mach_vm_address_t remote_path = reinterpret_cast<mach_vm_address_t>(nullptr);
     mach_vm_allocate(remote_task, &remote_path, module_path.size() + 1, VM_FLAGS_ANYWHERE);
     mach_vm_protect(remote_task, remote_path, module_path.size() + 1, 0, VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_READ);
     mach_vm_write(remote_task, remote_path, reinterpret_cast<mach_vm_offset_t>(module_path.c_str()), static_cast<mach_msg_type_number_t>(module_path.size()));
@@ -273,23 +273,23 @@ bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexc
     memcpy(&assembly[assembly_size - 15], (void*)&ptr, sizeof(ptr));
 
     //Allocate and write our remote code
-    mach_vm_address_t remote_code = NULL;
+    mach_vm_address_t remote_code = reinterpret_cast<mach_vm_address_t>(nullptr);
     mach_vm_allocate(remote_task, &remote_code, assembly_size, VM_FLAGS_ANYWHERE);
     mach_vm_protect(remote_task, remote_code, assembly_size, 0, VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_READ);
     mach_vm_write(remote_task, remote_code, reinterpret_cast<mach_vm_offset_t>(&assembly[0]), static_cast<mach_msg_type_number_t>(assembly_size));
 
     //Allocate remote stack..
-    mach_vm_address_t remote_stack = NULL;
+    mach_vm_address_t remote_stack = reinterpret_cast<mach_vm_address_t>(nullptr);
     mach_vm_allocate(remote_task, &remote_stack, stack_size, VM_FLAGS_ANYWHERE);
     mach_vm_protect(remote_task, remote_stack, stack_size, true, VM_PROT_READ | VM_PROT_WRITE);
 
     //Allocate & write parameters..
     void* parameters[] = {
             (void*)(remote_code + (assembly_size - 18)),
-            (void*)dlsym(RTLD_NEXT, "pthread_create_from_mach_thread")
+            (void*)dlsym(RTLD_DEFAULT, "pthread_create_from_mach_thread")
     };
 
-    mach_vm_address_t remote_parameters = NULL;
+    mach_vm_address_t remote_parameters = reinterpret_cast<mach_vm_address_t>(nullptr);
     mach_vm_allocate(remote_task, &remote_parameters, sizeof(parameters), VM_FLAGS_ANYWHERE);
     mach_vm_write(remote_task, remote_parameters, reinterpret_cast<mach_vm_offset_t>(&parameters[0]), static_cast<mach_msg_type_number_t>(sizeof(parameters)));
 

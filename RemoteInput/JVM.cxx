@@ -28,7 +28,7 @@ JVM::JVM() noexcept : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(fal
         return;
     }
 	#else
-	if (!module && !dlsym(RTLD_NEXT, "JNI_GetCreatedJavaVMs"))
+	if (!module && !dlsym(RTLD_DEFAULT, "JNI_GetCreatedJavaVMs"))
 	{
 		return;
 	}
@@ -36,7 +36,7 @@ JVM::JVM() noexcept : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(fal
 	if (!module)
 	{
 		this->loadedJNI = false;
-		module = RTLD_NEXT;
+		module = RTLD_DEFAULT;
 	}
 	#endif
 
@@ -115,8 +115,10 @@ bool JVM::Init(int argc, const char* argv[]) noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     this->module = LoadLibraryW(L"jvm.dll"); //C:/Program Files/Java/jre1.8.0_73/bin/server/jvm.dll
-    #else
+    #elif defined(__APPLE__)
     this->module = dlopen("libjvm.dylib", RTLD_LAZY); ///Library/Java/JavaVirtualMachines/jdk1.8.0_66.jdk/Contents/Home/jre/lib/server/libjvm.dylib
+    #else
+    this->module = dlopen("libjvm.so", RTLD_LAZY);
     #endif // defined
 
     if (!this->module)

@@ -36,14 +36,14 @@ void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData,
     #define PtrAddBytes(p, b)               ((void *) (((intptr_t) (p)) + (b)))
     #define PtrCoord(p, x, xinc, y, yinc)   PtrAddBytes(p, (y)*(yinc) + (x)*(xinc))
 
-    static NativePrimitive* (*GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(dlsym(RTLD_NEXT, "GetNativePrim"));
-    static SurfaceDataOps* (*SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(dlsym(RTLD_NEXT, "SurfaceData_GetOps"));
-    static jint (*Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(dlsym(RTLD_NEXT, "Region_GetInfo"));
-    static void (*SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(dlsym(RTLD_NEXT, "SurfaceData_IntersectBounds"));
-    static void (*SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(dlsym(RTLD_NEXT, "SurfaceData_IntersectBlitBounds"));
-    static void (*Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(dlsym(RTLD_NEXT, "Region_StartIteration"));
-    static jint (*Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(dlsym(RTLD_NEXT, "Region_NextIteration"));
-    static void (*Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(dlsym(RTLD_NEXT, "Region_EndIteration"));
+    static NativePrimitive* (*GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(dlsym(RTLD_DEFAULT, "GetNativePrim"));
+    static SurfaceDataOps* (*SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(dlsym(RTLD_DEFAULT, "SurfaceData_GetOps"));
+    static jint (*Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(dlsym(RTLD_DEFAULT, "Region_GetInfo"));
+    static void (*SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(dlsym(RTLD_DEFAULT, "SurfaceData_IntersectBounds"));
+    static void (*SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(dlsym(RTLD_DEFAULT, "SurfaceData_IntersectBlitBounds"));
+    static void (*Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(dlsym(RTLD_DEFAULT, "Region_StartIteration"));
+    static jint (*Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(dlsym(RTLD_DEFAULT, "Region_NextIteration"));
+    static void (*Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(dlsym(RTLD_DEFAULT, "Region_EndIteration"));
 
     if (!GetNativePrim || !SurfaceData_GetOps || !Region_GetInfo || !SurfaceData_IntersectBounds || !SurfaceData_IntersectBlitBounds || !Region_StartIteration || !Region_NextIteration || !Region_EndIteration || width <= 0 || height <= 0)
     {
@@ -547,12 +547,8 @@ void InitialiseHooks() noexcept
 {
     #if defined(USE_DETOURS)
     std::thread([&]{
-        extern void* GetModuleHandle(const char*);
-        void* libawt = GetModuleHandle("libawt.so");
-        void* libxawt = GetModuleHandle("libawt_xawt.so");
-
         //Hook Native Blit
-        void* blit = dlsym(libawt ?: RTLD_NEXT, "Java_sun_java2d_loops_Blit_Blit");
+        void* blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_loops_Blit_Blit");
         if (blit)
         {
             native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeBlit));
@@ -561,7 +557,7 @@ void InitialiseHooks() noexcept
 
         //Hook OpenGL Blit
         #if defined(HOOK_OPENGL_BLIT)
-        blit = dlsym(libxawt ?: RTLD_NEXT, "OGLBlitLoops_Blit");
+        blit = dlsym(RTLD_DEFAULT, "OGLBlitLoops_Blit");
         if (blit)
         {
             opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
@@ -569,7 +565,7 @@ void InitialiseHooks() noexcept
         }
         else
         {
-            blit = dlsym(libxawt ?: RTLD_NEXT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
+            blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
             if (blit)
             {
                 flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
@@ -579,7 +575,7 @@ void InitialiseHooks() noexcept
 
         if (!blit)
         {
-            blit = dlsym(RTLD_NEXT, "glXSwapBuffers");
+            blit = dlsym(RTLD_DEFAULT, "glXSwapBuffers");
             if (blit)
             {
                 opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(glXSwapBuffersHook));
@@ -594,16 +590,6 @@ void InitialiseHooks() noexcept
             opengl_hook->apply();
         }
         #endif
-
-        if (libawt)
-        {
-            dlclose(libawt);
-        }
-
-        if (libxawt)
-        {
-            dlclose(libxawt);
-        }
 
         //Signal that all hooks are finished initializing..
 		ControlCenter::signal_sync(getpid());
