@@ -97,7 +97,7 @@ EXPORT int GetTypeCount() noexcept;
 EXPORT int GetFunctionInfo(int Index, void** Address, char** Definition) noexcept;
 EXPORT int GetTypeInfo(int Index, char** Type, char** Definition) noexcept;
 
-#if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+#if defined(PASCAL_CALLING_CONVENTION)
 EXPORT void SetPluginMemManager(TMemoryManager MemMgr) noexcept;
 #endif
 

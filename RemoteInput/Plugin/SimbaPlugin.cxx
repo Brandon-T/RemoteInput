@@ -10,7 +10,7 @@
 extern HMODULE module;
 #endif
 
-#if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+#if defined(PASCAL_CALLING_CONVENTION)
 TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
 #endif
 
@@ -93,7 +93,7 @@ int GetTypeInfo(int Index, char** Type, char** Definition) noexcept
 	return -1;
 }
 
-#if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+#if defined(PASCAL_CALLING_CONVENTION)
 void SetPluginMemManager(TMemoryManager MemMgr) noexcept
 {
     PLUGIN_MEMORY_MANAGER = MemMgr;
@@ -925,7 +925,7 @@ template<typename T>
 T* AllocateArray(std::size_t size, std::size_t element_size) noexcept
 {
     std::size_t new_size = (size * element_size) + sizeof(PascalArray);
-    #if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+    #if defined(PASCAL_CALLING_CONVENTION)
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
     #else
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size));
@@ -939,7 +939,7 @@ template<typename T>
 T* AllocateString(std::size_t size, std::size_t element_size) noexcept
 {
     std::size_t new_size = (size * element_size) + sizeof(PascalString);
-    #if defined(DELPHI_PASCAL_CALLING_CONVENTION)
+    #if defined(PASCAL_CALLING_CONVENTION)
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
     #else
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size));
