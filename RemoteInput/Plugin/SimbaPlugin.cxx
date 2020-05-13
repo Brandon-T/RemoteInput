@@ -14,8 +14,15 @@ extern HMODULE module;
 TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
 #endif
 
+// MARK: - Simba v1.4 - Deprecated
 TSimbaMethods PLUGIN_SYNC_METHODS = {0};
 TSimbaMemoryAllocators PLUGIN_MEMORY_ALLOCATORS = {0};
+
+// MARK: - Simba v1.4+
+TSimbaInfomation PLUGIN_SIMBA_INFO = {0};
+TSimbaMethodsExtended PLUGIN_SIMBA_METHODS = {0};
+
+// Internal
 extern std::unique_ptr<ControlCenter> control_center;
 
 
@@ -108,6 +115,12 @@ void SetPluginSimbaMethods(TSimbaMethods Methods) noexcept
 void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators) noexcept
 {
 	PLUGIN_MEMORY_ALLOCATORS = Allocators;
+}
+
+void RegisterSimbaPlugin(TSimbaInfomation* Information, TSimbaMethodsExtended* Methods) noexcept
+{
+    std::memcpy(&PLUGIN_SIMBA_INFO, Information, sizeof(TSimbaInfomation));
+    std::memcpy(&PLUGIN_SIMBA_METHODS, Methods, sizeof(TSimbaMethodsExtended));
 }
 
 void OnAttach(void* info) noexcept
@@ -928,7 +941,11 @@ T* AllocateArray(std::size_t size, std::size_t element_size) noexcept
     #if defined(PASCAL_CALLING_CONVENTION)
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
     #else
-    PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size));
+    PascalArray* ptr = static_cast<PascalArray*>(
+            PLUGIN_MEMORY_ALLOCATORS.GetMem ? PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size) :
+            PLUGIN_SIMBA_METHODS.GetMem ? PLUGIN_SIMBA_METHODS.GetMem(new_size) :
+            nullptr
+    );
     #endif
     ptr->refCount = 1;
     ptr->length = size - 1;
@@ -942,7 +959,11 @@ T* AllocateString(std::size_t size, std::size_t element_size) noexcept
     #if defined(PASCAL_CALLING_CONVENTION)
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
     #else
-    PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size));
+    PascalArray* ptr = static_cast<PascalArray*>(
+            PLUGIN_MEMORY_ALLOCATORS.GetMem ? PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size) :
+            PLUGIN_SIMBA_METHODS.GetMem ? PLUGIN_SIMBA_METHODS.GetMem(new_size) :
+            nullptr
+    );
     #endif
     ptr->refCount = 1;
     ptr->length = size;

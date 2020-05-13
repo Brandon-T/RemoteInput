@@ -103,6 +103,7 @@ EXPORT void SetPluginMemManager(TMemoryManager MemMgr) noexcept;
 
 EXPORT void SetPluginSimbaMethods(TSimbaMethods Methods) noexcept;
 EXPORT void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators) noexcept;
+EXPORT void RegisterSimbaPlugin(TSimbaInfomation* Information, TSimbaMethodsExtended* Methods) noexcept;
 EXPORT void OnAttach(void* info) noexcept;
 EXPORT void OnDetach() noexcept;
 

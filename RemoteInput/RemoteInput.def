@@ -23,3 +23,6 @@ EXPORTS
     OnAttach
     OnDetach
     SetPluginMemManager
+    SetPluginSimbaMethods
+    SetPluginSimbaMemoryAllocators
+    RegisterSimbaPlugin

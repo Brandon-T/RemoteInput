@@ -71,8 +71,25 @@ typedef struct
 
 typedef struct
 {
-	void* (*GetMem)(std::size_t size);
-	void (*FreeMem)(void* ptr);
+    void* (*GetMem)(std::size_t size);
+    void (*FreeMem)(void* ptr);
 } __attribute__((__packed__)) TSimbaMemoryAllocators;
+
+typedef struct
+{
+    std::int32_t SimbaMinor;
+    std::int32_t SimbaMajor;
+    const char* FileName;
+} __attribute__((__packed__)) TSimbaInfomation;
+
+typedef struct
+{
+    void (*Sync)(void(*synchronize_method)(void*), void* data);
+    void* (*GetMem)(std::size_t size);
+    void (*FreeMem)(void* ptr);
+    void* (*AllocMem)(std::size_t size);
+    void* (*ReAllocMem)(void** ptr, std::size_t size);
+    std::size_t (*MemSize)(void* ptr);
+} __attribute__((__packed__)) TSimbaMethodsExtended;
 
 #endif // TMEMORYMANAGER_HXX_INCLUDED
