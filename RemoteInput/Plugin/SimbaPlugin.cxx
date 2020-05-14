@@ -955,18 +955,22 @@ T* AllocateArray(std::size_t size, std::size_t element_size) noexcept
 template<typename T>
 T* AllocateString(std::size_t size, std::size_t element_size) noexcept
 {
-    std::size_t new_size = (size * element_size) + sizeof(PascalString);
+    std::size_t new_size = (size * element_size) + sizeof(PascalString) + sizeof(T);
     #if defined(PASCAL_CALLING_CONVENTION)
-    PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
+    PascalString* ptr = static_cast<PascalString*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
     #else
-    PascalArray* ptr = static_cast<PascalArray*>(
+    PascalString* ptr = static_cast<PascalString*>(
             PLUGIN_MEMORY_ALLOCATORS.GetMem ? PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size) :
             PLUGIN_SIMBA_METHODS.GetMem ? PLUGIN_SIMBA_METHODS.GetMem(new_size) :
             nullptr
     );
     #endif
+
     ptr->refCount = 1;
     ptr->length = size;
+    ptr->codePage = 65001; //CP_UTF8
+    ptr->elementSize = sizeof(T);
+    *reinterpret_cast<char*>(ptr + 1) = '\0';
     return reinterpret_cast<T*>(++ptr);
 }
 
