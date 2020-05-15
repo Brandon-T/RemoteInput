@@ -44,7 +44,7 @@ template<typename T>
 T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T)) noexcept;
 
 template<typename T>
-T* GetString(void* ptr) noexcept;
+T* GetString(void* ptr, std::size_t* size) noexcept;
 
 template<typename T>
 T PascalRead(void* ptr) noexcept;
@@ -978,15 +978,16 @@ template<typename T>
 T* GetArray(void* ptr, std::size_t* size) noexcept
 {
     PascalArray* mem = static_cast<PascalArray*>(ptr) - 1;
-    *size = mem->length;
+    *size = mem->length + 1;
     return reinterpret_cast<T*>(mem->data);
 }
 
 template<typename T>
-T* GetString(void* ptr) noexcept
+T* GetString(void* ptr, std::size_t* size) noexcept
 {
-    PascalString* mem = static_cast<PascalString*>(ptr);
-    return reinterpret_cast<T*>((--mem)->data);
+    PascalString* mem = static_cast<PascalString*>(ptr) - 1;
+    *size = mem->length;
+    return reinterpret_cast<T*>(mem->data);
 }
 
 template<typename T>
