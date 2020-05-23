@@ -11,6 +11,7 @@
 #include <atomic>
 #include <cstring>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "MemoryMap.hxx"
 #include "SharedEvent.hxx"
@@ -91,7 +92,11 @@ void Reflect_Release_Object(EIOS* eios, jobject object) noexcept
 {
 	if (eios)
 	{
-		eios->control_center->reflect_release_object(object);
+	    //Make sure we're not freeing null objects..
+	    if (object)
+	    {
+            eios->control_center->reflect_release_object(object);
+        }
 	}
 }
 
@@ -99,7 +104,31 @@ void Reflect_Release_Objects(EIOS* eios, jobject* objects, std::size_t amount) n
 {
 	if (eios)
 	{
-		eios->control_center->reflect_release_objects(objects, amount);
+        //Make sure we're not freeing null objects..
+	    if (objects && amount > 0)
+        {
+            //This is the fastest possible way to remove duplicates..
+            //Do NOT use `unordered_set` constructor instead of the for-loop.
+            //It is slower than emplace/insert.
+            std::unordered_set<jobject> set;
+            for (std::size_t i = 0; i < amount; ++i)
+            {
+                set.insert(objects[i]);
+            }
+
+            //Remove null objects
+            set.erase(nullptr);
+
+            //Create a contiguous array of objects for the client.
+            std::vector<jobject> objects;
+            objects.assign(set.begin(), set.end());
+
+            //Make sure we're not freeing null objects..
+            if (objects.size())
+            {
+                eios->control_center->reflect_release_objects(objects.data(), objects.size());
+            }
+        }
 	}
 }
 
