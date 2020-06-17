@@ -2,6 +2,7 @@
 #include <memory>
 #include <cstring>
 #include <unordered_map>
+#include <unordered_set>
 #include <type_traits>
 
 #include "ControlCenter.hxx"
@@ -227,7 +228,10 @@ void Pascal_Reflect_Release_Object(void** Params, void** Result) noexcept
 	if (eios)
 	{
 	    jobject object = PascalRead<jobject>(Params[1]);
-	    eios->control_center->reflect_release_object(object);
+	    if (object)
+	    {
+			eios->control_center->reflect_release_object(object);
+		}
 	}
 }
 
@@ -238,7 +242,32 @@ void Pascal_Reflect_Release_Objects(void** Params, void** Result) noexcept
 	{
 	    std::size_t length = 0;
 	    jobject* objects = GetArray<jobject>(PascalRead<void*>(Params[1]), &length);
-		eios->control_center->reflect_release_objects(objects, length);
+
+		//Make sure we're not freeing null objects..
+		if (objects && length > 0)
+		{
+			//This is the fastest possible way to remove duplicates..
+			//Do NOT use `unordered_set` constructor instead of the for-loop.
+			//It is slower than emplace/insert.
+			std::unordered_set<jobject> set;
+			for (std::size_t i = 0; i < length; ++i)
+			{
+				set.insert(objects[i]);
+			}
+
+			//Remove null objects
+			set.erase(nullptr);
+
+			//Create a contiguous array of objects for the client.
+			std::vector<jobject> objects;
+			objects.assign(set.begin(), set.end());
+
+			//Make sure we're not freeing null objects..
+			if (objects.size())
+			{
+				eios->control_center->reflect_release_objects(objects.data(), objects.size());
+			}
+		}
 	}
 }
 

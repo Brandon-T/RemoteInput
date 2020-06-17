@@ -9,6 +9,7 @@
 #include "SharedEvent.hxx"
 #include <tuple>
 #include <string.h>
+#include <stdexcept>
 
 #if !(_POSIX_TIMEOUTS >= 200112L)
 int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)

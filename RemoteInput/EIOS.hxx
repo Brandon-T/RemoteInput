@@ -86,7 +86,7 @@ typedef struct ImageData
     std::int32_t height;
 	bool debug_graphics;
     EIOSCommand command;
-    std::uint8_t args[4096 * 8];
+    std::uint8_t args[100000 * 8];
 } ImageData;
 
 typedef struct EIOS
