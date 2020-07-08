@@ -91,6 +91,9 @@ jobs:
         sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         #sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
         sudo apt-get install libprocps-dev:arm64 mesa-common-dev:arm64 libglu1-mesa:arm64 libglu1-mesa-dev:arm64 libgl1-mesa-glx:arm64 libgl1-mesa-dev:arm64 libglfw3-dev:arm64 cmake
+        sudo apt-get install openjdk-8-jdk:arm64
+        sudo update-alternatives --auto java
+        sudo update-alternatives --auto javac
 
     - name: CMake Generate Build Files - Linux-aarch64
       if: matrix.config.name == 'Linux-aarch64'
@@ -125,6 +128,9 @@ jobs:
       run: |
         sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
         sudo apt-get install libprocps-dev:armhf mesa-common-dev:armhf libglu1-mesa:armhf libglu1-mesa-dev:armhf libgl1-mesa-glx:armhf libgl1-mesa-dev:armhf libglfw3-dev:armhf cmake
+        sudo apt-get install openjdk-8-jdk:armhf
+        sudo update-alternatives --auto java
+        sudo update-alternatives --auto javac
         
     - name: CMake Generate Build Files - Linux-armhf
       if: matrix.config.name == 'Linux-armhf'

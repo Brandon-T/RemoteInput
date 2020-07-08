@@ -976,7 +976,7 @@ T* AllocateArray(std::size_t size, std::size_t element_size) noexcept
             nullptr
     );
     #endif
-    ptr->refCount = 1;
+    ptr->refCount = 0;
     ptr->length = size - 1;
     return reinterpret_cast<T*>(++ptr);
 }
@@ -995,7 +995,7 @@ T* AllocateString(std::size_t size, std::size_t element_size) noexcept
     );
     #endif
 
-    ptr->refCount = 1;
+    ptr->refCount = 0;
     ptr->length = size;
     ptr->codePage = 65001; //CP_UTF8
     ptr->elementSize = sizeof(T);
