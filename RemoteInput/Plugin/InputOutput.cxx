@@ -829,15 +829,15 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
                                       (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
                                       (mouse_buttons[2] ? InputEvent::GetDownMaskForButton(mouse_buttons[2]) : 0);
 
-            //Key extended masks
-            buttonMask |= GetActiveKeyModifiers();
-            MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
-
             //Gain Focus
             if (!this->has_focus(&receiver))
             {
                 this->gain_focus(&receiver);
             }
+
+            //Key extended masks
+            buttonMask |= GetActiveKeyModifiers();
+            MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
         }
 		else
         {

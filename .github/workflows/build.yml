@@ -180,83 +180,49 @@ jobs:
       id: cache-msys32
       uses: actions/cache@v1
       with:
-        path: msys32
-        key: msys2_i686
+        path: ${{ github.workspace }}/mingw32
+        key: mingw32-8.1.0
     
     # Set Path workaround for https://github.com/actions/virtual-environments/issues/263
     - name: Set Environment Path - Windows-32
       if: matrix.config.name == 'Windows-32'
       run: |
-        echo "::add-path::C:\Program Files\Git\mingw64\bin"
+        #echo "::add-path::C:\Program Files\Git\mingw64\bin"
         echo "::add-path::C:\Program Files\Git\usr\bin"
         echo "::add-path::C:\Program Files\Git\bin"
         echo "::add-path::${{ github.workspace }}/msys32/mingw32/bin"
 
-    - name: Install MSYS2 - Windows-32
+    - name: Install Build Tools - Windows-32
       if: steps.cache-msys32.outputs.cache-hit != 'true' && matrix.config.name == 'Windows-32'
+      shell: sh
       run: |
-        curl -fsSL http://repo.msys2.org/distrib/i686/msys2-base-i686-20190524.tar.xz -o msys2.tar.xz
-        tar xf msys2.tar.xz -C $env:GITHUB_WORKSPACE.Replace("\", "/")
-
-    - name: Update Pacman - Windows-32
-      if: steps.cache-msys32.outputs.cache-hit != 'true' && matrix.config.name == 'Windows-32'
-      run: |
-        $env:MSYSTEM = "MINGW32"
-        $env:MSYS2_PATH_TYPE = "strict"
-        $script = @'
-          pacman -Syu --noconfirm
-        '@
-        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+        echo "Downloading Mingw"
+        curl -fsSL https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z -o mingw-i686.7z
+        7z x mingw-i686.7z | 1> /dev/null
+        rm -rf ./mingw-i686.7z
         
-    - name: Install Tools - Windows-32
-      if: steps.cache-msys32.outputs.cache-hit != 'true' && matrix.config.name == 'Windows-32'
-      run: |
-        $env:MSYSTEM = "MINGW32"
-        $env:MSYS2_PATH_TYPE = "strict"
-        $script = @'
-          #pacman --noconfirm -R cmake
-          #pacman --noconfirm -R make
-          pacman --noconfirm -Syu msys/gcc
-          if [ "$MSYSTEM" = "MINGW32" ]; then
-            pacman --noconfirm -Syu mingw32/mingw-w64-i686-gcc
-            #packman --noconfirm -Syu mingw-w64-i686-clang
-            pacman --noconfirm -Syu mingw-w64-i686-make
-            pacman --noconfirm -Syu mingw-w64-i686-cmake
-          else
-            pacman --noconfirm -Syu mingw64/mingw-w64-x86_64-gcc
-            #packman --noconfirm -Syu mingw-w64-x86_64-clang
-            pacman --noconfirm -Syu mingw-w64-x86_64-make
-            pacman --noconfirm -Syu mingw-w64-x86_64-cmake
-          fi
-        '@
-        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+        echo "Downloading CMake"
+        curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.18.0/cmake-3.18.0-win32-x86.zip -o cmake.zip
+        unzip -q cmake.zip -d .
+        cp -rf ./cmake-3.18.0-win32-x86/bin/* ${PWD}/mingw32/bin
+        cp -rf ./cmake-3.18.0-win32-x86/share/* ${PWD}/mingw32/share
+        rm -rf cmake.zip
 
     - name: CMake Generate Build Files - Windows-32
       if: matrix.config.name == 'Windows-32'
-      env:
-        CMAKE: "${{ github.workspace }}/msys32/mingw32/bin/cmake.exe"
-        MAKE: "${{ github.workspace }}/msys32/mingw32/bin/mingw32-make.exe"
+      shell: sh
       run: |
-        $env:MSYSTEM = "MINGW32"
-        $env:MSYS2_PATH_TYPE = "strict"
-        $script = @'
-          cd $OLDPWD
-          ${CMAKE} -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_MAKE_PROGRAM=${MAKE} -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
-        '@
-        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+        CMAKE="${PWD}/mingw32/bin/cmake.exe"
+        MAKE="${PWD}/mingw32/bin/mingw32-make.exe"
+        ${CMAKE} -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_MAKE_PROGRAM=${MAKE} -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
 
     - name: Build - Windows-32
       if: matrix.config.name == 'Windows-32'
-      env:
-        CMAKE: "${{ github.workspace }}/msys32/mingw32/bin/cmake.exe"
-        MAKE: "${{ github.workspace }}/msys32/mingw32/bin/mingw32-make.exe"
+      shell: sh
       run: |
-        $env:MSYSTEM = "MINGW32"
-        $env:MSYS2_PATH_TYPE = "strict"
-        $script = @'
-          ${CMAKE} --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
-        '@
-        & "${{ github.workspace }}/msys32/usr/bin/bash" -c -l $script
+        CMAKE="${PWD}/mingw32/bin/cmake.exe"
+        MAKE="${PWD}/mingw32/bin/mingw32-make.exe"
+        ${CMAKE} --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
         
       #Windows-64
     - name: CMake Generate Build Files - Windows-64
