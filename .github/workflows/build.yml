@@ -214,7 +214,7 @@ jobs:
       run: |
         CMAKE="${PWD}/mingw32/bin/cmake.exe"
         MAKE="${PWD}/mingw32/bin/mingw32-make.exe"
-        ${CMAKE} -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_MAKE_PROGRAM=${MAKE} -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
+        ${CMAKE} -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_MAKE_PROGRAM=${MAKE} -DCMAKE_C_COMPILER=${PWD}/mingw32/bin/gcc -DCMAKE_CXX_COMPILER=${PWD}/mingw32/bin/g++ -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
 
     - name: Build - Windows-32
       if: matrix.config.name == 'Windows-32'
