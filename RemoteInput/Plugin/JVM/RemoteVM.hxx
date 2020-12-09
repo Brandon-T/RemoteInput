@@ -8,6 +8,8 @@
 #include <jni.h>
 #include <vector>
 #include <string>
+#include <functional>
+#include <cstdint>
 
 class ControlCenter;
 struct ImageData;
