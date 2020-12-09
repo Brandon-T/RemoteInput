@@ -7,6 +7,7 @@
 #include "NativeHooks.hxx"
 #include "Graphics.hxx"
 #include "ReflectionHook.hxx"
+#include "RemoteVM.hxx"
 
 template<typename T>
 T EIOS_Read(void* &ptr) noexcept
@@ -83,14 +84,14 @@ void EIOS_Write(void* &ptr, const std::vector<T> &result) noexcept
         return;
     }
 
-    *static_cast<std::size_t*>(ptr) = result.length();
+    *static_cast<std::size_t*>(ptr) = result.size();
     ptr = static_cast<std::size_t*>(ptr) + 1;
 
-    memcpy(ptr, &result[0], result.length() * sizeof(T));
-    ptr = static_cast<char*>(ptr) + (result.length() * sizeof(T));
+    memcpy(ptr, &result[0], result.size() * sizeof(T));
+    ptr = static_cast<char*>(ptr) + (result.size() * sizeof(T));
 }
 
-ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller()
+ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller(), remote_vm()
 {
 	if (pid <= 0)
 	{
@@ -145,6 +146,10 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 				if (this->reflector->Attach())
 				{
 					this->io_controller = std::make_unique<InputOutput>(this->reflector.get());
+					this->remote_vm = std::make_unique<RemoteVM>(this->reflector.get()->getEnv(),
+                                                                      this,
+                                                                      &ControlCenter::send_command,
+                                                                      &ControlCenter::get_image_data);
 
 					while(!stopped)
 					{
@@ -653,6 +658,12 @@ void ControlCenter::process_command() noexcept
         {
             jarray array = EIOS_Read<jarray>(arguments);
             process_reflect_array_indices(array, arguments, response);
+        }
+            break;
+
+	    case EIOSCommand::REMOTE_VM_INSTRUCTION:
+        {
+            this->remote_vm->process_command(arguments, response);
         }
             break;
 	}

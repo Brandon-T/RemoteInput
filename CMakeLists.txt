@@ -10,8 +10,14 @@ ENDIF()
 
 
 # ----------------------------- PACKAGES -----------------------------
+set(JAVA_AWT_LIBRARY NotNeeded)
+set(JAVA_JVM_LIBRARY NotNeeded)
+set(JAVA_AWT_INCLUDE_PATH NotNeeded)
+set(PYTHON_BINDINGS ON)
+
 find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
+find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development)
 
 
 
@@ -23,7 +29,9 @@ set(INCLUDE_DIRECTORIES
         RemoteInput/Java
         RemoteInput/Platform
         RemoteInput/Plugin
-        ${JNI_INCLUDE_DIRS})
+        RemoteInput/Plugin/JVM
+        ${JNI_INCLUDE_DIRS}
+        ${Python_INCLUDE_DIRS})
 
 
 # ----------------------------- PLATFORM -----------------------------
@@ -183,6 +191,8 @@ set(SRC_LIST
         RemoteInput/Plugin/SimbaPlugin.cxx
         RemoteInput/Plugin/SimbaPlugin.hxx
         RemoteInput/Plugin/TMemoryManager.hxx
+        RemoteInput/Plugin/JVM/RemoteVM.hxx
+        RemoteInput/Plugin/JVM/RemoteVM.cxx
         RemoteInput/DetachedThreadPool.cxx
         RemoteInput/DetachedThreadPool.hxx
         RemoteInput/EIOS.cxx
@@ -212,12 +222,22 @@ ELSEIF(APPLE)
             RemoteInput/Platform/Platform_Darwin.mm)
 ENDIF()
 
+IF(PYTHON_BINDINGS)
+    set(SRC_LIST
+            ${SRC_LIST}
+            RemoteInput/Plugin/PythonPlugin.cxx
+            RemoteInput/Plugin/PythonPlugin.hxx
+            RemoteInput/Plugin/PythonTraits.hxx)
+ENDIF()
 
+set(EXTRA_LIBRARIES
+        ${EXTRA_LIBRARIES}
+        ${Python_LIBRARIES})
 
 # ---------------------------- COMPILE ----------------------------
 
 add_subdirectory(RemoteInput/Thirdparty)
-add_library(${PROJECT_NAME} SHARED ${SRC_LIST}  $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
+add_library(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORIES})
 

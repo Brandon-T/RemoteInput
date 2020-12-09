@@ -10,6 +10,7 @@
 #include "InputOutput.hxx"
 
 
+class RemoteVM;
 struct ImageData;
 
 enum class ReflectionArrayType: std::uint8_t
@@ -40,6 +41,7 @@ private:
 	std::unique_ptr<Reflection> reflector;
 	std::unique_ptr<MemoryMap<char>> memory_map;
 	std::unique_ptr<InputOutput> io_controller;
+    std::unique_ptr<RemoteVM> remote_vm;
 
 	bool init_maps() noexcept;
 	bool init_locks() noexcept;
