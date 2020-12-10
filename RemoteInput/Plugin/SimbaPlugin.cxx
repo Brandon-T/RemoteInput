@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include "ControlCenter.hxx"
+#include "RemoteVM.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 extern HMODULE module;
@@ -16,12 +17,12 @@ TMemoryManager PLUGIN_MEMORY_MANAGER = {0};
 #endif
 
 // MARK: - Simba v1.4 - Deprecated
-TSimbaMethods PLUGIN_SYNC_METHODS = {0};
-TSimbaMemoryAllocators PLUGIN_MEMORY_ALLOCATORS = {0};
+TSimbaMethods PLUGIN_SYNC_METHODS = {nullptr};
+TSimbaMemoryAllocators PLUGIN_MEMORY_ALLOCATORS = {nullptr};
 
 // MARK: - Simba v1.4+
 TSimbaInfomation PLUGIN_SIMBA_INFO = {0};
-TSimbaMethodsExtended PLUGIN_SIMBA_METHODS = {0};
+TSimbaMethodsExtended PLUGIN_SIMBA_METHODS = {nullptr};
 
 // Internal
 extern std::unique_ptr<ControlCenter> control_center;
@@ -950,6 +951,1370 @@ void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result) noexcept
         EIOS_SetKeyboardRepeatDelay(eios, delay);
     }
 }
+
+
+//MARK: - RemoteVM
+void Pascal_RemoteVM_MaxMemoryChunkSize(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    PascalWrite(Result, remote_vm->MaxMemoryChunkSize());
+}
+
+void Pascal_RemoteVM_AllocateMemory(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    std::size_t size = PascalRead<std::size_t>(Params[1]);
+    PascalWrite(Result, remote_vm->AllocateMemory(size));
+}
+
+void Pascal_RemoteVM_ReadMemory(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    void* destintation = PascalRead<void*>(Params[1]);
+    void* source = PascalRead<void*>(Params[2]);
+    std::size_t size = PascalRead<std::size_t>(Params[3]);
+    PascalWrite(Result, remote_vm->ReadMemory(destintation, source, size));
+}
+
+void Pascal_RemoteVM_WriteMemory(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    void* destintation = PascalRead<void*>(Params[1]);
+    void* source = PascalRead<void*>(Params[2]);
+    std::size_t size = PascalRead<std::size_t>(Params[3]);
+    PascalWrite(Result, remote_vm->WriteMemory(destintation, source, size));
+}
+
+void Pascal_RemoteVM_FreeMemory(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    void* memory = PascalRead<void*>(Params[1]);
+    remote_vm->FreeMemory(memory);
+}
+
+
+void Pascal_RemoteVM_GetVersion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    PascalWrite(Result, remote_vm->GetVersion());
+}
+
+void Pascal_RemoteVM_DefineClass(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    const char* name = PascalRead<const char*>(Params[1]);
+    jobject loader = PascalRead<jobject>(Params[2]);
+    jbyte* buf = PascalRead<jbyte*>(Params[3]);
+    jsize len = PascalRead<jsize>(Params[4]);
+    PascalWrite(Result, remote_vm->DefineClass(name, loader, buf, len));
+}
+
+void Pascal_RemoteVM_FindClass(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    const char* name = PascalRead<const char*>(Params[1]);
+    PascalWrite(Result, remote_vm->FindClass(name));
+}
+
+void Pascal_RemoteVM_FromReflectedMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject method = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->FromReflectedMethod(method));
+}
+
+void Pascal_RemoteVM_FromReflectedField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject field = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->FromReflectedField(field));
+}
+
+void Pascal_RemoteVM_ToReflectedMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass cls = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+    jboolean isStatic = PascalRead<jboolean>(Params[3]);
+    PascalWrite(Result, remote_vm->ToReflectedMethod(cls, methodID, isStatic));
+}
+
+void Pascal_RemoteVM_GetSuperclass(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass sub = PascalRead<jclass>(Params[1]);
+    PascalWrite(Result, remote_vm->GetSuperclass(sub));
+}
+
+void Pascal_RemoteVM_IsAssignableFrom(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass sub = PascalRead<jclass>(Params[1]);
+    jclass sup = PascalRead<jclass>(Params[2]);
+    PascalWrite(Result, remote_vm->IsAssignableFrom(sub, sup));
+}
+
+void Pascal_RemoteVM_ToReflectedField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass cls = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jboolean isStatic = PascalRead<jboolean>(Params[3]);
+    PascalWrite(Result, remote_vm->ToReflectedField(cls, fieldID, isStatic));
+}
+
+void Pascal_RemoteVM_Throw(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jthrowable obj = PascalRead<jthrowable>(Params[1]);
+    PascalWrite(Result, remote_vm->Throw(obj));
+}
+
+void Pascal_RemoteVM_ThrowNew(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    const char* msg = PascalRead<const char*>(Params[2]);
+    PascalWrite(Result, remote_vm->ThrowNew(clazz, msg));
+}
+
+void Pascal_RemoteVM_GetExceptionMessage(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    std::string result = remote_vm->GetExceptionMessage();
+
+    if (!result.empty())
+    {
+        char* output = AllocateString<char>(result.length());
+        std::memcpy(output, &result[0], result.length());
+        output[result.length()] = '\0';
+
+        PascalWrite(Result, output);
+    }
+}
+
+void Pascal_RemoteVM_FatalError(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    const char* msg = PascalRead<const char*>(Params[1]);
+    remote_vm->FatalError(msg);
+}
+
+void Pascal_RemoteVM_DeleteGlobalRef(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject gref = PascalRead<jobject>(Params[1]);
+    remote_vm->DeleteGlobalRef(gref);
+}
+
+void Pascal_RemoteVM_IsSameObject(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj1 = PascalRead<jobject>(Params[1]);
+    jobject obj2 = PascalRead<jobject>(Params[2]);
+    PascalWrite(Result, remote_vm->IsSameObject(obj1, obj2));
+}
+
+void Pascal_RemoteVM_AllocObject(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    PascalWrite(Result, remote_vm->AllocObject(clazz));
+}
+
+void Pascal_RemoteVM_NewObject(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+
+    PascalWrite(Result, remote_vm->NewObject(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_GetObjectClass(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->GetObjectClass(obj));
+}
+
+void Pascal_RemoteVM_IsInstanceOf(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    PascalWrite(Result, remote_vm->IsInstanceOf(obj, clazz));
+}
+
+void Pascal_RemoteVM_GetMethodID(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    const char* name = PascalRead<const char*>(Params[2]);
+    const char* sig = PascalRead<const char*>(Params[3]);
+    PascalWrite(Result, remote_vm->GetMethodID(clazz, name, sig));
+}
+
+void Pascal_RemoteVM_CallObjectMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallObjectMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallBooleanMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallBooleanMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallByteMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallByteMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallCharMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallCharMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallShortMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallShortMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallIntMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallIntMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallLongMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallLongMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallFloatMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallFloatMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallDoubleMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallDoubleMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallVoidMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->CallVoidMethod(obj, methodID, std::vector<jvalue>(args, args + length));
+}
+
+void Pascal_RemoteVM_CallNonvirtualObjectMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualObjectMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualBooleanMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualBooleanMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualByteMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualByteMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualCharMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualCharMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualShortMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualShortMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualIntMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualIntMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualLongMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualLongMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualFloatMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualFloatMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualDoubleMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    PascalWrite(Result, remote_vm->CallNonvirtualDoubleMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallNonvirtualVoidMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[3]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
+    remote_vm->CallNonvirtualVoidMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length));
+}
+
+void Pascal_RemoteVM_GetFieldID(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    const char* name = PascalRead<const char*>(Params[2]);
+    const char* sig = PascalRead<const char*>(Params[3]);
+    PascalWrite(Result, remote_vm->GetFieldID(clazz, name, sig));
+}
+
+void Pascal_RemoteVM_GetObjectField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetObjectField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetBooleanField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetBooleanField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetByteField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetByteField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetCharField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetCharField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetShortField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetShortField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetIntField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetIntField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetLongField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetLongField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetFloatField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetFloatField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_GetDoubleField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetDoubleField(obj, fieldID));
+}
+
+void Pascal_RemoteVM_SetObjectField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jobject value = PascalRead<jobject>(Params[3]);
+    remote_vm->SetObjectField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetBooleanField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jboolean value = PascalRead<jboolean>(Params[3]);
+    remote_vm->SetBooleanField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetByteField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jbyte value = PascalRead<jbyte>(Params[3]);
+    remote_vm->SetByteField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetCharField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jchar value = PascalRead<jchar>(Params[3]);
+    remote_vm->SetCharField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetShortField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jshort value = PascalRead<jshort>(Params[3]);
+    remote_vm->SetShortField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetIntField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jint value = PascalRead<jint>(Params[3]);
+    remote_vm->SetIntField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetLongField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jlong value = PascalRead<jlong>(Params[3]);
+    remote_vm->SetLongField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetFloatField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jfloat value = PascalRead<jfloat>(Params[3]);
+    remote_vm->SetFloatField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetDoubleField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jdouble value = PascalRead<jdouble>(Params[3]);
+    remote_vm->SetDoubleField(obj, fieldID, value);
+}
+
+void Pascal_RemoteVM_GetStaticMethodID(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    const char* name = PascalRead<const char*>(Params[2]);
+    const char* sig = PascalRead<const char*>(Params[3]);
+    PascalWrite(Result, remote_vm->GetStaticMethodID(clazz, name, sig));
+}
+
+void Pascal_RemoteVM_CallStaticObjectMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticObjectMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticBooleanMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticBooleanMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticByteMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticByteMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticCharMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticCharMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticShortMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticShortMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticIntMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticIntMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticLongMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticLongMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticFloatMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticFloatMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticDoubleMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    PascalWrite(Result, remote_vm->CallStaticDoubleMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+}
+
+void Pascal_RemoteVM_CallStaticVoidMethod(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jmethodID methodID = PascalRead<jmethodID>(Params[2]);
+
+    std::size_t length = 0;
+    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->CallStaticVoidMethod(clazz, methodID, std::vector<jvalue>(args, args + length));
+}
+
+void Pascal_RemoteVM_GetStaticFieldID(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    const char* name = PascalRead<const char*>(Params[2]);
+    const char* sig = PascalRead<const char*>(Params[3]);
+    PascalWrite(Result, remote_vm->GetStaticFieldID(clazz, name, sig));
+}
+
+void Pascal_RemoteVM_GetStaticObjectField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticObjectField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticBooleanField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticBooleanField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticByteField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticByteField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticCharField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticCharField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticShortField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticShortField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticIntField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticIntField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticLongField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticLongField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticFloatField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticFloatField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_GetStaticDoubleField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    PascalWrite(Result, remote_vm->GetStaticDoubleField(clazz, fieldID));
+}
+
+void Pascal_RemoteVM_SetStaticObjectField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jobject value = PascalRead<jobject>(Params[3]);
+    remote_vm->SetStaticObjectField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticBooleanField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jboolean value = PascalRead<jboolean>(Params[3]);
+    remote_vm->SetStaticBooleanField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticByteField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jbyte value = PascalRead<jbyte>(Params[3]);
+    remote_vm->SetStaticByteField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticCharField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jchar value = PascalRead<jchar>(Params[3]);
+    remote_vm->SetStaticCharField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticShortField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jshort value = PascalRead<jshort>(Params[3]);
+    remote_vm->SetStaticShortField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticIntField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jint value = PascalRead<jint>(Params[3]);
+    remote_vm->SetStaticIntField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticLongField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jlong value = PascalRead<jlong>(Params[3]);
+    remote_vm->SetStaticLongField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticFloatField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jfloat value = PascalRead<jfloat>(Params[3]);
+    remote_vm->SetStaticFloatField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_SetStaticDoubleField(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jclass clazz = PascalRead<jclass>(Params[1]);
+    jfieldID fieldID = PascalRead<jfieldID>(Params[2]);
+    jdouble value = PascalRead<jdouble>(Params[3]);
+    remote_vm->SetStaticDoubleField(clazz, fieldID, value);
+}
+
+void Pascal_RemoteVM_NewString(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    const wchar_t* unicode = PascalRead<const wchar_t*>(Params[1]);
+    PascalWrite(Result, remote_vm->NewString(unicode));
+}
+
+void Pascal_RemoteVM_GetStringLength(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jstring str = PascalRead<jstring>(Params[1]);
+    PascalWrite(Result, remote_vm->GetStringLength(str));
+}
+
+void Pascal_RemoteVM_GetStringChars(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jstring str = PascalRead<jstring>(Params[1]);
+
+    std::wstring result = remote_vm->GetStringChars(str);
+
+    if (!result.empty())
+    {
+        wchar_t* output = AllocateString<wchar_t>(result.length());
+        std::memcpy(output, &result[0], result.length());
+        output[result.length()] = '\0';
+        PascalWrite(Result, output);
+    }
+}
+
+void Pascal_RemoteVM_NewStringUTF(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    const char* utf = PascalRead<const char*>(Params[1]);
+    PascalWrite(Result, remote_vm->NewStringUTF(utf));
+}
+
+void Pascal_RemoteVM_GetStringUTFLength(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jstring str = PascalRead<jstring>(Params[1]);
+    PascalWrite(Result, remote_vm->GetStringUTFLength(str));
+}
+
+void Pascal_RemoteVM_GetStringUTFChars(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jstring str = PascalRead<jstring>(Params[1]);
+
+    std::string result = remote_vm->GetStringUTFChars(str);
+
+    if (!result.empty())
+    {
+        char* output = AllocateString<char>(result.length());
+        std::memcpy(output, &result[0], result.length());
+        output[result.length()] = '\0';
+        PascalWrite(Result, output);
+    }
+}
+
+void Pascal_RemoteVM_GetArrayLength(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jarray array = PascalRead<jarray>(Params[1]);
+    PascalWrite(Result, remote_vm->GetArrayLength(array));
+}
+
+void Pascal_RemoteVM_NewObjectArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    jclass clazz = PascalRead<jclass>(Params[2]);
+    jobject init = PascalRead<jobject>(Params[3]);
+    PascalWrite(Result, remote_vm->NewObjectArray(len, clazz, init));
+}
+
+void Pascal_RemoteVM_NewBooleanArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewBooleanArray(len));
+}
+
+void Pascal_RemoteVM_NewByteArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewByteArray(len));
+}
+
+void Pascal_RemoteVM_NewCharArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewCharArray(len));
+}
+
+void Pascal_RemoteVM_NewShortArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewShortArray(len));
+}
+
+void Pascal_RemoteVM_NewIntArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewIntArray(len));
+}
+
+void Pascal_RemoteVM_NewLongArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewLongArray(len));
+}
+
+void Pascal_RemoteVM_NewFloatArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewFloatArray(len));
+}
+
+void Pascal_RemoteVM_NewDoubleArray(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jsize len = PascalRead<jsize>(Params[1]);
+    PascalWrite(Result, remote_vm->NewDoubleArray(len));
+}
+
+void Pascal_RemoteVM_GetObjectArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobjectArray array = PascalRead<jobjectArray>(Params[1]);
+    std::vector<jobject> elements = remote_vm->GetObjectArrayElements(array);
+
+    jobject* buffer = AllocateArray<jobject>(elements.size());
+    std::memcpy(buffer, &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_SetObjectArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobjectArray array = PascalRead<jobjectArray>(Params[1]);
+    jsize index = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jobject* objects = GetArray<jobject>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetObjectArrayElements(array, index, std::vector<jobject>(objects, objects + length));
+}
+
+void Pascal_RemoteVM_GetBooleanArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jbooleanArray array = PascalRead<jbooleanArray>(Params[1]);
+    std::vector<jboolean> elements = remote_vm->GetBooleanArrayElements(array);
+
+    jboolean* buffer = AllocateArray<jboolean>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetByteArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jbyteArray array = PascalRead<jbyteArray>(Params[1]);
+    std::vector<jbyte> elements = remote_vm->GetByteArrayElements(array);
+
+    jbyte* buffer = AllocateArray<jbyte>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetCharArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jcharArray array = PascalRead<jcharArray>(Params[1]);
+    std::vector<jchar> elements = remote_vm->GetCharArrayElements(array);
+
+    jchar* buffer = AllocateArray<jchar>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetShortArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jshortArray array = PascalRead<jshortArray>(Params[1]);
+    std::vector<jshort> elements = remote_vm->GetShortArrayElements(array);
+
+    jshort* buffer = AllocateArray<jshort>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetIntArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jintArray array = PascalRead<jintArray>(Params[1]);
+    std::vector<jint> elements = remote_vm->GetIntArrayElements(array);
+
+    jint* buffer = AllocateArray<jint>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetLongArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jlongArray array = PascalRead<jlongArray>(Params[1]);
+    std::vector<jlong> elements = remote_vm->GetLongArrayElements(array);
+
+    jlong* buffer = AllocateArray<jlong>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetFloatArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jfloatArray array = PascalRead<jfloatArray>(Params[1]);
+    std::vector<jfloat> elements = remote_vm->GetFloatArrayElements(array);
+
+    jfloat* buffer = AllocateArray<jfloat>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetDoubleArrayElements(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jdoubleArray array = PascalRead<jdoubleArray>(Params[1]);
+    std::vector<jdouble> elements = remote_vm->GetDoubleArrayElements(array);
+
+    jdouble* buffer = AllocateArray<jdouble>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetBooleanArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jbooleanArray array = PascalRead<jbooleanArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jboolean> elements = remote_vm->GetBooleanArrayRegion(array, start, len);
+
+    jboolean* buffer = AllocateArray<jboolean>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetByteArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jbyteArray array = PascalRead<jbyteArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jbyte> elements = remote_vm->GetByteArrayRegion(array, start, len);
+
+    jbyte* buffer = AllocateArray<jbyte>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetCharArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jcharArray array = PascalRead<jcharArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jchar> elements = remote_vm->GetCharArrayRegion(array, start, len);
+
+    jchar* buffer = AllocateArray<jchar>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetShortArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jshortArray array = PascalRead<jshortArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jshort> elements = remote_vm->GetShortArrayRegion(array, start, len);
+
+    jshort* buffer = AllocateArray<jshort>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetIntArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jintArray array = PascalRead<jintArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jint> elements = remote_vm->GetIntArrayRegion(array, start, len);
+
+    jint* buffer = AllocateArray<jint>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetLongArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jlongArray array = PascalRead<jlongArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jlong> elements = remote_vm->GetLongArrayRegion(array, start, len);
+
+    jlong* buffer = AllocateArray<jlong>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetFloatArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jfloatArray array = PascalRead<jfloatArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jfloat> elements = remote_vm->GetFloatArrayRegion(array, start, len);
+
+    jfloat* buffer = AllocateArray<jfloat>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_GetDoubleArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jdoubleArray array = PascalRead<jdoubleArray >(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+    jsize len = PascalRead<jsize>(Params[3]);
+    std::vector<jdouble> elements = remote_vm->GetDoubleArrayRegion(array, start, len);
+
+    jdouble * buffer = AllocateArray<jdouble>(elements.size());
+    std::memcpy(&buffer[0], &elements[0], sizeof(elements[0]) * elements.size());
+    PascalWrite(Result, buffer);
+}
+
+void Pascal_RemoteVM_SetBooleanArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jbooleanArray array = PascalRead<jbooleanArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jboolean* elements = GetArray<jboolean>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetBooleanArrayRegion(array, start, std::vector<jboolean>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_SetByteArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jbyteArray array = PascalRead<jbyteArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jbyte * elements = GetArray<jbyte >(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetByteArrayRegion(array, start, std::vector<jbyte>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_SetCharArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jcharArray array = PascalRead<jcharArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jchar* elements = GetArray<jchar>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetCharArrayRegion(array, start, std::vector<jchar>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_SetShortArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jshortArray array = PascalRead<jshortArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jshort* elements = GetArray<jshort>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetShortArrayRegion(array, start, std::vector<jshort>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_SetIntArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jintArray array = PascalRead<jintArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jint* elements = GetArray<jint>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetIntArrayRegion(array, start, std::vector<jint>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_SetLongArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jlongArray array = PascalRead<jlongArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jlong* elements = GetArray<jlong>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetLongArrayRegion(array, start, std::vector<jlong>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_SetFloatArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jfloatArray array = PascalRead<jfloatArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jfloat* elements = GetArray<jfloat>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetFloatArrayRegion(array, start, std::vector<jfloat>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_SetDoubleArrayRegion(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jdoubleArray array = PascalRead<jdoubleArray>(Params[1]);
+    jsize start = PascalRead<jsize>(Params[2]);
+
+    std::size_t length = 0;
+    jdouble* elements = GetArray<jdouble>(PascalRead<void*>(Params[3]), &length);
+    remote_vm->SetDoubleArrayRegion(array, start, std::vector<jdouble>(elements, elements + length));
+}
+
+void Pascal_RemoteVM_MonitorEnter(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->MonitorEnter(obj));
+}
+
+void Pascal_RemoteVM_MonitorExit(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->MonitorExit(obj));
+}
+
+void Pascal_RemoteVM_GetJavaVM(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    PascalWrite(Result, remote_vm->GetJavaVM());
+}
+
+void Pascal_RemoteVM_NewDirectByteBuffer(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    void* address = PascalRead<void*>(Params[1]);
+    jlong capacity = PascalRead<jlong>(Params[2]);
+    PascalWrite(Result, remote_vm->NewDirectByteBuffer(address, capacity));
+}
+
+void Pascal_RemoteVM_GetDirectBufferAddress(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject buf = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->GetDirectBufferAddress(buf));
+}
+
+void Pascal_RemoteVM_GetDirectBufferCapacity(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject buf = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->GetDirectBufferCapacity(buf));
+}
+
+void Pascal_RemoteVM_GetObjectRefType(void** Params, void** Result)
+{
+    RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
+    jobject obj = PascalRead<jobject>(Params[1]);
+    PascalWrite(Result, remote_vm->GetObjectRefType(obj));
+}
+
+
 
 template<typename T>
 int PascalHigh(T* Arr) noexcept
