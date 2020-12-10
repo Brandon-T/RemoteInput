@@ -44,6 +44,9 @@ private:
     template<typename R, typename... Args>
     typename std::enable_if<is_vector<R>::value, R>::type SendCommand(RemoteVMCommand command, Args&&... args) const noexcept;
 
+    template<typename R, typename... Args>
+    R ExecuteCommand(void* arguments, R (RemoteVM::*func)(Args...) const noexcept) const noexcept;
+
 public:
     RemoteVM(JNIEnv* env,
              ControlCenter* control_center,
@@ -64,8 +67,8 @@ public:
     void FreeMemory(void* memory) const noexcept;
 
     jint GetVersion() const noexcept;
-    jclass DefineClass(const char* name, jobject loader, const jbyte* buf, jsize len) const noexcept;
-    jclass FindClass(const char* name) const noexcept;
+    jclass DefineClass(const std::string &name, jobject loader, const jbyte* buf, jsize len) const noexcept;
+    jclass FindClass(const std::string &name) const noexcept;
     jmethodID FromReflectedMethod(jobject method) const noexcept;
     jfieldID FromReflectedField(jobject field) const noexcept;
     jobject ToReflectedMethod(jclass cls, jmethodID methodID, jboolean isStatic) const noexcept;
@@ -73,18 +76,16 @@ public:
     jboolean IsAssignableFrom(jclass sub, jclass sup) const noexcept;
     jobject ToReflectedField(jclass cls, jfieldID fieldID, jboolean isStatic) const noexcept;
     jint Throw(jthrowable obj) const noexcept;
-    jint ThrowNew(jclass clazz, const char* msg) const noexcept;
-    jthrowable ExceptionOccurred() const noexcept;
-    void ExceptionDescribe() const noexcept;
-    void ExceptionClear() const noexcept;
-    void FatalError(const char* msg) const noexcept;
+    jint ThrowNew(jclass clazz, const std::string &msg) const noexcept;
+    std::string GetExceptionMessage() const noexcept;
+    void FatalError(const std::string &msg) const noexcept;
     void DeleteGlobalRef(jobject gref) const noexcept;
     jboolean IsSameObject(jobject obj1, jobject obj2) const noexcept;
     jobject AllocObject(jclass clazz) const noexcept;
     jobject NewObject(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     jclass GetObjectClass(jobject obj) const noexcept;
     jboolean IsInstanceOf(jobject obj, jclass clazz) const noexcept;
-    jmethodID GetMethodID(jclass clazz, const char* name, const char* sig) const noexcept;
+    jmethodID GetMethodID(jclass clazz, const std::string &name, const std::string &sig) const noexcept;
     jobject CallObjectMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     jboolean CallBooleanMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     jbyte CallByteMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
@@ -105,7 +106,7 @@ public:
     jfloat CallNonvirtualFloatMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     jdouble CallNonvirtualDoubleMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     void CallNonvirtualVoidMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
-    jfieldID GetFieldID(jclass clazz, const char* name, const char* sig) const noexcept;
+    jfieldID GetFieldID(jclass clazz, const std::string &name, const std::string &sig) const noexcept;
     jobject GetObjectField(jobject obj, jfieldID fieldID) const noexcept;
     jboolean GetBooleanField(jobject obj, jfieldID fieldID) const noexcept;
     jbyte GetByteField(jobject obj, jfieldID fieldID) const noexcept;
@@ -124,7 +125,7 @@ public:
     void SetLongField(jobject obj, jfieldID fieldID, jlong val) const noexcept;
     void SetFloatField(jobject obj, jfieldID fieldID, jfloat val) const noexcept;
     void SetDoubleField(jobject obj, jfieldID fieldID, jdouble val) const noexcept;
-    jmethodID GetStaticMethodID(jclass clazz, const char* name, const char* sig) const noexcept;
+    jmethodID GetStaticMethodID(jclass clazz, const std::string &name, const std::string &sig) const noexcept;
     jobject CallStaticObjectMethod(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     jboolean CallStaticBooleanMethod(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     jbyte CallStaticByteMethod(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
@@ -135,7 +136,7 @@ public:
     jfloat CallStaticFloatMethod(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     jdouble CallStaticDoubleMethod(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
     void CallStaticVoidMethod(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept;
-    jfieldID GetStaticFieldID(jclass clazz, const char* name, const char* sig) const noexcept;
+    jfieldID GetStaticFieldID(jclass clazz, const std::string &name, const std::string &sig) const noexcept;
     jobject GetStaticObjectField(jclass clazz, jfieldID fieldID) const noexcept;
     jboolean GetStaticBooleanField(jclass clazz, jfieldID fieldID) const noexcept;
     jbyte GetStaticByteField(jclass clazz, jfieldID fieldID) const noexcept;
@@ -154,10 +155,10 @@ public:
     void SetStaticLongField(jclass clazz, jfieldID fieldID, jlong value) const noexcept;
     void SetStaticFloatField(jclass clazz, jfieldID fieldID, jfloat value) const noexcept;
     void SetStaticDoubleField(jclass clazz, jfieldID fieldID, jdouble value) const noexcept;
-    jstring NewString(const jchar* unicode, jsize len) const noexcept;
+    jstring NewString(const std::wstring &unicode) const noexcept;
     jsize GetStringLength(jstring str) const noexcept;
     std::wstring GetStringChars(jstring str) const noexcept;
-    jstring NewStringUTF(const char* utf) const noexcept;
+    jstring NewStringUTF(const std::string &utf) const noexcept;
     jsize GetStringUTFLength(jstring str) const noexcept;
     std::string GetStringUTFChars(jstring str) const noexcept;
     jsize GetArrayLength(jarray array) const noexcept;
@@ -199,7 +200,6 @@ public:
     jint MonitorEnter(jobject obj) const noexcept;
     jint MonitorExit(jobject obj) const noexcept;
     JavaVM* GetJavaVM() const noexcept;
-    jboolean ExceptionCheck() const noexcept;
     jobject NewDirectByteBuffer(void* address, jlong capacity) const noexcept;
     void* GetDirectBufferAddress(jobject buf) const noexcept;
     jlong GetDirectBufferCapacity(jobject buf) const noexcept;

@@ -23,14 +23,10 @@ enum class RemoteVMCommand: std::uint32_t
     TO_REFLECTED_FIELD,
     THROW,
     THROW_NEW,
-    EXCEPTION_OCCURRED,
-    EXCEPTION_DESCRIBE,
-    EXCEPTION_CLEAR,
+    GET_EXCEPTION_MESSAGE,
     FATAL_ERROR,
     DELETE_GLOBAL_REF,
     IS_SAME_OBJECT,
-    NEW_LOCAL_REF,
-    ENSURE_LOCAL_CAPACITY,
     ALLOC_OBJECT,
     NEW_OBJECT,
     GET_OBJECT_CLASS,
@@ -108,7 +104,6 @@ enum class RemoteVMCommand: std::uint32_t
     NEW_STRING,
     GET_STRING_LENGTH,
     GET_STRING_CHARS,
-    RELEASE_STRING_CHARS,
     NEW_STRING_UTF,
     GET_STRING_UTF_LENGTH,
     GET_STRING_UTF_CHARS,
@@ -160,43 +155,61 @@ enum class RemoteVMCommand: std::uint32_t
 template<class T, class... Ts>
 struct is_same_of : std::bool_constant<(std::is_same<typename std::remove_cv<T>::type, typename std::remove_cv<Ts>::type>::value || ...)> { };
 
+template<class T>
+struct is_string
+{
+    static bool const value = false;
+};
+
 template<typename T>
-T Remote_VM_Read(void* &ptr) noexcept
+struct is_string<std::basic_string<T>>
+{
+    static bool const value = true;
+};
+
+template<typename T>
+typename std::enable_if<!is_string<std::decay_t<T>>::value && !is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(void* &ptr) noexcept
 {
     T result = *static_cast<T*>(ptr);
     ptr = static_cast<T*>(ptr) + 1;
     return result;
 }
 
-std::string Remote_VM_Read(void* &ptr) noexcept
+template<typename T>
+typename std::enable_if<is_string<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(void* &ptr) noexcept
 {
+    using string_type = std::decay_t<T>;
+    using value_type = typename std::decay_t<T>::value_type;
+
     std::size_t length = *static_cast<std::size_t*>(ptr);
     ptr = static_cast<std::size_t*>(ptr) + 1;
 
     if (length > 0)
     {
-        std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
-        ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
-        ptr = static_cast<char*>(ptr) + 1;
+        string_type result = string_type(reinterpret_cast<const value_type*>(ptr), length);
+        ptr = static_cast<value_type*>(ptr) + (result.length() * sizeof(value_type));
+        ptr = static_cast<value_type*>(ptr) + 1;
         return result;
     }
-    return std::string();
+    return string_type();
 }
 
-template<template<typename> class R, typename T>
-typename std::enable_if<std::is_same<std::vector<T>, R<T>>::value, R<T>>::type Remote_VM_Read(void* &ptr) noexcept
+template<typename T>
+typename std::enable_if<is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(void* &ptr) noexcept
 {
-    std::size_t length = *static_cast<std::size_t*>(ptr);
+    using vector_type = std::decay_t<T>;
+
+    std::size_t size = *static_cast<std::size_t*>(ptr);
     ptr = static_cast<std::size_t*>(ptr) + 1;
 
-    if (length > 0)
+    if (size > 0)
     {
-        std::vector<T> result = std::vector<T>(length);
-        std::memcpy(&result[0], ptr, length);
+        vector_type result = vector_type(size);
+        std::memcpy(&result[0], ptr, size);
         ptr = static_cast<char*>(ptr) + (result.size() * sizeof(T));
         return result;
     }
-    return std::vector<T>();
+    return vector_type();
 }
 
 template<typename T>
@@ -323,6 +336,13 @@ typename std::enable_if<is_vector<R>::value, R>::type RemoteVM::SendCommand(Remo
     return {};
 }
 
+template<typename R, typename... Args>
+R RemoteVM::ExecuteCommand(void* arguments, R (RemoteVM::*func)(Args...) const noexcept) const noexcept
+{
+    auto args = std::tuple<Args...>(Remote_VM_Read<Args>(arguments)...);
+    return std::apply(func, std::tuple_cat(std::forward_as_tuple(this), std::forward<std::tuple<Args...>>(args)));
+}
+
 
 RemoteVM::RemoteVM(JNIEnv* env,
                    ControlCenter* control_center,
@@ -425,23 +445,23 @@ jint RemoteVM::GetVersion() const noexcept
     return env->GetVersion();
 }
 
-jclass RemoteVM::DefineClass(const char* name, jobject loader, const jbyte* buf, jsize len) const noexcept 
+jclass RemoteVM::DefineClass(const std::string &name, jobject loader, const jbyte* buf, jsize len) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jclass>(RemoteVMCommand::DEFINE_CLASS, std::string(name), loader, buf, len);
+        return SendCommand<jclass>(RemoteVMCommand::DEFINE_CLASS, name, loader, buf, len);
     }
 
-    return local_to_global(env->DefineClass(name, loader, buf, len));
+    return local_to_global(env->DefineClass(name.c_str(), loader, buf, len));
 }
 
-jclass RemoteVM::FindClass(const char* name) const noexcept 
+jclass RemoteVM::FindClass(const std::string &name) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jclass>(RemoteVMCommand::FIND_CLASS, std::string(name));
+        return SendCommand<jclass>(RemoteVMCommand::FIND_CLASS, name);
     }
-    return local_to_global(env->FindClass(name));
+    return local_to_global(env->FindClass(name.c_str()));
 }
 
 jmethodID RemoteVM::FromReflectedMethod(jobject method) const noexcept 
@@ -507,49 +527,60 @@ jint RemoteVM::Throw(jthrowable obj) const noexcept
     return env->Throw(obj);
 }
 
-jint RemoteVM::ThrowNew(jclass clazz, const char* msg) const noexcept 
+jint RemoteVM::ThrowNew(jclass clazz, const std::string &msg) const noexcept
 {
     if (this->send_command)
     {
         return SendCommand<jint>(RemoteVMCommand::THROW_NEW, clazz, std::string(msg));
     }
-    return env->ThrowNew(clazz, msg);
+    return env->ThrowNew(clazz, msg.c_str());
 }
 
-jthrowable RemoteVM::ExceptionOccurred() const noexcept 
+std::string RemoteVM::GetExceptionMessage() const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jthrowable>(RemoteVMCommand::EXCEPTION_OCCURRED);
+        return SendCommand<std::string>(RemoteVMCommand::GET_EXCEPTION_MESSAGE);
     }
-    return local_to_global(env->ExceptionOccurred());
+
+    std::string result = std::string();
+    if (env->ExceptionCheck())
+    {
+        jthrowable throwable = env->ExceptionOccurred();
+        if (throwable)
+        {
+            env->ExceptionClear();
+            jclass clazz = env->GetObjectClass(throwable);
+            if (clazz)
+            {
+                jmethodID getMessage = env->GetMethodID(clazz, "getMessage", "()Ljava/lang/String;");
+                jstring message = static_cast<jstring>(env->CallObjectMethod(throwable, getMessage));
+                if (message)
+                {
+                    jsize length = env->GetStringLength(message);
+                    if (length > 0)
+                    {
+                        const char* str = env->GetStringUTFChars(message, nullptr);
+                        result = std::string(str, length);
+                        env->ReleaseStringUTFChars(message, str);
+                    }
+                    env->DeleteLocalRef(message);
+                }
+                env->DeleteLocalRef(clazz);
+            }
+            env->DeleteLocalRef(throwable);
+        }
+    }
+    return result;
 }
 
-void RemoteVM::ExceptionDescribe() const noexcept 
+void RemoteVM::FatalError(const std::string &msg) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<void>(RemoteVMCommand::EXCEPTION_DESCRIBE);
+        return SendCommand<void>(RemoteVMCommand::FATAL_ERROR, msg);
     }
-    return env->ExceptionDescribe();
-}
-
-void RemoteVM::ExceptionClear() const noexcept 
-{
-    if (this->send_command)
-    {
-        return SendCommand<void>(RemoteVMCommand::EXCEPTION_CLEAR);
-    }
-    return env->ExceptionClear();
-}
-
-void RemoteVM::FatalError(const char* msg) const noexcept 
-{
-    if (this->send_command)
-    {
-        return SendCommand<void>(RemoteVMCommand::FATAL_ERROR, std::string(msg));
-    }
-    return env->FatalError(msg);
+    return env->FatalError(msg.c_str());
 }
 
 void RemoteVM::DeleteGlobalRef(jobject gref) const noexcept 
@@ -606,13 +637,13 @@ jboolean RemoteVM::IsInstanceOf(jobject obj, jclass clazz) const noexcept
     return env->IsInstanceOf(obj, clazz);
 }
 
-jmethodID RemoteVM::GetMethodID(jclass clazz, const char* name, const char* sig) const noexcept 
+jmethodID RemoteVM::GetMethodID(jclass clazz, const std::string &name, const std::string &sig) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jmethodID>(RemoteVMCommand::GET_METHOD_ID, clazz, std::string(name), std::string(sig));
+        return SendCommand<jmethodID>(RemoteVMCommand::GET_METHOD_ID, clazz, name, sig);
     }
-    return env->GetMethodID(clazz, name, sig);
+    return env->GetMethodID(clazz, name.c_str(), sig.c_str());
 }
 
 jobject RemoteVM::CallObjectMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
@@ -795,13 +826,13 @@ void RemoteVM::CallNonvirtualVoidMethod(jobject obj, jclass clazz, jmethodID met
     return env->CallNonvirtualVoidMethodA(obj, clazz, methodID, args.data());
 }
 
-jfieldID RemoteVM::GetFieldID(jclass clazz, const char* name, const char* sig) const noexcept 
+jfieldID RemoteVM::GetFieldID(jclass clazz, const std::string &name, const std::string &sig) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jfieldID>(RemoteVMCommand::GET_FIELD_ID, clazz, std::string(name), std::string(sig));
+        return SendCommand<jfieldID>(RemoteVMCommand::GET_FIELD_ID, clazz, name, sig);
     }
-    return env->GetFieldID(clazz, name, sig);
+    return env->GetFieldID(clazz, name.c_str(), sig.c_str());
 }
 
 jobject RemoteVM::GetObjectField(jobject obj, jfieldID fieldID) const noexcept
@@ -966,13 +997,13 @@ void RemoteVM::SetDoubleField(jobject obj, jfieldID fieldID, jdouble val) const 
     return env->SetDoubleField(obj, fieldID, val);
 }
 
-jmethodID RemoteVM::GetStaticMethodID(jclass clazz, const char* name, const char* sig) const noexcept
+jmethodID RemoteVM::GetStaticMethodID(jclass clazz, const std::string &name, const std::string &sig) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jmethodID>(RemoteVMCommand::GET_STATIC_METHOD_ID, clazz, std::string(name), std::string(sig));
+        return SendCommand<jmethodID>(RemoteVMCommand::GET_STATIC_METHOD_ID, clazz, name, sig);
     }
-    return env->GetStaticMethodID(clazz, name, sig);
+    return env->GetStaticMethodID(clazz, name.c_str(), sig.c_str());
 }
 
 jobject RemoteVM::CallStaticObjectMethod(jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
@@ -1065,13 +1096,13 @@ void RemoteVM::CallStaticVoidMethod(jclass clazz, jmethodID methodID, const std:
     return env->CallStaticVoidMethodA(clazz, methodID, args.data());
 }
 
-jfieldID RemoteVM::GetStaticFieldID(jclass clazz, const char* name, const char* sig) const noexcept
+jfieldID RemoteVM::GetStaticFieldID(jclass clazz, const std::string &name, const std::string &sig) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jfieldID>(RemoteVMCommand::GET_STATIC_FIELD_ID, clazz, std::string(name), std::string(sig));
+        return SendCommand<jfieldID>(RemoteVMCommand::GET_STATIC_FIELD_ID, clazz, name, sig);
     }
-    return env->GetStaticFieldID(clazz, name, sig);
+    return env->GetStaticFieldID(clazz, name.c_str(), sig.c_str());
 }
 
 jobject RemoteVM::GetStaticObjectField(jclass clazz, jfieldID fieldID) const noexcept
@@ -1236,13 +1267,13 @@ void RemoteVM::SetStaticDoubleField(jclass clazz, jfieldID fieldID, jdouble valu
     return env->SetStaticDoubleField(clazz, fieldID, value);
 }
 
-jstring RemoteVM::NewString(const jchar* unicode, jsize len) const noexcept
+jstring RemoteVM::NewString(const std::wstring &unicode) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jstring>(RemoteVMCommand::NEW_STRING, std::wstring(reinterpret_cast<const wchar_t*>(unicode), len));
+        return SendCommand<jstring>(RemoteVMCommand::NEW_STRING, unicode);
     }
-    return local_to_global(env->NewString(unicode, len));
+    return local_to_global(env->NewString(reinterpret_cast<const jchar*>(unicode.c_str()), static_cast<jsize>(unicode.size())));
 }
 
 jsize RemoteVM::GetStringLength(jstring str) const noexcept
@@ -1277,13 +1308,13 @@ std::wstring RemoteVM::GetStringChars(jstring str) const noexcept
     return std::wstring();
 }
 
-jstring RemoteVM::NewStringUTF(const char* utf) const noexcept
+jstring RemoteVM::NewStringUTF(const std::string &utf) const noexcept
 {
     if (this->send_command)
     {
-        return SendCommand<jstring>(RemoteVMCommand::NEW_STRING_UTF, std::string(utf));
+        return SendCommand<jstring>(RemoteVMCommand::NEW_STRING_UTF, utf);
     }
-    return local_to_global(env->NewStringUTF(utf));
+    return local_to_global(env->NewStringUTF(utf.c_str()));
 }
 
 jsize RemoteVM::GetStringUTFLength(jstring str) const noexcept
@@ -1853,15 +1884,6 @@ JavaVM* RemoteVM::GetJavaVM() const noexcept
     return env->GetJavaVM(&jvm) == 0 ? jvm : nullptr;
 }
 
-jboolean RemoteVM::ExceptionCheck() const noexcept
-{
-    if (this->send_command)
-    {
-        return SendCommand<jboolean>(RemoteVMCommand::EXCEPTION_CLEAR);
-    }
-    return env->ExceptionCheck();
-}
-
 jobject RemoteVM::NewDirectByteBuffer(void* address, jlong capacity) const noexcept
 {
     if (this->send_command)
@@ -1905,8 +1927,7 @@ void RemoteVM::process_command(void* arguments, void* response) const noexcept
     {
         case RemoteVMCommand::ALLOCATE_MEMORY:
         {
-            jsize size = Remote_VM_Read<jsize>(arguments);
-            void* result = this->AllocateMemory(size);
+            void* result = this->ExecuteCommand(arguments, &RemoteVM::AllocateMemory);
             Remote_VM_Write(response, result);
         }
             break;
@@ -1931,14 +1952,14 @@ void RemoteVM::process_command(void* arguments, void* response) const noexcept
 
         case RemoteVMCommand::FREE_MEMORY:
         {
-            void* memory = Remote_VM_Read<void*>(arguments);
-            this->FreeMemory(memory);
+            this->ExecuteCommand(arguments, &RemoteVM::FreeMemory);
         }
             break;
 
         case RemoteVMCommand::GET_VERSION:
         {
-            Remote_VM_Write(response, this->GetVersion());
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::GetVersion);
+            Remote_VM_Write(response, result);
         }
             break;
 
@@ -1955,710 +1976,921 @@ void RemoteVM::process_command(void* arguments, void* response) const noexcept
 
         case RemoteVMCommand::FIND_CLASS:
         {
-            
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::FindClass);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::FROM_REFLECTED_METHOD:
         {
-
+            jmethodID result = this->ExecuteCommand(arguments, &RemoteVM::FromReflectedMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::FROM_REFLECTED_FIELD:
         {
-
+            jfieldID result = this->ExecuteCommand(arguments, &RemoteVM::FromReflectedField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::TO_REFLECTED_METHOD:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::ToReflectedMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_SUPER_CLASS:
         {
+            jclass result = this->ExecuteCommand(arguments, &RemoteVM::GetSuperclass);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::IS_ASSIGNABLE_FROM:
         {
+            bool result = this->ExecuteCommand(arguments, &RemoteVM::IsAssignableFrom);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::TO_REFLECTED_FIELD:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::ToReflectedField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::THROW:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::Throw);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::THROW_NEW:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::ThrowNew);
+            Remote_VM_Write(response, result);
         }
             break;
 
-        case RemoteVMCommand::EXCEPTION_OCCURRED:
+        case RemoteVMCommand::GET_EXCEPTION_MESSAGE:
         {
-        }
-            break;
-
-        case RemoteVMCommand::EXCEPTION_DESCRIBE:
-        {
-        }
-            break;
-
-        case RemoteVMCommand::EXCEPTION_CLEAR:
-        {
+            std::string result = this->ExecuteCommand(arguments, &RemoteVM::GetExceptionMessage);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::FATAL_ERROR:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::FatalError);
         }
             break;
 
         case RemoteVMCommand::DELETE_GLOBAL_REF:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::DeleteGlobalRef);
         }
             break;
 
         case RemoteVMCommand::IS_SAME_OBJECT:
         {
-        }
-            break;
-
-        case RemoteVMCommand::NEW_LOCAL_REF:
-        {
-        }
-            break;
-
-        case RemoteVMCommand::ENSURE_LOCAL_CAPACITY:
-        {
+            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::IsSameObject);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::ALLOC_OBJECT:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::AllocObject);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_OBJECT:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::NewObject);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_CLASS:
         {
+            jclass result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectClass);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::IS_INSTANCE_OF:
         {
+            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::IsInstanceOf);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_METHOD_ID:
         {
+            jmethodID result = this->ExecuteCommand(arguments, &RemoteVM::GetMethodID);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_OBJECT_METHOD:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::CallObjectMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_BOOLEAN_METHOD:
         {
+            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::CallBooleanMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_BYTE_METHOD:
         {
+            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::CallByteMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_CHAR_METHOD:
         {
+            jchar result = this->ExecuteCommand(arguments, &RemoteVM::CallCharMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_SHORT_METHOD:
         {
+            jshort result = this->ExecuteCommand(arguments, &RemoteVM::CallShortMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_INT_METHOD:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::CallIntMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_LONG_METHOD:
         {
+            jlong result = this->ExecuteCommand(arguments, &RemoteVM::CallLongMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_FLOAT_METHOD:
         {
+            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::CallFloatMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_DOUBLE_METHOD:
         {
+            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::CallDoubleMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_VOID_METHOD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::CallVoidMethod);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_OBJECT_METHOD:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualObjectMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_BOOLEAN_METHOD:
         {
+            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualBooleanMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_BYTE_METHOD:
         {
+            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualByteMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_CHAR_METHOD:
         {
+            jchar result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualCharMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_SHORT_METHOD:
         {
+            jshort result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualShortMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_INT_METHOD:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualIntMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_LONG_METHOD:
         {
+            jlong result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualLongMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_FLOAT_METHOD:
         {
+            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualFloatMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_DOUBLE_METHOD:
         {
+            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualDoubleMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_VOID_METHOD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualVoidMethod);
         }
             break;
 
         case RemoteVMCommand::GET_FIELD_ID:
         {
+            jfieldID result = this->ExecuteCommand(arguments, &RemoteVM::GetFieldID);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_FIELD:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_BOOLEAN_FIELD:
         {
+            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::GetBooleanField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_BYTE_FIELD:
         {
+            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::GetByteField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_CHAR_FIELD:
         {
+            jchar result = this->ExecuteCommand(arguments, &RemoteVM::GetCharField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_SHORT_FIELD:
         {
+            jshort result = this->ExecuteCommand(arguments, &RemoteVM::GetShortField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_INT_FIELD:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::GetIntField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_LONG_FIELD:
         {
+            jlong result = this->ExecuteCommand(arguments, &RemoteVM::GetLongField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_FLOAT_FIELD:
         {
+            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::GetFloatField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_DOUBLE_FIELD:
         {
+            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::GetDoubleField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::SET_OBJECT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetObjectField);
         }
             break;
 
         case RemoteVMCommand::SET_BOOLEAN_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetBooleanField);
         }
             break;
 
         case RemoteVMCommand::SET_BYTE_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetByteField);
         }
             break;
 
         case RemoteVMCommand::SET_CHAR_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetCharField);
         }
             break;
 
         case RemoteVMCommand::SET_SHORT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetShortField);
         }
             break;
 
         case RemoteVMCommand::SET_INT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetIntField);
         }
             break;
 
         case RemoteVMCommand::SET_LONG_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetLongField);
         }
             break;
 
         case RemoteVMCommand::SET_FLOAT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetFloatField);
         }
             break;
 
         case RemoteVMCommand::SET_DOUBLE_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetDoubleField);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_METHOD_ID:
         {
+            jmethodID result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticMethodID);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_OBJECT_METHOD:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticObjectMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_BOOLEAN_METHOD:
         {
+            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticBooleanMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_BYTE_METHOD:
         {
+            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticByteMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_CHAR_METHOD:
         {
+            jchar result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticCharMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_SHORT_METHOD:
         {
+            jshort result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticShortMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_INT_METHOD:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticIntMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_LONG_METHOD:
         {
+            jlong result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticLongMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_FLOAT_METHOD:
         {
+            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticFloatMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_DOUBLE_METHOD:
         {
+            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticDoubleMethod);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_VOID_METHOD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::CallStaticVoidMethod);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_FIELD_ID:
         {
+            jfieldID result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticFieldID);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_OBJECT_FIELD:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticObjectField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_BOOLEAN_FIELD:
         {
+            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticBooleanField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_BYTE_FIELD:
         {
+            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticByteField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_CHAR_FIELD:
         {
+            jchar result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticCharField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_SHORT_FIELD:
         {
+            jshort result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticShortField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_INT_FIELD:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticIntField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_LONG_FIELD:
         {
+            jlong result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticLongField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_FLOAT_FIELD:
         {
+            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticFloatField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_DOUBLE_FIELD:
         {
+            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticDoubleField);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_OBJECT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticObjectField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_BOOLEAN_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticBooleanField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_BYTE_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticByteField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_CHAR_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticCharField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_SHORT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticShortField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_INT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticIntField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_LONG_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticLongField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_FLOAT_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticFloatField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_DOUBLE_FIELD:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetStaticDoubleField);
         }
             break;
 
         case RemoteVMCommand::NEW_STRING:
         {
+            jstring result = this->ExecuteCommand(arguments, &RemoteVM::NewString);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_LENGTH:
         {
+            jsize result = this->ExecuteCommand(arguments, &RemoteVM::GetStringLength);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_CHARS:
         {
-        }
-            break;
-
-        case RemoteVMCommand::RELEASE_STRING_CHARS:
-        {
+            std::wstring result = this->ExecuteCommand(arguments, &RemoteVM::GetStringChars);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_STRING_UTF:
         {
+            jstring result = this->ExecuteCommand(arguments, &RemoteVM::NewStringUTF);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_UTF_LENGTH:
         {
+            jsize result = this->ExecuteCommand(arguments, &RemoteVM::GetStringUTFLength);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_UTF_CHARS:
         {
+            std::string result = this->ExecuteCommand(arguments, &RemoteVM::GetStringUTFChars);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_ARRAY_LENGTH:
         {
+            jsize result = this->ExecuteCommand(arguments, &RemoteVM::GetArrayLength);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_OBJECT_ARRAY:
         {
+            jobjectArray result = this->ExecuteCommand(arguments, &RemoteVM::NewObjectArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_ARRAY_ELEMENTS:
         {
+            std::vector<jobject> result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::SET_OBJECT_ARRAY_ELEMENTS:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetObjectArrayElements);
         }
             break;
 
         case RemoteVMCommand::NEW_BOOLEAN_ARRAY:
         {
+            jbooleanArray result = this->ExecuteCommand(arguments, &RemoteVM::NewBooleanArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_BYTE_ARRAY:
         {
+            jbyteArray result = this->ExecuteCommand(arguments, &RemoteVM::NewByteArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_CHAR_ARRAY:
         {
+            jcharArray result = this->ExecuteCommand(arguments, &RemoteVM::NewCharArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_SHORT_ARRAY:
         {
+            jshortArray result = this->ExecuteCommand(arguments, &RemoteVM::NewShortArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_INT_ARRAY:
         {
+            jintArray result = this->ExecuteCommand(arguments, &RemoteVM::NewIntArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_LONG_ARRAY:
         {
+            jlongArray result = this->ExecuteCommand(arguments, &RemoteVM::NewLongArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_FLOAT_ARRAY:
         {
+            jfloatArray result = this->ExecuteCommand(arguments, &RemoteVM::NewFloatArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::NEW_DOUBLE_ARRAY:
         {
+            jdoubleArray result = this->ExecuteCommand(arguments, &RemoteVM::NewDoubleArray);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_BOOLEAN_ARRAY_ELEMENTS:
         {
+            std::vector<jboolean> result = this->ExecuteCommand(arguments, &RemoteVM::GetBooleanArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_BYTE_ARRAY_ELEMENTS:
         {
+            std::vector<jbyte> result = this->ExecuteCommand(arguments, &RemoteVM::GetByteArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_CHAR_ARRAY_ELEMENTS:
         {
+            std::vector<jchar> result = this->ExecuteCommand(arguments, &RemoteVM::GetCharArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_SHORT_ARRAY_ELEMENTS:
         {
+            std::vector<jshort> result = this->ExecuteCommand(arguments, &RemoteVM::GetShortArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_INT_ARRAY_ELEMENTS:
         {
+            std::vector<jint> result = this->ExecuteCommand(arguments, &RemoteVM::GetIntArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_LONG_ARRAY_ELEMENTS:
         {
+            std::vector<jlong> result = this->ExecuteCommand(arguments, &RemoteVM::GetLongArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_FLOAT_ARRAY_ELEMENTS:
         {
+            std::vector<jfloat> result = this->ExecuteCommand(arguments, &RemoteVM::GetFloatArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_DOUBLE_ARRAY_ELEMENTS:
         {
+            std::vector<jdouble> result = this->ExecuteCommand(arguments, &RemoteVM::GetDoubleArrayElements);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_BOOLEAN_ARRAY_REGION:
         {
+            std::vector<jboolean> result = this->ExecuteCommand(arguments, &RemoteVM::GetBooleanArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_BYTE_ARRAY_REGION:
         {
+            std::vector<jbyte> result = this->ExecuteCommand(arguments, &RemoteVM::GetByteArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_CHAR_ARRAY_REGION:
         {
+            std::vector<jchar> result = this->ExecuteCommand(arguments, &RemoteVM::GetCharArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_SHORT_ARRAY_REGION:
         {
+            std::vector<jshort> result = this->ExecuteCommand(arguments, &RemoteVM::GetShortArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_INT_ARRAY_REGION:
         {
+            std::vector<jint> result = this->ExecuteCommand(arguments, &RemoteVM::GetIntArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_LONG_ARRAY_REGION:
         {
+            std::vector<jlong> result = this->ExecuteCommand(arguments, &RemoteVM::GetLongArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_FLOAT_ARRAY_REGION:
         {
+            std::vector<jfloat> result = this->ExecuteCommand(arguments, &RemoteVM::GetFloatArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::GET_DOUBLE_ARRAY_REGION:
         {
+            std::vector<jdouble> result = this->ExecuteCommand(arguments, &RemoteVM::GetDoubleArrayRegion);
+            Remote_VM_Write(response, result);
         }
             break;
 
         case RemoteVMCommand::SET_BOOLEAN_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetBooleanArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_BYTE_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetByteArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_CHAR_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetCharArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_SHORT_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetShortArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_INT_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetIntArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_LONG_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetLongArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_FLOAT_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetFloatArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_DOUBLE_ARRAY_REGION:
         {
+            this->ExecuteCommand(arguments, &RemoteVM::SetDoubleArrayRegion);
         }
             break;
 
         case RemoteVMCommand::MONITOR_ENTER:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::MonitorEnter);
+            Remote_VM_Write(arguments, result);
         }
             break;
 
         case RemoteVMCommand::MONITOR_EXIT:
         {
+            jint result = this->ExecuteCommand(arguments, &RemoteVM::MonitorExit);
+            Remote_VM_Write(arguments, result);
         }
             break;
 
         case RemoteVMCommand::GET_JAVA_VM:
         {
+            JavaVM* result = this->ExecuteCommand(arguments, &RemoteVM::GetJavaVM);
+            Remote_VM_Write(arguments, result);
         }
             break;
 
         case RemoteVMCommand::NEW_DIRECT_BYTE_BUFFER:
         {
+            jobject result = this->ExecuteCommand(arguments, &RemoteVM::NewDirectByteBuffer);
+            Remote_VM_Write(arguments, result);
         }
             break;
 
         case RemoteVMCommand::GET_DIRECT_BUFFER_ADDRESS:
         {
+            void* result = this->ExecuteCommand(arguments, &RemoteVM::GetDirectBufferAddress);
+            Remote_VM_Write(arguments, result);
         }
             break;
 
         case RemoteVMCommand::GET_DIRECT_BUFFER_CAPACITY:
         {
+            jlong result = this->ExecuteCommand(arguments, &RemoteVM::GetDirectBufferCapacity);
+            Remote_VM_Write(arguments, result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_REF_TYPE:
         {
-
+            jobjectRefType result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectRefType);
+            Remote_VM_Write(arguments, result);
         }
             break;
     }
