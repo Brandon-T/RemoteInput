@@ -7,6 +7,7 @@
 
 #include "ControlCenter.hxx"
 #include "RemoteVM.hxx"
+#include "Module.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 extern HMODULE module;
@@ -41,6 +42,9 @@ T* AllocateArray(std::size_t size, std::size_t element_size = sizeof(T)) noexcep
 
 template<typename T>
 T* GetArray(void* ptr, std::size_t* size) noexcept;
+
+template<typename T>
+std::vector<T> GetArrayAsVector(void* ptr) noexcept;
 
 template<typename T>
 T* AllocateString(std::size_t size, std::size_t element_size = sizeof(T)) noexcept;
@@ -954,6 +958,126 @@ void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result) noexcept
 
 
 //MARK: - RemoteVM
+void Pascal_RemoteVM_Init(void** Params, void** Result)
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[1]);
+    RemoteVM** remote_vm = static_cast<RemoteVM**>(Params[0]);
+    if (eios && eios->control_center)
+    {
+        *remote_vm = eios->control_center->create_remote_vm().release();
+    }
+}
+
+void Pascal_RemoteVM_InitEx(void** Params, void** Result)
+{
+    #if defined(_WIN32) || defined(_WIN64)
+    static Module module = Module("jvm.dll");
+    #elif defined(__APPLE__)
+    static Module module = Module("libjvm.dylib");
+    #else
+    static Module module = Module("libjvm.so");
+    #endif // defined
+
+    jint (JNICALL *JNI_GetCreatedJavaVMs)(JavaVM**, jsize, jsize*) = nullptr;
+    jint (JNICALL *JNI_GetDefaultJavaVMInitArgs)(void* args) = nullptr;
+    jint (JNICALL *JNI_CreateJavaVM)(JavaVM** pvm, void** penv, void* args) = nullptr;
+
+    if (!module ||
+        !module.AddressOf(JNI_GetCreatedJavaVMs, "JNI_GetCreatedJavaVMs") ||
+        !module.AddressOf(JNI_GetDefaultJavaVMInitArgs, "JNI_GetDefaultJavaVMInitArgs") ||
+        !module.AddressOf(JNI_CreateJavaVM, "JNI_CreateJavaVM"))
+    {
+        return;
+    }
+
+    RemoteVM** remote_vm = static_cast<RemoteVM**>(Params[0]);
+    std::vector<char*> arguments = GetArrayAsVector<char*>(PascalRead<void*>(Params[1]));
+
+    JavaVMInitArgs jvm_args;
+    std::unique_ptr<JavaVMOption[]> options = !arguments.empty() ? std::make_unique<JavaVMOption[]>(arguments.size()) : nullptr;
+
+    for (std::size_t i = 0; i < arguments.size(); ++i)
+    {
+        options[i].optionString = arguments[i];
+    }
+
+    JNI_GetDefaultJavaVMInitArgs(&jvm_args);
+    jvm_args.version = JNI_VERSION_1_8;
+    jvm_args.nOptions = arguments.size();
+    jvm_args.options = options.get();
+    jvm_args.ignoreUnrecognized = false;
+
+    jint num_vms = 0;
+    const jint max_vms = 5;
+    JavaVM* vms[max_vms] = {0};
+    if (JNI_GetCreatedJavaVMs(vms, max_vms, &num_vms) == JNI_OK)
+    {
+        for (int i = 0; i < num_vms; ++i)
+        {
+            if (vms[i])
+            {
+                JNIEnv* env = nullptr;
+                vms[i]->GetEnv(reinterpret_cast<void**>(&env), jvm_args.version);
+                if (!env)
+                {
+                    vms[i]->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+                }
+
+                if (env)
+                {
+                    *remote_vm = new RemoteVM(env, nullptr, nullptr, nullptr);
+                }
+                return;
+            }
+        }
+    }
+
+    JavaVM* vm = nullptr;
+    JNIEnv* env = nullptr;
+    if (JNI_CreateJavaVM(&vm, reinterpret_cast<void**>(&env), &jvm_args) == JNI_OK)
+    {
+        if (env)
+        {
+            *remote_vm = new RemoteVM(env, nullptr, nullptr, nullptr);
+            return;
+        }
+
+        vm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+        if (env)
+        {
+            *remote_vm = new RemoteVM(env, nullptr, nullptr, nullptr);
+            return;
+        }
+
+        vm->DestroyJavaVM();
+    }
+}
+
+void Pascal_RemoteVM_Free(void** Params, void** Result)
+{
+    RemoteVM** remote_vm = static_cast<RemoteVM**>(Params[0]);
+    if (remote_vm && *remote_vm)
+    {
+        if (!(*remote_vm)->is_remote())
+        {
+            JavaVM* vm = (*remote_vm)->GetJavaVM();
+            if (vm)
+            {
+                JNIEnv* env = nullptr;
+                vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_8);
+                if (env)
+                {
+                    vm->DetachCurrentThread();
+                }
+                vm->DestroyJavaVM();
+            }
+
+        }
+        delete *remote_vm;
+        *remote_vm = nullptr;
+    }
+}
+
 void Pascal_RemoteVM_MaxMemoryChunkSize(void** Params, void** Result)
 {
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
@@ -1127,11 +1251,8 @@ void Pascal_RemoteVM_NewObject(void** Params, void** Result)
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
-
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-
-    PascalWrite(Result, remote_vm->NewObject(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->NewObject(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_GetObjectClass(void** Params, void** Result)
@@ -1163,10 +1284,8 @@ void Pascal_RemoteVM_CallObjectMethod(void** Params, void** Result)
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
-
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallObjectMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallObjectMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallBooleanMethod(void** Params, void** Result)
@@ -1174,10 +1293,8 @@ void Pascal_RemoteVM_CallBooleanMethod(void** Params, void** Result)
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
-
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallBooleanMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallBooleanMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallByteMethod(void** Params, void** Result)
@@ -1185,10 +1302,8 @@ void Pascal_RemoteVM_CallByteMethod(void** Params, void** Result)
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
-
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallByteMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallByteMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallCharMethod(void** Params, void** Result)
@@ -1196,10 +1311,8 @@ void Pascal_RemoteVM_CallCharMethod(void** Params, void** Result)
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
-
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallCharMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallCharMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallShortMethod(void** Params, void** Result)
@@ -1207,10 +1320,8 @@ void Pascal_RemoteVM_CallShortMethod(void** Params, void** Result)
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
-
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallShortMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallShortMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallIntMethod(void** Params, void** Result)
@@ -1218,10 +1329,8 @@ void Pascal_RemoteVM_CallIntMethod(void** Params, void** Result)
     RemoteVM* remote_vm = PascalRead<RemoteVM*>(Params[0]);
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
-
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallIntMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallIntMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallLongMethod(void** Params, void** Result)
@@ -2374,6 +2483,23 @@ T* GetArray(void* ptr, std::size_t* size) noexcept
     PascalArray* mem = static_cast<PascalArray*>(ptr) - 1;
     *size = mem->length + 1;
     return reinterpret_cast<T*>(mem->data);
+}
+
+template<typename T>
+std::vector<T> GetArrayAsVector(void* ptr) noexcept
+{
+    if (!ptr)
+    {
+        return {};
+    }
+
+    PascalArray* mem = static_cast<PascalArray*>(ptr) - 1;
+    if (mem->length + 1 > 0)
+    {
+        T* values = reinterpret_cast<T*>(mem->data);
+        return std::vector<T>(values, values + mem->length + 1);
+    }
+    return {};
 }
 
 template<typename T>

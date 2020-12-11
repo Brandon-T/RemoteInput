@@ -51,7 +51,7 @@ public:
     RemoteVM(JNIEnv* env,
              ControlCenter* control_center,
              bool (ControlCenter::*send_command)(std::function<void(ImageData*)>&&) const,
-             ImageData* (ControlCenter::*get_image_data)() const);
+             ImageData* (ControlCenter::*get_image_data)() const) noexcept;
     ~RemoteVM();
 
     RemoteVM(const RemoteVM& other) = delete;
@@ -205,6 +205,7 @@ public:
     jlong GetDirectBufferCapacity(jobject buf) const noexcept;
     jobjectRefType GetObjectRefType(jobject obj) const noexcept;
 
+    bool is_remote() const noexcept;
     void process_command(void* arguments, void* response) const noexcept;
 };
 

@@ -148,8 +148,8 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 					this->io_controller = std::make_unique<InputOutput>(this->reflector.get());
 					this->remote_vm = std::make_unique<RemoteVM>(this->reflector.get()->getEnv(),
                                                                       this,
-                                                                      &ControlCenter::send_command,
-                                                                      &ControlCenter::get_image_data);
+                                                                      nullptr,
+                                                                      nullptr);
 
 					while(!stopped)
 					{
@@ -1973,6 +1973,14 @@ Component ControlCenter::reflect_canvas() const noexcept
 {
 	Applet applet{reflector->getEnv(), reflector->getApplet(), false};
 	return applet.getComponent(0);
+}
+
+std::unique_ptr<RemoteVM> ControlCenter::create_remote_vm() noexcept
+{
+	return std::make_unique<RemoteVM>(nullptr,
+									  this,
+									  &ControlCenter::send_command,
+									  &ControlCenter::get_image_data);
 }
 
 void ControlCenter::get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::size_t* width, std::size_t* height) const noexcept

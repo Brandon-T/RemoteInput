@@ -7,8 +7,16 @@
 //
 
 #include "PythonPlugin.hxx"
+
+#if defined(_WIN32) || defined(_WIN64)
+#include "structmember.h"
+#elif defined(__linux__) && (defined(__x86_64__) || defined(__i386__))
+#include "structmember.h"
+#elif defined(__APPLE__)
 #include <Python/structmember.h>
-#include <Python.h>
+#elif defined(__aarch64__) || defined(__arm__)
+#include "structmember.h"
+#endif
 
 // STRUCTURES
 typedef struct {
@@ -50,6 +58,7 @@ static PyMethodDef PyEIOSMethods[] = {
         {nullptr}  /* Sentinel */
 };
 
+#if __cplusplus >= 202002L  //C++20
 static PyTypeObject PyEIOSType = {
         PyVarObject_HEAD_INIT(nullptr, 0)
         .tp_name = "remoteinput.EIOS",
@@ -81,6 +90,74 @@ static PyTypeObject PyEIOSType = {
         .tp_getset = PyEIOSPropertyMembers,
         .tp_new = PyType_GenericNew,
 };
+#else
+static PyTypeObject PyEIOSType = {
+        PyVarObject_HEAD_INIT(nullptr, 0)
+        "remoteinput.EIOS",
+        sizeof(PyEIOS),
+        0,
+        [](PyObject* object){
+            PyEIOS* py_eios = reinterpret_cast<PyEIOS*>(object);
+            EIOS_ReleaseTarget(py_eios->native_eios);
+            PyObject_GC_UnTrack(object);
+            Py_TYPE(object)->tp_clear(object);
+            PyObject_Del(object);
+        },
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+        "EIOS Structure",
+        [](PyObject* object, visitproc visit, void* arg) -> int {
+            //Py_VISIT(object->other_py_object);
+            return 0;
+        },
+        [](PyObject* object) -> int {
+            PyEIOS* py_eios = reinterpret_cast<PyEIOS*>(object);
+            py_eios->pid = -1;
+            py_eios->width = 0;
+            py_eios->height = 0;
+            py_eios->native_eios = nullptr;
+            return 0;
+        },
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        PyEIOSMethods,
+        PyEIOSMembers,
+        PyEIOSPropertyMembers,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        PyType_GenericNew,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        0,
+        nullptr
+};
+#endif
 
 typedef struct {
     PyObject_HEAD
@@ -92,6 +169,7 @@ static PyMemberDef PyJavaObjectMembers[] = {
     {nullptr}  /* Sentinel */
 };
 
+#if __cplusplus >= 202002L  //C++20
 static PyTypeObject PyJavaObjectType = {
         PyVarObject_HEAD_INIT(nullptr, 0)
         .tp_name = "remoteinput.JavaObject",
@@ -128,6 +206,80 @@ static PyTypeObject PyJavaObjectType = {
         .tp_getset = nullptr,
         .tp_new = PyType_GenericNew,
 };
+#else
+static PyTypeObject PyJavaObjectType = {
+        PyVarObject_HEAD_INIT(nullptr, 0)
+        "remoteinput.JavaObject",
+        sizeof(PyJavaObject),
+        0,
+        [](PyObject* object){
+            PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject*>(object);
+            if (py_java_object->eios && py_java_object->object)
+            {
+                Reflect_Release_Object(reinterpret_cast<PyEIOS *>(py_java_object->eios)->native_eios, py_java_object->object);
+            }
+            PyObject_GC_UnTrack(object);
+            Py_TYPE(object)->tp_clear(object);
+            PyObject_Del(object);
+        },
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+        "Java Object",
+        [](PyObject* object, visitproc visit, void* arg) -> int {
+            PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject*>(object);
+            if (py_java_object->eios)
+            {
+                Py_VISIT(py_java_object->eios);
+            }
+            return 0;
+        },
+        [](PyObject* object) -> int {
+            PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject*>(object);
+            Py_CLEAR(py_java_object->eios);
+            py_java_object->eios = nullptr;
+            py_java_object->object = nullptr;
+            return 0;
+        },
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        PyJavaObjectMembers,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        PyType_GenericNew,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        0,
+        nullptr
+};
+#endif
 
 // HELPERS
 

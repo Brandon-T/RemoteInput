@@ -10,6 +10,9 @@
 #define REMOTEINPUT_PYTHONPLUGIN_HXX
 
 #include "Plugin.hxx"
+
+//On Windows, Python is really badly implemented, so we must include `math.h` and not `cmath` to get the _hpyot symbol
+#include <math.h>
 #include <Python.h>
 
 #if PY_MAJOR_VERSION < 3
@@ -45,7 +48,11 @@ PyObject* PYTHON_Reflect_Array_With_Size(PyObject* self, PyObject* args) noexcep
 PyObject* PYTHON_Reflect_Array_Size(PyObject* self, PyObject* args) noexcept;
 PyObject* PYTHON_Reflect_Array_Index(PyObject* self, PyObject* args) noexcept;
 
+#if defined(_WIN32) || defined(_WIN64)
+PyMODINIT_FUNC MODINIT(remote_input)();
+#else
 EXPORT PyMODINIT_FUNC MODINIT(remote_input)();
+#endif
 
 #ifdef __cplusplus
 }

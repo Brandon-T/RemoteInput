@@ -1,0 +1,8 @@
+//
+// Created by Brandon on 2020-12-12.
+//
+
+#ifndef REMOTEINPUT_STREAM_HXX
+#define REMOTEINPUT_STREAM_HXX
+
+#endif //REMOTEINPUT_STREAM_HXX

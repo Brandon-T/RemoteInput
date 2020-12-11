@@ -70,7 +70,7 @@ public:
      * @param other.module - Module to be moved into this container.
      *
      ***********************************************/
-    Module(Module&& other) noexcept : module(other.module) {other.module = nullptr;}
+    Module(Module&& other) noexcept : module(other.module) { other.module = nullptr; }
 
 
     /********************************************//**
@@ -79,7 +79,7 @@ public:
      * @return void* - Handle to the underlying module.
      *
      ***********************************************/
-    explicit operator void*() const noexcept {return module;}
+    explicit operator void*() const noexcept { return module; }
 
 
     /********************************************//**
@@ -88,7 +88,7 @@ public:
      * @return bool - Boolean indicating whether the module was loaded successfully.
      *
      ***********************************************/
-    explicit operator bool() const noexcept {return module != nullptr;}
+    explicit operator bool() const noexcept { return module != nullptr; }
 
 
     /********************************************//**
@@ -97,7 +97,7 @@ public:
      * @return bool - Boolean indicating whether the module was loaded successfully.
      *
      ***********************************************/
-    bool IsLoaded() const noexcept {return module != nullptr;}
+    bool IsLoaded() const noexcept { return module != nullptr; }
 
 
     /********************************************//**
@@ -108,7 +108,7 @@ public:
      *
      ***********************************************/
     template<typename T>
-    T AddressOf(const std::string &FunctionName) const noexcept;
+    T AddressOf(const std::string &FunctionName) const;
 
 
     /********************************************//**
@@ -152,7 +152,7 @@ public:
 
 
 template<typename T>
-T Module::AddressOf(const std::string &Name) const noexcept
+T Module::AddressOf(const std::string &Name) const
 {
     #if defined _WIN32 || defined _WIN64
     T Result = reinterpret_cast<T>(GetProcAddress(static_cast<HMODULE>(module), Name.c_str()));

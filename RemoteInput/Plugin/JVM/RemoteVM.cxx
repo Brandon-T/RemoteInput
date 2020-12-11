@@ -187,7 +187,7 @@ typename std::enable_if<is_string<std::decay_t<T>>::value, std::decay_t<T>>::typ
     if (length > 0)
     {
         string_type result = string_type(reinterpret_cast<const value_type*>(ptr), length);
-        ptr = static_cast<value_type*>(ptr) + (result.length() * sizeof(value_type));
+        ptr = static_cast<value_type*>(ptr) + (length * sizeof(value_type));
         ptr = static_cast<value_type*>(ptr) + 1;
         return result;
     }
@@ -198,6 +198,7 @@ template<typename T>
 typename std::enable_if<is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(void* &ptr) noexcept
 {
     using vector_type = std::decay_t<T>;
+    using value_type = typename std::decay_t<T>::value_type;
 
     std::size_t size = *static_cast<std::size_t*>(ptr);
     ptr = static_cast<std::size_t*>(ptr) + 1;
@@ -205,8 +206,8 @@ typename std::enable_if<is_vector<std::decay_t<T>>::value, std::decay_t<T>>::typ
     if (size > 0)
     {
         vector_type result = vector_type(size);
-        std::memcpy(&result[0], ptr, size);
-        ptr = static_cast<char*>(ptr) + (result.size() * sizeof(T));
+        std::memcpy(&result[0], ptr, size * sizeof(value_type));
+        ptr = static_cast<char*>(ptr) + (size * sizeof(value_type));
         return result;
     }
     return vector_type();
@@ -339,25 +340,28 @@ typename std::enable_if<is_vector<R>::value, R>::type RemoteVM::SendCommand(Remo
 template<typename R, typename... Args>
 R RemoteVM::ExecuteCommand(void* arguments, R (RemoteVM::*func)(Args...) const noexcept) const noexcept
 {
-    auto args = std::tuple<Args...>(Remote_VM_Read<Args>(arguments)...);
-    return std::apply(func, std::tuple_cat(std::forward_as_tuple(this), std::forward<std::tuple<Args...>>(args)));
+    auto args = std::tuple<std::decay_t<Args>...>{Remote_VM_Read<std::decay_t<Args>>(arguments)...};
+    return std::apply(func, std::tuple_cat(std::forward_as_tuple(this), std::forward<std::tuple<std::decay_t<Args>...>>(args)));
 }
 
 
 RemoteVM::RemoteVM(JNIEnv* env,
                    ControlCenter* control_center,
                    bool (ControlCenter::*send_command)(std::function<void(ImageData*)>&&) const,
-                   ImageData* (ControlCenter::*get_image_data)() const ) : env(env), control_center(control_center), send_command(send_command), get_image_data(get_image_data) {}
+                   ImageData* (ControlCenter::*get_image_data)() const ) noexcept : env(env), control_center(control_center), send_command(send_command), get_image_data(get_image_data) {}
 RemoteVM::~RemoteVM() {}
 
-RemoteVM::RemoteVM(RemoteVM&& other) : control_center(other.control_center)
+RemoteVM::RemoteVM(RemoteVM&& other) : env(other.env), control_center(other.control_center)
 {
+    other.env = nullptr;
     other.control_center = nullptr;
 }
 
 RemoteVM& RemoteVM::operator = (RemoteVM&& other)
 {
+    env = other.env;
     control_center = other.control_center;
+    other.env = nullptr;
     other.control_center = nullptr;
     return *this;
 }
@@ -652,7 +656,7 @@ jobject RemoteVM::CallObjectMethod(jobject obj, jmethodID methodID, const std::v
     {
         return SendCommand<jobject>(RemoteVMCommand::CALL_OBJECT_METHOD, obj, methodID, args);
     }
-    return local_to_global(env->CallObjectMethod(obj, methodID, args.data()));
+    return local_to_global(env->CallObjectMethodA(obj, methodID, args.data()));
 }
 
 jboolean RemoteVM::CallBooleanMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -661,7 +665,7 @@ jboolean RemoteVM::CallBooleanMethod(jobject obj, jmethodID methodID, const std:
     {
         return SendCommand<jboolean>(RemoteVMCommand::CALL_BOOLEAN_METHOD, obj, methodID, args);
     }
-    return env->CallBooleanMethod(obj, methodID, args.data());
+    return env->CallBooleanMethodA(obj, methodID, args.data());
 }
 
 jbyte RemoteVM::CallByteMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -670,7 +674,7 @@ jbyte RemoteVM::CallByteMethod(jobject obj, jmethodID methodID, const std::vecto
     {
         return SendCommand<jbyte>(RemoteVMCommand::CALL_BYTE_METHOD, obj, methodID, args);
     }
-    return env->CallByteMethod(obj, methodID, args.data());
+    return env->CallByteMethodA(obj, methodID, args.data());
 }
 
 jchar RemoteVM::CallCharMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -679,7 +683,7 @@ jchar RemoteVM::CallCharMethod(jobject obj, jmethodID methodID, const std::vecto
     {
         return SendCommand<jchar>(RemoteVMCommand::CALL_CHAR_METHOD, obj, methodID, args);
     }
-    return env->CallCharMethod(obj, methodID, args.data());
+    return env->CallCharMethodA(obj, methodID, args.data());
 }
 
 jshort RemoteVM::CallShortMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -688,7 +692,7 @@ jshort RemoteVM::CallShortMethod(jobject obj, jmethodID methodID, const std::vec
     {
         return SendCommand<jshort>(RemoteVMCommand::CALL_SHORT_METHOD, obj, methodID, args);
     }
-    return env->CallShortMethod(obj, methodID, args.data());
+    return env->CallShortMethodA(obj, methodID, args.data());
 }
 
 jint RemoteVM::CallIntMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -697,7 +701,7 @@ jint RemoteVM::CallIntMethod(jobject obj, jmethodID methodID, const std::vector<
     {
         return SendCommand<jint>(RemoteVMCommand::CALL_INT_METHOD, obj, methodID, args);
     }
-    return env->CallIntMethod(obj, methodID, args.data());
+    return env->CallIntMethodA(obj, methodID, args.data());
 }
 
 jlong RemoteVM::CallLongMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -706,7 +710,7 @@ jlong RemoteVM::CallLongMethod(jobject obj, jmethodID methodID, const std::vecto
     {
         return SendCommand<jlong>(RemoteVMCommand::CALL_LONG_METHOD, obj, methodID, args);
     }
-    return env->CallLongMethod(obj, methodID, args.data());
+    return env->CallLongMethodA(obj, methodID, args.data());
 }
 
 jfloat RemoteVM::CallFloatMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -715,7 +719,7 @@ jfloat RemoteVM::CallFloatMethod(jobject obj, jmethodID methodID, const std::vec
     {
         return SendCommand<jfloat>(RemoteVMCommand::CALL_FLOAT_METHOD, obj, methodID, args);
     }
-    return env->CallFloatMethod(obj, methodID, args.data());
+    return env->CallFloatMethodA(obj, methodID, args.data());
 }
 
 jdouble RemoteVM::CallDoubleMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -724,7 +728,7 @@ jdouble RemoteVM::CallDoubleMethod(jobject obj, jmethodID methodID, const std::v
     {
         return SendCommand<jdouble>(RemoteVMCommand::CALL_DOUBLE_METHOD, obj, methodID, args);
     }
-    return env->CallDoubleMethod(obj, methodID, args.data());
+    return env->CallDoubleMethodA(obj, methodID, args.data());
 }
 
 void RemoteVM::CallVoidMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -733,7 +737,7 @@ void RemoteVM::CallVoidMethod(jobject obj, jmethodID methodID, const std::vector
     {
         return SendCommand<void>(RemoteVMCommand::CALL_VOID_METHOD, obj, methodID, args);
     }
-    return env->CallVoidMethod(obj, methodID, args.data());
+    return env->CallVoidMethodA(obj, methodID, args.data());
 }
 
 jobject RemoteVM::CallNonvirtualObjectMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
@@ -1918,6 +1922,11 @@ jobjectRefType RemoteVM::GetObjectRefType(jobject obj) const noexcept
         return SendCommand<jobjectRefType>(RemoteVMCommand::GET_OBJECT_REF_TYPE, obj);
     }
     return env->GetObjectRefType(obj);
+}
+
+bool RemoteVM::is_remote() const noexcept
+{
+    return !env && control_center && send_command && get_image_data;
 }
 
 void RemoteVM::process_command(void* arguments, void* response) const noexcept
