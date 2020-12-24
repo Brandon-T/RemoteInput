@@ -92,7 +92,7 @@ jobs:
         #sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
         sudo apt-get install libprocps-dev:arm64 mesa-common-dev:arm64 libglu1-mesa:arm64 libglu1-mesa-dev:arm64 libgl1-mesa-glx:arm64 libgl1-mesa-dev:arm64 libglfw3-dev:arm64 cmake
         sudo apt-get install openjdk-11-jdk
-        sudo apt-get install python3 python-dev
+        sudo apt-get install libpython3-dev:arm64
 
     - name: CMake Generate Build Files - Linux-aarch64
       if: matrix.config.name == 'Linux-aarch64'
@@ -132,6 +132,7 @@ jobs:
         sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
         sudo apt-get install libprocps-dev:armhf mesa-common-dev:armhf libglu1-mesa:armhf libglu1-mesa-dev:armhf libgl1-mesa-glx:armhf libgl1-mesa-dev:armhf libglfw3-dev:armhf cmake
         sudo apt-get install openjdk-11-jdk
+        sudo apt-get install libpython3-dev:armhf
         
     - name: CMake Generate Build Files - Linux-armhf
       if: matrix.config.name == 'Linux-armhf'
@@ -176,64 +177,53 @@ jobs:
         cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
         
       #Windows-32
-    - name: Cache - Windows-32
+    - name: Dependencies - Windows-32
       if: matrix.config.name == 'Windows-32'
-      id: cache-msys32
-      uses: actions/cache@v1
+      uses: msys2/setup-msys2@v2
       with:
-        path: ${{ github.workspace }}/mingw32
-        key: mingw32-8.1.0
-    
-    # Set Path workaround for https://github.com/actions/virtual-environments/issues/263
-    - name: Set Environment Path - Windows-32
-      if: matrix.config.name == 'Windows-32'
-      run: |
-        #echo "::add-path::C:\Program Files\Git\mingw64\bin"
-        echo "::add-path::C:\Program Files\Git\usr\bin"
-        echo "::add-path::C:\Program Files\Git\bin"
-        echo "::add-path::${{ github.workspace }}/mingw32/bin"
-
-    - name: Install Build Tools - Windows-32
-      if: steps.cache-msys32.outputs.cache-hit != 'true' && matrix.config.name == 'Windows-32'
-      shell: sh
-      run: |
-        echo "Downloading Mingw"
-        curl -fsSL https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z -o mingw-i686.7z
-        7z x mingw-i686.7z | 1> /dev/null
-        rm -rf ./mingw-i686.7z
-        
-        echo "Downloading CMake"
-        curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.18.0/cmake-3.18.0-win32-x86.zip -o cmake.zip
-        unzip -q cmake.zip -d .
-        cp -rf ./cmake-3.18.0-win32-x86/bin/* ${PWD}/mingw32/bin
-        cp -rf ./cmake-3.18.0-win32-x86/share/* ${PWD}/mingw32/share
-        rm -rf cmake.zip
+        msystem: MINGW32
+        install: mingw-w64-i686-gcc mingw-w64-i686-cmake make
+        update: false
 
     - name: CMake Generate Build Files - Windows-32
       if: matrix.config.name == 'Windows-32'
-      shell: sh
+      shell: msys2 {0}
       run: |
-        CMAKE="${PWD}/mingw32/bin/cmake.exe"
-        MAKE="${PWD}/mingw32/bin/mingw32-make.exe"
-        ${CMAKE} -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_MAKE_PROGRAM=${MAKE} -DCMAKE_C_COMPILER=${PWD}/mingw32/bin/gcc.exe -DCMAKE_CXX_COMPILER=${PWD}/mingw32/bin/g++.exe -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
+        set MSYSTEM=MINGW32
+        MINGW_INSTALLS=MINGW32
+        cmake -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
 
     - name: Build - Windows-32
       if: matrix.config.name == 'Windows-32'
-      shell: sh
+      shell: msys2 {0}
       run: |
-        CMAKE="${PWD}/mingw32/bin/cmake.exe"
-        MAKE="${PWD}/mingw32/bin/mingw32-make.exe"
-        ${CMAKE} --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
+        set MSYSTEM=MINGW32
+        MINGW_INSTALLS=MINGW32
+        cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
         
       #Windows-64
+    - name: Dependencies - Windows-64
+      if: matrix.config.name == 'Windows-64'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake make
+        update: false
+
     - name: CMake Generate Build Files - Windows-64
       if: matrix.config.name == 'Windows-64'
+      shell: msys2 {0}
       run: |
+        set MSYSTEM=MINGW64
+        MINGW_INSTALLS=MINGW64
         cmake -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
 
     - name: Build - Windows-64
       if: matrix.config.name == 'Windows-64'
+      shell: msys2 {0}
       run: |
+        set MSYSTEM=MINGW64
+        MINGW_INSTALLS=MINGW64
         cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
 
     #Shared

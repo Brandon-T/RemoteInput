@@ -13,11 +13,11 @@ ENDIF()
 set(JAVA_AWT_LIBRARY NotNeeded)
 set(JAVA_JVM_LIBRARY NotNeeded)
 set(JAVA_AWT_INCLUDE_PATH NotNeeded)
-set(PYTHON_BINDINGS ON)
+set(PYTHON_BINDINGS OFF)
 
 find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
-find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development)
+#find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development)
 
 
 

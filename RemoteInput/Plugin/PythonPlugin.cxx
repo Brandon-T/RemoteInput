@@ -103,7 +103,7 @@ static PyTypeObject PyEIOSType = {
             Py_TYPE(object)->tp_clear(object);
             PyObject_Del(object);
         },
-        nullptr,
+        0,
         nullptr,
         nullptr,
         nullptr,
@@ -222,7 +222,7 @@ static PyTypeObject PyJavaObjectType = {
             Py_TYPE(object)->tp_clear(object);
             PyObject_Del(object);
         },
-        nullptr,
+        0,
         nullptr,
         nullptr,
         nullptr,
