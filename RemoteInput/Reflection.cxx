@@ -128,7 +128,7 @@ bool Reflection::Initialize(jobject awtFrame) noexcept
         return {};
     };
 
-    //Find Client Class.
+    //Find Canvas Class.
     this->applet = findApplet(awtFrame).release() ?: getParent(findCanvas(awtFrame).get()).release();
     if (this->applet)
     {
@@ -140,7 +140,7 @@ bool Reflection::Initialize(jobject awtFrame) noexcept
         auto clsObj = make_safe_local<jobject>(jvm->CallObjectMethod(this->applet, mid));
         cls = make_safe_local<jclass>(jvm->GetObjectClass(clsObj.get()));
 
-        //Get Client's ClassLoader.
+        //Get Canvas's ClassLoader.
         mid = jvm->GetMethodID(cls.get(), "getClassLoader", "()Ljava/lang/ClassLoader;");
         this->classLoader = jvm->NewGlobalRef(make_safe_local<jobject>(jvm->CallObjectMethod(clsObj.get(), mid)).get());
         return true;

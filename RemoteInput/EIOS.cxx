@@ -252,6 +252,23 @@ void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay) noexcept
     }
 }
 
+bool EIOS_GetGraphicsScaling(EIOS* eios) noexcept
+{
+    if (eios)
+    {
+        return eios->control_center->get_graphics_scaling();
+    }
+    return false;
+}
+
+void EIOS_SetGraphicsScaling(EIOS* eios, bool enabled) noexcept
+{
+    if (eios)
+    {
+        eios->control_center->set_graphics_scaling(enabled);
+    }
+}
+
 EIOS* EIOS_PairClient(pid_t pid) noexcept
 {
 	std::int32_t tid = GetCurrentThreadID();

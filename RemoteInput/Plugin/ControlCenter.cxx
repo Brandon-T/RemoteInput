@@ -1175,6 +1175,19 @@ void ControlCenter::set_debug_graphics(bool enabled) const noexcept
 	}
 }
 
+bool ControlCenter::get_graphics_scaling() const noexcept
+{
+    return memory_map && memory_map->is_mapped() ? get_image_data()->ui_scaling : false;
+}
+
+void ControlCenter::set_graphics_scaling(bool enabled) const noexcept
+{
+    if (memory_map && memory_map->is_mapped())
+    {
+        get_image_data()->ui_scaling = enabled;
+    }
+}
+
 void ControlCenter::set_parent_process_id(std::int32_t pid) const noexcept
 {
     if (memory_map && memory_map->is_mapped())
@@ -1308,8 +1321,31 @@ void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height) c
 {
 	if (memory_map && memory_map->is_mapped())
 	{
-		get_image_data()->width = width;
-		get_image_data()->height = height;
+	    if (get_image_data()->ui_scaling)
+        {
+            std::int32_t x = 0;
+            std::int32_t y = 0;
+            std::size_t w = 0;
+            std::size_t h = 0;
+
+            get_applet_dimensions(&x, &y, &w, &h);
+
+            if (w > 0 && h > 0)
+            {
+                get_image_data()->width = w;
+                get_image_data()->height = h;
+            }
+            else
+            {
+                get_image_data()->width = width;
+                get_image_data()->height = height;
+            }
+	    }
+	    else
+        {
+            get_image_data()->width = width;
+            get_image_data()->height = height;
+        }
 	}
 }
 

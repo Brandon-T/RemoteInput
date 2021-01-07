@@ -956,6 +956,25 @@ void Pascal_SetKeyboardRepeatDelay(void** Params, void** Result) noexcept
     }
 }
 
+void Pascal_GetGraphicsScaling(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        PascalWrite(Result, EIOS_GetGraphicsScaling(eios));
+    }
+}
+
+void Pascal_SetGraphicsScaling(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        bool enabled = PascalRead<bool>(Params[1]);
+        EIOS_SetGraphicsScaling(eios, enabled);
+    }
+}
+
 
 //MARK: - RemoteVM
 void Pascal_RemoteVM_Init(void** Params, void** Result)

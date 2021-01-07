@@ -79,6 +79,8 @@ public:
 	std::uint8_t* get_debug_image() const noexcept;
 	bool get_debug_graphics() const noexcept;
 	void set_debug_graphics(bool enabled) const noexcept;
+    bool get_graphics_scaling() const noexcept;
+    void set_graphics_scaling(bool enabled) const noexcept;
 
 	bool has_focus() const noexcept;
 	void gain_focus() const noexcept;

@@ -53,6 +53,9 @@ enum class EIOSCommand: std::uint32_t
     GET_KEYBOARD_REPEAT_DELAY,
     SET_KEYBOARD_REPEAT_DELAY,
 
+    GET_UI_SCALING,
+    SET_UI_SCALING,
+
 	REFLECT_OBJECT,
     REFLECT_COMPARE_OBJECTS,
 	REFLECT_INSTANCE_OF,
@@ -87,6 +90,7 @@ typedef struct ImageData
     std::int32_t width;
     std::int32_t height;
 	bool debug_graphics;
+	bool ui_scaling;
     EIOSCommand command;
     std::uint8_t args[100000 * 8];
 } ImageData;
@@ -166,6 +170,8 @@ EXPORT std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios) noexcept;
 EXPORT void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed) noexcept;
 EXPORT std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios) noexcept;
 EXPORT void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay) noexcept;
+EXPORT bool EIOS_GetGraphicsScaling(EIOS* eios) noexcept;
+EXPORT void EIOS_SetGraphicsScaling(EIOS* eios, bool enabled) noexcept;
 EXPORT EIOS* EIOS_PairClient(pid_t pid) noexcept;
 EXPORT void EIOS_KillClientPID(pid_t pid) noexcept;
 EXPORT void EIOS_KillClient(EIOS* eios) noexcept;
