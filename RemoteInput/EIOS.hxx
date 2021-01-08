@@ -136,6 +136,8 @@ EXPORT [[gnu::stdcall]] std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed) noexcept;
 EXPORT [[gnu::stdcall]] std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay) noexcept;
+EXPORT [[gnu::stdcall]] bool EIOS_GetGraphicsScaling(EIOS* eios) noexcept;
+EXPORT [[gnu::stdcall]] void EIOS_SetGraphicsScaling(EIOS* eios, bool enabled) noexcept;
 EXPORT [[gnu::stdcall]] EIOS* EIOS_PairClient(pid_t pid) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_KillClientPID(pid_t pid) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_KillClient(EIOS* eios) noexcept;

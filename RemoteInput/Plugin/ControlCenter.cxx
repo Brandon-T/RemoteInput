@@ -426,6 +426,20 @@ void ControlCenter::process_command() noexcept
         }
             break;
 
+        case EIOSCommand::GET_UI_SCALING:
+        {
+            fprintf(stderr, "WHY ARE YOU REMOTELY CALLING THIS FUNCTION?!\n");
+            std::exit(0);
+        }
+            break;
+
+        case EIOSCommand::SET_UI_SCALING:
+        {
+            fprintf(stderr, "WHY ARE YOU REMOTELY CALLING THIS FUNCTION?!\n");
+            std::exit(0);
+        }
+            break;
+
 		case EIOSCommand::REFLECT_OBJECT:
 		{
 			ReflectionHook hook;

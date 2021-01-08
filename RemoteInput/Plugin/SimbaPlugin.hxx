@@ -74,8 +74,8 @@ static const char* PascalExports[] =
     "Pascal_SetKeyboardSpeed", "Procedure EIOS_SetKeyboardSpeed(eios: Pointer; speed: Int32); native;",
     "Pascal_GetKeyboardRepeatDelay", "Function EIOS_GetKeyboardRepeatDelay(eios: Pointer): Int32; native;",
     "Pascal_SetKeyboardRepeatDelay", "Procedure EIOS_SetKeyboardRepeatDelay(eios: Pointer; delay: Int32); native;",
-    "Pascal_GetGraphicsScaling", "Function EIOS_GetGraphicsScaling(eios: Pointer): Boolean; native;",
-    "Pascal_SetGraphicsScaling", "Procedure EIOS_SetGraphicsScaling(eios: Pointer; enabled: Boolean); native;",
+    //"Pascal_GetGraphicsScaling", "Function EIOS_GetGraphicsScaling(eios: Pointer): Boolean; native;",
+    //"Pascal_SetGraphicsScaling", "Procedure EIOS_SetGraphicsScaling(eios: Pointer; enabled: Boolean); native;",
 
     //RemoteVM
     "Pascal_RemoteVM_Init", "Procedure RemoteVM.Init(eios: Pointer); native;",
