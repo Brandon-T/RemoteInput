@@ -23,10 +23,30 @@ std::unique_ptr<Hook> directx_xrgb_hook{nullptr};
 std::unique_ptr<Hook> directx_argb_hook{nullptr};
 std::unique_ptr<Hook> flush_buffer_hook{nullptr};
 
+bool can_render(jint srctype, jint width, jint height)
+{
+    /* SRC_TYPE = OpenGLSurfaceData.PF_INT_RGBX = 3; //GL_RGBA, GL_UNSIGNED_INT_8_8_8_8
+     * OGLPixelFormat pf = PixelFormats[srctype];
+     *
+     * It's used to render java.awt.canvas..
+     * */
+    if (srctype == 3 /* OpenGLSurfaceData.PF_INT_RGBX -- D3DSurfaceData.ST_INT_RGB*/)
+    {
+        return true;
+    }
+
+    //Arbitrarily chosen because the java.awt.canvas should never be smaller than this value.
+    //Technically stuff should be rendering with a minimum of a power of 2.. so 256 * 256 for example.
+    //This value can change if the renderer renders in 128 * 128 chunks but I haven't met a GPU that does that..
+    //OR a Java implementation either.
+    // - January 7th, 2021
+    return width >= 200 && height >= 200;
+}
+
 void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
-    if (!control_center)
+    if (!control_center || !can_render(-1, width, height))
     {
         return native_hook->call<void, decltype(JavaNativeBlit)>(env, self, srcData, dstData, comp, clip, srcx, srcy, dstx, dsty, width, height);
     }
@@ -193,6 +213,9 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
 
 void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2) noexcept
 {
+    // NOT SURE!
+    // I believe when I wrote this code, srctype 2 is OpenGLSurface.IntRgb = 2; //GL_BGRA
+    // It might be that for Windows it renders OpenGL using BGRA and not RGBA!
     if (srctype != 2)
     {
         if (opengl_hook)
@@ -369,7 +392,7 @@ void __stdcall JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, j
 void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
-	if (!control_center)
+	if (!control_center || !can_render(-1, width, height))
 	{
 		//Original
 		return native_hook->call<void, decltype(JavaNativeGDIBlit)>(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
@@ -569,7 +592,7 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     static const int ST_BYTE_INDEXED_BM = 8;
     static const int ST_3BYTE_BGR       = 9;
 
-    if (srctype != ST_INT_RGB)
+    if (srctype != ST_INT_RGB) //!can_render(srctype, width, height);
     {
         //Canvas will always be drawn as ST_INT_RGB.. Other UI can be drawn in other formats which screws up our debug drawing.. :S
         return directx_xrgb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
@@ -843,7 +866,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
 	{
 	    int src_x = 0;
 	    int src_y = 0;
-	    int bytes_per_pixel = 4; //TODO: Parse format
+	    int bytes_per_pixel = 4; //TODO: Parse format  //can_render(format == GL_RGBA ? 3 : -1, width, height)
 		int stride = width * bytes_per_pixel;
         void *rasBase = static_cast<std::uint8_t*>(const_cast<void*>(data)) + (stride * src_y) + (bytes_per_pixel * src_x);
 
@@ -896,7 +919,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 
-		if (width >= 200 && height >= 200)
+		if (can_render(-1, width, height))
 		{
 			control_center->update_dimensions(width, height);
 

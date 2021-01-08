@@ -1152,8 +1152,8 @@ void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::s
 	JNIEnv* env = nullptr;
 	if (this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr) == JNI_OK)
 	{
-		Applet applet{env, this->applet, false};
-		Component receiver = applet.getComponent(0);
+		Applet receiver{env, this->applet, false};
+		//Component receiver = applet.getComponent(0);
 
 		receiver.getLocation(x, y);
 		receiver.getSize(width, height);

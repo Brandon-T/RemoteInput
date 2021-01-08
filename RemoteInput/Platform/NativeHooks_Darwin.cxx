@@ -30,10 +30,30 @@ std::unique_ptr<Hook> native_hook{nullptr};
 std::unique_ptr<Hook> opengl_hook{nullptr};
 std::unique_ptr<Hook> flush_buffer_hook{nullptr};
 
+bool can_render(jint srctype, jint width, jint height)
+{
+    /* SRC_TYPE = OpenGLSurfaceData.PF_INT_RGBX = 3; //GL_RGBA, GL_UNSIGNED_INT_8_8_8_8
+     * OGLPixelFormat pf = PixelFormats[srctype];
+     *
+     * It's used to render java.awt.canvas..
+     * */
+    if (srctype == 3 /* OpenGLSurfaceData.PF_INT_RGBX */)
+    {
+        return true;
+    }
+
+    //Arbitrarily chosen because the java.awt.canvas should never be smaller than this value.
+    //Technically stuff should be rendering with a minimum of a power of 2.. so 256 * 256 for example.
+    //This value can change if the renderer renders in 128 * 128 chunks but I haven't met a GPU that does that..
+    //OR a Java implementation either.
+    // - January 7th, 2021
+    return width >= 200 && height >= 200;
+}
+
 void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
-    if (!control_center)
+    if (!control_center || !can_render(-1, width, height))
     {
         return native_hook->call<void, decltype(JavaNativeBlit)>(env, self, srcData, dstData, comp, clip, srcx, srcy, dstx, dsty, width, height);
     }
@@ -206,7 +226,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
         jint height = sy2 - sy1;
         SurfaceDataOps *srcOps = (SurfaceDataOps *)pSrcOps;
 
-        if (!srcOps || width <= 0 || height <= 0)
+        if (!srcOps || width <= 0 || height <= 0 || !can_render(srctype, width, height))
         {
             if (opengl_hook)
             {
@@ -447,7 +467,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 
-		if (width >= 200 && height >= 200)
+		if (can_render(-1, width, height))
 		{
 			control_center->update_dimensions(width, height);
 
@@ -500,7 +520,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 		GLint width = ViewPort[2] - ViewPort[0];
 		GLint height = ViewPort[3] - ViewPort[1];
 
-		if (width >= 200 && height >= 200)
+		if (can_render(-1, width, height))
 		{
 			control_center->update_dimensions(width, height);
 
