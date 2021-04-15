@@ -525,7 +525,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 		//Character Key
 		std::int32_t code = static_cast<std::int32_t>(c);
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-		std::int32_t keycode = GetJavaKeyCode(code);
+		std::int32_t keycode = CharToJavaKeyCode(code);
 		std::int32_t location = GetKeyLocation(code);
 
 		KeyEvent::Dispatch(env,
