@@ -74,13 +74,13 @@ jobs:
         #source_version=$(cat /etc/apt/sources.list | grep "main restricted" | head -1 | sed -e 's/.*com\/ //' -e 's/ main.*//')
         #echo "Found: ${ source_version }"
         sudo sed -Ei 's/^deb /deb \[arch=amd64\,i386\] /' /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic main restricted" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-updates main restricted" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-updates universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-updates multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ bionic-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ focal main restricted" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ focal-updates main restricted" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ focal universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ focal-updates universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ focal multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ focal-updates multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ focal-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
         
         sudo dpkg --add-architecture arm64
         sudo apt-get update
@@ -115,13 +115,13 @@ jobs:
         #source_version=$(cat /etc/apt/sources.list | grep "main restricted" | head -1 | sed -e 's/.*com\/ //' -e 's/ main.*//')
         #echo "Found: ${ source_version }"
         sudo sed -Ei 's/^deb /deb \[arch=amd64\,i386\] /' /etc/apt/sources.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ bionic main restricted" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ bionic-updates main restricted" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ bionic universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ bionic-updates universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ bionic multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ bionic-updates multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ bionic-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ focal main restricted" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ focal-updates main restricted" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ focal universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ focal-updates universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ focal multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ focal-updates multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ focal-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
         
         sudo dpkg --add-architecture armhf
         sudo apt-get update
