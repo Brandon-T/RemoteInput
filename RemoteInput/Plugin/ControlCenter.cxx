@@ -213,7 +213,11 @@ ControlCenter::~ControlCenter()
 
 void ControlCenter::terminate() noexcept
 {
-	if (!is_controller)
+    if (is_controller)
+    {
+        stop_all_processing();
+    }
+    else
 	{
 		if (!stopped)
 		{
@@ -423,6 +427,12 @@ void ControlCenter::process_command() noexcept
         {
             std::int32_t delay = EIOS_Read<std::int32_t>(arguments);
             io_controller->set_keyboard_repeat_delay(delay);
+        }
+            break;
+            
+        case EIOSCommand::STOP_ALL_PROCESSING:
+        {
+            io_controller->stop_all_processing();
         }
             break;
 
@@ -1604,6 +1614,13 @@ void ControlCenter::set_keyboard_repeat_delay(std::int32_t delay) const noexcept
         void* arguments = image_data->args;
         image_data->command = EIOSCommand::SET_KEYBOARD_REPEAT_DELAY;
         EIOS_Write<std::int32_t>(arguments, delay);
+    });
+}
+
+void ControlCenter::stop_all_processing() const noexcept
+{
+    send_command([](ImageData* image_data) {
+        image_data->command = EIOSCommand::STOP_ALL_PROCESSING;
     });
 }
 

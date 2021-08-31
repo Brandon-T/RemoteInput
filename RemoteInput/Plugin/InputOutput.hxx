@@ -52,7 +52,6 @@ private:
 	void lose_focus(Component* component) const noexcept;
 
 	bool any_key_held(std::array<std::int32_t, 4>&& keys) const noexcept;
-	
 	void handle_resize(Component* component) noexcept;
 
 public:
@@ -82,7 +81,7 @@ public:
 	void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
 	void scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines) noexcept;
 	bool is_mouse_held(std::int32_t button) const noexcept;
-
+    void stop_all_processing() noexcept;
 
 private:
     friend class ControlCenter;

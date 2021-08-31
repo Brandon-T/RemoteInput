@@ -957,6 +957,22 @@ bool InputOutput::is_mouse_held(std::int32_t button) const noexcept
 	}
 }
 
+void InputOutput::stop_all_processing() noexcept
+{
+    std::int32_t x = 0;
+    std::int32_t y = 0;
+    
+    this->get_mouse_position(&x, &y);
+    this->release_mouse(x, y, 0);
+    this->release_mouse(x, y, 1);
+    this->release_mouse(x, y, 2);
+    
+    for (std::int32_t key : std::vector<std::int32_t>(held_keys.begin(), held_keys.end()))
+    {
+        this->release_key(key);
+    }
+}
+
 jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers) const noexcept
 {
 	static const std::int32_t mapping[256] = { //char16_t
