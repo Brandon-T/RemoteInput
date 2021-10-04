@@ -815,7 +815,7 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 
         Component receiver = control_center->reflect_canvas();
         JNIEnv* env = receiver.getEnv();
-	this->handle_resize(&receiver);
+	    this->handle_resize(&receiver);
 
         this->x = x; this->y = y;
         bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
@@ -868,9 +868,9 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-                bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
-                bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
-                bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
+        bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+        bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
+        bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
 
 		//Button priority is 1 (left), 3 (right), 2 (middle)
 		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = false;
@@ -946,6 +946,33 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 								  1,
 								  lines,
 								  lines + precision);
+	}
+	else if (isRequestedPositionInsideComponent && !isMouseInsideComponent)
+	{
+		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+	    bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
+		if (isDragging)
+		{
+			return; //Developer is an idiot. We shouldn't even have to be here in the first place..
+		}
+
+	    //Button priority is 1 (left), 3 (right), 2 (middle)
+	    std::int32_t buttonMask = (mouse_buttons[0] ? InputEvent::GetDownMaskForButton(mouse_buttons[0]) : 0) |
+	                              (mouse_buttons[1] ? InputEvent::GetDownMaskForButton(mouse_buttons[1]) : 0) |
+							      (mouse_buttons[2] ? InputEvent::GetDownMaskForButton(mouse_buttons[2]) : 0);
+
+	    //Key extended masks
+	    buttonMask |= GetActiveKeyModifiers();
+
+
+		//MOUSE_ENTERED
+		this->x = x; this->y = y;
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+		
+		// Recursive call
+		scroll_mouse(x, y, lines);
 	}
 }
 
