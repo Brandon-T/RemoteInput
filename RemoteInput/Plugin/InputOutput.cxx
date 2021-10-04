@@ -815,6 +815,7 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 
         Component receiver = control_center->reflect_canvas();
         JNIEnv* env = receiver.getEnv();
+	this->handle_resize(&receiver);
 
         this->x = x; this->y = y;
         bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
@@ -863,12 +864,13 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 		this->x = x; this->y = y;
 		Component receiver = control_center->reflect_canvas();
 		JNIEnv* env = receiver.getEnv();
+		this->handle_resize(&receiver);
 
 		std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-        bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
-        bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
-        bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
+                bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+                bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
+                bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
 
 		//Button priority is 1 (left), 3 (right), 2 (middle)
 		mouse_buttons[SimbaMouseButtonToJava(button) - 1] = false;
@@ -902,6 +904,7 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 
 	Component receiver = control_center->reflect_canvas();
 	JNIEnv* env = receiver.getEnv();
+	this->handle_resize(&receiver);
 
 	bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
 	bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
