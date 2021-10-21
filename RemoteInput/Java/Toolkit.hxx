@@ -18,13 +18,14 @@ private:
 	JNIEnv* env;
 	jclass cls;
 	jobject toolkit;
-	
+
+protected:
 	Toolkit(JNIEnv* env, jclass cls, jobject toolkit) noexcept;
 	
 public:
 	Toolkit(Toolkit&& other) noexcept;
 	Toolkit(const Toolkit& other) = delete;
-	~Toolkit() noexcept;
+	virtual ~Toolkit() noexcept;
 	
 	Toolkit& operator = (Toolkit&& other) noexcept;
 	Toolkit& operator = (const Toolkit& other) = delete;

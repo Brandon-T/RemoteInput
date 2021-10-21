@@ -150,6 +150,8 @@ set(SRC_LIST
         RemoteInput/Java/AWTEventAccessor.hxx
         RemoteInput/Java/Component.cxx
         RemoteInput/Java/Component.hxx
+        RemoteInput/Java/Container.cxx
+        RemoteInput/Java/Container.hxx
         RemoteInput/Java/EventQueue.cxx
         RemoteInput/Java/EventQueue.hxx
         RemoteInput/Java/FocusEvent.cxx
@@ -164,10 +166,18 @@ set(SRC_LIST
         RemoteInput/Java/MouseEvent.hxx
         RemoteInput/Java/MouseWheelEvent.cxx
         RemoteInput/Java/MouseWheelEvent.hxx
-        RemoteInput/Java/Toolkit.cxx
-        RemoteInput/Java/Toolkit.hxx
         RemoteInput/Java/PointerInfo.cxx
         RemoteInput/Java/PointerInfo.hxx
+        RemoteInput/Java/SunToolkit.cxx
+        RemoteInput/Java/SunToolkit.hxx
+        RemoteInput/Java/Toolkit.cxx
+        RemoteInput/Java/Toolkit.hxx
+        RemoteInput/Java/Window.cxx
+        RemoteInput/Java/Window.hxx
+        RemoteInput/Java/WindowEvent.cxx
+        RemoteInput/Java/WindowEvent.hxx
+        RemoteInput/Java/RIEventQueue.cxx
+        RemoteInput/Java/RIEventQueue.hxx
         RemoteInput/Platform/DebugConsole.cxx
         RemoteInput/Platform/DebugConsole.hxx
         RemoteInput/Platform/JavaInternal.hxx

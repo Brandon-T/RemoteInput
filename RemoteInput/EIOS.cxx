@@ -109,21 +109,38 @@ void EIOS_LoseFocus(EIOS* eios) noexcept
 	}
 }
 
-bool EIOS_IsInputEnabled(EIOS* eios) noexcept
+bool EIOS_IsKeyboardInputEnabled(EIOS* eios) noexcept
 {
 	if (eios)
 	{
-		return eios->control_center->is_input_enabled();
+		return eios->control_center->is_keyboard_input_enabled();
 	}
 	return false;
 }
 
-void EIOS_SetInputEnabled(EIOS* eios, bool enabled) noexcept
+void EIOS_SetKeyboardInputEnabled(EIOS* eios, bool enabled) noexcept
 {
 	if (eios)
 	{
-		eios->control_center->set_input_enabled(enabled);
+		eios->control_center->set_keyboard_input_enabled(enabled);
 	}
+}
+
+bool EIOS_IsMouseInputEnabled(EIOS* eios) noexcept
+{
+    if (eios)
+    {
+        return eios->control_center->is_mouse_input_enabled();
+    }
+    return false;
+}
+
+void EIOS_SetMouseInputEnabled(EIOS* eios, bool enabled) noexcept
+{
+    if (eios)
+    {
+        eios->control_center->set_mouse_input_enabled(enabled);
+    }
 }
 
 void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept

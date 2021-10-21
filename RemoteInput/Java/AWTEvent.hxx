@@ -15,6 +15,8 @@ class AWTEvent
 {
 protected:
 	jobject self;
+    static void SetSystemGenerated(JNIEnv* env, jobject event, bool is_system_generated);
+	static void Post(JNIEnv* env, jobject event, bool is_system_generated);
 	
 public:
 	AWTEvent() noexcept;
@@ -26,7 +28,8 @@ public:
 	AWTEvent& operator = (AWTEvent&& other) noexcept;
 	AWTEvent& operator = (const AWTEvent& other) = delete;
 	
-	jobject get() const noexcept;
+	virtual jobject get() const noexcept;
+	virtual jobject getSource(JNIEnv* env) const noexcept;
 };
 
 #endif /* AWTEvent_HXX_INCLUDED */

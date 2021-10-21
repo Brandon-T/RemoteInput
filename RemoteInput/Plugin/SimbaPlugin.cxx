@@ -876,23 +876,42 @@ void Pascal_LoseFocus(void** Params, void** Result) noexcept
 	}
 }
 
-void Pascal_IsInputEnabled(void** Params, void** Result) noexcept
+void Pascal_IsKeyboardInputEnabled(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
 	{
-		PascalWrite(Result, EIOS_IsInputEnabled(eios));
+		PascalWrite(Result, EIOS_IsKeyboardInputEnabled(eios));
 	}
 }
 
-void Pascal_SetInputEnabled(void** Params, void** Result) noexcept
+void Pascal_SetKeyboardInputEnabled(void** Params, void** Result) noexcept
 {
 	EIOS* eios = PascalRead<EIOS*>(Params[0]);
 	if (eios)
 	{
 		bool enabled = PascalRead<bool>(Params[1]);
-		EIOS_SetInputEnabled(eios, enabled);
+		EIOS_SetKeyboardInputEnabled(eios, enabled);
 	}
+}
+
+void Pascal_IsMouseInputEnabled(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        PascalWrite(Result, EIOS_IsMouseInputEnabled(eios));
+    }
+}
+
+void Pascal_SetMouseInputEnabled(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        bool enabled = PascalRead<bool>(Params[1]);
+        EIOS_SetMouseInputEnabled(eios, enabled);
+    }
 }
 
 void Pascal_GetRealMousePosition(void** Params, void** Result) noexcept

@@ -17,6 +17,7 @@
 #include "DetachedThreadPool.hxx"
 #include "Reflection.hxx"
 #include "Component.hxx"
+#include "RIEventQueue.hxx"
 
 class InputOutput final
 {
@@ -25,6 +26,7 @@ private:
 	jobject applet;
 	std::mutex mutex;
 	DetachedThreadPool input_thread;
+	std::unique_ptr<RIEventQueue> event_queue;
 
 	// MARK: - Input Variables
 	std::atomic<std::int32_t> currently_held_key;
@@ -61,8 +63,10 @@ public:
 	bool has_focus() const noexcept;
 	void gain_focus() const noexcept;
 	void lose_focus() const noexcept;
-	bool is_input_enabled() const noexcept;
-	void set_input_enabled(bool enabled) const noexcept;
+    bool is_keyboard_input_enabled() const noexcept;
+    void set_keyboard_input_enabled(bool enabled) const noexcept;
+    bool is_mouse_input_enabled() const noexcept;
+    void set_mouse_input_enabled(bool enabled) const noexcept;
 
 	std::int32_t get_keyboard_speed() const noexcept;
 	void set_keyboard_speed(std::int32_t speed) noexcept;

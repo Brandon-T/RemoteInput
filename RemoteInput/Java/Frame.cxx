@@ -9,7 +9,7 @@
 #include "Frame.hxx"
 #include <utility>
 
-Frame::Frame(JNIEnv* env, jobject frame, bool canDelete) noexcept : Component(env, nullptr, frame, canDelete)
+Frame::Frame(JNIEnv* env, jobject frame, bool canDelete) noexcept : Window(env, nullptr, frame, canDelete)
 {
 	this->cls = frame ? env->GetObjectClass(frame) : env->FindClass("java/awt/JFrame");
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));

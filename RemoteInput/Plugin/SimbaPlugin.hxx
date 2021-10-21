@@ -67,8 +67,10 @@ static const char* PascalExports[] =
 	"Pascal_HasFocus", "Function EIOS_HasFocus(eios: Pointer): Boolean; native;",
 	"Pascal_GainFocus", "Procedure EIOS_GainFocus(eios: Pointer); native;",
 	"Pascal_LoseFocus", "Procedure EIOS_LoseFocus(eios: Pointer); native;",
-	"Pascal_IsInputEnabled", "Function EIOS_IsInputEnabled(eios: Pointer): Boolean; native;",
-	"Pascal_SetInputEnabled", "Function EIOS_SetInputEnabled(eios: Pointer; enabled: Boolean): Boolean; native;",
+    "Pascal_IsKeyboardInputEnabled", "Function EIOS_IsKeyboardInputEnabled(eios: Pointer): Boolean; native;",
+    "Pascal_SetKeyboardInputEnabled", "Function EIOS_SetKeyboardInputEnabled(eios: Pointer; enabled: Boolean): Boolean; native;",
+    "Pascal_IsMouseInputEnabled", "Function EIOS_IsMouseInputEnabled(eios: Pointer): Boolean; native;",
+    "Pascal_SetMouseInputEnabled", "Function EIOS_SetMouseInputEnabled(eios: Pointer; enabled: Boolean): Boolean; native;",
 	"Pascal_GetRealMousePosition", "Procedure EIOS_GetRealMousePosition(eios: Pointer; var x, y: Int32); native;",
     "Pascal_GetKeyboardSpeed", "Function EIOS_GetKeyboardSpeed(eios: Pointer): Int32; native;",
     "Pascal_SetKeyboardSpeed", "Procedure EIOS_SetKeyboardSpeed(eios: Pointer; speed: Int32); native;",
@@ -150,7 +152,7 @@ static const char* PascalExports[] =
     "Pascal_RemoteVM_CallStaticByteMethod", "Function RemoteVM.CallStaticByteMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jbyte; native;",
     "Pascal_RemoteVM_CallStaticCharMethod", "Function RemoteVM.CallStaticCharMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jchar; native;",
     "Pascal_RemoteVM_CallStaticShortMethod", "Function RemoteVM.CallStaticShortMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jshort; native;",
-    "Pascal_RemoteVM_CallStaticIntMethod", "Function RemoteVM.CallIntStaticMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jint; native;",
+    "Pascal_RemoteVM_CallStaticIntMethod", "Function RemoteVM.CallStaticIntMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jint; native;",
     "Pascal_RemoteVM_CallStaticLongMethod", "Function RemoteVM.CallStaticLongMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jlong; native;",
     "Pascal_RemoteVM_CallStaticFloatMethod", "Function RemoteVM.CallStaticFloatMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jfloat; native;",
     "Pascal_RemoteVM_CallStaticDoubleMethod", "Function RemoteVM.CallStaticDoubleMethod(clazz: jclass; methodID: jmethodID; args: array of jvalue): jdouble; native;",
@@ -343,8 +345,10 @@ EXPORT void Pascal_Inject_PID(void** Params, void** Result) noexcept;
 EXPORT void Pascal_HasFocus(void** Params, void** Result) noexcept;
 EXPORT void Pascal_GainFocus(void** Params, void** Result) noexcept;
 EXPORT void Pascal_LoseFocus(void** Params, void** Result) noexcept;
-EXPORT void Pascal_IsInputEnabled(void** Params, void** Result) noexcept;
-EXPORT void Pascal_SetInputEnabled(void** Params, void** Result) noexcept;
+EXPORT void Pascal_IsKeyboardInputEnabled(void** Params, void** Result) noexcept;
+EXPORT void Pascal_SetKeyboardInputEnabled(void** Params, void** Result) noexcept;
+EXPORT void Pascal_IsMouseInputEnabled(void** Params, void** Result) noexcept;
+EXPORT void Pascal_SetMouseInputEnabled(void** Params, void** Result) noexcept;
 EXPORT void Pascal_GetRealMousePosition(void** Params, void** Result) noexcept;
 
 EXPORT void Pascal_GetKeyboardSpeed(void** Params, void** Result) noexcept;

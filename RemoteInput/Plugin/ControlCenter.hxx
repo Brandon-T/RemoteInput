@@ -85,8 +85,10 @@ public:
 	bool has_focus() const noexcept;
 	void gain_focus() const noexcept;
 	void lose_focus() const noexcept;
-	bool is_input_enabled() const noexcept;
-	void set_input_enabled(bool enabled) const noexcept;
+	bool is_keyboard_input_enabled() const noexcept;
+	void set_keyboard_input_enabled(bool enabled) const noexcept;
+    bool is_mouse_input_enabled() const noexcept;
+    void set_mouse_input_enabled(bool enabled) const noexcept;
 	void get_target_dimensions(std::int32_t* width, std::int32_t* height) const noexcept;
 	void get_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept;
 	void get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept;

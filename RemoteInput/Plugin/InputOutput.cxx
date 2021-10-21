@@ -17,6 +17,10 @@
 #include "MouseEvent.hxx"
 #include "MouseWheelEvent.hxx"
 #include "PointerInfo.hxx"
+#include "SunToolkit.hxx"
+#include "Toolkit.hxx"
+#include "Window.hxx"
+#include "WindowEvent.hxx"
 
 #warning "WINDOWS BS"
 #ifdef VK_SHIFT
@@ -90,8 +94,9 @@ static KeyEvent::KeyCodes control_keys_locations[] = {
 	KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflector) noexcept : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
+InputOutput::InputOutput(Reflection* reflector) noexcept : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), event_queue(nullptr), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
 {
+    event_queue = std::make_unique<RIEventQueue>(reflector->getEnv());
 	x = std::numeric_limits<std::int32_t>::min();
 	y = std::numeric_limits<std::int32_t>::min();
 
@@ -141,6 +146,9 @@ InputOutput::InputOutput(Reflection* reflector) noexcept : vm(reflector->getVM()
         repeat_rate += repeat_rate * Random::instance()->generate_random_float(0.0, 0.20);
         this->keyboard_speed = round(repeat_rate);
     #endif
+
+    EventQueue queue = Toolkit::getDefaultToolkit(reflector->getEnv()).getSystemEventQueue();
+    queue.push(this->event_queue.get());
 }
 
 InputOutput::~InputOutput() noexcept
@@ -199,7 +207,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 			//Control Keys only generate a single held event..
 			held_keys.push_back(code);
 
-			//DispatchEvent
+			//PostEvent
 			Component receiver = control_center->reflect_canvas();
 
 			JNIEnv* env = receiver.getEnv();
@@ -213,15 +221,14 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 			std::int32_t keycode = GetJavaKeyCode(code);
 			std::int32_t location = GetKeyLocation(code);
 
-			KeyEvent::Dispatch(env,
-							   &receiver,
-							   &receiver,
-							   KeyEvent::KeyCodes::KEY_PRESSED,
-							   when,
-							   modifiers,
-							   keycode,
-							   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
-							   location);
+			KeyEvent::Post(env,
+                           &receiver,
+                           KeyEvent::KeyCodes::KEY_PRESSED,
+                           when,
+                           modifiers,
+                           keycode,
+                           static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                           location);
 		}
 		else
 		{
@@ -233,7 +240,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 				currently_held_key = code;
 				held_keys.push_back(code);
 
-				//Dispatch Event
+				//Post Event
 				Component receiver = control_center->reflect_canvas();
 				if (!this->has_focus(&receiver))
 				{
@@ -246,25 +253,23 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 				std::int32_t keycode = GetJavaKeyCode(code);
 				std::int32_t location = GetKeyLocation(code);
 
-				KeyEvent::Dispatch(env,
-								   &receiver,
-								   &receiver,
-								   KeyEvent::KeyCodes::KEY_PRESSED,
-								   when,
-								   modifiers,
-								   keycode,
-								   NativeKeyCodeToChar(code, modifiers),
-								   location);
+				KeyEvent::Post(env,
+                               &receiver,
+                               KeyEvent::KeyCodes::KEY_PRESSED,
+                               when,
+                               modifiers,
+                               keycode,
+                               NativeKeyCodeToChar(code, modifiers),
+                               location);
 
-				KeyEvent::Dispatch(env,
-									&receiver,
-									&receiver,
-									KeyEvent::KeyCodes::KEY_TYPED,
-									when,
-									modifiers,
-									0,
-									NativeKeyCodeToChar(code, modifiers),
-									KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+				KeyEvent::Post(env,
+                                &receiver,
+                                KeyEvent::KeyCodes::KEY_TYPED,
+                                when,
+                                modifiers,
+                                0,
+                                NativeKeyCodeToChar(code, modifiers),
+                                KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 
 				if (this->keyboard_repeat_delay > 0)
 				{
@@ -277,7 +282,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 				currently_held_key = code;
 				held_keys.push_back(code);
 
-				//Dispatch Event
+				//Post Event
 				Component receiver = control_center->reflect_canvas();
 				if (!this->has_focus(&receiver))
 				{
@@ -290,25 +295,23 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 				std::int32_t keycode = GetJavaKeyCode(code);
 				std::int32_t location = GetKeyLocation(code);
 
-				KeyEvent::Dispatch(env,
-								   &receiver,
-								   &receiver,
-								   KeyEvent::KeyCodes::KEY_PRESSED,
-								   when,
-								   modifiers,
-								   keycode,
-								   NativeKeyCodeToChar(code, modifiers),
-								   location);
+				KeyEvent::Post(env,
+                               &receiver,
+                               KeyEvent::KeyCodes::KEY_PRESSED,
+                               when,
+                               modifiers,
+                               keycode,
+                               NativeKeyCodeToChar(code, modifiers),
+                               location);
 
-				KeyEvent::Dispatch(env,
-									&receiver,
-									&receiver,
-									KeyEvent::KeyCodes::KEY_TYPED,
-									when,
-									modifiers,
-									0,
-									NativeKeyCodeToChar(code, modifiers),
-									KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+				KeyEvent::Post(env,
+                                &receiver,
+                                KeyEvent::KeyCodes::KEY_TYPED,
+                                when,
+                                modifiers,
+                                0,
+                                NativeKeyCodeToChar(code, modifiers),
+                                KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 				this->mutex.unlock();
 
 				if (this->keyboard_speed >= 0 && this->keyboard_repeat_delay >= 0)
@@ -340,7 +343,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 
                             std::int32_t code = currently_held_key;
 
-                            //Dispatch Event
+                            //Post Event
                             if (!this->has_focus(&receiver))
                             {
                                 this->gain_focus(&receiver);
@@ -351,25 +354,23 @@ void InputOutput::hold_key(std::int32_t code) noexcept
                             std::int32_t keycode = GetJavaKeyCode(code);
                             std::int32_t location = GetKeyLocation(code);
 
-                            KeyEvent::Dispatch(env,
-                                               &receiver,
-                                               &receiver,
-                                               KeyEvent::KeyCodes::KEY_PRESSED,
-                                               when,
-                                               modifiers,
-                                               keycode,
-                                               NativeKeyCodeToChar(code, modifiers),
-                                               location);
+                            KeyEvent::Post(env,
+                                           &receiver,
+                                           KeyEvent::KeyCodes::KEY_PRESSED,
+                                           when,
+                                           modifiers,
+                                           keycode,
+                                           NativeKeyCodeToChar(code, modifiers),
+                                           location);
 
-                            KeyEvent::Dispatch(env,
-                                                &receiver,
-                                                &receiver,
-                                                KeyEvent::KeyCodes::KEY_TYPED,
-                                                when,
-                                                modifiers,
-                                                0,
-                                                NativeKeyCodeToChar(code, modifiers),
-                                                KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+                            KeyEvent::Post(env,
+                                            &receiver,
+                                            KeyEvent::KeyCodes::KEY_TYPED,
+                                            when,
+                                            modifiers,
+                                            0,
+                                            NativeKeyCodeToChar(code, modifiers),
+                                            KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
                         }
                     });
 				}
@@ -394,7 +395,7 @@ void InputOutput::release_key(std::int32_t code) noexcept
 
 			held_keys.erase(it); //held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), code), held_keys.end());
 
-			//Dispatch Event
+			//Post Event
 			Component receiver = control_center->reflect_canvas();
 			if (!this->has_focus(&receiver))
 			{
@@ -407,15 +408,14 @@ void InputOutput::release_key(std::int32_t code) noexcept
 			std::int32_t keycode = GetJavaKeyCode(code);
 			std::int32_t location = GetKeyLocation(code);
 
-			KeyEvent::Dispatch(env,
-							   &receiver,
-							   &receiver,
-							   KeyEvent::KeyCodes::KEY_RELEASED,
-							   when,
-							   modifiers,
-							   keycode,
-							   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
-							   location);
+			KeyEvent::Post(env,
+                           &receiver,
+                           KeyEvent::KeyCodes::KEY_RELEASED,
+                           when,
+                           modifiers,
+                           keycode,
+                           static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                           location);
 		}
 		else
 		{
@@ -432,7 +432,7 @@ void InputOutput::release_key(std::int32_t code) noexcept
 			currently_held_key = jt != held_keys.crend() ? *jt : -1;
 			this->mutex.unlock();
 
-			//Dispatch Event
+			//Post Event
 			std::lock_guard<std::mutex>(this->mutex);
 			Component receiver = control_center->reflect_canvas();
 			if (!this->has_focus(&receiver))
@@ -446,15 +446,14 @@ void InputOutput::release_key(std::int32_t code) noexcept
 			std::int32_t keycode = GetJavaKeyCode(code);
 			std::int32_t location = GetKeyLocation(code);
 
-			KeyEvent::Dispatch(env,
-							   &receiver,
-							   &receiver,
-							   KeyEvent::KeyCodes::KEY_RELEASED,
-							   when,
-							   modifiers,
-							   keycode,
-							   NativeKeyCodeToChar(code, modifiers),
-							   location);
+			KeyEvent::Post(env,
+                           &receiver,
+                           KeyEvent::KeyCodes::KEY_RELEASED,
+                           when,
+                           modifiers,
+                           keycode,
+                           NativeKeyCodeToChar(code, modifiers),
+                           location);
 		}
 	}
 }
@@ -508,15 +507,14 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 				std::int32_t keycode = GetJavaKeyCode(code);
 				std::int32_t location = GetKeyLocation(code);
 
-				KeyEvent::Dispatch(env,
-								   &receiver,
-								   &receiver,
-								   KeyEvent::KeyCodes::KEY_PRESSED,
-								   when,
-								   modifiers,
-								   keycode,
-								   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
-								   location);
+				KeyEvent::Post(env,
+                               &receiver,
+                               KeyEvent::KeyCodes::KEY_PRESSED,
+                               when,
+                               modifiers,
+                               keycode,
+                               static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                               location);
 
 				yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keymodwait)));
 			}
@@ -528,38 +526,35 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 		std::int32_t keycode = CharToJavaKeyCode(code);
 		std::int32_t location = GetKeyLocation(code);
 
-		KeyEvent::Dispatch(env,
-						   &receiver,
-						   &receiver,
-						   KeyEvent::KeyCodes::KEY_PRESSED,
-						   when,
-						   modifiers,
-						   keycode,
-						   static_cast<jchar>(c),
-						   location);
+		KeyEvent::Post(env,
+                       &receiver,
+                       KeyEvent::KeyCodes::KEY_PRESSED,
+                       when,
+                       modifiers,
+                       keycode,
+                       static_cast<jchar>(c),
+                       location);
 
-		KeyEvent::Dispatch(env,
-							&receiver,
-							&receiver,
-							KeyEvent::KeyCodes::KEY_TYPED,
-							when,
-							modifiers,
-							0,
-							static_cast<jchar>(c),
-							KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+		KeyEvent::Post(env,
+                        &receiver,
+                        KeyEvent::KeyCodes::KEY_TYPED,
+                        when,
+                        modifiers,
+                        0,
+                        static_cast<jchar>(c),
+                        KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
 
         yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keywait)));
 		when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-		KeyEvent::Dispatch(env,
-						   &receiver,
-						   &receiver,
-						   KeyEvent::KeyCodes::KEY_RELEASED,
-						   when,
-						   modifiers,
-						   keycode,
-						   static_cast<jchar>(c),
-						   location);
+		KeyEvent::Post(env,
+                       &receiver,
+                       KeyEvent::KeyCodes::KEY_RELEASED,
+                       when,
+                       modifiers,
+                       keycode,
+                       static_cast<jchar>(c),
+                       location);
 
         yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keywait)));
 
@@ -574,15 +569,14 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
 			std::int32_t keycode = GetJavaKeyCode(code);
 			std::int32_t location = GetKeyLocation(code);
 
-			KeyEvent::Dispatch(env,
-							   &receiver,
-							   &receiver,
-							   KeyEvent::KeyCodes::KEY_RELEASED,
-							   when,
-							   modifiers,
-							   keycode,
-							   static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
-							   location);
+			KeyEvent::Post(env,
+                           &receiver,
+                           KeyEvent::KeyCodes::KEY_RELEASED,
+                           when,
+                           modifiers,
+                           keycode,
+                           static_cast<jchar>(KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                           location);
 
             yield_thread(std::chrono::milliseconds(lround(Random::instance()->generate_random_float(1.0, 1.1) * keymodwait)));
 		}
@@ -615,46 +609,85 @@ void InputOutput::gain_focus() const noexcept
 	}
 
 	Component component = control_center->reflect_canvas();
-	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
+	this->gain_focus(&component);
 }
 
 void InputOutput::gain_focus(Component* component) const noexcept
 {
-	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
+    JNIEnv* env = component->getEnv();
+    Window window = SunToolkit::getContainingWindow(component);
+
+    if (window.get())
+    {
+        WindowEvent::Post(env, &window, WindowEvent::WindowEventCodes::WINDOW_ACTIVATED, 0, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(Random::instance()->generate_random_int(100, 250)));
+        WindowEvent::Post(env, &window, WindowEvent::WindowEventCodes::WINDOW_GAINED_FOCUS, 0, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(Random::instance()->generate_random_int(100, 250)));
+    }
+
+	FocusEvent::Post(env, component, FocusEvent::FocusCodes::FOCUS_GAINED, false, FocusEvent::Cause::ACTIVATION);
 }
 
 void InputOutput::lose_focus() const noexcept
 {
-	extern std::unique_ptr<ControlCenter> control_center;
-	if (!control_center)
-	{
-		return;
-	}
+    extern std::unique_ptr<ControlCenter> control_center;
+    if (!control_center)
+    {
+        return;
+    }
 
-	Component component = control_center->reflect_canvas();
-	FocusEvent::Dispatch(component.getEnv(), &component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
+    Component component = control_center->reflect_canvas();
+    this->lose_focus(&component);
 }
 
-bool InputOutput::is_input_enabled() const noexcept
+void InputOutput::lose_focus(Component* component) const noexcept
 {
-	extern std::unique_ptr<ControlCenter> control_center;
-	if (!control_center)
-	{
-		return false;
-	}
+    JNIEnv* env = component->getEnv();
+    Window window = SunToolkit::getContainingWindow(component);
 
-	return control_center->reflect_applet().isEnabled();
+    if (window.get())
+    {
+        WindowEvent::Post(env, &window, WindowEvent::WindowEventCodes::WINDOW_DEACTIVATED, 0, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(Random::instance()->generate_random_int(100, 250)));
+    }
+
+    FocusEvent::Post(env, component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
 }
 
-void InputOutput::set_input_enabled(bool enabled) const noexcept
+bool InputOutput::is_keyboard_input_enabled() const noexcept
 {
-	extern std::unique_ptr<ControlCenter> control_center;
-	if (!control_center)
-	{
-		return;
-	}
+    return event_queue->is_keyboard_input_enabled();
+}
 
-	control_center->reflect_applet().setEnabled(enabled);
+void InputOutput::set_keyboard_input_enabled(bool enabled) const noexcept
+{
+	event_queue->set_keyboard_input_enabled(enabled);
+
+	if (!enabled)
+    {
+        if (!this->has_focus())
+        {
+            this->gain_focus();
+        }
+    }
+}
+
+bool InputOutput::is_mouse_input_enabled() const noexcept
+{
+    return event_queue->is_mouse_input_enabled();
+}
+
+void InputOutput::set_mouse_input_enabled(bool enabled) const noexcept
+{
+    event_queue->set_mouse_input_enabled(enabled);
+
+    if (!enabled)
+    {
+        if (!this->has_focus())
+        {
+            this->gain_focus();
+        }
+    }
 }
 
 std::int32_t InputOutput::get_keyboard_speed() const noexcept
@@ -675,11 +708,6 @@ std::int32_t InputOutput::get_keyboard_repeat_delay() const noexcept
 void InputOutput::set_keyboard_repeat_delay(std::int32_t delay) noexcept
 {
     this->keyboard_repeat_delay = delay;
-}
-
-void InputOutput::lose_focus(Component* component) const noexcept
-{
-	FocusEvent::Dispatch(component->getEnv(), component, FocusEvent::FocusCodes::FOCUS_LOST, true, FocusEvent::Cause::ACTIVATION);
 }
 
 void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept
@@ -712,7 +740,7 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept
             this->y = y;
 		}
 	}
-	else if (!has_focus() && !is_input_enabled())
+	else if (!has_focus() && (!is_keyboard_input_enabled() || !is_mouse_input_enabled()))
 	{
 		Component receiver = control_center->reflect_canvas();
 		this->handle_resize(&receiver);
@@ -769,14 +797,14 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
 	{
 		//MOUSE_ENTERED
 		this->x = x; this->y = y;
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 	}
 	else if (!isRequestedPositionInsideComponent && isMouseInsideComponent)
 	{
 		//MOUSE_EXITED
 		this->x = x; this->y = y;
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_EXITED, when, buttonMask, x, y, 0, false, 0);
 	}
 	else if (isRequestedPositionInsideComponent && isMouseInsideComponent)
 	{
@@ -784,12 +812,12 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
 		if (isDragging)
 		{
 			this->x = x; this->y = y;
-			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
+			MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
 		else
 		{
 			this->x = x; this->y = y;
-			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+			MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 		}
 	}
 	else if (!isRequestedPositionInsideComponent && !isMouseInsideComponent)
@@ -798,7 +826,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
 		this->x = x; this->y = y;
 		if (isDragging)
 		{
-			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
+			MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_DRAGGED, when, buttonMask, x, y, click_count, false, button);
 		}
 	}
 }
@@ -838,7 +866,7 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 
             //Key extended masks
             buttonMask |= GetActiveKeyModifiers();
-            MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
+            MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
         }
 		else
         {
@@ -884,12 +912,12 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
 		buttonMask |= GetActiveKeyModifiers();
 
 		//MOUSE_RELEASED
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, x, y, click_count, false, button);
+		MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, x, y, click_count, false, button);
 
 		if (!isDragging && isRequestedPositionInsideComponent && isMouseInsideComponent)
 		{
 		    //MOUSE_CLICKED
-			MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, x, y, click_count, false, button);
+			MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, x, y, click_count, false, button);
 		}
 	}
 }
@@ -930,22 +958,21 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 		double precision = lines > 0 ? Random::instance()->generate_random_int(1, 9) : lines < 0 ? Random::instance()->generate_random_int(-9, -1) : Random::instance()->generate_random_double(-1, 1);
 		precision /= 10.0;
 
-		MouseWheelEvent::Dispatch(env,
-								  &receiver,
-								  &receiver,
-								  MouseEvent::MouseEventCodes::MOUSE_WHEEL,
-								  when,
-								  modifiers,
-								  x,
-								  y,
-								  cx + x,
-								  cy + y,
-								  0,
-								  false,
-								  MouseWheelEvent::MouseWheelEventCodes::WHEEL_UNIT_SCROLL,
-								  1,
-								  lines,
-								  lines + precision);
+		MouseWheelEvent::Post(env,
+                              &receiver,
+                              MouseEvent::MouseEventCodes::MOUSE_WHEEL,
+                              when,
+                              modifiers,
+                              x,
+                              y,
+                              cx + x,
+                              cy + y,
+                              0,
+                              false,
+                              MouseWheelEvent::MouseWheelEventCodes::WHEEL_UNIT_SCROLL,
+                              1,
+                              lines,
+                              lines + precision);
 	}
 	else if (isRequestedPositionInsideComponent && !isMouseInsideComponent)
 	{
@@ -968,8 +995,8 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 
 		//MOUSE_ENTERED
 		this->x = x; this->y = y;
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
-		MouseEvent::Dispatch(env, &receiver, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
+		MouseEvent::Post(env, &receiver, MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
 		
 		// Recursive call
 		scroll_mouse(x, y, lines);
@@ -1001,6 +1028,9 @@ void InputOutput::stop_all_processing() noexcept
     {
         this->release_key(key);
     }
+
+    this->set_keyboard_input_enabled(true);
+    this->set_mouse_input_enabled(true);
 }
 
 jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers) const noexcept

@@ -35,22 +35,7 @@ void FocusEvent::Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, boo
 		
 		if (event)
 		{
-			if (is_system_generated)
-			{
-				//Get AWTEventAccessor
-				jclass cls = env->FindClass("sun/awt/AWTEventAccessor");
-				static jmethodID accessor_methodId = env->GetStaticMethodID(cls, "getAWTEventAccessor", "()Lsun/awt/AWTEventAccessor;");
-				jobject accessor = env->CallStaticObjectMethod(cls, accessor_methodId);
-				
-				//Set System Generated
-				static jmethodID system_generated_methodId = env->GetMethodID(cls, "setSystemGenerated", "(Ljava/awt/AWTEvent;)V");
-				env->CallVoidMethod(accessor, system_generated_methodId, event);
-				
-				//Cleanup
-				env->DeleteLocalRef(accessor);
-				env->DeleteLocalRef(cls);
-			}
-			
+            AWTEvent::SetSystemGenerated(env, event, is_system_generated);
 			receiver->dispatchEvent(event);
 			env->DeleteLocalRef(event);
 		}
@@ -66,46 +51,11 @@ void FocusEvent::Post(JNIEnv* env, Component* receiver, std::int32_t id, bool te
 	{
 		static jmethodID methodId = env->GetMethodID(cls, "<init>", "(Ljava/awt/Component;IZ)V");
 		jobject event = env->NewObject(cls, methodId, receiver->get(), id, temporary);
-		
 		if (event)
-		{
-			if (is_system_generated)
-			{
-				//Get AWTEventAccessor
-				jclass cls = env->FindClass("sun/awt/AWTEventAccessor");
-				static jmethodID accessor_methodId = env->GetStaticMethodID(cls, "getAWTEventAccessor", "()Lsun/awt/AWTEventAccessor;");
-				jobject accessor = env->CallStaticObjectMethod(cls, accessor_methodId);
-				
-				//Set System Generated
-				static jmethodID system_generated_methodId = env->GetMethodID(cls, "setSystemGenerated", "(Ljava/awt/AWTEvent;)V");
-				env->CallVoidMethod(accessor, system_generated_methodId, event);
-				
-				//Cleanup
-				env->DeleteLocalRef(accessor);
-				env->DeleteLocalRef(cls);
-			}
-			
-			//Get Default Toolkit
-			jclass cls = env->FindClass("java/awt/Toolkit");
-			static jmethodID toolkit_methodId = env->GetStaticMethodID(cls, "getDefaultToolkit", "()Ljava/awt/Toolkit;");
-			jobject toolkit = env->CallStaticObjectMethod(cls, toolkit_methodId);
-			
-			//Get System Event Queue
-			static jmethodID queue_methodId = env->GetMethodID(cls, "getSystemEventQueue", "()Ljava/awt/EventQueue;");
-			jobject queue = env->CallObjectMethod(toolkit, queue_methodId);
-			
-			//Post Event
-			static jmethodID post_methodId = env->GetMethodID(cls, "postEvent", "(Ljava/awt/AWTEvent;)V");
-			env->CallVoidMethod(queue, post_methodId, event);
-			
-			//Cleanup
-			env->DeleteLocalRef(queue);
-			env->DeleteLocalRef(toolkit);
-			env->DeleteLocalRef(cls);
-			
-			env->DeleteLocalRef(event);
-		}
-		
+        {
+            AWTEvent::Post(env, event, is_system_generated);
+            env->DeleteLocalRef(event);
+        }
 		env->DeleteLocalRef(cls);
 	}
 }
@@ -131,7 +81,10 @@ jobject FocusEvent::GetCauseDescription(JNIEnv* env, Cause cause) noexcept
 	if (cause_cls)
 	{
 		static jfieldID fieldId = env->GetStaticFieldID(cause_cls , causes[static_cast<std::uint32_t>(cause)], "Ljava/awt/event/FocusEvent$Cause;");
-		return env->GetStaticObjectField(cause_cls, fieldId);
+		jobject cause = env->GetStaticObjectField(cause_cls, fieldId);
+		env->DeleteLocalRef(cause_cls);
+        env->DeleteLocalRef(std::exchange(cause_cls, static_cast<jclass>(env->NewGlobalRef(cause_cls))));
+		return cause;
 	}
 	return nullptr;
 }

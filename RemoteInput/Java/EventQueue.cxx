@@ -9,6 +9,11 @@
 #include "EventQueue.hxx"
 #include <utility>
 
+EventQueue::EventQueue(JNIEnv* env) noexcept : env(env), cls(nullptr), queue(nullptr)
+{
+
+}
+
 EventQueue::EventQueue(JNIEnv* env, jclass cls, jobject queue) noexcept : env(env), cls(cls), queue(queue)
 {
 	env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
@@ -44,6 +49,12 @@ EventQueue& EventQueue::operator = (EventQueue&& other) noexcept
 	other.cls = nullptr;
 	other.queue = nullptr;
 	return *this;
+}
+
+void EventQueue::push(EventQueue* queue) const noexcept
+{
+    static jmethodID methodId = env->GetMethodID(cls, "push", "(Ljava/awt/EventQueue;)V");
+    env->CallVoidMethod(this->queue, methodId, queue->queue);
 }
 
 void EventQueue::postEvent(AWTEvent* event) const noexcept

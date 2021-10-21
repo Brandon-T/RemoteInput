@@ -25,7 +25,7 @@ private:
 
 public:
 	FocusEvent(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause) noexcept;
-	~FocusEvent() noexcept;
+    virtual ~FocusEvent() noexcept;
 
 	static void Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;
 	static void Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;

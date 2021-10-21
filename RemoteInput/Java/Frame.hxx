@@ -10,9 +10,9 @@
 #define FRAME_HXX_INCLUDED
 
 #include <jni.h>
-#include "Component.hxx"
+#include "Window.hxx"
 
-class Frame final : public Component
+class Frame final : public Window
 {
 public:
 	Frame(JNIEnv* env, jobject frame, bool canDelete = true) noexcept;

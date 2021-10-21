@@ -34,8 +34,10 @@ enum class EIOSCommand: std::uint32_t
 	HAS_FOCUS,
 	GAIN_FOCUS,
 	LOSE_FOCUS,
-	IS_INPUT_ENABLED,
-	SET_INPUT_ENABLED,
+    IS_KEYBOARD_INPUT_ENABLED,
+    SET_KEYBOARD_INPUT_ENABLED,
+    IS_MOUSE_INPUT_ENABLED,
+    SET_MOUSE_INPUT_ENABLED,
 	GET_MOUSE,
 	GET_REAL_MOUSE,
     MOVE_MOUSE,
@@ -120,8 +122,10 @@ EXPORT [[gnu::stdcall]] void EIOS_UpdateImageBuffer(EIOS* eios) noexcept;
 EXPORT [[gnu::stdcall]] bool EIOS_HasFocus(EIOS* eios) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_GainFocus(EIOS* eios) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_LoseFocus(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_IsInputEnabled(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SetInputEnabled(EIOS* eios, bool enabled) noexcept;
+EXPORT [[gnu::stdcall]] bool EIOS_IsKeyboardInputEnabled(EIOS* eios) noexcept;
+EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardInputEnabled(EIOS* eios, bool enabled) noexcept;
+EXPORT [[gnu::stdcall]] bool EIOS_IsMouseInputEnabled(EIOS* eios) noexcept;
+EXPORT [[gnu::stdcall]] void EIOS_SetMouseInputEnabled(EIOS* eios, bool enabled) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
 EXPORT [[gnu::stdcall]] void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y) noexcept;
@@ -156,8 +160,10 @@ EXPORT void EIOS_UpdateImageBuffer(EIOS* eios) noexcept;
 EXPORT bool EIOS_HasFocus(EIOS* eios) noexcept;
 EXPORT void EIOS_GainFocus(EIOS* eios) noexcept;
 EXPORT void EIOS_LoseFocus(EIOS* eios) noexcept;
-EXPORT bool EIOS_IsInputEnabled(EIOS* eios) noexcept;
-EXPORT void EIOS_SetInputEnabled(EIOS* eios, bool enabled) noexcept;
+EXPORT bool EIOS_IsKeyboardInputEnabled(EIOS* eios) noexcept;
+EXPORT void EIOS_SetKeyboardInputEnabled(EIOS* eios, bool enabled) noexcept;
+EXPORT bool EIOS_IsMouseInputEnabled(EIOS* eios) noexcept;
+EXPORT void EIOS_SetMouseInputEnabled(EIOS* eios, bool enabled) noexcept;
 EXPORT void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
 EXPORT void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
 EXPORT void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y) noexcept;

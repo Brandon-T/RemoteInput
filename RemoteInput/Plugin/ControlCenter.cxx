@@ -290,19 +290,33 @@ void ControlCenter::process_command() noexcept
 		}
 			break;
 			
-		case EIOSCommand::IS_INPUT_ENABLED:
+		case EIOSCommand::IS_KEYBOARD_INPUT_ENABLED:
 		{
-			jboolean result = io_controller->is_input_enabled();
+			jboolean result = io_controller->is_keyboard_input_enabled();
 			EIOS_Write<jboolean>(response, result);
 		}
 			break;
-			
-		case EIOSCommand::SET_INPUT_ENABLED:
-		{
-			jboolean enabled = EIOS_Read<jboolean>(arguments);
-			io_controller->set_input_enabled(enabled);
-		}
-			break;
+
+        case EIOSCommand::SET_KEYBOARD_INPUT_ENABLED:
+        {
+            jboolean enabled = EIOS_Read<jboolean>(arguments);
+            io_controller->set_keyboard_input_enabled(enabled);
+        }
+            break;
+
+        case EIOSCommand::IS_MOUSE_INPUT_ENABLED:
+        {
+            jboolean result = io_controller->is_mouse_input_enabled();
+            EIOS_Write<jboolean>(response, result);
+        }
+            break;
+
+        case EIOSCommand::SET_MOUSE_INPUT_ENABLED:
+        {
+            jboolean enabled = EIOS_Read<jboolean>(arguments);
+            io_controller->set_mouse_input_enabled(enabled);
+        }
+            break;
 
 		case EIOSCommand::GET_MOUSE:
 		{
@@ -1415,10 +1429,10 @@ void ControlCenter::lose_focus() const noexcept
 	});
 }
 
-bool ControlCenter::is_input_enabled() const noexcept
+bool ControlCenter::is_keyboard_input_enabled() const noexcept
 {
 	auto result = send_command([](ImageData* image_data) {
-		image_data->command = EIOSCommand::IS_INPUT_ENABLED;
+		image_data->command = EIOSCommand::IS_KEYBOARD_INPUT_ENABLED;
 	});
 	
 	if (result)
@@ -1430,13 +1444,37 @@ bool ControlCenter::is_input_enabled() const noexcept
 	return false;
 }
 
-void ControlCenter::set_input_enabled(bool enabled) const noexcept
+void ControlCenter::set_keyboard_input_enabled(bool enabled) const noexcept
 {
-	send_command([enabled](ImageData* image_data) {
-		void* arguments = image_data->args;
-		image_data->command = EIOSCommand::SET_INPUT_ENABLED;
-		EIOS_Write<jboolean>(arguments, enabled);
-	});
+    send_command([enabled](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::SET_KEYBOARD_INPUT_ENABLED;
+        EIOS_Write<jboolean>(arguments, enabled);
+    });
+}
+
+bool ControlCenter::is_mouse_input_enabled() const noexcept
+{
+    auto result = send_command([](ImageData* image_data) {
+        image_data->command = EIOSCommand::IS_MOUSE_INPUT_ENABLED;
+    });
+
+    if (result)
+    {
+        void* arguments = get_image_data()->args;
+        return EIOS_Read<jboolean>(arguments);
+    }
+
+    return false;
+}
+
+void ControlCenter::set_mouse_input_enabled(bool enabled) const noexcept
+{
+    send_command([enabled](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::SET_MOUSE_INPUT_ENABLED;
+        EIOS_Write<jboolean>(arguments, enabled);
+    });
 }
 
 void ControlCenter::get_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept
