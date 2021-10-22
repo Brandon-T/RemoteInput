@@ -9,13 +9,15 @@
 #include <jni.h>
 #include "Container.hxx"
 
-class Window : public Container
+namespace java
 {
-public:
-    Window(JNIEnv* env, jobject window, bool canDelete = true) noexcept;
-    Window(JNIEnv* env, jclass cls, jobject window, bool canDelete = true) noexcept;
-    void pack() const noexcept;
-};
-
+    class Window : public Container
+    {
+    public:
+        Window(JNIEnv* env, jobject window, bool canDelete = true) noexcept;
+        Window(JNIEnv* env, jclass cls, jobject window, bool canDelete = true) noexcept;
+        void pack() const noexcept;
+    };
+}
 
 #endif //REMOTEINPUT_WINDOW_HXX

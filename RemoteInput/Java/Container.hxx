@@ -8,15 +8,18 @@
 #include <jni.h>
 #include "Component.hxx"
 
-class Container : public Component
+namespace java
 {
-public:
-    Container(JNIEnv* env, jobject container, bool canDelete = true) noexcept;
-    Container(JNIEnv* env, jclass cls, jobject container, bool canDelete = true) noexcept;
+    class Container : public Component
+    {
+    public:
+        Container(JNIEnv* env, jobject container, bool canDelete = true) noexcept;
+        Container(JNIEnv* env, jclass cls, jobject container, bool canDelete = true) noexcept;
 
-    Component getComponent(std::int32_t index) const noexcept;
-    int getComponentCount() const noexcept;
-};
+        Component getComponent(std::int32_t index) const noexcept;
+        int getComponentCount() const noexcept;
+    };
+}
 
 
 #endif //REMOTEINPUT_CONTAINER_HXX

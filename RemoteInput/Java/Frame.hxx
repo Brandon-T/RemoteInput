@@ -12,12 +12,15 @@
 #include <jni.h>
 #include "Window.hxx"
 
-class Frame final : public Window
+namespace java
 {
-public:
-	Frame(JNIEnv* env, jobject frame, bool canDelete = true) noexcept;
-	
-	Component getContentPane() const noexcept;
-};
+    class Frame final : public Window
+    {
+    public:
+        Frame(JNIEnv* env, jobject frame, bool canDelete = true) noexcept;
+
+        Component getContentPane() const noexcept;
+    };
+}
 
 #endif /* FRAME_HXX_INCLUDED */

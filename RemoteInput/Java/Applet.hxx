@@ -12,10 +12,13 @@
 #include <jni.h>
 #include "Window.hxx"
 
-class Applet final : public Window
+namespace java
 {
-public:
-	Applet(JNIEnv* env, jobject applet, bool canDelete = true) noexcept;
-};
+    class Applet final : public Window
+    {
+    public:
+        Applet(JNIEnv* env, jobject applet, bool canDelete = true) noexcept;
+    };
+}
 
 #endif /* APPLET_HXX_INCLUDED */

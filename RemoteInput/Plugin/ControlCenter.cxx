@@ -2069,14 +2069,14 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionArrayType type) noexc
 	return mapping[static_cast<std::uint8_t>(type)];
 }
 
-Applet ControlCenter::reflect_applet() const noexcept
+java::Applet ControlCenter::reflect_applet() const noexcept
 {
 	return {reflector->getEnv(), reflector->getApplet(), false};
 }
 
-Component ControlCenter::reflect_canvas() const noexcept
+java::Component ControlCenter::reflect_canvas() const noexcept
 {
-	Applet applet{reflector->getEnv(), reflector->getApplet(), false};
+    java::Applet applet{reflector->getEnv(), reflector->getApplet(), false};
 	return applet.getComponent(0);
 }
 

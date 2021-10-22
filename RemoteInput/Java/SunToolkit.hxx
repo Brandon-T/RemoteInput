@@ -8,10 +8,13 @@
 #include "Toolkit.hxx"
 #include "Window.hxx"
 
-class SunToolkit : public Toolkit
+namespace java
 {
-public:
-    static Window getContainingWindow(Component* component);
-};
+    class SunToolkit : public Toolkit
+    {
+    public:
+        static Window getContainingWindow(Component* component);
+    };
+}
 
 #endif //REMOTEINPUT_SUNTOOLKIT_HXX

@@ -133,8 +133,8 @@ public:
 
 	static std::size_t reflect_size_for_type(ReflectionArrayType type) noexcept;
 
-	Applet reflect_applet() const noexcept;
-	Component reflect_canvas() const noexcept;
+    java::Applet reflect_applet() const noexcept;
+    java::Component reflect_canvas() const noexcept;
 	std::unique_ptr<RemoteVM> create_remote_vm() noexcept;
 
 	void get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::size_t* width, std::size_t* height) const noexcept;

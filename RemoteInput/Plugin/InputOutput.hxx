@@ -26,7 +26,7 @@ private:
 	jobject applet;
 	std::mutex mutex;
 	DetachedThreadPool input_thread;
-	std::unique_ptr<RIEventQueue> event_queue;
+	std::unique_ptr<java::RIEventQueue> event_queue;
 
 	// MARK: - Input Variables
 	std::atomic<std::int32_t> currently_held_key;
@@ -49,12 +49,12 @@ private:
 	std::int32_t ModifiersForChar(char c) const noexcept;
 	std::int32_t SimbaMouseButtonToJava(std::int32_t button) const noexcept;
 
-	bool has_focus(Component* component) const noexcept;
-	void gain_focus(Component* component) const noexcept;
-	void lose_focus(Component* component) const noexcept;
+	bool has_focus(java::Component* component) const noexcept;
+	void gain_focus(java::Component* component) const noexcept;
+	void lose_focus(java::Component* component) const noexcept;
 
 	bool any_key_held(std::array<std::int32_t, 4>&& keys) const noexcept;
-	void handle_resize(Component* component) noexcept;
+	void handle_resize(java::Component* component) noexcept;
 
 public:
 	InputOutput(Reflection* reflector) noexcept;

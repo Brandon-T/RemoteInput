@@ -12,26 +12,29 @@
 #include <jni.h>
 #include "AWTEvent.hxx"
 
-class EventQueue
+namespace java
 {
-protected:
-    JNIEnv* env;
-    jclass cls;
-    jobject queue;
+    class EventQueue
+    {
+    protected:
+        JNIEnv* env;
+        jclass cls;
+        jobject queue;
 
-    EventQueue(JNIEnv* env) noexcept;
-	
-public:
-	EventQueue(JNIEnv* env, jclass cls, jobject queue) noexcept;
-	EventQueue(EventQueue&& other) noexcept;
-	EventQueue(const EventQueue& other) = delete;
-	virtual ~EventQueue() noexcept;
-	
-	EventQueue& operator = (EventQueue&& other) noexcept;
-	EventQueue& operator = (const EventQueue& other) = delete;
+        EventQueue(JNIEnv* env) noexcept;
 
-	virtual void push(EventQueue* queue) const noexcept;
-    virtual void postEvent(AWTEvent* event) const noexcept;
-};
+    public:
+        EventQueue(JNIEnv* env, jclass cls, jobject queue) noexcept;
+        EventQueue(EventQueue&& other) noexcept;
+        EventQueue(const EventQueue& other) = delete;
+        virtual ~EventQueue() noexcept;
+
+        EventQueue& operator = (EventQueue&& other) noexcept;
+        EventQueue& operator = (const EventQueue& other) = delete;
+
+        virtual void push(EventQueue* queue) const noexcept;
+        virtual void postEvent(AWTEvent* event) const noexcept;
+    };
+}
 
 #endif /* EventQueue_HXX_INCLUDED */
