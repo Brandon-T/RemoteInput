@@ -92,28 +92,24 @@ namespace java
         };
 
         //ClassLoader systemClassLoader = sun.awt.AppContext.getAppContext().getContextClassLoader();
-        this->cls = env->DefineClass("eos/EventInput/EventQueue",
-                                     nullptr,
-                                     reinterpret_cast<const jbyte *>(&bytes[0]),
-                                     static_cast<jsize>(bytes.size()));
-        env->DeleteLocalRef(std::exchange(this->cls, static_cast<jclass>(env->NewGlobalRef(this->cls))));
+        jclass cls = env->DefineClass("eos/EventInput/EventQueue",
+                                      nullptr,
+                                      reinterpret_cast<const jbyte *>(&bytes[0]),
+                                      static_cast<jsize>(bytes.size()));
 
-        if (this->cls)
+        if (cls)
         {
-            JNINativeMethod method = {
-                "dispatchEvent",
-                "(Ljava/awt/AWTEvent;)V",
-                reinterpret_cast<void *>(&RIEventQueue::DispatchEvent)
-            };
-            env->RegisterNatives(cls, &method, 1);
-
-            jmethodID methodID = env->GetMethodID(this->cls, "<init>", "()V");
-            this->queue = env->NewObject(this->cls, methodID);
+            // Apparently Order of Calls matters in Java-1.6.
+            // Must call RegisterNatives AFTER creating an instance of the class
+            // OR initialize the class first, by calling GetMethodID.
+            // This will crash on Java-1.6 if not done in the correct order.
+            jmethodID methodID = env->GetMethodID(cls, "<init>", "()V");
+            this->queue = env->NewObject(cls, methodID);
             env->DeleteLocalRef(std::exchange(this->queue, env->NewGlobalRef(this->queue)));
 
             if (this->queue)
             {
-                jfieldID fieldID = env->GetFieldID(this->cls, "nativeQueue", "J");
+                jfieldID fieldID = env->GetFieldID(cls, "nativeQueue", "J");
                 env->SetLongField(this->queue, fieldID, reinterpret_cast<std::intptr_t>(this));
             }
             else
@@ -124,6 +120,15 @@ namespace java
                     env->ExceptionClear();
                 }
             }
+
+            JNINativeMethod method = {
+                "dispatchEvent",
+                "(Ljava/awt/AWTEvent;)V",
+                reinterpret_cast<void *>(&RIEventQueue::DispatchEvent)
+            };
+
+            env->RegisterNatives(cls, &method, 1);
+            env->DeleteLocalRef(cls);
         }
         else
         {
@@ -165,11 +170,17 @@ namespace java
             0x0, 0x0, 0x2, 0x0, 0x5
         };
 
-        jclass cls = env->DefineClass("eos/EventInput/AWTEvent",
-                                      nullptr,
-                                      reinterpret_cast<const jbyte *>(&bytes[0]),
-                                      static_cast<jsize>(bytes.size()));
+        cls = env->DefineClass("eos/EventInput/AWTEvent",
+                               nullptr,
+                               reinterpret_cast<const jbyte *>(&bytes[0]),
+                               static_cast<jsize>(bytes.size()));
         env->DeleteLocalRef(cls);
+
+        if (env->ExceptionCheck())
+        {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
     }
 
     void RIEventQueue::DispatchEvent(JNIEnv* env, jobject thiz, jobject event)
@@ -186,6 +197,7 @@ namespace java
                 {
                     jmethodID methodID = env->GetMethodID(super_class, "dispatchEvent", "(Ljava/awt/AWTEvent;)V");
                     env->CallNonvirtualVoidMethod(thiz, super_class, methodID, event);
+                    env->DeleteLocalRef(super_class);
                 }
             };
 
@@ -201,6 +213,7 @@ namespace java
                     {
                         // super.dispatchEvent(original)
                         dispatch_event(env, cls, thiz, original);
+                        env->DeleteLocalRef(original);
                         env->DeleteLocalRef(cls);
                     }
                     env->DeleteLocalRef(event_class);
@@ -302,7 +315,6 @@ namespace java
             dispatch_event(env, cls, thiz, event);
             env->DeleteLocalRef(cls);
         }
-
     }
 
     RIEventQueue::RIEventQueue(JNIEnv* env) noexcept : EventQueue(env), is_blocking_keyboard_events(false), is_blocking_mouse_events(false)

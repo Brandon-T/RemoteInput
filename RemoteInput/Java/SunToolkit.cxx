@@ -3,6 +3,7 @@
 //
 
 #include "SunToolkit.hxx"
+#include <utility>
 
 namespace java
 {
@@ -13,10 +14,29 @@ namespace java
         if (cls)
         {
             static jmethodID methodId = env->GetStaticMethodID(cls, "getContainingWindow", "(Ljava/awt/Component;)Ljava/awt/Window;");
-            jobject containing_window = env->CallStaticObjectMethod(cls, methodId, component->get());
+            if (methodId)
+            {
+                jobject containing_window = env->CallStaticObjectMethod(cls, methodId, component->get());
+                env->DeleteLocalRef(cls);
+                env->DeleteLocalRef(std::exchange(containing_window, env->NewGlobalRef(containing_window)));
+                return {env, containing_window};
+            }
             env->DeleteLocalRef(cls);
-            return Window{env, containing_window};
         }
-        return Window{env, nullptr};
+
+        cls = env->FindClass("java/awt/Window");
+        if (cls)
+        {
+            jobject comp = env->NewGlobalRef(component->get());
+            while(comp && !env->IsInstanceOf(comp, cls))
+            {
+                comp = env->NewGlobalRef(Component(env, comp).getParent().get());
+            }
+
+            env->DeleteLocalRef(cls);
+            return {env, comp};
+        }
+
+        return {env, nullptr};
     }
 }

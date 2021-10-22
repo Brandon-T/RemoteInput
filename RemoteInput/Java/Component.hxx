@@ -16,6 +16,8 @@
 
 namespace java
 {
+    class Container;
+
     class Component
     {
     protected:
@@ -43,6 +45,7 @@ namespace java
         void getLocation(std::int32_t &x, std::int32_t &y) const noexcept;
         void getSize(std::size_t &width, std::size_t &height) const noexcept;
         Component getComponentAt(std::int32_t x, std::int32_t y) const noexcept;
+        Container getParent() const noexcept;
         void dispatchEvent(AWTEvent* event) const noexcept;
         void dispatchEvent(jobject event) const noexcept;
 

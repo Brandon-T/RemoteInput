@@ -173,13 +173,11 @@ ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Refl
 						process_command();
 						response_signal->signal();
 					}
-					
 
 					if (this->io_controller)
 					{
 						this->io_controller.reset();
 					}
-
 
 					if (this->reflector)
 					{

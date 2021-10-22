@@ -7,6 +7,7 @@
 //
 
 #include "Component.hxx"
+#include "Container.hxx"
 #include <utility>
 
 namespace java
@@ -25,6 +26,18 @@ namespace java
         }
     }
 
+    Component::Component(JNIEnv* env, jclass cls, jobject component, bool canDelete) noexcept : env(env), cls(cls), component(component), canDelete(canDelete)
+    {
+    }
+
+    Component::Component(Component&& other) noexcept : env(other.env), cls(other.cls), component(other.component), canDelete(other.canDelete)
+    {
+        other.env = nullptr;
+        other.cls = nullptr;
+        other.component = nullptr;
+        other.canDelete = false;
+    }
+
     Component::~Component() noexcept
     {
         if (cls)
@@ -36,18 +49,6 @@ namespace java
         {
             env->DeleteGlobalRef(component);
         }
-    }
-
-    Component::Component(JNIEnv* env, jclass cls, jobject component, bool canDelete) noexcept : env(env), cls(cls), component(component), canDelete(canDelete)
-    {
-    }
-
-    Component::Component(Component&& other) noexcept : env(other.env), cls(other.cls), component(other.component), canDelete(other.canDelete)
-    {
-        other.env = nullptr;
-        other.cls = nullptr;
-        other.component = nullptr;
-        other.canDelete = false;
     }
 
     Component& Component::operator = (Component&& other) noexcept
@@ -155,6 +156,18 @@ namespace java
     {
         static jmethodID methodId = env->GetMethodID(cls, "getComponentAt", "(II)Ljava/awt/Component;");
         jobject object = env->CallObjectMethod(component, methodId, x, y);
+        if (object)
+        {
+            env->DeleteLocalRef(std::exchange(object, env->NewGlobalRef(object)));
+            return {env, object};
+        }
+        return {env, nullptr};
+    }
+
+    Container Component::getParent() const noexcept
+    {
+        static jmethodID methodId = env->GetMethodID(cls, "getParent", "()Ljava/awt/Container;");
+        jobject object = env->CallObjectMethod(component, methodId);
         if (object)
         {
             env->DeleteLocalRef(std::exchange(object, env->NewGlobalRef(object)));

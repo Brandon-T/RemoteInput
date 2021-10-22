@@ -322,7 +322,7 @@ void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, 
         }
 
 		//Decrease our reference count by 1..
-		//So if `FreeLibrary` was called previous, our count reaches 0 and we'll be fred.
+		//So if `FreeLibrary` was called previous, our count reaches 0 and we'll be freed.
 		FreeLibraryAndExitThread(module, 0);
 	}, this_module).detach();
 }
