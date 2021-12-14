@@ -626,6 +626,12 @@ void InputOutput::gain_focus(java::Component* component) const noexcept
     }
 
     java::FocusEvent::Post(env, component, java::FocusEvent::FocusCodes::FOCUS_GAINED, false, java::FocusEvent::Cause::ACTIVATION);
+
+    auto now = std::chrono::high_resolution_clock::now();
+    while (!component->hasFocus() && elapsed_time<std::chrono::seconds>(now) < 2)
+    {
+        yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(100, 250)));
+    }
 }
 
 void InputOutput::lose_focus() const noexcept
@@ -652,6 +658,12 @@ void InputOutput::lose_focus(java::Component* component) const noexcept
     }
 
     java::FocusEvent::Post(env, component, java::FocusEvent::FocusCodes::FOCUS_LOST, true, java::FocusEvent::Cause::ACTIVATION);
+
+    auto now = std::chrono::high_resolution_clock::now();
+    while (component->hasFocus() && elapsed_time<std::chrono::seconds>(now) < 2)
+    {
+        yield_thread(std::chrono::milliseconds(Random::instance()->generate_random_int(100, 250)));
+    }
 }
 
 bool InputOutput::is_keyboard_input_enabled() const noexcept
