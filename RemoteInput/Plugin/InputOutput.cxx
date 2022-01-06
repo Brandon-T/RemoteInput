@@ -154,6 +154,7 @@ InputOutput::InputOutput(Reflection* reflector) noexcept : vm(reflector->getVM()
 InputOutput::~InputOutput() noexcept
 {
     this->input_thread.terminate();
+    this->event_queue.reset();
     this->vm = nullptr;
     this->applet = nullptr;
 }

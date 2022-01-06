@@ -28,10 +28,12 @@ namespace java
             env->DeleteGlobalRef(cls);
         }
 
-        if (queue)
+        // In Java 6, the system deletes the queue.
+        // If we attempt to delete it, it will crash!
+        /*if (queue)
         {
             env->DeleteGlobalRef(queue);
-        }
+        }*/
     }
 
     EventQueue::EventQueue(EventQueue&& other) noexcept : env(other.env), cls(other.cls), queue(other.queue)
