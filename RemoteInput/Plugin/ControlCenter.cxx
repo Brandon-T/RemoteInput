@@ -2,6 +2,7 @@
 #include <thread>
 #include <unordered_map>
 #include <cstring>
+#include <utility>
 #include "EIOS.hxx"
 #include "Platform.hxx"
 #include "NativeHooks.hxx"

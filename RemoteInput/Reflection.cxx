@@ -1,4 +1,5 @@
 #include "Reflection.hxx"
+#include <utility>
 
 Reflection::Reflection() noexcept : jvm(new JVM()), frame(nullptr), applet(nullptr), classLoader(nullptr)
 {
