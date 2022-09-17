@@ -441,18 +441,21 @@ bool EnumWindowsProc(Display* display, Window window, void* other) noexcept
 {
     pid_t pid = 0;
     GetWindowThreadProcessId(display, window, &pid);
-    if (pid != getpid() || other == nullptr) {
+    if (pid != getpid() || other == nullptr)
+    {
         // wrong process ID, or a null `other` parameter:
         return true;
     }
     char className[256] = {0};
-    if (GetClassName(display, window, className, sizeof(className)) > 0) {
+    if (GetClassName(display, window, className, sizeof(className)) > 0)
+    {
         const auto matchedClassName = std::find(
             std::begin(recognizedClassNames),
             std::end(recognizedClassNames),
             std::string(className)
         );
-        if (matchedClassName != std::end(recognizedClassNames)) {
+        if (matchedClassName != std::end(recognizedClassNames))
+        {
             // the correct window has been located, so assign this `Window`
             // object to the `other` parameter, and return false to
             // indicate that the operation was a success.
