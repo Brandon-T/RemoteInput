@@ -433,7 +433,7 @@ void* GetModuleHandle(const char* module_name) noexcept
 #endif
 
 #if defined(__linux__)
-std::vector<std::string> recognizedClassNames = {
+std::array<std::string, 2> recognizedClassNames = {
     "jagexappletviewer",  // Jagex client
     "net-runelite-client-RuneLite",  // RuneLite client
 };
