@@ -8,6 +8,7 @@
 #include <utility>
 #include <cstdint>
 #include <string>
+#include <sys/types.h>
 
 class Injector
 {
