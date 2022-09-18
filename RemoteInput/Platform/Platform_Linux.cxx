@@ -433,19 +433,38 @@ void* GetModuleHandle(const char* module_name) noexcept
 #endif
 
 #if defined(__linux__)
+std::array<std::string, 2> recognizedClassNames = {
+    "jagexappletviewer",  // Jagex client
+    "net-runelite-client-RuneLite",  // RuneLite client
+};
 bool EnumWindowsProc(Display* display, Window window, void* other) noexcept
 {
     pid_t pid = 0;
     GetWindowThreadProcessId(display, window, &pid);
-    if (pid == getpid() && other)
+    if (pid != getpid() || other == nullptr)
     {
-        char className[256] = {0};
-        int result = GetClassName(display, window, className, sizeof(className));
-        if (result != 0 && std::string(className) == "jagexappletviewer")  //Need a better way to check the class..
+        // wrong process ID, or a null `other` parameter:
+        return true;
+    }
+    char className[256] = {0};
+    if (GetClassName(display, window, className, sizeof(className)) > 0)
+    {
+        const auto matchedClassName = std::find(
+            std::begin(recognizedClassNames),
+            std::end(recognizedClassNames),
+            std::string(className)
+        );
+        if (matchedClassName != std::end(recognizedClassNames))
         {
+            // the correct window has been located, so assign this `Window`
+            // object to the `other` parameter, and return false to
+            // indicate that the operation was a success.
             *reinterpret_cast<Window*>(other) = window;
             return false;
         }
+        #if defined(DEBUG)
+        printf("excluded window with class name '%s'\n", className);
+        #endif
     }
     return true;
 }
