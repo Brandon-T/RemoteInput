@@ -1,8 +1,10 @@
 #ifndef TMEMORYMANAGER_HXX_INCLUDED
 #define TMEMORYMANAGER_HXX_INCLUDED
 
-#if !defined(_MSC_VER) && __has_attribute(regparm)
+#if !defined(_MSC_VER)
+#if __has_attribute(regparm)
 #define PASCAL_CALLING_CONVENTION __attribute__((regparm(3)))
+#endif
 #endif
 
 #if defined(PASCAL_CALLING_CONVENTION)
@@ -64,25 +66,31 @@ typedef struct
 } __attribute__((__packed__)) TCMemoryManager;
 #endif
 
-typedef struct
+#if defined(_MSC_VER)
+#define STRUCT_PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop))
+#else
+#define STRUCT_PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#endif
+
+STRUCT_PACK(typedef struct
 {
 	void (*Sync)(void(*synchronize_method)(void*), void* data);
-} __attribute__((__packed__)) TSimbaMethods;
+}) TSimbaMethods;
 
-typedef struct
+STRUCT_PACK(typedef struct
 {
     void* (*GetMem)(std::size_t size);
     void (*FreeMem)(void* ptr);
-} __attribute__((__packed__)) TSimbaMemoryAllocators;
+}) TSimbaMemoryAllocators;
 
-typedef struct
+STRUCT_PACK(typedef struct
 {
     std::int32_t SimbaMinor;
     std::int32_t SimbaMajor;
     const char* FileName;
-} __attribute__((__packed__)) TSimbaInfomation;
+}) TSimbaInfomation;
 
-typedef struct
+STRUCT_PACK(typedef struct
 {
     void (*Sync)(void(*synchronize_method)(void*), void* data);
     void* (*GetMem)(std::size_t size);
@@ -90,6 +98,6 @@ typedef struct
     void* (*AllocMem)(std::size_t size);
     void* (*ReAllocMem)(void** ptr, std::size_t size);
     std::size_t (*MemSize)(void* ptr);
-} __attribute__((__packed__)) TSimbaMethodsExtended;
+}) TSimbaMethodsExtended;
 
 #endif // TMEMORYMANAGER_HXX_INCLUDED

@@ -1,10 +1,21 @@
 #include "NativeHooks.hxx"
+#include <cstdint>
 
 #if defined(_WIN32) || defined(_WIN64)
+#if defined(_MSC_VER)
+#include <windows.h>
+#include <gl/GL.h>
+
+typedef std::uintptr_t GLsizeiptr;
+#define GL_PIXEL_PACK_BUFFER              0x88EB
+#define GL_STREAM_READ                    0x88E1
+#define GL_READ_ONLY                      0x88B8
+#define GL_BGRA                           0x80E1
+#else
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glext.h>
-#include <GL/wglext.h>
+#endif
 
 #include <memory>
 #include <thread>
@@ -58,15 +69,20 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
     #define PtrAddBytes(p, b)               ((void *) (((intptr_t) (p)) + (b)))
     #define PtrCoord(p, x, xinc, y, yinc)   PtrAddBytes(p, (y)*(yinc) + (x)*(xinc))
 
+    auto GetProcAddress = [](HMODULE module, const char* stdcall_name, const char* cdecl_name) -> FARPROC {
+        FARPROC result = ::GetProcAddress(module, stdcall_name);
+        return result ? result : ::GetProcAddress(module, cdecl_name);
+    };
+
     static HMODULE module = GetModuleHandle("awt.dll");
-	static NativePrimitive* (__stdcall *GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(GetProcAddress(module, "_GetNativePrim@8") ?: GetProcAddress(module, "GetNativePrim"));
-	static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8") ?: GetProcAddress(module, "SurfaceData_GetOps"));
-	static jint (__stdcall *Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(GetProcAddress(module, "_Region_GetInfo@12") ?: GetProcAddress(module, "Region_GetInfo"));
-    static void (__stdcall *SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBounds@8") ?: GetProcAddress(module, "SurfaceData_IntersectBounds"));
-    static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16") ?: GetProcAddress(module, "SurfaceData_IntersectBlitBounds"));
-    static void (__stdcall *Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(GetProcAddress(module, "_Region_StartIteration@8") ?: GetProcAddress(module, "Region_StartIteration"));
-    static jint (__stdcall *Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(GetProcAddress(module, "_Region_NextIteration@8") ?: GetProcAddress(module, "Region_NextIteration"));
-    static void (__stdcall *Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(GetProcAddress(module, "_Region_EndIteration@8") ?: GetProcAddress(module, "Region_EndIteration"));
+	static NativePrimitive* (__stdcall *GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(GetProcAddress(module, "_GetNativePrim@8",  "GetNativePrim"));
+	static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8", "SurfaceData_GetOps"));
+	static jint (__stdcall *Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(GetProcAddress(module, "_Region_GetInfo@12", "Region_GetInfo"));
+    static void (__stdcall *SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBounds@8", "SurfaceData_IntersectBounds"));
+    static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16", "SurfaceData_IntersectBlitBounds"));
+    static void (__stdcall *Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(GetProcAddress(module, "_Region_StartIteration@8", "Region_StartIteration"));
+    static jint (__stdcall *Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(GetProcAddress(module, "_Region_NextIteration@8", "Region_NextIteration"));
+    static void (__stdcall *Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(GetProcAddress(module, "_Region_EndIteration@8", "Region_EndIteration"));
 
 	if (!GetNativePrim || !SurfaceData_GetOps || !Region_GetInfo || !SurfaceData_IntersectBounds || !SurfaceData_IntersectBlitBounds || !Region_StartIteration || !Region_NextIteration || !Region_EndIteration || width <= 0 || height <= 0)
     {
@@ -398,11 +414,16 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 		return native_hook->call<void, decltype(JavaNativeGDIBlit)>(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
 	}
 
+    auto GetProcAddress = [](HMODULE module, const char* stdcall_name, const char* cdecl_name) -> FARPROC {
+        FARPROC result = ::GetProcAddress(module, stdcall_name);
+        return result ? result : ::GetProcAddress(module, cdecl_name);
+    };
+
 	//Setup Function Pointers
     static HMODULE module = GetModuleHandle("awt.dll");
-	static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8") ?: GetProcAddress(module, "SurfaceData_GetOps"));
-	static GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(GDIWindowSurfaceData_GetOps)>(GetProcAddress(module, "_GDIWindowSurfaceData_GetOps@8") ?: GetProcAddress(module, "GDIWindowSurfaceData_GetOps"));
-	static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16") ?: GetProcAddress(module, "SurfaceData_IntersectBlitBounds"));
+	static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8", "SurfaceData_GetOps"));
+	static GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(GDIWindowSurfaceData_GetOps)>(GetProcAddress(module, "_GDIWindowSurfaceData_GetOps@8", "GDIWindowSurfaceData_GetOps"));
+	static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16", "SurfaceData_IntersectBlitBounds"));
 
 	if (!SurfaceData_GetOps || !GDIWindowSurfaceData_GetOps || !SurfaceData_IntersectBlitBounds)
 	{
@@ -712,8 +733,14 @@ GLboolean (__stdcall *glUnmapBuffer)(GLenum target);
 
 bool IsGLExtensionsSupported(HDC hdc, std::string extension) noexcept
 {
+    typedef std::uintptr_t GLsizeiptr;
+    auto wglGetProcAddress = [](const char* a, const char* b) -> FARPROC {
+        FARPROC result = ::wglGetProcAddress(a);
+        return result ? result : ::wglGetProcAddress(b);
+    };
+
     static std::vector<std::string> extensions;
-    static const char* (__stdcall *wglGetExtensionsString)(HDC hdc) = reinterpret_cast<decltype(wglGetExtensionsString)>(wglGetProcAddress("wglGetExtensionsString") ?: wglGetProcAddress("wglGetExtensionsStringARB"));
+    static const char* (__stdcall *wglGetExtensionsString)(HDC hdc) = reinterpret_cast<decltype(wglGetExtensionsString)>(wglGetProcAddress("wglGetExtensionsString", "wglGetExtensionsStringARB"));
 
     if (wglGetExtensionsString && hdc && extensions.empty())
     {
@@ -803,7 +830,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 	nextIndex = (index + 1) % 2;
 
 	//read back-buffer.
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
 	glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[nextIndex]);
@@ -1060,8 +1087,13 @@ void InitialiseHooks() noexcept
 		#if defined(USE_DETOURS)
 		HMODULE module = GetModuleHandle("awt.dll");
 
+        auto GetProcAddress = [](HMODULE module, const char* stdcall_name, const char* cdecl_name) -> FARPROC {
+            FARPROC result = ::GetProcAddress(module, stdcall_name);
+            return result ? result : ::GetProcAddress(module, cdecl_name);
+        };
+
         //Hook X11 Blit
-        void* blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_windows_GDIBlitLoops_nativeBlit@60") ?: GetProcAddress(module, "Java_sun_java2d_windows_GDIBlitLoops_nativeBlit"));
+        void* blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_windows_GDIBlitLoops_nativeBlit@60", "Java_sun_java2d_windows_GDIBlitLoops_nativeBlit"));
         if (blit)
         {
             native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeGDIBlit));
@@ -1070,7 +1102,7 @@ void InitialiseHooks() noexcept
 		else
 		{
 		    //_Java_sun_java2d_loops_ScaledBlit_Scale@72 //Java_sun_java2d_loops_ScaledBlit_Scale
-            blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_loops_Blit_Blit@48") ?: GetProcAddress(module, "Java_sun_java2d_loops_Blit_Blit"));
+            blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_loops_Blit_Blit@48", "Java_sun_java2d_loops_Blit_Blit"));
             if (blit)
             {
                 native_hook = std::make_unique<Hook>(reinterpret_cast<void *>(blit), reinterpret_cast<void *>(JavaNativeBlit));
@@ -1079,14 +1111,14 @@ void InitialiseHooks() noexcept
 		}
 
         //Hook DirectX Surface Blit
-        blit = reinterpret_cast<void*>(GetProcAddress(module, "?D3DBL_CopyImageToIntXrgbSurface@@YAJPAUSurfaceDataRasInfo@@HPAVD3DResource@@JJJJJJ@Z") ?: GetProcAddress(module, "?D3DBL_CopyImageToIntXrgbSurface@@YAJPEAUSurfaceDataRasInfo@@HPEAVD3DResource@@JJJJJJ@Z"));
+        blit = reinterpret_cast<void*>(GetProcAddress(module, "?D3DBL_CopyImageToIntXrgbSurface@@YAJPAUSurfaceDataRasInfo@@HPAVD3DResource@@JJJJJJ@Z", "?D3DBL_CopyImageToIntXrgbSurface@@YAJPEAUSurfaceDataRasInfo@@HPEAVD3DResource@@JJJJJJ@Z"));
         if (blit)
         {
             directx_xrgb_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaDirectXCopyImageToIntXrgbSurface));
             directx_xrgb_hook->apply();
         }
 
-        blit = reinterpret_cast<void*>(GetProcAddress(module, "D3DBL_CopySurfaceToIntArgbImage@@YAJPAUIDirect3DSurface9@@PAUSurfaceDataRasInfo@@JJJJJJ@Z") ?: GetProcAddress(module, "?D3DBL_CopySurfaceToIntArgbImage@@YAJPEAUIDirect3DSurface9@@PEAUSurfaceDataRasInfo@@JJJJJJ@Z"));
+        blit = reinterpret_cast<void*>(GetProcAddress(module, "D3DBL_CopySurfaceToIntArgbImage@@YAJPAUIDirect3DSurface9@@PAUSurfaceDataRasInfo@@JJJJJJ@Z", "?D3DBL_CopySurfaceToIntArgbImage@@YAJPEAUIDirect3DSurface9@@PEAUSurfaceDataRasInfo@@JJJJJJ@Z"));
         if (blit)
         {
             directx_argb_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaDirectXCopyImageToIntArgbSurface));
@@ -1095,7 +1127,7 @@ void InitialiseHooks() noexcept
 
 		//Hook OpenGL Blit
 		#if defined(HOOK_OPENGL_BLIT)
-		blit = reinterpret_cast<void*>( GetProcAddress(module, "OGLBlitLoops_Blit"));
+		blit = reinterpret_cast<void*>(::GetProcAddress(module, "OGLBlitLoops_Blit"));
 		if (blit)
 		{
 			opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
@@ -1103,7 +1135,7 @@ void InitialiseHooks() noexcept
 		}
 		else
 		{
-			blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer@20") ?: GetProcAddress(module, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer"));
+			blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer@20", "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer"));
 			if (blit)
 			{
 				flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
@@ -1117,11 +1149,11 @@ void InitialiseHooks() noexcept
 			if (module)
 			{
 				#if !defined(HOOK_OPENGL_SWAP)
-				blit = reinterpret_cast<void*>(GetProcAddress(module, "wglSwapBuffers"));
+				blit = reinterpret_cast<void*>(::GetProcAddress(module, "wglSwapBuffers"));
 				opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mSwapBuffers));
 				opengl_swap_hook->apply();
 				#else
-				blit = reinterpret_cast<void*>(GetProcAddress(module, "glDrawPixels"));
+				blit = reinterpret_cast<void*>(::GetProcAddress(module, "glDrawPixels"));
                 opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mglDrawPixels));
                 opengl_swap_hook->apply();
 				#endif

@@ -9,7 +9,7 @@
 #ifndef PointerInfo_HXX_INCLUDED
 #define PointerInfo_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "Component.hxx"
 
 namespace java

@@ -92,7 +92,7 @@ void EIOS_Write(void* &ptr, const std::vector<T> &result) noexcept
     ptr = static_cast<char*>(ptr) + (result.size() * sizeof(T));
 }
 
-ControlCenter::ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller(), remote_vm()
+ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller(), remote_vm()
 {
 	if (pid <= 0)
 	{
@@ -632,10 +632,38 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
 			hook.read(arguments);
 
-			auto result = reflector->getField<jarray>(hook.object, hook);
-			jsize length = result ? reflector->getEnv()->GetArrayLength(result) : 0;
-			EIOS_Write(arguments, length);
-			EIOS_Write(arguments, result);
+            auto array = reflector->getField<jarray>(hook.object, hook);
+            process_reflect_array_with_size(array, arguments, response, 1);
+        }
+            break;
+
+        case EIOSCommand::REFLECT_ARRAY_WITH_SIZE2D:
+        {
+            ReflectionHook hook;
+            hook.read(arguments);
+
+            auto array = reflector->getField<jarray>(hook.object, hook);
+            process_reflect_array_with_size(array, arguments, response, 2);
+        }
+            break;
+
+        case EIOSCommand::REFLECT_ARRAY_WITH_SIZE3D:
+        {
+            ReflectionHook hook;
+            hook.read(arguments);
+
+            auto array = reflector->getField<jarray>(hook.object, hook);
+            process_reflect_array_with_size(array, arguments, response, 3);
+        }
+            break;
+
+        case EIOSCommand::REFLECT_ARRAY_WITH_SIZE4D:
+        {
+            ReflectionHook hook;
+            hook.read(arguments);
+
+            auto array = reflector->getField<jarray>(hook.object, hook);
+            process_reflect_array_with_size(array, arguments, response, 4);
         }
             break;
 
@@ -647,7 +675,7 @@ void ControlCenter::process_command() noexcept
 		}
 			break;
 			
-		case EIOSCommand::REFLECT_ARRAY_INDEX_SIZE:
+		case EIOSCommand::REFLECT_ARRAY_SIZE2D:
 		{
 			jobjectArray array = EIOS_Read<jobjectArray>(arguments);
 			jsize index = EIOS_Read<jsize>(arguments);
@@ -662,6 +690,60 @@ void ControlCenter::process_command() noexcept
 			EIOS_Write(response, length);
 		}
 			break;
+
+        case EIOSCommand::REFLECT_ARRAY_SIZE3D:
+        {
+            jobjectArray array = EIOS_Read<jobjectArray>(arguments);
+            jsize x = EIOS_Read<jsize>(arguments);
+            jsize y = EIOS_Read<jsize>(arguments);
+
+            jarray local = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(array, x));
+            jsize length = 0;
+            if (local)
+            {
+                jarray localX = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(local), y));
+                length = localX ? reflector->getEnv()->GetArrayLength(localX) : 0;
+                if (localX)
+                {
+                    reflector->getEnv()->DeleteLocalRef(localX);
+                }
+                reflector->getEnv()->DeleteLocalRef(local);
+            }
+
+            EIOS_Write(response, length);
+        }
+            break;
+
+        case EIOSCommand::REFLECT_ARRAY_SIZE4D:
+        {
+            jobjectArray array = EIOS_Read<jobjectArray>(arguments);
+            jsize x = EIOS_Read<jsize>(arguments);
+            jsize y = EIOS_Read<jsize>(arguments);
+            jsize z = EIOS_Read<jsize>(arguments);
+
+            jarray local = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(array, x));
+            jsize length = 0;
+            if (local)
+            {
+                jarray localX = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(local), y));
+
+                if (localX)
+                {
+                    jarray localY = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(local), z));
+                    if (localY)
+                    {
+                        length = localY ? reflector->getEnv()->GetArrayLength(localY) : 0;
+                        reflector->getEnv()->DeleteLocalRef(localY);
+                    }
+
+                    reflector->getEnv()->DeleteLocalRef(localX);
+                }
+                reflector->getEnv()->DeleteLocalRef(local);
+            }
+
+            EIOS_Write(response, length);
+        }
+            break;
 
 		case EIOSCommand::REFLECT_ARRAY_INDEX:
 		{
@@ -979,6 +1061,31 @@ void ControlCenter::process_reflect_array_index(jarray array, void* &arguments, 
 	reflector->getEnv()->DeleteLocalRef(array);
 }
 
+void ControlCenter::process_reflect_array_with_size(jarray array, void* &arguments, void* &response, int dimensions) const noexcept
+{
+    if (dimensions == 1)
+    {
+        EIOS_Write(response, reflector->getEnv()->GetArrayLength(array));
+        EIOS_Write(response, array);
+        return;
+    }
+
+    for (int i = 0; i < dimensions - 1; ++i)
+    {
+        jsize index = EIOS_Read<jsize>(arguments);
+
+        if (array)
+        {
+            jarray local = static_cast<jarray>(reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), index));
+            reflector->getEnv()->DeleteGlobalRef(std::exchange(array, static_cast<jarray>(reflector->getEnv()->NewGlobalRef(local))));
+            reflector->getEnv()->DeleteLocalRef(local);
+        }
+    }
+
+    EIOS_Write(response, reflector->getEnv()->GetArrayLength(array));
+    EIOS_Write(response, array);
+}
+
 bool ControlCenter::init_maps() noexcept
 {
     char mapName[256] = {0};
@@ -1072,7 +1179,7 @@ bool ControlCenter::init_signals() noexcept
     return command_signal && response_signal;
 }
 
-void ControlCenter::kill_zombie_process(pid_t pid) noexcept
+void ControlCenter::kill_zombie_process(std::int32_t pid) noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 
@@ -1241,7 +1348,7 @@ void ControlCenter::set_parent_thread_id(std::int32_t tid) const noexcept
 	}
 }
 
-void ControlCenter::signal_sync(pid_t pid) noexcept
+void ControlCenter::signal_sync(std::int32_t pid) noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     char signalName[256] = {0};
@@ -1262,7 +1369,7 @@ void ControlCenter::signal_sync(pid_t pid) noexcept
     }
 }
 
-void ControlCenter::wait_for_sync(pid_t pid) noexcept
+void ControlCenter::wait_for_sync(std::int32_t pid) noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char signalName[256] = {0};
@@ -1284,7 +1391,7 @@ void ControlCenter::wait_for_sync(pid_t pid) noexcept
     }
 }
 
-bool ControlCenter::controller_exists(pid_t pid) noexcept
+bool ControlCenter::controller_exists(std::int32_t pid) noexcept
 {
 	if (pid == getpid())
 	{
@@ -1301,7 +1408,7 @@ bool ControlCenter::controller_exists(pid_t pid) noexcept
 	return MemoryMap<char>(mapName, std::ios::in).open();
 }
 
-bool ControlCenter::controller_is_paired(pid_t pid, bool* exists) noexcept
+bool ControlCenter::controller_is_paired(std::int32_t pid, bool* exists) noexcept
 {
 	if (pid == getpid())
 	{
@@ -1320,9 +1427,10 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists) noexcept
 	auto memory = MemoryMap<char>(mapName, std::ios::in | std::ios::out);
 	if (memory.open())
 	{
-		*exists = true;
+        //*exists = true;
 		if (memory.map(sizeof(ImageData)))
 		{
+            *exists = true;
 		    ImageData* data = static_cast<ImageData*>(memory.data());
 		    if (data)
             {
@@ -1347,7 +1455,7 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists) noexcept
 	return false;
 }
 
-void ControlCenter::kill_process(pid_t pid) const noexcept
+void ControlCenter::kill_process(std::int32_t pid) const noexcept
 {
 	send_command([](ImageData* image_data) {
 		image_data->command = EIOSCommand::KILL_APPLICATION;
@@ -1904,19 +2012,79 @@ jarray ControlCenter::reflect_array(const ReflectionHook &hook) const noexcept
 jarray ControlCenter::reflect_array_with_size(const ReflectionHook &hook, std::size_t* output_size) const noexcept
 {
     auto result = send_command([&](ImageData* image_data) {
-		void* arguments = image_data->args;
-		image_data->command = EIOSCommand::REFLECT_ARRAY_WITH_SIZE;
-		hook.write(arguments);
-	});
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_ARRAY_WITH_SIZE;
+        hook.write(arguments);
+    });
 
-	if (result)
-	{
-		void* response = get_image_data()->args;
-		*output_size = EIOS_Read<jsize>(response);
-		jarray object = EIOS_Read<jarray>(response);
-		return object;
-	}
-	return nullptr;
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        *output_size = EIOS_Read<jsize>(response);
+        jarray object = EIOS_Read<jarray>(response);
+        return object;
+    }
+    return nullptr;
+}
+
+jarray ControlCenter::reflect_array_with_size2d(const ReflectionHook &hook, std::size_t x, std::size_t* output_size) const noexcept
+{
+    auto result = send_command([&](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_ARRAY_WITH_SIZE2D;
+        hook.write(arguments);
+        EIOS_Write(arguments, static_cast<jsize>(x));
+    });
+
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        *output_size = EIOS_Read<jsize>(response);
+        jarray object = EIOS_Read<jarray>(response);
+        return object;
+    }
+    return nullptr;
+}
+
+jarray ControlCenter::reflect_array_with_size3d(const ReflectionHook &hook, std::size_t x, std::size_t y, std::size_t* output_size) const noexcept
+{
+    auto result = send_command([&](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_ARRAY_WITH_SIZE3D;
+        hook.write(arguments);
+        EIOS_Write(arguments, static_cast<jsize>(x));
+        EIOS_Write(arguments, static_cast<jsize>(y));
+    });
+
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        *output_size = EIOS_Read<jsize>(response);
+        jarray object = EIOS_Read<jarray>(response);
+        return object;
+    }
+    return nullptr;
+}
+
+jarray ControlCenter::reflect_array_with_size4d(const ReflectionHook &hook, std::size_t x, std::size_t y, std::size_t z, std::size_t* output_size) const noexcept
+{
+    auto result = send_command([&](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_ARRAY_WITH_SIZE4D;
+        hook.write(arguments);
+        EIOS_Write(arguments, static_cast<jsize>(x));
+        EIOS_Write(arguments, static_cast<jsize>(y));
+        EIOS_Write(arguments, static_cast<jsize>(z));
+    });
+
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        *output_size = EIOS_Read<jsize>(response);
+        jarray object = EIOS_Read<jarray>(response);
+        return object;
+    }
+    return nullptr;
 }
 
 std::size_t ControlCenter::reflect_array_size(const jarray array) const noexcept
@@ -1936,22 +2104,61 @@ std::size_t ControlCenter::reflect_array_size(const jarray array) const noexcept
 	return 0;
 }
 
-std::size_t ControlCenter::reflect_array_size(const jarray array, std::size_t index) const noexcept
+std::size_t ControlCenter::reflect_array_size2d(const jarray array, std::size_t index) const noexcept
 {
-	auto result = send_command([&](ImageData* image_data) {
-		void* arguments = image_data->args;
-		image_data->command = EIOSCommand::REFLECT_ARRAY_INDEX_SIZE;
-		EIOS_Write(arguments, array);
-		EIOS_Write(arguments, index);
-	});
+    auto result = send_command([&](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_ARRAY_SIZE2D;
+        EIOS_Write(arguments, array);
+        EIOS_Write(arguments, static_cast<jsize>(index));
+    });
 
-	if (result)
-	{
-		void* response = get_image_data()->args;
-		jsize object = EIOS_Read<jsize>(response);
-		return object;
-	}
-	return 0;
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        jsize object = EIOS_Read<jsize>(response);
+        return object;
+    }
+    return 0;
+}
+
+std::size_t ControlCenter::reflect_array_size3d(const jarray array, std::size_t x, std::size_t y) const noexcept
+{
+    auto result = send_command([&](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_ARRAY_SIZE3D;
+        EIOS_Write(arguments, array);
+        EIOS_Write(arguments, static_cast<jsize>(x));
+        EIOS_Write(arguments, static_cast<jsize>(y));
+    });
+
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        jsize object = EIOS_Read<jsize>(response);
+        return object;
+    }
+    return 0;
+}
+
+std::size_t ControlCenter::reflect_array_size4d(const jarray array, std::size_t x, std::size_t y, std::size_t z) const noexcept
+{
+    auto result = send_command([&](ImageData* image_data) {
+        void* arguments = image_data->args;
+        image_data->command = EIOSCommand::REFLECT_ARRAY_SIZE4D;
+        EIOS_Write(arguments, array);
+        EIOS_Write(arguments, static_cast<jsize>(x));
+        EIOS_Write(arguments, static_cast<jsize>(y));
+        EIOS_Write(arguments, static_cast<jsize>(z));
+    });
+
+    if (result)
+    {
+        void* response = get_image_data()->args;
+        jsize object = EIOS_Read<jsize>(response);
+        return object;
+    }
+    return 0;
 }
 
 void* ControlCenter::reflect_array_index(const jarray array, ReflectionArrayType type, std::size_t index, std::size_t length) const noexcept
@@ -1972,7 +2179,7 @@ void* ControlCenter::reflect_array_index(const jarray array, ReflectionArrayType
 	return nullptr;
 }
 
-void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y) const noexcept
+void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::size_t x, std::size_t y) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -1991,7 +2198,7 @@ void* ControlCenter::reflect_array_index2d(const jarray array, ReflectionArrayTy
 	return nullptr;
 }
 
-void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z) const noexcept
+void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::size_t x, std::size_t y, std::size_t z) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -2011,7 +2218,7 @@ void* ControlCenter::reflect_array_index3d(const jarray array, ReflectionArrayTy
 	return nullptr;
 }
 
-void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w) const noexcept
+void* ControlCenter::reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::size_t x, std::size_t y, std::size_t z, std::size_t w) const noexcept
 {
 	auto result = send_command([&](ImageData* image_data) {
 		void* arguments = image_data->args;
@@ -2040,7 +2247,7 @@ void* ControlCenter::reflect_array_indices(const jarray array, ReflectionArrayTy
        EIOS_Write(arguments, array);
        EIOS_Write(arguments, type);
        EIOS_Write(arguments, length);
-       std::memcpy(arguments, indices, length * sizeof(std::int32_t));
+       std::memcpy(arguments, indices, length * sizeof(std::size_t));
     });
 
     if (result)

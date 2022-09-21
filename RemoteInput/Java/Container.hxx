@@ -5,7 +5,7 @@
 #ifndef REMOTEINPUT_CONTAINER_HXX
 #define REMOTEINPUT_CONTAINER_HXX
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "Component.hxx"
 
 namespace java

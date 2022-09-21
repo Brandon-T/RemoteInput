@@ -24,7 +24,7 @@ std::int32_t GetCurrentThreadID() noexcept
 	return GetCurrentThreadId();
 }
 
-bool IsProcessAlive(pid_t pid) noexcept
+bool IsProcessAlive(std::int32_t pid) noexcept
 {
 	HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
 	if (process)
@@ -48,9 +48,9 @@ bool IsThreadAlive(std::int32_t tid) noexcept
     return false;
 }
 
-std::vector<pid_t> get_pids() noexcept
+std::vector<std::int32_t> get_pids() noexcept
 {
-	std::vector<pid_t> result;
+	std::vector<std::int32_t> result;
 	PROCESSENTRY32 processInfo = {0};
 	processInfo.dwSize = sizeof(processInfo);
 
@@ -71,9 +71,9 @@ std::vector<pid_t> get_pids() noexcept
 	return result;
 }
 
-std::vector<pid_t> get_pids(const char* process_name) noexcept
+std::vector<std::int32_t> get_pids(const char* process_name) noexcept
 {
-	std::vector<pid_t> result;
+	std::vector<std::int32_t> result;
 	PROCESSENTRY32 processInfo = {0};
 	processInfo.dwSize = sizeof(processInfo);
 
@@ -101,7 +101,7 @@ std::vector<pid_t> get_pids(const char* process_name) noexcept
 	return result;
 }
 
-PROCESSENTRY32 GetProcessInfo(pid_t pid) noexcept
+PROCESSENTRY32 GetProcessInfo(std::int32_t pid) noexcept
 {
     HANDLE processesSnapshot = nullptr;
     if((processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)) == INVALID_HANDLE_VALUE)
@@ -123,7 +123,7 @@ PROCESSENTRY32 GetProcessInfo(pid_t pid) noexcept
     return {0};
 }
 
-MODULEENTRY32 GetModuleInfo(pid_t pid, const char* module_name) noexcept
+MODULEENTRY32 GetModuleInfo(std::int32_t pid, const char* module_name) noexcept
 {
 	HANDLE modulesSnapshot = nullptr;
 	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
@@ -146,7 +146,7 @@ MODULEENTRY32 GetModuleInfo(pid_t pid, const char* module_name) noexcept
 	return {0};
 }
 
-MODULEENTRY32 GetModuleInfo(pid_t pid, HMODULE module_handle) noexcept
+MODULEENTRY32 GetModuleInfo(std::int32_t pid, HMODULE module_handle) noexcept
 {
 	HANDLE modulesSnapshot = nullptr;
 	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
@@ -169,7 +169,7 @@ MODULEENTRY32 GetModuleInfo(pid_t pid, HMODULE module_handle) noexcept
 	return {0};
 }
 
-void PrintProcessInfo(pid_t pid) noexcept
+void PrintProcessInfo(std::int32_t pid) noexcept
 {
     PROCESSENTRY32 Proc32 = GetProcessInfo(pid);
     if (Proc32.th32ProcessID != 0)
@@ -185,7 +185,7 @@ void PrintProcessInfo(pid_t pid) noexcept
     }
 }
 
-bool InjectSelf(pid_t pid) noexcept
+bool InjectSelf(std::int32_t pid) noexcept
 {
     if (IsProcessAlive(pid))
     {
@@ -203,7 +203,7 @@ bool InjectSelf(pid_t pid) noexcept
     return false;
 }
 
-pid_t InjectProcess(pid_t pid) noexcept
+std::int32_t InjectProcess(std::int32_t pid) noexcept
 {
     extern HMODULE module;
 	MODULEENTRY32 info = GetModuleInfo(pid, module);
@@ -217,11 +217,11 @@ pid_t InjectProcess(pid_t pid) noexcept
 	return -1;
 }
 
-std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
+std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept
 {
-	std::vector<pid_t> result;
-    std::vector<pid_t> pids = get_pids(process_name);
-    for (pid_t pid : pids)
+	std::vector<std::int32_t> result;
+    std::vector<std::int32_t> pids = get_pids(process_name);
+    for (std::int32_t pid : pids)
     {
         if (InjectProcess(pid) != -1)
 		{
@@ -231,11 +231,11 @@ std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
 	return result;
 }
 
-pid_t PIDFromWindow(void* window) noexcept
+std::int32_t PIDFromWindow(void* window) noexcept
 {
     DWORD pid = 0;
     GetWindowThreadProcessId(static_cast<HWND>(window), &pid);
-    return static_cast<pid_t>(pid);
+    return static_cast<std::int32_t>(pid);
 }
 #endif // defined
 
@@ -294,12 +294,17 @@ Reflection* GetNativeReflector() noexcept
 		return nullptr;
 	}
 
-    auto DSGetComponent = reinterpret_cast<jobject __stdcall (*)(JNIEnv*, void*)>(GetProcAddress(awt, "_DSGetComponent@8") ?: GetProcAddress(awt, "DSGetComponent"));
+    auto DSGetComponent = reinterpret_cast<jobject (__stdcall *)(JNIEnv*, void*)>(GetProcAddress(awt, "_DSGetComponent@8"));
+    if (!DSGetComponent)
+    {
+        DSGetComponent = reinterpret_cast<jobject (__stdcall* )(JNIEnv*, void*)>(GetProcAddress(awt, "DSGetComponent"));
+    }
+
     if (!DSGetComponent)
     {
         int ordinal = 146;
         char* procName = reinterpret_cast<char*>(static_cast<std::uint64_t>(static_cast<std::uint16_t>(ordinal)));
-        DSGetComponent = reinterpret_cast<jobject __stdcall (*)(JNIEnv*, void*)>(GetProcAddress(awt, procName));
+        DSGetComponent = reinterpret_cast<jobject (__stdcall *)(JNIEnv*, void*)>(GetProcAddress(awt, procName));
     }
 
     if (!DSGetComponent)

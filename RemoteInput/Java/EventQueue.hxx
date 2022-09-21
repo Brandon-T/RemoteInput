@@ -9,7 +9,7 @@
 #ifndef EventQueue_HXX_INCLUDED
 #define EventQueue_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "AWTEvent.hxx"
 
 namespace java

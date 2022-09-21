@@ -9,7 +9,7 @@
 #ifndef KeyEvent_HXX_INCLUDED
 #define KeyEvent_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "AWTEvent.hxx"
 #include "Component.hxx"
 

@@ -9,7 +9,7 @@
 #ifndef Toolkit_HXX_INCLUDED
 #define Toolkit_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "EventQueue.hxx"
 
 namespace java

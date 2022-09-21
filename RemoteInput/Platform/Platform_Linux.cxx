@@ -44,7 +44,7 @@ std::int32_t GetCurrentThreadID() noexcept
 	#endif
 }
 
-bool IsProcessAlive(pid_t pid) noexcept
+bool IsProcessAlive(std::int32_t pid) noexcept
 {
 	return !kill(pid, 0);
 }
@@ -55,9 +55,9 @@ bool IsThreadAlive(std::int32_t tid) noexcept
 }
 
 #if __has_include("libproc.h") && __has_include("proc/readproc.h")
-std::vector<pid_t> get_pids() noexcept
+std::vector<std::int32_t> get_pids() noexcept
 {
-	std::vector<pid_t> pids;
+	std::vector<std::int32_t> pids;
 
     proc_t proc_info = {0};
 	PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
@@ -73,13 +73,13 @@ std::vector<pid_t> get_pids() noexcept
     }
 
 
-	std::vector<pid_t>(pids).swap(pids);
+	std::vector<std::int32_t>(pids).swap(pids);
 	return pids;
 }
 
-std::vector<pid_t> get_pids(const char* process_name) noexcept
+std::vector<std::int32_t> get_pids(const char* process_name) noexcept
 {
-	std::vector<pid_t> result;
+	std::vector<std::int32_t> result;
 
 	proc_t proc_info = {0};
 	PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
@@ -100,9 +100,9 @@ std::vector<pid_t> get_pids(const char* process_name) noexcept
 	return result;
 }
 #else
-std::vector<pid_t> get_pids(const char* process_name) noexcept
+std::vector<std::int32_t> get_pids(const char* process_name) noexcept
 {
-    std::vector<pid_t> result;
+    std::vector<std::int32_t> result;
     DIR* proc_dir = opendir("/proc");
     if (proc_dir)
     {
@@ -151,9 +151,9 @@ std::vector<pid_t> get_pids(const char* process_name) noexcept
     return result;
 }
 
-std::vector<pid_t> get_pids() noexcept
+std::vector<std::int32_t> get_pids() noexcept
 {
-    std::vector<pid_t> result;
+    std::vector<std::int32_t> result;
     DIR* proc_dir = opendir("/proc");
     if (proc_dir)
     {
@@ -171,7 +171,7 @@ std::vector<pid_t> get_pids() noexcept
             {
                 if (is_number(entry->d_name))
                 {
-                    pid_t pid = std::stoi(entry->d_name);
+                    std::int32_t pid = std::stoi(entry->d_name);
                     result.push_back(pid);
                 }
             }
@@ -183,7 +183,7 @@ std::vector<pid_t> get_pids() noexcept
 }
 #endif
 
-pid_t InjectProcess(pid_t pid) noexcept
+std::int32_t InjectProcess(std::int32_t pid) noexcept
 {
 	Dl_info info = {0};
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
@@ -200,11 +200,11 @@ pid_t InjectProcess(pid_t pid) noexcept
 	return -1;
 }
 
-std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
+std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept
 {
-	std::vector<pid_t> result;
-    std::vector<pid_t> pids = get_pids(process_name);
-    for (pid_t pid : pids)
+	std::vector<std::int32_t> result;
+    std::vector<std::int32_t> pids = get_pids(process_name);
+    for (std::int32_t pid : pids)
     {
         if (InjectProcess(pid) != -1)
 		{
@@ -323,7 +323,7 @@ void EnumChildWindows(Display* display, Window parentWindow, bool (*EnumChildPro
     }
 }
 
-void GetWindowThreadProcessId(Display* display, Window window, pid_t* pid) noexcept
+void GetWindowThreadProcessId(Display* display, Window window, std::int32_t* pid) noexcept
 {
     if (!pid) { return; }
     *pid = 0;
@@ -344,13 +344,13 @@ void GetWindowThreadProcessId(Display* display, Window window, pid_t* pid) noexc
     {
         if (property)
         {
-            *pid = *reinterpret_cast<pid_t*>(property);
+            *pid = *reinterpret_cast<std::int32_t*>(property);
             XFree(property);
         }
     }
 }
 
-std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid) noexcept
+std::vector<Window> GetWindowsFromProcessId(Display* display, std::int32_t pid) noexcept
 {
     // Get Atom PID
     Atom atomPID = XInternAtom(display, "_NET_WM_PID", True);
@@ -359,7 +359,7 @@ std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid) noexcep
         return std::vector<Window>();
     }
 
-    std::function<void(Display*, Window, Atom, pid_t, std::vector<Window>&)> GetWindowsFromPIDInternal = [&](Display* display, Window window, Atom atomPID, pid_t pid, std::vector<Window>& results) {
+    std::function<void(Display*, Window, Atom, std::int32_t, std::vector<Window>&)> GetWindowsFromPIDInternal = [&](Display* display, Window window, Atom atomPID, std::int32_t pid, std::vector<Window>& results) {
         // Get Window PID
         Atom type = None;
         int format = 0;
@@ -371,7 +371,7 @@ std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid) noexcep
         {
             if (property)
             {
-                if (pid == *reinterpret_cast<pid_t*>(property))
+                if (pid == *reinterpret_cast<std::int32_t*>(property))
                 {
                     results.emplace_back(window);
                 }
@@ -400,9 +400,9 @@ std::vector<Window> GetWindowsFromProcessId(Display* display, pid_t pid) noexcep
     return windows;
 }
 
-pid_t PIDFromWindow(void* window) noexcept
+std::int32_t PIDFromWindow(void* window) noexcept
 {
-    pid_t pid = 0;
+    std::int32_t pid = 0;
     Display* display = XOpenDisplay(nullptr);
     GetWindowThreadProcessId(display, reinterpret_cast<Window>(window), &pid);
     XCloseDisplay(display);
@@ -439,7 +439,7 @@ std::array<std::string, 2> recognizedClassNames = {
 };
 bool EnumWindowsProc(Display* display, Window window, void* other) noexcept
 {
-    pid_t pid = 0;
+    std::int32_t pid = 0;
     GetWindowThreadProcessId(display, window, &pid);
     if (pid != getpid() || other == nullptr)
     {

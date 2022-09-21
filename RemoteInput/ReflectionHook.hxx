@@ -11,7 +11,8 @@
 
 #include <cstring>
 #include <string>
-#include <jni.h>
+
+#include "JNI_Common.hxx"
 
 struct ReflectionHook
 {

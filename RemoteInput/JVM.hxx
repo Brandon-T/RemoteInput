@@ -1,8 +1,6 @@
 #ifndef JVM_HXX_INCLUDED
 #define JVM_HXX_INCLUDED
 
-#include <jni.h>
-
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #else
@@ -12,6 +10,8 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
+
+#include "JNI_Common.hxx"
 
 class JVM
 {

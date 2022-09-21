@@ -5,7 +5,7 @@
 #ifndef REMOTEINPUT_WINDOWEVENT_HXX
 #define REMOTEINPUT_WINDOWEVENT_HXX
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "AWTEvent.hxx"
 #include "Component.hxx"
 

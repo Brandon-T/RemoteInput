@@ -47,7 +47,7 @@ std::int32_t GetCurrentThreadID() noexcept
 	#pragma clang diagnostic pop
 }
 
-bool IsProcessAlive(pid_t pid) noexcept
+bool IsProcessAlive(std::int32_t pid) noexcept
 {
 	return !kill(pid, 0);
 }
@@ -57,18 +57,18 @@ bool IsThreadAlive(std::int32_t tid) noexcept
     return !kill(tid, 0);
 }
 
-std::vector<pid_t> get_pids() noexcept
+std::vector<std::int32_t> get_pids() noexcept
 {
-	std::vector<pid_t> pids(2048);
-	pids.resize(proc_listpids(PROC_ALL_PIDS, 0, &pids[0], 2048 * sizeof(pid_t)) / sizeof(pid_t));
-	std::vector<pid_t>(pids).swap(pids);
+	std::vector<std::int32_t> pids(2048);
+	pids.resize(proc_listpids(PROC_ALL_PIDS, 0, &pids[0], 2048 * sizeof(std::int32_t)) / sizeof(std::int32_t));
+	std::vector<std::int32_t>(pids).swap(pids);
 	return pids;
 }
 
-std::vector<pid_t> get_pids(const char* process_name) noexcept
+std::vector<std::int32_t> get_pids(const char* process_name) noexcept
 {
-	std::vector<pid_t> result;
-	std::vector<pid_t> pids = get_pids();
+	std::vector<std::int32_t> result;
+	std::vector<std::int32_t> pids = get_pids();
 	
     for (std::size_t i = 0; i < pids.size(); ++i)
 	{
@@ -84,7 +84,7 @@ std::vector<pid_t> get_pids(const char* process_name) noexcept
 	return result;
 }
 
-pid_t InjectProcess(pid_t pid) noexcept
+std::int32_t InjectProcess(std::int32_t pid) noexcept
 {
 	Dl_info info = {0};
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
@@ -101,11 +101,11 @@ pid_t InjectProcess(pid_t pid) noexcept
 	return -1;
 }
 
-std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
+std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept
 {
-	std::vector<pid_t> result;
-    std::vector<pid_t> pids = get_pids(process_name);
-    for (pid_t pid : pids)
+	std::vector<std::int32_t> result;
+    std::vector<std::int32_t> pids = get_pids(process_name);
+    for (std::int32_t pid : pids)
     {
         if (InjectProcess(pid) != -1)
 		{
@@ -115,7 +115,7 @@ std::vector<pid_t> InjectProcesses(const char* process_name) noexcept
 	return result;
 }
 
-pid_t PIDFromWindow(void* window) noexcept
+std::int32_t PIDFromWindow(void* window) noexcept
 {
     NSArray *windowList = (NSArray *)CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID));
 	

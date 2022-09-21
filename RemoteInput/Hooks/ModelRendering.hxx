@@ -11,9 +11,9 @@
 
 #if defined(DEBUG)
 #include <cstdint>
-#include <jni.h>
 #include <cmath>
 #include <vector>
+#include "JNI_Common.hxx"
 #include "Reflection.hxx"
 
 class Reflector;

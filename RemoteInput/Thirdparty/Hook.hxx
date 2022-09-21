@@ -37,9 +37,9 @@ template<typename R, typename FuncPtr, typename... Args>
 R Hook::call( Args... args)
 {
 #if defined(_WIN32) || defined(_WIN64)
-    return reinterpret_cast<FuncPtr*>(trampoline ?: original)(std::forward<Args>(args)...);
+    return reinterpret_cast<FuncPtr*>(trampoline ? trampoline : original)(std::forward<Args>(args)...);
 #elif defined(__APPLE__)
-    return reinterpret_cast<FuncPtr*>(trampoline ?: original)(std::forward<Args>(args)...);
+    return reinterpret_cast<FuncPtr*>(trampoline ? trampoline : original)(std::forward<Args>(args)...);
 #else
     return reinterpret_cast<FuncPtr*>(original)(std::forward<Args>(args)...);
 #endif

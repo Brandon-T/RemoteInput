@@ -85,12 +85,32 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORIES})
 IF(WIN32)
     #target_compile_definitions(${PROJECT_NAME} PRIVATE _AMD64_=1 _UNIX64=1)
 
-    target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-Wno-multichar -Wno-null-conversion -g -O0 -fno-omit-frame-pointer>
-            $<$<CONFIG:RELEASE>:-Wno-multichar -Wno-null-conversion -s -O0 -fno-omit-frame-pointer>)
-    target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++>
-            $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++>)
+    IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:-Wno-multichar -Wno-null-conversion -g -O0 -fno-omit-frame-pointer>
+                $<$<CONFIG:RELEASE>:-Wno-multichar -Wno-null-conversion -s -O0 -fno-omit-frame-pointer>)
+        target_link_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++>
+                $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++>)
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:-Wno-multichar -Wno-null-conversion -g -O0 -fno-omit-frame-pointer>
+                $<$<CONFIG:RELEASE>:-Wno-multichar -Wno-null-conversion -s -O0 -fno-omit-frame-pointer>)
+        target_link_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++>
+                $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++>)
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        set_property(TARGET ${PROJECT_NAME} PROPERTY
+                MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+        target_compile_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:/Zo -DWIN32_LEAN_AND_MEAN /MTd>
+                $<$<CONFIG:RELEASE>:/Zo -DWIN32_LEAN_AND_MEAN /MT>)
+        target_link_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:>
+                $<$<CONFIG:RELEASE>:>)
+    ENDIF()
 ELSEIF(APPLE)
     #target_compile_definitions(${PROJECT_NAME} PRIVATE _AMD64_=1 _UNIX64=1)
 

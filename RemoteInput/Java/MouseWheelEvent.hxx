@@ -9,7 +9,7 @@
 #ifndef MouseWheelEvent_HXX_INCLUDED
 #define MouseWheelEvent_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "AWTEvent.hxx"
 #include "Component.hxx"
 

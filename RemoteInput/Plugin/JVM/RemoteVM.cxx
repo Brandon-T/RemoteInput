@@ -152,9 +152,6 @@ enum class RemoteVMCommand: std::uint32_t
     GET_OBJECT_REF_TYPE
 };
 
-template<class T, class... Ts>
-struct is_same_of : std::bool_constant<(std::is_same<typename std::remove_cv<T>::type, typename std::remove_cv<Ts>::type>::value || ...)> { };
-
 template<class T>
 struct is_string
 {

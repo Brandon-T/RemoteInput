@@ -7,6 +7,10 @@
 //
 
 #include "Time.hxx"
+#if defined(_MSC_VER)
+#include <windows.h>
+#include <winsock.h>
+#endif
 
 void timeval_to_timespec(struct timeval* tv, struct timespec* ts) noexcept
 {
@@ -60,8 +64,8 @@ uint64_t timeval_to_filetime(struct timeval* tp) noexcept
 uint64_t get_file_time() noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
-    static void __stdcall (*PreciseSystemFileTime)(FILETIME* file_time) = []{
-        void __stdcall (*PreciseSystemFileTime)(FILETIME* file_time) = nullptr;
+    static void (__stdcall *PreciseSystemFileTime)(FILETIME* file_time) = [] {
+        void (__stdcall *PreciseSystemFileTime)(FILETIME* file_time) = nullptr;
         HMODULE kernel = GetModuleHandleW(L"Kernel32.dll");
         PreciseSystemFileTime = reinterpret_cast<void (__stdcall *)(FILETIME*)>(GetProcAddress(kernel, "GetSystemTimePreciseAsFileTime"));
         if (!PreciseSystemFileTime)

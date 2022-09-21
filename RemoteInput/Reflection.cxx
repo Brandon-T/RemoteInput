@@ -130,7 +130,12 @@ bool Reflection::Initialize(jobject awtFrame) noexcept
     };
 
     //Find Canvas Class.
-    this->applet = findApplet(awtFrame).release() ?: getParent(findCanvas(awtFrame).get()).release();
+    this->applet = findApplet(awtFrame).release();
+    if (!this->applet)
+    {
+        this->applet = getParent(findCanvas(awtFrame).get()).release();
+    }
+
     if (this->applet)
     {
         this->frame = jvm->NewGlobalRef(awtFrame);

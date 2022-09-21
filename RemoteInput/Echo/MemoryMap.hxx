@@ -10,7 +10,10 @@
 #define MEMORYMAP_HXX_INCLUDED
 
 #if defined(_WIN32) || defined(_WIN64)
+#if !defined(WIN32_LEAN_AND_MEAN)
 #define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <windows.h>
 #else
 #include <sys/types.h>
@@ -39,8 +42,7 @@ private:
     std::ios_base::openmode mode;
 
 public:
-    explicit MemoryMap(const char_type* path, std::ios_base::openmode mode = std::ios::in | std::ios::out) noexcept;
-    explicit MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode = std::ios::in | std::ios::out) noexcept;
+    explicit MemoryMap(const char_type* path, std::size_t size = 0, std::ios_base::openmode mode = std::ios::in | std::ios::out) noexcept;
     ~MemoryMap() noexcept;
 
     bool open() noexcept;
@@ -60,14 +62,8 @@ public:
 
 #if defined(_WIN32) || defined(_WIN64)
 template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) noexcept : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
-
-template<typename char_type>
 MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) noexcept : hFile(INVALID_HANDLE_VALUE), hMap(nullptr), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
 #else
-template<typename char_type>
-MemoryMap<char_type>::MemoryMap(const char_type* path, std::ios_base::openmode mode) noexcept : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(0), mode(mode) {}
-
 template<typename char_type>
 MemoryMap<char_type>::MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) noexcept : hFile(0), physical(false), owner(false), path(path), pData(nullptr), pSize(size), mode(mode) {}
 #endif

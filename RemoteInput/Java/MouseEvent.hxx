@@ -9,7 +9,7 @@
 #ifndef MouseEvent_HXX_INCLUDED
 #define MouseEvent_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "AWTEvent.hxx"
 #include "Component.hxx"
 
@@ -29,8 +29,11 @@ namespace java
 
         static void Post(JNIEnv* env, Component* source, std::int32_t id, std::int64_t when, std::int32_t modifiers, std::int32_t x, std::int32_t y, std::int32_t clickCount, bool popupTrigger, std::int32_t button, bool is_system_generated = false) noexcept;
 
-        #if defined(MOUSE_MOVED) && (defined(_WIN32) || defined(_WIN64))
+        #if !defined(_MSC_VER)
         #warning "WINDOWS BS"
+        #endif
+
+        #if defined(MOUSE_MOVED) && (defined(_WIN32) || defined(_WIN64))
         #undef MOUSE_MOVED
         #endif // MOUSE_MOVED
 

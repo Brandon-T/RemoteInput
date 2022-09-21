@@ -24,6 +24,7 @@
 #include <windows.h>
 #endif
 
+#if !defined(_MSC_VER)
 #if defined(_USE_POSIX_SEMAPHORES)
 #include <pthread.h>
 #include <semaphore.h>
@@ -59,6 +60,7 @@
 #include <errno.h>
 #include <unistd.h>
 #endif
+#endif  // _MSC_VER
 
 class Mutex
 {

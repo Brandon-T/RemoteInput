@@ -4,7 +4,7 @@
 #include <string>
 #include <memory>
 #include <functional>
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "JVM.hxx"
 #include "ReflectionHook.hxx"
 

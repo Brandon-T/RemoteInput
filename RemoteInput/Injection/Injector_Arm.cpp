@@ -30,9 +30,9 @@
 #endif
 
 #if defined(__aarch64__) || defined(__arm__)
-auto find_library = [](pid_t pid, const char* library_name) -> std::uintptr_t {
+auto find_library = [](std::int32_t pid, const char* library_name) -> std::uintptr_t {
     char file_map_name[256] = {0};
-    sprintf(file_map_name, "/proc/%d/maps", pid);
+    snprintf(file_map_name, sizeof(file_map_name), "/proc/%d/maps", pid);
 
     std::fstream file = std::fstream(file_map_name, std::ios::in | std::ios::binary);
     if (file)
@@ -52,7 +52,7 @@ auto find_library = [](pid_t pid, const char* library_name) -> std::uintptr_t {
     return reinterpret_cast<std::uintptr_t>(nullptr);
 };
 
-auto find_symbol = [](pid_t pid, const char* library_name, void* local_symbol) -> std::uintptr_t {
+auto find_symbol = [](std::int32_t pid, const char* library_name, void* local_symbol) -> std::uintptr_t {
     std::intptr_t remote_library_address = find_library(pid, library_name);
     std::intptr_t local_library_address = [local_symbol]() -> std::intptr_t {
         Dl_info info = {0};
@@ -67,7 +67,7 @@ auto find_symbol = [](pid_t pid, const char* library_name, void* local_symbol) -
     return reinterpret_cast<std::uintptr_t>(nullptr);
 };
 
-auto read_vm_memory = [](pid_t pid, void* dest, void* src, std::size_t size) {
+auto read_vm_memory = [](std::int32_t pid, void* dest, void* src, std::size_t size) {
     iovec local_vec = {0};
     local_vec.iov_base = dest;
     local_vec.iov_len = size;
@@ -79,7 +79,7 @@ auto read_vm_memory = [](pid_t pid, void* dest, void* src, std::size_t size) {
     process_vm_readv(pid, &local_vec, 1, &remote_vec, 1, 0);
 };
 
-auto write_vm_memory = [](pid_t pid, void* dest, void* src, std::size_t size) {
+auto write_vm_memory = [](std::int32_t pid, void* dest, void* src, std::size_t size) {
     iovec local_vec = {0};
     local_vec.iov_base = src;
     local_vec.iov_len = size;
@@ -113,7 +113,7 @@ auto get_signal = [](int status, int expected, const char* message) -> int {
 #endif
 
 #if defined(__aarch64__)
-auto remote_alloc = [](pid_t pid, std::size_t size) -> void* {
+auto remote_alloc = [](std::int32_t pid, std::size_t size) -> void* {
     struct user_regs_struct registers = {0};
     struct user_regs_struct registers_backup = {0};
     iovec regs_vec = { .iov_base = &registers, .iov_len = sizeof(registers) };
@@ -157,7 +157,7 @@ auto remote_alloc = [](pid_t pid, std::size_t size) -> void* {
     return reinterpret_cast<void*>(registers.regs[0]);
 };
 
-auto remote_free = [](pid_t pid, void* memory, std::size_t size) -> int {
+auto remote_free = [](std::int32_t pid, void* memory, std::size_t size) -> int {
     struct user_regs_struct registers = {0};
     struct user_regs_struct registers_backup = {0};
     iovec regs_vec = { .iov_base = &registers, .iov_len = sizeof(registers) };
@@ -201,7 +201,7 @@ auto remote_free = [](pid_t pid, void* memory, std::size_t size) -> int {
     return static_cast<int>(registers.regs[0]);
 };
 
-auto remote_dlopen = [](pid_t pid, std::uintptr_t dlopen_address, std::uintptr_t remote_path, int flags) -> void* {
+auto remote_dlopen = [](std::int32_t pid, std::uintptr_t dlopen_address, std::uintptr_t remote_path, int flags) -> void* {
     struct user_regs_struct registers = {0};
     struct user_regs_struct registers_backup = {0};
     iovec regs_vec = { .iov_base = &registers, .iov_len = sizeof(registers) };
@@ -245,7 +245,7 @@ auto remote_dlopen = [](pid_t pid, std::uintptr_t dlopen_address, std::uintptr_t
 #endif
 
 #if defined(__arm__)
-auto remote_alloc = [](pid_t pid, std::size_t size) -> void* {
+auto remote_alloc = [](std::int32_t pid, std::size_t size) -> void* {
     struct user_regs registers = {0};
     struct user_regs registers_backup = {0};
     ptrace(PTRACE_GETREGS, pid, nullptr, &registers);
@@ -285,7 +285,7 @@ auto remote_alloc = [](pid_t pid, std::size_t size) -> void* {
     return reinterpret_cast<void*>(registers.uregs[0]);
 };
 
-auto remote_free = [](pid_t pid, void* memory, std::size_t size) -> int {
+auto remote_free = [](std::int32_t pid, void* memory, std::size_t size) -> int {
     struct user_regs registers = {0};
     struct user_regs registers_backup = {0};
     ptrace(PTRACE_GETREGS, pid, nullptr, &registers);
@@ -325,7 +325,7 @@ auto remote_free = [](pid_t pid, void* memory, std::size_t size) -> int {
     return static_cast<int>(registers.uregs[0]);
 };
 
-auto remote_dlopen = [](pid_t pid, std::uintptr_t dlopen_address, std::uintptr_t remote_path, int flags) -> void* {
+auto remote_dlopen = [](std::int32_t pid, std::uintptr_t dlopen_address, std::uintptr_t remote_path, int flags) -> void* {
     struct user_regs registers = {0};
     struct user_regs registers_backup = {0};
     ptrace(PTRACE_GETREGS, pid, nullptr, &registers);
@@ -368,7 +368,7 @@ auto remote_dlopen = [](pid_t pid, std::uintptr_t dlopen_address, std::uintptr_t
 
 
 #if defined(__aarch64__) || defined(__arm__)
-bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexcept
+bool Injector::Inject(std::string module_path, std::int32_t pid, void* bootstrap) noexcept
 {
     //Determine if the module is already injected
     if (find_library(pid, basename(module_path.c_str())))

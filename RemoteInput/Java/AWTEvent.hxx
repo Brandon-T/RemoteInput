@@ -9,7 +9,7 @@
 #ifndef AWTEvent_HXX_INCLUDED
 #define AWTEvent_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 
 namespace java
 {

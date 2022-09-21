@@ -22,8 +22,11 @@
 #include "Window.hxx"
 #include "WindowEvent.hxx"
 
-#ifdef VK_SHIFT
+#if !defined(_MSC_VER)
 #warning "WINDOWS BS"
+#endif
+
+#ifdef VK_SHIFT
 #undef VK_SHIFT
 #undef VK_LSHIFT
 #undef VK_RSHIFT
@@ -203,7 +206,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 		//Key is a control key
 		if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
 		{
-			std::lock_guard<std::mutex>(this->mutex);
+			std::lock_guard<std::mutex> lock(this->mutex);
 
 			//Control Keys only generate a single held event..
 			held_keys.push_back(code);
@@ -236,7 +239,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 			//Key already being pressed so just replace it
 			if (currently_held_key != -1 && this->keyboard_speed >= 0 && this->keyboard_repeat_delay >= 0)
 			{
-				std::lock_guard<std::mutex>(this->mutex);
+				std::lock_guard<std::mutex> lock(this->mutex);
 
 				currently_held_key = code;
 				held_keys.push_back(code);
@@ -331,7 +334,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 
                         while (!stopped && currently_held_key != -1)
                         {
-                            std::lock_guard<std::mutex>(this->mutex);
+                            std::lock_guard<std::mutex> lock(this->mutex);
                             if (this->keyboard_speed > 0)
                             {
                                 yield_thread(std::chrono::milliseconds(this->keyboard_speed));
@@ -392,7 +395,7 @@ void InputOutput::release_key(std::int32_t code) noexcept
 	{
 		if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
 		{
-			std::lock_guard<std::mutex>(this->mutex);
+			std::lock_guard<std::mutex> lock(this->mutex);
 
 			held_keys.erase(it); //held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), code), held_keys.end());
 
@@ -434,7 +437,7 @@ void InputOutput::release_key(std::int32_t code) noexcept
 			this->mutex.unlock();
 
 			//Post Event
-			std::lock_guard<std::mutex>(this->mutex);
+			std::lock_guard<std::mutex> lock(this->mutex);
             java::Component receiver = control_center->reflect_canvas();
 			if (!this->has_focus(&receiver))
 			{

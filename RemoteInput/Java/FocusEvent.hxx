@@ -9,7 +9,7 @@
 #ifndef FocusEvent_HXX_INCLUDED
 #define FocusEvent_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "AWTEvent.hxx"
 #include "Component.hxx"
 
@@ -32,8 +32,11 @@ namespace java
         static void Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;
         static void Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;
 
-        #if defined(MOUSE_EVENT) && (defined(_WIN32) || defined(_WIN64))
+        #if !defined(_MSC_VER)
         #warning "WINDOWS BS"
+        #endif
+
+        #if defined(MOUSE_EVENT) && (defined(_WIN32) || defined(_WIN64))
         #undef MOUSE_EVENT
         #endif
 

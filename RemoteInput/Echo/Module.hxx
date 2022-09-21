@@ -10,7 +10,10 @@
 #define MODULE_HXX_INCLUDED
 
 #if defined _WIN32 || defined _WIN64
+#if !defined(WIN32_LEAN_AND_MEAN)
 #define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <windows.h>
 #else
 #include <dlfcn.h>

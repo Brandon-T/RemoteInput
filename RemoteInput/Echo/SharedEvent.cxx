@@ -8,9 +8,11 @@
 
 #include "SharedEvent.hxx"
 #include <tuple>
-#include <string.h>
+#include <cstring>
 #include <stdexcept>
+#include <thread>
 
+#if !defined(_MSC_VER)
 #if !(_POSIX_TIMEOUTS >= 200112L)
 int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
 {
@@ -39,6 +41,7 @@ int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeo
 
     return retcode;
 }
+#endif
 #endif
 
 #if defined(_USE_SYSTEM_V_SEMAPHORES) && !(_POSIX_TIMEOUTS >= 200112L) && !(_POSIX_C_SOURCE  >= 200112L)
@@ -1212,7 +1215,7 @@ bool atomic_signal_timedlock(std::atomic_bool* lock, const struct timespec* time
 			return false;
 		}
 
-		nanosleep (&sleeptime, nullptr);
+		std::this_thread::sleep_for(std::chrono::nanoseconds(sleeptime.tv_nsec));
     }
 	return true;
 }

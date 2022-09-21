@@ -9,7 +9,7 @@
 #ifndef InputEvent_HXX_INCLUDED
 #define InputEvent_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include <cstdint>
 
 namespace java

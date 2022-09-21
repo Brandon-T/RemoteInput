@@ -9,7 +9,7 @@
 #ifndef FRAME_HXX_INCLUDED
 #define FRAME_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "Window.hxx"
 
 namespace java

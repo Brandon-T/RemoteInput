@@ -9,9 +9,9 @@
 #ifndef COMPONENT_HXX_INCLUDED
 #define COMPONENT_HXX_INCLUDED
 
-#include <jni.h>
 #include <cstdint>
 #include <cstddef>
+#include "JNI_Common.hxx"
 #include "AWTEvent.hxx"
 
 namespace java

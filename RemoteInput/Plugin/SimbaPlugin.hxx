@@ -29,7 +29,9 @@ static const char* PascalExports[] =
 	//Array size
     "Pascal_Reflect_Array_With_Size", "Function RIGetArray(eios: Pointer; instance: Pointer; output_size: ^SizeUInt; constref field: ^const RIField): Pointer; overload; native;",
     "Pascal_Reflect_Array_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer): SizeUInt; native;",
-	"Pascal_Reflect_Array_Index_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer; index: SizeUInt): SizeUInt; overload; native;",
+    "Pascal_Reflect_Array_Size2D", "Function RIGetArraySize(eios: Pointer; arr: Pointer; index: SizeUInt): SizeUInt; overload; native;",
+    "Pascal_Reflect_Array_Size3D", "Function RIGetArraySize(eios: Pointer; arr: Pointer; x, y: SizeUInt): SizeUInt; overload; native;",
+    "Pascal_Reflect_Array_Size4D", "Function RIGetArraySize(eios: Pointer; arr: Pointer; x, y, z: SizeUInt): SizeUInt; overload; native;",
 	"Pascal_Reflect_Array_Indices", "Function RIGetArrayElements(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; indices: Array of Int32): Pointer; overload; native;",
 
 	//Array 1-D
@@ -318,7 +320,9 @@ EXPORT void Pascal_Reflect_String(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_With_Size(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Size(void** Params, void** Result) noexcept;
-EXPORT void Pascal_Reflect_Array_Index_Size(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Size2D(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Size3D(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Array_Size4D(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Indices(void** Params, void** Result) noexcept;
 
 EXPORT void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept;

@@ -4,8 +4,19 @@
 #include <memory>
 
 #if defined(_WIN32) || defined(_WIN64)
-#include <GL/gl.h>
-#include <GL/glext.h>
+#if defined(_MSC_VER)
+#include <windows.h>
+#include <gl/GL.h>
+
+#define GL_PIXEL_PACK_BUFFER              0x88EB
+#define GL_STREAM_READ                    0x88E1
+#define GL_READ_ONLY                      0x88B8
+#define GL_CLAMP_TO_EDGE                  0x812F
+#define GL_BGRA                           0x80E1
+#else
+#include <gl/gl.h>
+#include <gl/glext.h>
+#endif
 #elif defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLMacro.h>

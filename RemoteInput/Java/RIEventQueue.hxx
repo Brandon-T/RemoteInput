@@ -5,14 +5,14 @@
 #ifndef RIEVENTQUEUE_HXX
 #define RIEVENTQUEUE_HXX
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "EventQueue.hxx"
 #include "AWTEvent.hxx"
 #include <vector>
 
 namespace java
 {
-    class RIEvent: public AWTEvent
+    class RIEvent final: public AWTEvent
     {
     private:
         JNIEnv* env;

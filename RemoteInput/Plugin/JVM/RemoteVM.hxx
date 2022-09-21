@@ -5,27 +5,17 @@
 #ifndef REMOTEINPUT_REMOTEVM_HXX
 #define REMOTEINPUT_REMOTEVM_HXX
 
-#include <jni.h>
 #include <vector>
 #include <string>
 #include <functional>
 #include <cstdint>
 
+#include "JNI_Common.hxx"
+#include "TypeTraits.hxx"
+
 class ControlCenter;
 struct ImageData;
 enum class RemoteVMCommand: std::uint32_t;
-
-template<class T>
-struct is_vector
-{
-    static bool const value = false;
-};
-
-template<typename T>
-struct is_vector<std::vector<T>>
-{
-    static bool const value = true;
-};
 
 class RemoteVM final
 {

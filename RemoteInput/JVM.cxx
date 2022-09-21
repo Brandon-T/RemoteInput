@@ -132,7 +132,7 @@ bool JVM::Init(int argc, const char* argv[]) noexcept
     if (argc > 0)
     {
         JavaVMInitArgs jvm_args;
-        JavaVMOption options[argc];
+        std::vector<JavaVMOption> options(argc);
 
         for (int i = 0; i < argc; ++i)
         {
@@ -143,7 +143,7 @@ bool JVM::Init(int argc, const char* argv[]) noexcept
 
         jvm_args.version = JNI_VERSION_1_6;
         jvm_args.nOptions = argc;
-        jvm_args.options = options;
+        jvm_args.options = &options[0];
         jvm_args.ignoreUnrecognized = false;
 
         result = true;

@@ -7,7 +7,8 @@
  * LICENSED UNDER GPL2.
  */
 
-#include <jni.h>
+#include "JNI_Common.hxx"
+
 typedef struct {
     jint x1;
     jint y1;

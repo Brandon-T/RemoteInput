@@ -6,8 +6,12 @@
 //  Copyright © 2020 XIO. All rights reserved.
 //
 
-#ifndef REMOTEINPUT_PYTHONTRAITS_HXX
-#define REMOTEINPUT_PYTHONTRAITS_HXX
+#ifndef REMOTEINPUT_TYPETRAITS_HXX
+#define REMOTEINPUT_TYPETRAITS_HXX
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
 
 #include <type_traits>
 #include <tuple>
@@ -16,10 +20,10 @@
 #include <locale>
 #include <codecvt>
 
-template<class T, class... Ts>
+template<typename T, typename... Ts>
 struct is_same_of : std::bool_constant<(std::is_same<typename std::remove_cv<T>::type, typename std::remove_cv<Ts>::type>::value || ...)> { };
 
-template<class T>
+template<typename T>
 struct is_vector
 {
     static bool const value = false;
@@ -30,6 +34,15 @@ struct is_vector<std::vector<T>>
 {
     static bool const value = true;
 };
+
+template<typename... Ts>
+struct all_of : std::bool_constant<(Ts::value && ...)> { };  //std::conjunction<Ts...>
+
+template<typename... Ts>
+struct any_of : std::bool_constant<(Ts::value || ...)> { };  //std::disjunction<Ts...>
+
+template<typename... Ts>
+struct none_of : std::bool_constant<!any_of<Ts...>::value> { };
 
 template<typename Tuple, std::size_t... Ints>
 auto select_tuple(Tuple&& tuple, std::index_sequence<Ints...>)
@@ -52,36 +65,77 @@ using offset_sequence_t = typename offset_sequence<N, Seq>::type;
 template<std::size_t StartIndex, std::size_t Length>
 using offset_index_sequence_t = offset_sequence_t<StartIndex, std::make_index_sequence<Length>>;
 
-template<typename Fn, typename Argument, std::size_t... Ns>
-auto tuple_transform_impl(Fn&& fn, Argument&& argument, std::index_sequence<Ns...>)
+template<std::size_t N, typename... Args, std::size_t... Is>
+constexpr auto tuple_remove_first_n_impl(std::tuple<Args...>&& tp, std::index_sequence<Is...>)
 {
-    if constexpr (sizeof...(Ns) == 0)
+    return std::tuple{std::get<Is + N>(tp)...};
+}
+
+template<std::size_t N, typename... Args>
+constexpr auto tuple_remove_first_n(std::tuple<Args...> tp)
+{
+    return tuple_remove_first_n_impl<N>(std::forward<std::tuple<Args...>>(tp), std::make_index_sequence<sizeof...(Args) - N>{});
+}
+
+template<typename... Args, std::size_t... Is>
+constexpr auto tuple_remove_last_n_impl(std::tuple<Args...> tp, std::index_sequence<Is...>)
+{
+    return std::tuple{std::get<Is>(tp)...};
+}
+
+template<std::size_t N, typename... Args>
+constexpr auto tuple_remove_last_n(std::tuple<Args...> tp)
+{
+    return tuple_remove_last_n_impl(tp, std::make_index_sequence<sizeof...(Args) - N>{});
+}
+
+template<typename Fn, typename Tp, std::size_t... Ns>
+auto tuple_index_impl(Fn&& fn, Tp&& t, std::index_sequence<Ns...>)
+{
+    if constexpr(sizeof...(Ns) == 0)
     {
-        return std::tuple<>(); // empty tuple
+        return std::tuple<>(); // no values in tuple
     }
-    else if constexpr (std::is_same_v<decltype(fn(std::get<0>(argument))), void>)
+    else if constexpr(std::is_same_v<decltype(fn(std::get<0>(t), 0)), void>)
     {
-        (fn(std::get<Ns>(argument)),...); // no return value expected
+        (fn(std::get<Ns>(t), Ns), ...); // no return value expected
         return;
     }
-    else if constexpr (std::is_lvalue_reference_v<decltype(fn(std::get<0>(argument)))>)
+    else if constexpr(std::is_lvalue_reference_v<decltype(fn(std::get<0>(t), 0))>)
     {
-        return std::tie(fn(std::get<Ns>(argument))...);
+        return std::tie(fn(std::get<Ns>(t), Ns)...);
     }
-    else if constexpr (std::is_rvalue_reference_v<decltype(fn(std::get<0>(argument)))>)
+    else if constexpr(std::is_rvalue_reference_v<decltype(fn(std::get<0>(t), 0))>)
     {
-        return std::forward_as_tuple(fn(std::get<Ns>(argument))...);
+        return std::forward_as_tuple(fn(std::get<Ns>(t), Ns)...);
     }
     else
     {
-        return std::tuple(fn(std::get<Ns>(argument))...);
+        return std::tuple(fn(std::get<Ns>(t), Ns)...);
     }
 }
 
 template<typename Fn, typename... Ts>
 auto tuple_transform(Fn&& fn, const std::tuple<Ts...>& tuple)
 {
-    return tuple_transform_impl(std::forward<Fn>(fn), tuple, std::make_index_sequence<sizeof...(Ts)>());
+    auto transform = [fn = std::forward<Fn>(fn)](auto arg, [[maybe_unused]] std::size_t index) {
+        return fn(arg);
+    };
+    return tuple_index_impl(transform, tuple, std::make_index_sequence<sizeof...(Ts)>());
+}
+
+template<typename Fn, typename... Tp>
+auto tuple_map(Fn&& fn, const std::tuple<Tp...>& tp)
+{
+    return tuple_index_impl(std::forward<Fn>(fn), tp, std::make_index_sequence<sizeof...(Tp)>());
+}
+
+template<typename Tp, typename Fn>
+void tuple_for_each(Tp&& tuple, Fn&& fn)
+{
+    return std::apply(std::forward<Tp>(tuple), [&fn](auto&&... args) {
+        return (fn(std::forward<decltype(args)>(args)) && ...);
+    });
 }
 
 template<typename T, typename Predicate>
@@ -118,12 +172,33 @@ template<typename... Args>
 std::string to_string(const std::tuple<Args...> &ts, const char* separator = "")
 {
     auto convert_to_utf8 = [](const std::wstring &value) -> std::string {
+        #if defined(_WIN32) || defined(_WIN64)
+        int len = WideCharToMultiByte(CP_UTF8, 0, value.c_str(), -1, NULL, 0, 0, 0);
+        if (len)
+        {
+            std::string utf8 = std::string(len, '\0');
+            WideCharToMultiByte(CP_UTF8, 0, value.c_str(), -1, &utf8[0], len, 0, 0);
+            return utf8;
+        }
+        return std::string();
+        #elif __cplusplus > 199711L && __cplusplus < 201703L
         return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(value);
+        #else
+        int utf16len = wcslen(value.c_str());
+        int utf8len = std::wcstombs(nullptr, value.c_str(), utf16len);
+        if (utf8len)
+        {
+            std::string utf8 = std::string(utf8len, '\0');
+            std::wcstombs(&utf8[0], value.c_str(), utf16len);
+            return utf8;
+        }
+        return std::string();
+        #endif
     };
 
     auto convert_pointer_to_string = [](const auto &value) -> std::string {
         char buffer[(sizeof(void*) * 2) + 1] = {0};
-        sprintf(buffer, "%p", value);
+        snprintf(buffer, sizeof(buffer), "%p", value);
         return std::string(buffer);
     };
 
@@ -178,4 +253,4 @@ std::string to_string(const std::tuple<Args...> &ts, const char* separator = "")
     }, ts);
 }
 
-#endif //REMOTEINPUT_PYTHONTRAITS_HXX
+#endif //REMOTEINPUT_TYPETRAITS_HXX

@@ -9,7 +9,7 @@
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
-auto IsProcessAlive = [](pid_t pid) -> bool {
+auto IsProcessAlive = [](std::int32_t pid) -> bool {
     HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
     if (process)
     {
@@ -20,7 +20,7 @@ auto IsProcessAlive = [](pid_t pid) -> bool {
     return false;
 };
 
-bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexcept
+bool Injector::Inject(std::string module_path, std::int32_t pid, void* bootstrap) noexcept
 {
     if (IsProcessAlive(pid))
     {

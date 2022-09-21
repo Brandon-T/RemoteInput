@@ -9,7 +9,7 @@
 #ifndef AWTAccessor_HXX_INCLUDED
 #define AWTAccessor_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "AWTEventAccessor.hxx"
 
 namespace java

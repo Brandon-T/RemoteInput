@@ -6,7 +6,7 @@
 #define REMOTEINPUT_WINDOW_HXX
 
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "Container.hxx"
 
 namespace java

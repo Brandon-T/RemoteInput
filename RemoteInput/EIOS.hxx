@@ -17,8 +17,10 @@
 
 #if defined(_WIN32) || defined (_WIN64)
 #define EXPORT __declspec(dllexport)
+#define STD_CALL __stdcall
 #else
 #define EXPORT [[gnu::visibility("default")]]
+#define STD_CALL
 #endif
 
 
@@ -75,8 +77,13 @@ enum class EIOSCommand: std::uint32_t
 	REFLECT_STRING,
 	REFLECT_ARRAY,
 	REFLECT_ARRAY_WITH_SIZE,
+    REFLECT_ARRAY_WITH_SIZE2D,
+    REFLECT_ARRAY_WITH_SIZE3D,
+    REFLECT_ARRAY_WITH_SIZE4D,
 	REFLECT_ARRAY_SIZE,
-	REFLECT_ARRAY_INDEX_SIZE,
+    REFLECT_ARRAY_SIZE2D,
+    REFLECT_ARRAY_SIZE3D,
+    REFLECT_ARRAY_SIZE4D,
 	REFLECT_ARRAY_INDEX,
 	REFLECT_ARRAY_INDEX2D,
 	REFLECT_ARRAY_INDEX3D,
@@ -111,83 +118,43 @@ typedef struct EIOS
 extern "C" {
 #endif
 
-#if defined(_WIN32)
-EXPORT [[gnu::stdcall]] EIOS* EIOS_RequestTarget(const char* initargs) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_ReleaseTarget(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height) noexcept;
-EXPORT [[gnu::stdcall]] std::uint8_t* EIOS_GetImageBuffer(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_UpdateImageBuffer(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_HasFocus(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_GainFocus(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_LoseFocus(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_IsKeyboardInputEnabled(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardInputEnabled(EIOS* eios, bool enabled) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_IsMouseInputEnabled(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SetMouseInputEnabled(EIOS* eios, bool enabled) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_IsMouseButtonHeld(EIOS* eios, std::int32_t button) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_HoldKey(EIOS* eios, std::int32_t key) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_ReleaseKey(EIOS* eios, std::int32_t key) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key) noexcept;
-EXPORT [[gnu::stdcall]] std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed) noexcept;
-EXPORT [[gnu::stdcall]] std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay) noexcept;
-EXPORT [[gnu::stdcall]] bool EIOS_GetGraphicsScaling(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_SetGraphicsScaling(EIOS* eios, bool enabled) noexcept;
-EXPORT [[gnu::stdcall]] EIOS* EIOS_PairClient(pid_t pid) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_KillClientPID(pid_t pid) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_KillClient(EIOS* eios) noexcept;
-EXPORT [[gnu::stdcall]] void EIOS_KillZombieClients() noexcept;
-EXPORT [[gnu::stdcall]] std::size_t EIOS_GetClients(bool unpaired_only) noexcept;
-EXPORT [[gnu::stdcall]] pid_t EIOS_GetClientPID(std::size_t index) noexcept;
-#else
-EXPORT EIOS* EIOS_RequestTarget(const char* initargs) noexcept;
-EXPORT void EIOS_ReleaseTarget(EIOS* eios) noexcept;
-EXPORT void EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height) noexcept;
-EXPORT std::uint8_t* EIOS_GetImageBuffer(EIOS* eios) noexcept;
-EXPORT std::uint8_t* EIOS_GetDebugImageBuffer(EIOS* eios) noexcept;
-EXPORT void EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled) noexcept;
-EXPORT void EIOS_UpdateImageBuffer(EIOS* eios) noexcept;
-EXPORT bool EIOS_HasFocus(EIOS* eios) noexcept;
-EXPORT void EIOS_GainFocus(EIOS* eios) noexcept;
-EXPORT void EIOS_LoseFocus(EIOS* eios) noexcept;
-EXPORT bool EIOS_IsKeyboardInputEnabled(EIOS* eios) noexcept;
-EXPORT void EIOS_SetKeyboardInputEnabled(EIOS* eios, bool enabled) noexcept;
-EXPORT bool EIOS_IsMouseInputEnabled(EIOS* eios) noexcept;
-EXPORT void EIOS_SetMouseInputEnabled(EIOS* eios, bool enabled) noexcept;
-EXPORT void EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
-EXPORT void EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
-EXPORT void EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y) noexcept;
-EXPORT void EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
-EXPORT void EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
-EXPORT void EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines) noexcept;
-EXPORT bool EIOS_IsMouseButtonHeld(EIOS* eios, std::int32_t button) noexcept;
-EXPORT void EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait) noexcept;
-EXPORT void EIOS_HoldKey(EIOS* eios, std::int32_t key) noexcept;
-EXPORT void EIOS_ReleaseKey(EIOS* eios, std::int32_t key) noexcept;
-EXPORT bool EIOS_IsKeyHeld(EIOS* eios, std::int32_t key) noexcept;
-EXPORT std::int32_t EIOS_GetKeyboardSpeed(EIOS* eios) noexcept;
-EXPORT void EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed) noexcept;
-EXPORT std::int32_t EIOS_GetKeyboardRepeatDelay(EIOS* eios) noexcept;
-EXPORT void EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay) noexcept;
-EXPORT bool EIOS_GetGraphicsScaling(EIOS* eios) noexcept;
-EXPORT void EIOS_SetGraphicsScaling(EIOS* eios, bool enabled) noexcept;
-EXPORT EIOS* EIOS_PairClient(pid_t pid) noexcept;
-EXPORT void EIOS_KillClientPID(pid_t pid) noexcept;
-EXPORT void EIOS_KillClient(EIOS* eios) noexcept;
-EXPORT void EIOS_KillZombieClients() noexcept;
-EXPORT std::size_t EIOS_GetClients(bool unpaired_only) noexcept;
-EXPORT pid_t EIOS_GetClientPID(std::size_t index) noexcept;
-#endif
+EXPORT EIOS* STD_CALL EIOS_RequestTarget(const char* initargs) noexcept;
+EXPORT void STD_CALL EIOS_ReleaseTarget(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height) noexcept;
+EXPORT std::uint8_t* STD_CALL EIOS_GetImageBuffer(EIOS* eios) noexcept;
+EXPORT std::uint8_t* STD_CALL EIOS_GetDebugImageBuffer(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled) noexcept;
+EXPORT void STD_CALL EIOS_UpdateImageBuffer(EIOS* eios) noexcept;
+EXPORT bool STD_CALL EIOS_HasFocus(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_GainFocus(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_LoseFocus(EIOS* eios) noexcept;
+EXPORT bool STD_CALL EIOS_IsKeyboardInputEnabled(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_SetKeyboardInputEnabled(EIOS* eios, bool enabled) noexcept;
+EXPORT bool STD_CALL EIOS_IsMouseInputEnabled(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_SetMouseInputEnabled(EIOS* eios, bool enabled) noexcept;
+EXPORT void STD_CALL EIOS_GetMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
+EXPORT void STD_CALL EIOS_GetRealMousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
+EXPORT void STD_CALL EIOS_MoveMouse(EIOS* eios, std::int32_t x, std::int32_t y) noexcept;
+EXPORT void STD_CALL EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
+EXPORT void STD_CALL EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
+EXPORT void STD_CALL EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t lines) noexcept;
+EXPORT bool STD_CALL EIOS_IsMouseButtonHeld(EIOS* eios, std::int32_t button) noexcept;
+EXPORT void STD_CALL EIOS_SendString(EIOS* eios, const char* string, std::int32_t keywait, std::int32_t keymodwait) noexcept;
+EXPORT void STD_CALL EIOS_HoldKey(EIOS* eios, std::int32_t key) noexcept;
+EXPORT void STD_CALL EIOS_ReleaseKey(EIOS* eios, std::int32_t key) noexcept;
+EXPORT bool STD_CALL EIOS_IsKeyHeld(EIOS* eios, std::int32_t key) noexcept;
+EXPORT std::int32_t STD_CALL EIOS_GetKeyboardSpeed(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_SetKeyboardSpeed(EIOS* eios, std::int32_t speed) noexcept;
+EXPORT std::int32_t STD_CALL EIOS_GetKeyboardRepeatDelay(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_SetKeyboardRepeatDelay(EIOS* eios, std::int32_t delay) noexcept;
+EXPORT bool STD_CALL EIOS_GetGraphicsScaling(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_SetGraphicsScaling(EIOS* eios, bool enabled) noexcept;
+EXPORT EIOS* STD_CALL EIOS_PairClient(std::int32_t pid) noexcept;
+EXPORT void STD_CALL EIOS_KillClientPID(std::int32_t pid) noexcept;
+EXPORT void STD_CALL EIOS_KillClient(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_KillZombieClients() noexcept;
+EXPORT std::size_t STD_CALL EIOS_GetClients(bool unpaired_only) noexcept;
+EXPORT std::int32_t STD_CALL EIOS_GetClientPID(std::size_t index) noexcept;
 
 #ifdef __cplusplus
 }

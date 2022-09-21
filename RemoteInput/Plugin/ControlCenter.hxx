@@ -31,7 +31,7 @@ class ControlCenter final {
 private:
 	using Signal = ::Signal<Semaphore>;
 
-	pid_t pid;
+    std::int32_t pid;
 	bool is_controller;
 	std::atomic_bool stopped;
 	std::unique_ptr<Mutex> map_lock;
@@ -53,9 +53,10 @@ private:
 	bool send_command(std::function<void(ImageData*)> &&writer) const noexcept;
     void process_reflect_array_indices(jarray array, void* &arguments, void* &response) const noexcept;
 	void process_reflect_array_index(jarray array, void* &arguments, void* &response, int dimensions) const noexcept;
+    void process_reflect_array_with_size(jarray array, void* &arguments, void* &response, int dimensions) const noexcept;
 
 public:
-	ControlCenter(pid_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector);
+	ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector);
 	~ControlCenter();
 
 	void terminate() noexcept;
@@ -64,12 +65,12 @@ public:
 	void set_parent_thread_id(std::int32_t tid) const noexcept;
 	void update_dimensions(std::int32_t width, std::int32_t height) const noexcept;
 
-	static void signal_sync(pid_t pid) noexcept;
-	static void wait_for_sync(pid_t pid) noexcept;
-	static bool controller_exists(pid_t pid) noexcept;
-	static bool controller_is_paired(pid_t pid, bool* exists) noexcept;
-	void kill_process(pid_t pid) const noexcept;
-	static void kill_zombie_process(pid_t pid) noexcept;
+	static void signal_sync(std::int32_t pid) noexcept;
+	static void wait_for_sync(std::int32_t pid) noexcept;
+	static bool controller_exists(std::int32_t pid) noexcept;
+	static bool controller_is_paired(std::int32_t pid, bool* exists) noexcept;
+	void kill_process(std::int32_t pid) const noexcept;
+	static void kill_zombie_process(std::int32_t pid) noexcept;
 
 	std::int32_t parent_process_id() const noexcept;
 	std::int32_t parent_thread_id() const noexcept;
@@ -123,12 +124,17 @@ public:
 	std::string reflect_string(const ReflectionHook &hook) const noexcept;
 	jarray reflect_array(const ReflectionHook &hook) const noexcept;
 	jarray reflect_array_with_size(const ReflectionHook &hook, std::size_t* output_size) const noexcept;
+    jarray reflect_array_with_size2d(const ReflectionHook &hook, std::size_t x, std::size_t* output_size) const noexcept;
+    jarray reflect_array_with_size3d(const ReflectionHook &hook, std::size_t x, std::size_t y, std::size_t* output_size) const noexcept;
+    jarray reflect_array_with_size4d(const ReflectionHook &hook, std::size_t x, std::size_t y, std::size_t z, std::size_t* output_size) const noexcept;
 	std::size_t reflect_array_size(const jarray array) const noexcept;
-	std::size_t reflect_array_size(const jarray array, std::size_t index) const noexcept;
+	std::size_t reflect_array_size2d(const jarray array, std::size_t index) const noexcept;
+    std::size_t reflect_array_size3d(const jarray array, std::size_t x, std::size_t y) const noexcept;
+    std::size_t reflect_array_size4d(const jarray array, std::size_t x, std::size_t y, std::size_t z) const noexcept;
 	void* reflect_array_index(const jarray array, ReflectionArrayType type, std::size_t index, std::size_t length) const noexcept;
-	void* reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y) const noexcept;
-	void* reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z) const noexcept;
-	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::int32_t x, std::int32_t y, std::int32_t z, std::int32_t w) const noexcept;
+	void* reflect_array_index2d(const jarray array, ReflectionArrayType type, std::size_t length, std::size_t x, std::size_t y) const noexcept;
+	void* reflect_array_index3d(const jarray array, ReflectionArrayType type, std::size_t length, std::size_t x, std::size_t y, std::size_t z) const noexcept;
+	void* reflect_array_index4d(const jarray array, ReflectionArrayType type, std::size_t length, std::size_t x, std::size_t y, std::size_t z, std::size_t w) const noexcept;
     void* reflect_array_indices(const jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length) const noexcept;
 
 	static std::size_t reflect_size_for_type(ReflectionArrayType type) noexcept;

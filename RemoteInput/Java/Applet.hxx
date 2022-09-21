@@ -9,7 +9,7 @@
 #ifndef APPLET_HXX_INCLUDED
 #define APPLET_HXX_INCLUDED
 
-#include <jni.h>
+#include "JNI_Common.hxx"
 #include "Window.hxx"
 
 namespace java

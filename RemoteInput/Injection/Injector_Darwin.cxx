@@ -236,7 +236,7 @@ auto find_symbol = [](mach_port_t task, mach_vm_address_t library_header_address
     return NULL;
 };
 
-bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexcept
+bool Injector::Inject(std::string module_path, std::int32_t pid, void* bootstrap) noexcept
 {
     std::size_t assembly_size = 0;
     std::uint8_t* assembly = remote_load_library(&assembly_size);

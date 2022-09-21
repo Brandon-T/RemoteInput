@@ -3,7 +3,7 @@
 #if defined(DEBUG)
 #include <iostream>
 
-DebugConsole::DebugConsole( noexcept
+DebugConsole::DebugConsole() noexcept
 {
     inbuffer = std::cin.rdbuf();
     outbuffer = std::cout.rdbuf();

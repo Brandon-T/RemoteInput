@@ -13,13 +13,13 @@ Reflection* GetNativeReflector() noexcept;
 
 std::int32_t GetCurrentThreadID() noexcept;
 
-bool IsProcessAlive(pid_t pid) noexcept;
+bool IsProcessAlive(std::int32_t pid) noexcept;
 bool IsThreadAlive(std::int32_t tid) noexcept;
-std::vector<pid_t> get_pids() noexcept;
-std::vector<pid_t> get_pids(const char* process_name) noexcept;
-pid_t InjectProcess(pid_t) noexcept;
-std::vector<pid_t> InjectProcesses(const char* process_name) noexcept;
-pid_t PIDFromWindow(void* window) noexcept;
+std::vector<std::int32_t> get_pids() noexcept;
+std::vector<std::int32_t> get_pids(const char* process_name) noexcept;
+std::int32_t InjectProcess(std::int32_t) noexcept;
+std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept;
+std::int32_t PIDFromWindow(void* window) noexcept;
 
 template<typename T>
 void yield_thread(std::chrono::duration<std::int64_t, T> time) noexcept
