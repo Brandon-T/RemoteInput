@@ -350,7 +350,12 @@ bool Injector::Inject(std::string module_path, pid_t pid, void* bootstrap) noexc
     }
 
     //Get ASLR address of dlopen
-    std::uintptr_t dlopen_address = find_symbol(pid, "libdl", reinterpret_cast<void*>(dlopen));
+    std::uintptr_t dlopen_address = find_symbol(pid, "libc.so", reinterpret_cast<void*>(dlopen));
+    if (!dlopen_address)
+    {
+        dlopen_address = find_symbol(pid, "libdl.so", reinterpret_cast<void*>(dlopen));
+    }
+    
     if (!dlopen_address)
     {
         return false;
