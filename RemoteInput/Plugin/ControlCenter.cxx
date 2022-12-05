@@ -983,9 +983,9 @@ bool ControlCenter::init_maps() noexcept
 {
     char mapName[256] = {0};
 	#if defined(_WIN32) || defined(_WIN64)
-    sprintf(mapName, "Local\\RemoteInput_%d", pid);
+    snprintf(mapName, sizeof(mapName) - 1, "Local\\RemoteInput_%d", pid);
 	#else
-	sprintf(mapName, "RemoteInput_%d", pid);
+	snprintf(mapName, sizeof(mapName) - 1, "RemoteInput_%d", pid);
 	#endif
 
     if (is_controller)
@@ -1018,13 +1018,13 @@ bool ControlCenter::init_locks() noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char lockName[256] = {0};
-	sprintf(lockName, "Local\\RemoteInput_Lock_%d", pid);
+	snprintf(lockName, sizeof(lockName) - 1, "Local\\RemoteInput_Lock_%d", pid);
 	#elif defined(__linux__)
 	char lockName[256] = {0};
-	sprintf(lockName, "/RemoteInput_Lock_%d", pid);
+	snprintf(lockName, sizeof(lockName) - 1, "/RemoteInput_Lock_%d", pid);
 	#else
 	char lockName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-	sprintf(lockName, "/RemoteInput_Lock_%d", pid);
+	snprintf(lockName, sizeof(lockName) - 1, "/RemoteInput_Lock_%d", pid);
 	#endif
 
 	map_lock = std::make_unique<Mutex>(lockName);
@@ -1035,13 +1035,13 @@ bool ControlCenter::init_wait() noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char signalName[256] = {0};
-	sprintf(signalName, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
 	#elif defined(__linux__)
 	char signalName[256] = {0};
-	sprintf(signalName, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
 	#else
 	char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-	sprintf(signalName, "/RI_CC_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
 	#endif
 	
 	sync_signal = std::make_unique<AtomicSignal>(signalName);
@@ -1053,18 +1053,18 @@ bool ControlCenter::init_signals() noexcept
 	#if defined(_WIN32) || defined(_WIN64)
 	char readName[256] = {0};
 	char writeName[256] = {0};
-	sprintf(readName, "Local\\RemoteInput_ControlCenter_EventRead_%d", pid);
-	sprintf(writeName, "Local\\RemoteInput_ControlCenter_EventWrite_%d", pid);
+	snprintf(readName, sizeof(readName) - 1, "Local\\RemoteInput_ControlCenter_EventRead_%d", pid);
+	snprintf(writeName, sizeof(writeName) - 1, "Local\\RemoteInput_ControlCenter_EventWrite_%d", pid);
 	#elif defined(__linux__)
 	char readName[256] = {0};
 	char writeName[256] = {0};
-	sprintf(readName, "/RemoteInput_ControlCenter_EventRead_%d", pid);
-	sprintf(writeName, "/RemoteInput_ControlCenter_EventWrite_%d", pid);
+	snprintf(readName, sizeof(readName) - 1, "/RemoteInput_ControlCenter_EventRead_%d", pid);
+	snprintf(writeName, sizeof(writeName) - 1, "/RemoteInput_ControlCenter_EventWrite_%d", pid);
 	#else
 	char readName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
 	char writeName[31] = {0};
-	sprintf(readName, "/RI_CC_EventRead_%d", pid);
-	sprintf(writeName, "/RI_CC_EventWrite_%d", pid);
+	snprintf(readName, sizeof(readName) - 1, "/RI_CC_EventRead_%d", pid);
+	snprintf(writeName, sizeof(writeName) - 1, "/RI_CC_EventWrite_%d", pid);
 	#endif
 
 	command_signal = std::make_unique<Signal>(readName);
@@ -1080,35 +1080,35 @@ void ControlCenter::kill_zombie_process(pid_t pid) noexcept
 	char buffer[256] = {0};
 
 	//Kill Memory Maps
-	sprintf(buffer, "RemoteInput_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "RemoteInput_%d", pid);
 	shm_unlink(buffer);
 
 	//Kill Locks
-	sprintf(buffer, "/RemoteInput_Lock_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "/RemoteInput_Lock_%d", pid);
 	shm_unlink(buffer);
 
 	//Kill Signals
-	sprintf(buffer, "/RemoteInput_ControlCenter_EventRead_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "/RemoteInput_ControlCenter_EventRead_%d", pid);
 	sem_unlink(buffer);
 
-	sprintf(buffer, "/RemoteInput_ControlCenter_EventWrite_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "/RemoteInput_ControlCenter_EventWrite_%d", pid);
 	sem_unlink(buffer);
 	#else
 	char buffer[256] = {0};
 
 	//Kill Memory Maps
-	sprintf(buffer, "RemoteInput_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "RemoteInput_%d", pid);
 	shm_unlink(buffer);
 
 	//Kill Locks
-	sprintf(buffer, "/RemoteInput_Lock_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "/RemoteInput_Lock_%d", pid);
 	shm_unlink(buffer);
 
 	//Kill Signals
-	sprintf(buffer, "/RI_CC_EventRead_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "/RI_CC_EventRead_%d", pid);
 	sem_unlink(buffer);
 
-	sprintf(buffer, "/RI_CC_EventWrite_%d", pid);
+	snprintf(buffer, sizeof(buffer) - 1, "/RI_CC_EventWrite_%d", pid);
 	sem_unlink(buffer);
 	#endif
 }
@@ -1245,13 +1245,13 @@ void ControlCenter::signal_sync(pid_t pid) noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
     char signalName[256] = {0};
-    sprintf(signalName, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
+    snprintf(signalName, sizeof(signalName) - 1, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
     #elif defined(__linux__)
     char signalName[256] = {0};
-	sprintf(signalName, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
 	#else
 	char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-	sprintf(signalName, "/RI_CC_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
     #endif
 
     std::unique_ptr<AtomicSignal> sync_signal = std::make_unique<AtomicSignal>(signalName);
@@ -1266,13 +1266,13 @@ void ControlCenter::wait_for_sync(pid_t pid) noexcept
 {
 	#if defined(_WIN32) || defined(_WIN64)
 	char signalName[256] = {0};
-	sprintf(signalName, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
 	#elif defined(__linux__)
 	char signalName[256] = {0};
-	sprintf(signalName, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
 	#else
 	char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-	sprintf(signalName, "/RI_CC_SyncSignal_%d", pid);
+	snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
 	#endif
 
 	std::unique_ptr<AtomicSignal> sync_signal = std::make_unique<AtomicSignal>(signalName);
@@ -1293,9 +1293,9 @@ bool ControlCenter::controller_exists(pid_t pid) noexcept
 	
 	char mapName[256] = {0};
 	#if defined(_WIN32) || defined(_WIN64)
-    sprintf(mapName, "Local\\RemoteInput_%d", pid);
+    snprintf(mapName, sizeof(mapName) - 1, "Local\\RemoteInput_%d", pid);
 	#else
-	sprintf(mapName, "RemoteInput_%d", pid);
+	snprintf(mapName, sizeof(mapName) - 1, "RemoteInput_%d", pid);
 	#endif
 
 	return MemoryMap<char>(mapName, std::ios::in).open();
@@ -1311,9 +1311,9 @@ bool ControlCenter::controller_is_paired(pid_t pid, bool* exists) noexcept
 	
 	char mapName[256] = {0};
 	#if defined(_WIN32) || defined(_WIN64)
-    sprintf(mapName, "Local\\RemoteInput_%d", pid);
+    snprintf(mapName, sizeof(mapName) - 1, "Local\\RemoteInput_%d", pid);
 	#else
-	sprintf(mapName, "RemoteInput_%d", pid);
+	snprintf(mapName, sizeof(mapName) - 1, "RemoteInput_%d", pid);
 	#endif
 
 	*exists = false;

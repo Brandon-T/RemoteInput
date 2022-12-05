@@ -32,8 +32,8 @@ namespace java
         static void Dispatch(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;
         static void Post(JNIEnv* env, Component* receiver, std::int32_t id, bool temporary, Cause cause, bool is_system_generated = false) noexcept;
 
-        #warning "WINDOWS BS"
         #if defined(MOUSE_EVENT) && (defined(_WIN32) || defined(_WIN64))
+        #warning "WINDOWS BS"
         #undef MOUSE_EVENT
         #endif
 

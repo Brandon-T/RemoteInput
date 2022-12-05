@@ -122,8 +122,8 @@ namespace java
             }
 
             JNINativeMethod method = {
-                "dispatchEvent",
-                "(Ljava/awt/AWTEvent;)V",
+                const_cast<char*>("dispatchEvent"),
+                const_cast<char*>("(Ljava/awt/AWTEvent;)V"),
                 reinterpret_cast<void *>(&RIEventQueue::DispatchEvent)
             };
 

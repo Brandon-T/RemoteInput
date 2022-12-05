@@ -22,8 +22,8 @@
 #include "Window.hxx"
 #include "WindowEvent.hxx"
 
-#warning "WINDOWS BS"
 #ifdef VK_SHIFT
+#warning "WINDOWS BS"
 #undef VK_SHIFT
 #undef VK_LSHIFT
 #undef VK_RSHIFT
