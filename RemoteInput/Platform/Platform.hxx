@@ -21,6 +21,12 @@ std::int32_t InjectProcess(std::int32_t) noexcept;
 std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept;
 std::int32_t PIDFromWindow(void* window) noexcept;
 
+#if defined(_WIN32) || defined(_WIN64)
+HMODULE GetModuleHandle(const char* module_name) noexcept;
+#else
+void* GetModuleHandle(const char* module_name) noexcept;
+#endif
+
 template<typename T>
 void yield_thread(std::chrono::duration<std::int64_t, T> time) noexcept
 {
