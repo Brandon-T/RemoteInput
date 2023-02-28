@@ -18,11 +18,12 @@
 #include "Reflection.hxx"
 #include "Component.hxx"
 #include "RIEventQueue.hxx"
+#include "JVM.hxx"
 
 class InputOutput final
 {
 private:
-	JavaVM* vm;
+	JVM* vm;
 	jobject applet;
 	std::mutex mutex;
 	DetachedThreadPool input_thread;

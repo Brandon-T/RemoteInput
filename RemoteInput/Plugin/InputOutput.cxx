@@ -97,7 +97,7 @@ static java::KeyEvent::KeyCodes control_keys_locations[] = {
     java::KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflector) noexcept : vm(reflector->getVM()->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), event_queue(nullptr), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
+InputOutput::InputOutput(Reflection* reflector) noexcept : vm(reflector->getVM()), applet(reflector->getApplet()), mutex(), input_thread(2), event_queue(nullptr), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
 {
     event_queue = std::make_unique<java::RIEventQueue>(reflector->getEnv());
 	x = std::numeric_limits<std::int32_t>::min();
@@ -327,7 +327,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
                         }
 
                         JNIEnv* env = nullptr;
-                        this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
+                        this->vm->AttachCurrentThreadAsDaemon(&env);
 
                         java::Applet applet{env, this->applet, false};
                         java::Component receiver = applet.getComponent(0);
@@ -1034,12 +1034,12 @@ void InputOutput::stop_all_processing() noexcept
 {
     std::int32_t x = 0;
     std::int32_t y = 0;
-    
+
     this->get_mouse_position(&x, &y);
     this->release_mouse(x, y, 0);
     this->release_mouse(x, y, 1);
     this->release_mouse(x, y, 2);
-    
+
     for (std::int32_t key : std::vector<std::int32_t>(held_keys.begin(), held_keys.end()))
     {
         this->release_key(key);
@@ -1242,7 +1242,7 @@ std::int32_t InputOutput::SimbaMouseButtonToJava(std::int32_t button) const noex
 void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::size_t &width, std::size_t &height) const noexcept
 {
 	JNIEnv* env = nullptr;
-	if (this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr) == JNI_OK)
+	if (this->vm->AttachCurrentThreadAsDaemon(&env) == JNI_OK)
 	{
         java::Applet receiver{env, this->applet, false};
 		//Component receiver = applet.getComponent(0);

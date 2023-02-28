@@ -198,7 +198,12 @@ jint JVM::AttachCurrentThread() noexcept
 
 jint JVM::AttachCurrentThreadAsDaemon() noexcept
 {
-	return this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&this->env), nullptr);
+    return this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&this->env), nullptr);
+}
+
+jint JVM::AttachCurrentThreadAsDaemon(JNIEnv** env) noexcept
+{
+    return this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(env), nullptr);
 }
 
 jint JVM::DetachCurrentThread() noexcept

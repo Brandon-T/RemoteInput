@@ -147,10 +147,8 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 				if (this->reflector->Attach())
 				{
 					this->io_controller = std::make_unique<InputOutput>(this->reflector.get());
-					this->remote_vm = std::make_unique<RemoteVM>(this->reflector.get()->getEnv(),
-                                                                      this,
-                                                                      nullptr,
-                                                                      nullptr);
+                    this->remote_vm = std::make_unique<RemoteVM>(this->reflector->getEnv(),
+                                                                 this);
 
 					while(!stopped)
 					{
@@ -174,6 +172,11 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 						process_command();
 						response_signal->signal();
 					}
+
+                    if (this->remote_vm)
+                    {
+                        this->remote_vm.reset();
+                    }
 
 					if (this->io_controller)
 					{

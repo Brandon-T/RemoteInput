@@ -341,25 +341,33 @@ R RemoteVM::ExecuteCommand(void* arguments, R (RemoteVM::*func)(Args...) const n
     return std::apply(func, std::tuple_cat(std::forward_as_tuple(this), std::forward<std::tuple<std::decay_t<Args>...>>(args)));
 }
 
+RemoteVM::RemoteVM(JNIEnv* env,
+                   ControlCenter* control_center) noexcept : env(env), control_center(control_center) {}
 
 RemoteVM::RemoteVM(JNIEnv* env,
                    ControlCenter* control_center,
                    bool (ControlCenter::*send_command)(std::function<void(ImageData*)>&&) const,
-                   ImageData* (ControlCenter::*get_image_data)() const ) noexcept : env(env), control_center(control_center), send_command(send_command), get_image_data(get_image_data) {}
+                   ImageData* (ControlCenter::*get_image_data)() const) noexcept : env(env), control_center(control_center), send_command(send_command), get_image_data(get_image_data) {}
 RemoteVM::~RemoteVM() {}
 
-RemoteVM::RemoteVM(RemoteVM&& other) : env(other.env), control_center(other.control_center)
+RemoteVM::RemoteVM(RemoteVM&& other) : env(other.env), control_center(other.control_center), send_command(other.send_command), get_image_data(other.get_image_data)
 {
     other.env = nullptr;
     other.control_center = nullptr;
+    other.send_command = nullptr;
+    other.get_image_data = nullptr;
 }
 
 RemoteVM& RemoteVM::operator = (RemoteVM&& other)
 {
     env = other.env;
     control_center = other.control_center;
+    send_command = other.send_command;
+    get_image_data = other.get_image_data;
     other.env = nullptr;
     other.control_center = nullptr;
+    other.send_command = nullptr;
+    other.get_image_data = nullptr;
     return *this;
 }
 

@@ -38,6 +38,10 @@ private:
     R ExecuteCommand(void* arguments, R (RemoteVM::*func)(Args...) const noexcept) const noexcept;
 
 public:
+    // MSVC will crash when initializing `send_command` and `get_image_data`. So this convenience function is here.
+    // MSVC seems to not like the pointer to method.
+    RemoteVM(JNIEnv* env, ControlCenter* control_center) noexcept;
+
     RemoteVM(JNIEnv* env,
              ControlCenter* control_center,
              bool (ControlCenter::*send_command)(std::function<void(ImageData*)>&&) const,
