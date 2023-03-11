@@ -1,31 +1,50 @@
 #include "DebugConsole.hxx"
 
-#if defined(DEBUG)
-#include <iostream>
-
-DebugConsole::DebugConsole() noexcept
+DebugConsole::DebugConsole() noexcept : input(nullptr), error(nullptr), output(nullptr), allocated_console(false)
 {
-    inbuffer = std::cin.rdbuf();
-    outbuffer = std::cout.rdbuf();
-    errbuffer = std::cerr.rdbuf();
-    input.open("CONIN$", std::ios::in);
-    output.open("CONOUT$", std::ios::out);
-    error.open("CONOUT$", std::ios::out);
-    std::cin.rdbuf(input.rdbuf());
-    std::cout.rdbuf(output.rdbuf());
-    std::cerr.rdbuf(error.rdbuf());
+    #if defined(_WIN32) || defined(_WIN64)
+    allocated_console = AllocConsole();
+    #endif
+
+    freopen_s(&input, "CONIN$", "r", stdin);
+    freopen_s(&error, "CONOUT$", "w", stderr);
+    freopen_s(&output, "CONOUT$", "w", stdout);
+}
+
+DebugConsole::DebugConsole(DebugConsole&& other) : input(other.input), error(other.error), output(other.output), allocated_console(other.allocated_console)
+{
+    other.input = nullptr;
+    other.error = nullptr;
+    other.output = nullptr;
+    other.allocated_console = false;
 }
 
 DebugConsole::~DebugConsole() noexcept
 {
-    input.close();
-    output.close();
-    error.close();
-    std::cin.rdbuf(inbuffer);
-    std::cout.rdbuf(outbuffer);
-    std::cerr.rdbuf(errbuffer);
-    inbuffer = nullptr;
-    outbuffer = nullptr;
-    errbuffer = nullptr;
+    #if defined(_WIN32) || defined(_WIN64)
+    if (allocated_console)
+    {
+        FreeConsole();
+    }
+    #endif
+
+    std::fclose(input);
+    std::fclose(error);
+    std::fclose(output);
 }
-#endif
+
+DebugConsole& DebugConsole::operator=(DebugConsole &&other)
+{
+    std::fclose(input);
+    std::fclose(error);
+    std::fclose(output);
+    input = other.input;
+    error = other.error;
+    output = other.output;
+    allocated_console = other.allocated_console;
+    other.input = nullptr;
+    other.error = nullptr;
+    other.output = nullptr;
+    other.allocated_console = false;
+    return *this;
+}
