@@ -4,58 +4,61 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <unordered_map>
 #include "JNI_Common.hxx"
 #include "JVM.hxx"
 #include "ReflectionHook.hxx"
+#include "JVMCache.hxx"
+
+enum class ReflectionType: std::uint8_t
+{
+    CHAR,
+    BYTE,
+    BOOL,
+    SHORT,
+    INT,
+    LONG,
+    FLOAT,
+    DOUBLE,
+    STRING,
+    OBJECT
+};
 
 class Reflection final
 {
 private:
-	#define HANDLE_JAVA_CLASS_NOT_FOUND(RESULT) \
-	if (!cls)\
-	{\
-		fprintf(stderr, "No Such Class %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
-		jvm->ExceptionClear();\
+    #define HANDLE_JAVA_CLASS_NOT_FOUND(RESULT) \
+    if (!cls)\
+    {\
+        fprintf(stderr, "No Such Class %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
+        jvm->ExceptionClear();\
         return RESULT;\
-	}\
-	else if (jvm->ExceptionCheck())\
-	{\
-		jvm->ExceptionDescribe();\
-		jvm->ExceptionClear();\
-		return RESULT;\
-	}
-	
-	#define HANDLE_JAVA_EXCEPTION(RESULT) \
-	if (!field)\
-	{\
-		fprintf(stderr, "No Such %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
-		jvm->ExceptionClear();\
+    }\
+    else if (jvm->ExceptionCheck())\
+    {\
+        jvm->ExceptionDescribe();\
+        jvm->ExceptionClear();\
         return RESULT;\
-	}\
-	else if (jvm->ExceptionCheck())\
-	{\
-		jvm->ExceptionDescribe();\
-		jvm->ExceptionClear();\
-		return RESULT;\
-	}
-
-    template<typename T>
-    auto make_safe(jobject object) const noexcept -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
-    {
-		auto deleter = [&](T ptr){
-            if (jvm && ptr) 
-            {
-                jvm->DeleteGlobalRef(static_cast<jobject>(ptr));
-            }
-        };
-
-        return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
     }
 
-	template<typename T, typename U>
-    auto make_safe_local(U object) const noexcept -> std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>
+    #define HANDLE_JAVA_EXCEPTION(RESULT) \
+    if (!field)\
+    {\
+        fprintf(stderr, "No Such %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
+        jvm->ExceptionClear();\
+        return RESULT;\
+    }\
+    else if (jvm->ExceptionCheck())\
+    {\
+        jvm->ExceptionDescribe();\
+        jvm->ExceptionClear();\
+        return RESULT;\
+    }
+
+    template<typename T>
+    auto make_safe_local(auto object) const noexcept
     {
-		auto deleter = [&](T ptr){
+        auto deleter = [&](T ptr) {
             if (jvm && ptr) 
             {
                 jvm->DeleteLocalRef(static_cast<jobject>(ptr));
@@ -65,10 +68,18 @@ private:
         return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
     }
 
+    template<typename T>
+    T promote_to_global(auto object) const noexcept
+    {
+        jvm->DeleteLocalRef(std::exchange(object, jvm->NewGlobalRef(static_cast<jobject>(object))));
+        return static_cast<T>(object);
+    }
+
     JVM* jvm;
     jobject frame;
     jobject applet;
     jobject classLoader;
+    JVMCache cache;
 
     void PrintClasses() const noexcept;
 
@@ -85,343 +96,201 @@ public:
     bool Initialize(jobject awtFrame) noexcept;
 
     bool Attach() const noexcept;
-	bool AttachAsDaemon() const noexcept;
+    bool AttachAsDaemon() const noexcept;
     bool Detach() const noexcept;
 
     std::string GetClassName(jobject object) const noexcept;
     std::string GetClassType(jobject object) const noexcept;
     bool IsDecendentOf(jobject object, const char* className) const noexcept;
-    jclass LoadClass(const char* clsToLoad) const noexcept;
 
-	jobject getApplet() const noexcept;
+    jclass LoadClass(const char* name) noexcept;
+    void ClearCache() noexcept;
+    jfieldID GetFieldID(jclass cls, const char* name, const char* desc, bool is_static) noexcept;
 
-	JVM* getVM() const noexcept;
+
+    jobject getApplet() const noexcept;
+
+    JVM* getVM() const noexcept;
     JNIEnv* getEnv() const noexcept;
-
-	template<typename T>
-    typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jstring object) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jobject object, ReflectionHook hook) const noexcept;
+    getField(jstring object) noexcept;
+
+    template<typename T>
+    typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
+    getField(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-    getField(jobject object, ReflectionHook hook) const noexcept;
-
-    template<typename T>
-    typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>>::type
-    getFieldSafe(jobject object, ReflectionHook hook) const noexcept;
+    getField(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jint, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jlong, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jboolean, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 
-	template<typename T>
+    template<typename T>
     typename std::enable_if<std::is_same<jbyte, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jchar, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jshort, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jfloat, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<jdouble, typename std::remove_cv<T>::type>::value, T>::type
-    getPrimitive(jobject object, ReflectionHook hook) const noexcept;
+    getPrimitive(jobject object, const ReflectionHook &hook) noexcept;
 };
 
 
 template<typename T>
 typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jstring string) const noexcept
+Reflection::getField(jstring string) noexcept
 {
     if (string)
     {
-		jsize length = jvm->GetStringUTFLength(string);
-		if (length > 0)
-		{
-			const char* chars = jvm->GetStringUTFChars(string, nullptr);
-			if (chars)
-			{
-				std::string result = std::string(chars, length);
-				jvm->ReleaseStringUTFChars(string, chars);
-				return result;
-			}
-		}
+        jsize length = jvm->GetStringUTFLength(string);
+        if (length > 0)
+        {
+            const char* chars = jvm->GetStringUTFChars(string, nullptr);
+            if (chars)
+            {
+                std::string result = std::string(chars, length);
+                jvm->ReleaseStringUTFChars(string, chars);
+                return result;
+            }
+        }
     }
     return std::string();
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jobject object, ReflectionHook hook) const noexcept
+Reflection::getField(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (!object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(std::string());
-        jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(std::string());
-        auto string = make_safe_local<jstring>(jvm->GetStaticObjectField(cls.get(), field));
-		HANDLE_JAVA_EXCEPTION(std::string());
-
-        if (string)
-        {
-			jsize length = jvm->GetStringUTFLength(string.get());
-			if (length > 0)
-			{
-				const char* chars = jvm->GetStringUTFChars(string.get(), nullptr);
-				if (chars)
-				{
-					std::string result = std::string(chars, length);
-					jvm->ReleaseStringUTFChars(string.get(), chars);
-					return result;
-				}
-			}
-        }
-        return std::string();
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(std::string());
-    jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(std::string());
-    auto string = make_safe_local<jstring>(jvm->GetObjectField(object, field));
-	HANDLE_JAVA_EXCEPTION(std::string());
-
-    if (string)
-    {
-		jsize length = jvm->GetStringUTFLength(string.get());
-		if (length > 0)
-		{
-			const char* chars = jvm->GetStringUTFChars(string.get(), nullptr);
-			if (chars)
-			{
-				std::string result = std::string(chars, length);
-				jvm->ReleaseStringUTFChars(string.get(), chars);
-				return result;
-			}
-		}
-    }
-    return std::string();
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(std::string());
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(std::string());
+    auto string = make_safe_local<jstring>(object ? jvm->GetObjectField(object, field) : jvm->GetStaticObjectField(cls, field));
+    HANDLE_JAVA_EXCEPTION(std::string());
+    return getField<T>(string.get());
 }
 
 
 template<typename T>
 typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getField(jobject object, ReflectionHook hook) const noexcept
+Reflection::getField(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (!object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(nullptr);
-        jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(nullptr);
-        return static_cast<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetStaticObjectField(cls.get(), field)).get()));
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(nullptr);
-    jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(nullptr);
-    return static_cast<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetObjectField(object, field)).get()));
-}
-
-template<typename T>
-typename std::enable_if<!std::is_same<std::string, typename std::remove_cv<T>::type>::value, std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>>::type
-Reflection::getFieldSafe(jobject object, ReflectionHook hook) const noexcept
-{
-    if (!object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(nullptr);
-        jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(nullptr);
-        return make_safe<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetStaticObjectField(cls.get(), field)).get()));
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(nullptr);
-    jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(nullptr);
-    return make_safe<T>(jvm->NewGlobalRef(make_safe_local<T>(jvm->GetObjectField(object, field)).get()));
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(nullptr);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(nullptr);
+    return promote_to_global<T>(object ? jvm->GetObjectField(object, field) : jvm->GetStaticObjectField(cls, field));
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jint, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(-1);
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(-1);
-		return jvm->GetIntField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(-1);
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(-1);
-	return jvm->GetStaticIntField(cls.get(), field);
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(-1);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(-1);
+    return object ? jvm->GetIntField(object, field) : jvm->GetStaticIntField(cls, field);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jlong, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(-1);
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(-1);
-		return jvm->GetLongField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(-1);
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(-1);
-	return jvm->GetStaticLongField(cls.get(), field);
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(-1);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(-1);
+    return object ? jvm->GetLongField(object, field) : jvm->GetStaticLongField(cls, field);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jboolean, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(false);
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(false);
-        return jvm->GetBooleanField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(false);
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(false);
-    return jvm->GetStaticBooleanField(cls.get(), field);
+    jclass cls = this->LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(false);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(false);
+    return object ? jvm->GetBooleanField(object, field) : jvm->GetStaticBooleanField(cls, field);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jbyte, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(0);
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(0);
-        return jvm->GetByteField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(0);
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(0);
-    return jvm->GetStaticByteField(cls.get(), field);
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(0);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(0);
+    return object ? jvm->GetByteField(object, field) : jvm->GetStaticByteField(cls, field);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jchar, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND('\0');
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION('\0');
-        return jvm->GetCharField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND('\0');
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION('\0');
-    return jvm->GetStaticCharField(cls.get(), field);
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND('\0');
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION('\0');
+    return object ? jvm->GetCharField(object, field) : jvm->GetStaticCharField(cls, field);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jshort, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(-1);
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(-1);
-        return jvm->GetShortField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(-1);
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(-1);
-    return jvm->GetStaticShortField(cls.get(), field);
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(-1);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(-1);
+    return object ? jvm->GetShortField(object, field) : jvm->GetStaticShortField(cls, field);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jfloat, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(-1.0);
-        return jvm->GetFloatField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(-1.0);
-    return jvm->GetStaticFloatField(cls.get(), field);
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(-1.0);
+    return object ? jvm->GetFloatField(object, field) : jvm->GetStaticFloatField(cls, field);
 }
 
 template<typename T>
 typename std::enable_if<std::is_same<jdouble, typename std::remove_cv<T>::type>::value, T>::type
-Reflection::getPrimitive(jobject object, ReflectionHook hook) const noexcept
+Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    if (object)
-    {
-        auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-		HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
-        jfieldID field = jvm->GetFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-		HANDLE_JAVA_EXCEPTION(-1.0);
-        return jvm->GetDoubleField(object, field);
-    }
-
-    auto cls = make_safe_local<jclass>(this->LoadClass(hook.cls.c_str()));
-	HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
-    jfieldID field = jvm->GetStaticFieldID(cls.get(), hook.field.c_str(), hook.desc.c_str());
-	HANDLE_JAVA_EXCEPTION(-1.0);
-    return jvm->GetStaticDoubleField(cls.get(), field);
+    jclass cls = LoadClass(hook.cls.c_str());
+    HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
+    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    HANDLE_JAVA_EXCEPTION(-1.0);
+    return object ? jvm->GetDoubleField(object, field) : jvm->GetStaticDoubleField(cls, field);
 }
 
 #endif // REFLECTION_HXX_INCLUDED

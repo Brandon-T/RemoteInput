@@ -22,12 +22,12 @@ private:
 
 public:
     ThreadPool() noexcept;
-	ThreadPool(std::size_t max_threads) noexcept;
+    ThreadPool(std::size_t max_threads) noexcept;
     ~ThreadPool() noexcept;
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator = (const ThreadPool&) = delete;
-	
-	void terminate() noexcept;
+
+    void terminate() noexcept;
 
     void add_task(std::function<void()> &&task);
 

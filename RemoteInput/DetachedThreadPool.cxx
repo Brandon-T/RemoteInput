@@ -21,7 +21,7 @@ DetachedThreadPool::~DetachedThreadPool() noexcept
         return;
     }
 
-	this->terminate();
+    this->terminate();
 }
 
 void DetachedThreadPool::create_threads() noexcept
@@ -67,14 +67,14 @@ void DetachedThreadPool::create_threads() noexcept
 
 void DetachedThreadPool::terminate() noexcept
 {
-	if (stop && !*stop)
-	{
-		std::unique_lock<std::mutex> lock(*mutex);
-		*stop = true;
-		lock.unlock();
-		condition->notify_all();
-		std::vector<std::thread>().swap(this->threads);
-	}
+    if (stop && !*stop)
+    {
+        std::unique_lock<std::mutex> lock(*mutex);
+        *stop = true;
+        lock.unlock();
+        condition->notify_all();
+        std::vector<std::thread>().swap(this->threads);
+    }
 }
 
 void DetachedThreadPool::add_task(std::function<void(std::atomic_bool& stopped)> &&task)

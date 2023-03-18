@@ -12,9 +12,10 @@
 
 #include "JNI_Common.hxx"
 #include "TypeTraits.hxx"
+#include "ImageData.hxx"
 
 class ControlCenter;
-struct ImageData;
+struct EIOSData;
 enum class RemoteVMCommand: std::uint32_t;
 
 class RemoteVM final
@@ -22,7 +23,7 @@ class RemoteVM final
 private:
     JNIEnv* env;
     ControlCenter* control_center;
-    bool (ControlCenter::*send_command)(std::function<void(ImageData*)>&&) const;
+    std::function<bool(std::function<void(Stream&, ImageData*)>)> send_command;
     ImageData* (ControlCenter::*get_image_data)() const;
 
     template<typename T>
@@ -35,7 +36,7 @@ private:
     typename std::enable_if<is_vector<R>::value, R>::type SendCommand(RemoteVMCommand command, Args&&... args) const noexcept;
 
     template<typename R, typename... Args>
-    R ExecuteCommand(void* arguments, R (RemoteVM::*func)(Args...) const noexcept) const noexcept;
+    R ExecuteCommand(ImageData* image_data, R (RemoteVM::*func)(Args...) const noexcept) const noexcept;
 
 public:
     // MSVC will crash when initializing `send_command` and `get_image_data`. So this convenience function is here.
@@ -44,7 +45,7 @@ public:
 
     RemoteVM(JNIEnv* env,
              ControlCenter* control_center,
-             bool (ControlCenter::*send_command)(std::function<void(ImageData*)>&&) const,
+             std::function<bool(std::function<void(Stream&, ImageData*)>)>&& send_command,
              ImageData* (ControlCenter::*get_image_data)() const) noexcept;
     ~RemoteVM();
 
@@ -56,7 +57,7 @@ public:
 
     std::size_t MaxMemoryChunkSize() const noexcept;
     void* AllocateMemory(std::size_t size) const noexcept;
-    bool ReadMemory(void* destintation, void* source, std::size_t size) const noexcept;
+    bool ReadMemory(void* destination, void* source, std::size_t size) const noexcept;
     bool WriteMemory(void* destination, void* source, std::size_t size) const noexcept;
     void FreeMemory(void* memory) const noexcept;
 
@@ -200,7 +201,7 @@ public:
     jobjectRefType GetObjectRefType(jobject obj) const noexcept;
 
     bool is_remote() const noexcept;
-    void process_command(void* arguments, void* response) const noexcept;
+    void process_command(ImageData* image_data) const noexcept;
 };
 
 #endif //REMOTEINPUT_REMOTEVM_HXX

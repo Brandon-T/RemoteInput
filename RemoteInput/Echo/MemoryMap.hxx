@@ -18,6 +18,7 @@
 #else
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #endif
@@ -35,7 +36,7 @@ private:
     int hFile;
     bool physical;
     #endif
-	bool owner;
+    bool owner;
     std::basic_string<char_type> path;
     void* pData;
     std::size_t pSize;
@@ -48,15 +49,15 @@ public:
     bool open() noexcept;
     bool open_file() noexcept;
     bool map() noexcept;
-	bool map(std::size_t amount) noexcept;
+    bool map(std::size_t amount) noexcept;
     bool unmap() noexcept;
-	bool unmap(std::size_t amount) noexcept;
+    bool unmap(std::size_t amount) noexcept;
     bool close() noexcept;
     bool is_open() const noexcept;
     bool is_mapped() const noexcept;
     std::size_t size() const noexcept;
     void* data() const noexcept;
-	void flush() const noexcept;
+    void flush() const noexcept;
     std::size_t granularity() const noexcept;
 };
 
@@ -84,28 +85,28 @@ bool MemoryMap<char_type>::open() noexcept
 
     if(dwCreation == CREATE_ALWAYS)
     {
-		owner = true;
+        owner = true;
         hMap = std::is_same<char_type, wchar_t>::value ? CreateFileMappingW(hFile, nullptr, dwAccess, 0, pSize, reinterpret_cast<const wchar_t*>(path.c_str())) : CreateFileMappingA(hFile, nullptr, dwAccess, 0, pSize, reinterpret_cast<const char*>(path.c_str()));
         return hMap != nullptr;
     }
 
-	owner = false;
+    owner = false;
     hMap = std::is_same<char_type, wchar_t>::value ? OpenFileMappingW(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const wchar_t*>(path.c_str())) : OpenFileMappingA(FILE_MAP_ALL_ACCESS, false, reinterpret_cast<const char*>(path.c_str()));
     return hMap != nullptr;
     #else
     physical = false;
-	owner = (!read_only && pSize > 0);
+    owner = (!read_only && pSize > 0);
     int dwFlags = read_only ? O_RDONLY : O_RDWR;
     dwFlags |= (!read_only && pSize > 0) ? (O_CREAT | O_EXCL | O_TRUNC) : 0;
     hFile = shm_open(path.c_str(), dwFlags, S_IRWXU);
-	if(hFile == -1)
-	{
-		if (errno == EEXIST)
-		{
-			owner = false;
-			hFile = shm_open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
-		}
-	}
+    if(hFile == -1)
+    {
+        if (errno == EEXIST)
+        {
+            owner = false;
+            hFile = shm_open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
+        }
+    }
 
     if(hFile != -1)
     {
@@ -120,17 +121,17 @@ bool MemoryMap<char_type>::open() noexcept
 
         if(!read_only && pSize > 0)
         {
-			if (owner)
-			{
-				if (ftruncate(hFile, pSize) != -1)
-				{
-					struct stat info = {0};
-					return fstat(hFile, &info) != -1 ? info.st_size >= static_cast<std::int64_t>(pSize) : false;
-				}
-				return false;
-			}
+            if (owner)
+            {
+                if (ftruncate(hFile, pSize) != -1)
+                {
+                    struct stat info = {0};
+                    return fstat(hFile, &info) != -1 ? info.st_size >= static_cast<std::int64_t>(pSize) : false;
+                }
+                return false;
+            }
         }
-		return true;
+        return true;
     }
     #endif
     return false;
@@ -144,7 +145,7 @@ bool MemoryMap<char_type>::open_file() noexcept
     DWORD dwAccess = read_only ? GENERIC_READ : (GENERIC_READ | GENERIC_WRITE);
     DWORD dwCreation = (!read_only && pSize > 0) ? CREATE_ALWAYS : OPEN_EXISTING;
     DWORD dwAttributes = read_only ? FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_TEMPORARY;
-	owner = dwCreation != OPEN_EXISTING;
+    owner = dwCreation != OPEN_EXISTING;
 
     hFile = std::is_same<char_type, wchar_t>::value ? CreateFileW(reinterpret_cast<const wchar_t*>(path.c_str()), dwAccess, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, dwCreation, dwAttributes, nullptr) : CreateFileA(reinterpret_cast<const char*>(path.c_str()), dwAccess, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, dwCreation, dwAttributes, nullptr);
 
@@ -194,15 +195,15 @@ bool MemoryMap<char_type>::open_file() noexcept
     }
     #else
     physical = true;
-	owner = true;
+    owner = true;
     int dwFlags = read_only ? O_RDONLY : O_RDWR;
     dwFlags |= (!read_only && pSize > 0) ? (O_CREAT | O_EXCL | O_TRUNC) : 0;
     hFile = ::open(path.c_str(), dwFlags, S_IRWXU);
-	if(hFile == -1 && errno == EEXIST)
-	{
-		owner = false;
-		hFile = ::open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
-	}
+    if(hFile == -1 && errno == EEXIST)
+    {
+        owner = false;
+        hFile = ::open(path.c_str(), read_only ? O_RDONLY : O_RDWR, S_IRWXU);
+    }
 
     if(hFile != -1)
     {
@@ -227,22 +228,13 @@ bool MemoryMap<char_type>::open_file() noexcept
 template<typename char_type>
 bool MemoryMap<char_type>::map() noexcept
 {
-    bool read_only = !(mode & std::ios::out);
-    #if defined(_WIN32) || defined(_WIN64)
-    DWORD dwAccess = read_only ? FILE_MAP_READ : FILE_MAP_READ | FILE_MAP_WRITE;
-    pData = MapViewOfFile(hMap, dwAccess, 0, 0, pSize);
-    return pData != nullptr;
-    #else
-    int dwAccess = read_only ? PROT_READ : (PROT_READ | PROT_WRITE);
-    pData = mmap(nullptr, pSize, dwAccess, MAP_SHARED, hFile, 0);
-    return pData != MAP_FAILED;
-    #endif
+    return map(pSize);
 }
 
 template<typename char_type>
 bool MemoryMap<char_type>::map(std::size_t amount) noexcept
 {
-	bool read_only = !(mode & std::ios::out);
+    bool read_only = !(mode & std::ios::out);
     #if defined(_WIN32) || defined(_WIN64)
     DWORD dwAccess = read_only ? FILE_MAP_READ : FILE_MAP_READ | FILE_MAP_WRITE;
     pData = MapViewOfFile(hMap, dwAccess, 0, 0, amount);
@@ -291,18 +283,18 @@ bool MemoryMap<char_type>::close() noexcept
         hFile = INVALID_HANDLE_VALUE;
     }
     #else
-	if (physical || !owner)
-	{
-		result = ::close(hFile) != -1 && result;
-		hFile = -1;
-	}
+    if (physical || !owner)
+    {
+        result = ::close(hFile) != -1 && result;
+        hFile = -1;
+    }
 
-	if (!physical && owner)
-	{
-		result = !shm_unlink(path.c_str()) && result;
-	}
+    if (!physical && owner)
+    {
+        result = !shm_unlink(path.c_str()) && result;
+    }
     physical = false;
-	owner = false;
+    owner = false;
     #endif
     return result;
 }
@@ -341,8 +333,8 @@ void MemoryMap<char_type>::flush() const noexcept
     #if defined(_WIN32) || defined(_WIN64)
     FlushViewOfFile(pData, pSize);
     #else
-	msync(pData, pSize, MS_SYNC);
-	#endif
+    msync(pData, pSize, MS_SYNC);
+    #endif
 }
 
 template<typename char_type>

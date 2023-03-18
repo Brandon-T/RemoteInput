@@ -174,21 +174,21 @@ bool Module::AddressOf(T &Definition, const std::string &Name) const noexcept
 template<typename... Args>
 void Module::Call(void* func, Args... args) const noexcept
 {
-	#if defined(_WIN32)
+    #if defined(_WIN32)
     return reinterpret_cast<void (__stdcall *)(Args...)>(func)(std::forward<Args>(args)...);
-	#else
-	return reinterpret_cast<void (*)(Args...)>(func)(std::forward<Args>(args)...);
-	#endif
+    #else
+    return reinterpret_cast<void (*)(Args...)>(func)(std::forward<Args>(args)...);
+    #endif
 }
 
 template<typename R, typename... Args>
 R Module::Call(void* func, Args... args) const noexcept
 {
-	#if defined(_WIN32)
+    #if defined(_WIN32)
     return reinterpret_cast<R(__stdcall *)(Args...)>(func)(std::forward<Args>(args)...);
-	#else
-	return reinterpret_cast<R(*)(Args...)>(func)(std::forward<Args>(args)...);
-	#endif
+    #else
+    return reinterpret_cast<R(*)(Args...)>(func)(std::forward<Args>(args)...);
+    #endif
 }
 
 #endif /* MODULE_HXX_INCLUDED */

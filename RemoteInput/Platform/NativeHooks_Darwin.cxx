@@ -65,16 +65,16 @@ void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData,
     #define PtrAddBytes(p, b)               ((void *) (((intptr_t) (p)) + (b)))
     #define PtrCoord(p, x, xinc, y, yinc)   PtrAddBytes(p, (y)*(yinc) + (x)*(xinc))
 
-	static NativePrimitive* (*GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(dlsym(RTLD_DEFAULT, "GetNativePrim"));
-	static SurfaceDataOps* (*SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(dlsym(RTLD_DEFAULT, "SurfaceData_GetOps"));
-	static jint (*Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(dlsym(RTLD_DEFAULT, "Region_GetInfo"));
+    static NativePrimitive* (*GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(dlsym(RTLD_DEFAULT, "GetNativePrim"));
+    static SurfaceDataOps* (*SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(dlsym(RTLD_DEFAULT, "SurfaceData_GetOps"));
+    static jint (*Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(dlsym(RTLD_DEFAULT, "Region_GetInfo"));
     static void (*SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(dlsym(RTLD_DEFAULT, "SurfaceData_IntersectBounds"));
     static void (*SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(dlsym(RTLD_NEXT, "SurfaceData_IntersectBlitBounds"));
     static void (*Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(dlsym(RTLD_DEFAULT, "Region_StartIteration"));
     static jint (*Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(dlsym(RTLD_DEFAULT, "Region_NextIteration"));
     static void (*Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(dlsym(RTLD_DEFAULT, "Region_EndIteration"));
 
-	if (!GetNativePrim || !SurfaceData_GetOps || !Region_GetInfo || !SurfaceData_IntersectBounds || !SurfaceData_IntersectBlitBounds || !Region_StartIteration || !Region_NextIteration || !Region_EndIteration || width <= 0 || height <= 0)
+    if (!GetNativePrim || !SurfaceData_GetOps || !Region_GetInfo || !SurfaceData_IntersectBounds || !SurfaceData_IntersectBlitBounds || !Region_StartIteration || !Region_NextIteration || !Region_EndIteration || width <= 0 || height <= 0)
     {
         return native_hook->call<void, decltype(JavaNativeBlit)>(env, self, srcData, dstData, comp, clip, srcx, srcy, dstx, dsty, width, height);
     }
@@ -386,178 +386,178 @@ void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, 
 #if defined(__APPLE__)
 void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
-	static int w = 0;
-	static int h = 0;
+    static int w = 0;
+    static int h = 0;
 
-	#if defined(__APPLE__)
-	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
-	#endif
+    #if defined(__APPLE__)
+    CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+    #endif
 
-	//Buffer size changed
-	if (w != width || h != height)
-	{
-		w = width;
-		h = height;
+    //Buffer size changed
+    if (w != width || h != height)
+    {
+        w = width;
+        h = height;
 
-		//If buffers already exist, clean them up
-		if (pbo[1] != 0)
-		{
-			glDeleteBuffers(2, pbo);
-		}
+        //If buffers already exist, clean them up
+        if (pbo[1] != 0)
+        {
+            glDeleteBuffers(2, pbo);
+        }
 
-		//Generate buffers
-		glGenBuffers(2, pbo);
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
-		glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
+        //Generate buffers
+        glGenBuffers(2, pbo);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
+        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
 
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[1]);
-		glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-	}
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[1]);
+        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    }
 }
 
 void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
-	static int index = 0;
-	static int nextIndex = 0;
+    static int index = 0;
+    static int nextIndex = 0;
 
-	#if defined(__APPLE__)
-	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
-	#endif
+    #if defined(__APPLE__)
+    CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+    #endif
 
-	//Swap indices
-	index = (index + 1) % 2;
-	nextIndex = (index + 1) % 2;
+    //Swap indices
+    index = (index + 1) % 2;
+    nextIndex = (index + 1) % 2;
 
-	//read back-buffer.
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
-	glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[nextIndex]);
+    //read back-buffer.
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
+    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[nextIndex]);
 
-	void* data = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    void* data = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 
-	if (data)
-	{
-		//memcpy(dest, data, width * height * 4);
-		FlipImageBytes(data, (void*&)dest, width, height, 32);
-		data = nullptr;
-		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-	}
-	else
-	{
-		glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, dest);
-	}
+    if (data)
+    {
+        //memcpy(dest, data, width * height * 4);
+        FlipImageBytes(data, (void*&)dest, width, height, 32);
+        data = nullptr;
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+    }
+    else
+    {
+        glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, dest);
+    }
 
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
 #if defined(USE_DETOURS)
 CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 {
-	extern std::unique_ptr<ControlCenter> control_center;
+    extern std::unique_ptr<ControlCenter> control_center;
 
-	if (control_center)
-	{
-		static GLint ViewPort[4] = {0};
-		static GLuint pbo[2] = {0};
-		CGLContextObj CGL_MACRO_CONTEXT = ctx;
+    if (control_center)
+    {
+        static GLint ViewPort[4] = {0};
+        static GLuint pbo[2] = {0};
+        CGLContextObj CGL_MACRO_CONTEXT = ctx;
 
-		glGetIntegerv(GL_VIEWPORT, ViewPort);
-		GLint width = ViewPort[2] - ViewPort[0];
-		GLint height = ViewPort[3] - ViewPort[1];
+        glGetIntegerv(GL_VIEWPORT, ViewPort);
+        GLint width = ViewPort[2] - ViewPort[0];
+        GLint height = ViewPort[3] - ViewPort[1];
 
-		if (can_render(-1, width, height))
-		{
-			control_center->update_dimensions(width, height);
+        if (can_render(-1, width, height))
+        {
+            control_center->update_dimensions(width, height);
 
-			//Render to Shared Memory
-			std::uint8_t* dest = control_center->get_image();
-			if (dest)
-			{
-				GeneratePixelBuffers(ctx, pbo, width, height, 4);
-				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
-				//FlipImageVertically(width, height, dest);
-			}
+            //Render to Shared Memory
+            std::uint8_t* dest = control_center->get_image();
+            if (dest)
+            {
+                GeneratePixelBuffers(ctx, pbo, width, height, 4);
+                ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+                //FlipImageVertically(width, height, dest);
+            }
 
-			//Render Debug Graphics
-			if (control_center->get_debug_graphics())
-			{
-				std::uint8_t* src = control_center->get_debug_image();
-				if (src)
-				{
-					gl_draw_image(ctx, src, 0, 0, width, height, 4);
-				}
-			}
+            //Render Debug Graphics
+            if (control_center->get_debug_graphics())
+            {
+                std::uint8_t* src = control_center->get_debug_image();
+                if (src)
+                {
+                    gl_draw_image(ctx, src, 0, 0, width, height, 4);
+                }
+            }
 
-			//Render Cursor
-			std::int32_t x = -1;
-			std::int32_t y = -1;
-			control_center->get_applet_mouse_position(&x, &y);
+            //Render Cursor
+            std::int32_t x = -1;
+            std::int32_t y = -1;
+            control_center->get_applet_mouse_position(&x, &y);
 
-			if (x > -1 && y > -1)
-			{
-				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-				gl_draw_point(ctx, x, height - y, 0, 4);
-			}
-		}
-	}
+            if (x > -1 && y > -1)
+            {
+                glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+                gl_draw_point(ctx, x, height - y, 0, 4);
+            }
+        }
+    }
 
-	return opengl_hook->call<CGLError, decltype(mCGLFlushDrawable)>(ctx);
+    return opengl_hook->call<CGLError, decltype(mCGLFlushDrawable)>(ctx);
 }
 #else
 CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 {
-	extern std::unique_ptr<ControlCenter> control_center;
+    extern std::unique_ptr<ControlCenter> control_center;
 
-	if (control_center)
-	{
-		static GLint ViewPort[4] = {0};
-		static GLuint pbo[2] = {0};
-		CGLContextObj CGL_MACRO_CONTEXT = ctx;
+    if (control_center)
+    {
+        static GLint ViewPort[4] = {0};
+        static GLuint pbo[2] = {0};
+        CGLContextObj CGL_MACRO_CONTEXT = ctx;
 
-		glGetIntegerv(GL_VIEWPORT, ViewPort);
-		GLint width = ViewPort[2] - ViewPort[0];
-		GLint height = ViewPort[3] - ViewPort[1];
+        glGetIntegerv(GL_VIEWPORT, ViewPort);
+        GLint width = ViewPort[2] - ViewPort[0];
+        GLint height = ViewPort[3] - ViewPort[1];
 
-		if (can_render(-1, width, height))
-		{
-			control_center->update_dimensions(width, height);
+        if (can_render(-1, width, height))
+        {
+            control_center->update_dimensions(width, height);
 
-			//Render to Shared Memory
-			std::uint8_t* dest = control_center->get_image();
-			if (dest)
-			{
-				GeneratePixelBuffers(ctx, pbo, width, height, 4);
-				ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
-				//FlipImageVertically(width, height, dest);
-			}
+            //Render to Shared Memory
+            std::uint8_t* dest = control_center->get_image();
+            if (dest)
+            {
+                GeneratePixelBuffers(ctx, pbo, width, height, 4);
+                ReadPixelBuffers(ctx, dest, pbo, width, height, 4);
+                //FlipImageVertically(width, height, dest);
+            }
 
-			//Render Debug Graphics
-			if (control_center->get_debug_graphics())
-			{
-				std::uint8_t* src = control_center->get_debug_image();
-				if (src)
-				{
-					gl_draw_image(ctx, src, 0, 0, width, height, 4);
-				}
-			}
+            //Render Debug Graphics
+            if (control_center->get_debug_graphics())
+            {
+                std::uint8_t* src = control_center->get_debug_image();
+                if (src)
+                {
+                    gl_draw_image(ctx, src, 0, 0, width, height, 4);
+                }
+            }
 
-			//Render Cursor
-			std::int32_t x = -1;
-			std::int32_t y = -1;
-			control_center->get_applet_mouse_position(&x, &y);
+            //Render Cursor
+            std::int32_t x = -1;
+            std::int32_t y = -1;
+            control_center->get_applet_mouse_position(&x, &y);
 
-			if (x > -1 && y > -1)
-			{
-				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-				gl_draw_point(ctx, x, height - y, 0, 4);
-			}
-		}
-	}
+            if (x > -1 && y > -1)
+            {
+                glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+                gl_draw_point(ctx, x, height - y, 0, 4);
+            }
+        }
+    }
 
-	static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
-	return o_CGLFlushDrawable(ctx);
+    static decltype(CGLFlushDrawable)* o_CGLFlushDrawable = reinterpret_cast<decltype(CGLFlushDrawable)*>(dlsym(RTLD_NEXT, "CGLFlushDrawable"));
+    return o_CGLFlushDrawable(ctx);
 }
 #endif
 #endif
@@ -565,48 +565,48 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 #if defined(__APPLE__)
 void InitialiseHooks() noexcept
 {
-	std::thread([&]{
-		#if defined(USE_DETOURS)
-		//Hook Native Blit
-		void* blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_loops_Blit_Blit");
-		if (blit)
-		{
-			native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeBlit));
-			native_hook->apply();
-		}
+    std::thread([&]{
+        #if defined(USE_DETOURS)
+        //Hook Native Blit
+        void* blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_loops_Blit_Blit");
+        if (blit)
+        {
+            native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeBlit));
+            native_hook->apply();
+        }
 
-		//Hook OpenGL Blit
-		#if defined(HOOK_OPENGL_BLIT)
-		blit = dlsym(RTLD_DEFAULT, "OGLBlitLoops_Blit");
-		if (blit)
-		{
-			opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
-			opengl_hook->apply();
-		}
-		else
-		{
-			blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
-			if (blit)
-			{
-				flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
-				flush_buffer_hook->apply();
-			}
-		}
+        //Hook OpenGL Blit
+        #if defined(HOOK_OPENGL_BLIT)
+        blit = dlsym(RTLD_DEFAULT, "OGLBlitLoops_Blit");
+        if (blit)
+        {
+            opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
+            opengl_hook->apply();
+        }
+        else
+        {
+            blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
+            if (blit)
+            {
+                flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
+                flush_buffer_hook->apply();
+            }
+        }
 
-		if (!blit)
-		{
-			blit = dlsym(RTLD_DEFAULT, "CGLFlushDrawable");
-			opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mCGLFlushDrawable));
-			opengl_hook->apply();
-		}
-		#endif
-		#else
-		DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
+        if (!blit)
+        {
+            blit = dlsym(RTLD_DEFAULT, "CGLFlushDrawable");
+            opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mCGLFlushDrawable));
+            opengl_hook->apply();
+        }
+        #endif
+        #else
+        DYLD_INTERPOSE(mCGLFlushDrawable, CGLFlushDrawable);
         #endif
 
-		//Signal that all hooks are finished initializing..
-		ControlCenter::signal_sync(getpid());
-	}).detach();
+        //Signal that all hooks are finished initializing..
+        ControlCenter::signal_sync(getpid());
+    }).detach();
 }
 
 void StartHook() noexcept

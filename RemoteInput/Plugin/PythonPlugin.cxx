@@ -832,7 +832,7 @@ PyObject* PYTHON_Reflect_Array_Index(PyObject* self, PyObject* args) noexcept
 //        return nullptr;
 //    }
 
-    //ReflectionArrayType type, std::size_t index, std::size_t length
+    //ReflectionType type, std::size_t index, std::size_t length
     if (eios)
     {
         //return eios->control_center->reflect_array_index(array, type, index, length);

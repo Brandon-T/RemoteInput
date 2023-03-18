@@ -36,38 +36,38 @@ ThreadPool::ThreadPool(std::size_t max_threads) noexcept : mutex(), condition(),
 
 ThreadPool::~ThreadPool() noexcept
 {
-	if (!this->stop)
-	{
-		std::unique_lock<std::mutex> lock(this->mutex);
-		this->stop = true;
-		lock.unlock();
-		this->condition.notify_all();
+    if (!this->stop)
+    {
+        std::unique_lock<std::mutex> lock(this->mutex);
+        this->stop = true;
+        lock.unlock();
+        this->condition.notify_all();
 
-		for (auto&& thread : this->threads)
-		{
-			thread.join();
-		}
+        for (auto&& thread : this->threads)
+        {
+            thread.join();
+        }
 
-		std::vector<std::thread>().swap(this->threads);
-	}
+        std::vector<std::thread>().swap(this->threads);
+    }
 }
 
 void ThreadPool::terminate() noexcept
 {
-	if (!this->stop)
-	{
-		std::unique_lock<std::mutex> lock(this->mutex);
-		this->stop = true;
-		lock.unlock();
-		this->condition.notify_all();
+    if (!this->stop)
+    {
+        std::unique_lock<std::mutex> lock(this->mutex);
+        this->stop = true;
+        lock.unlock();
+        this->condition.notify_all();
 
-		for (auto&& thread : this->threads)
-		{
-			thread.detach();
-		}
+        for (auto&& thread : this->threads)
+        {
+            thread.detach();
+        }
 
-		std::vector<std::thread>().swap(this->threads);
-	}
+        std::vector<std::thread>().swap(this->threads);
+    }
 }
 
 void ThreadPool::add_task(std::function<void()> &&task)

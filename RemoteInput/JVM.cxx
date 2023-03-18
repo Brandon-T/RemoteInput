@@ -10,35 +10,35 @@ JVM::JVM() noexcept : env(nullptr), vm(nullptr), createdVM(false), loadedJNI(fal
         this->module = LoadLibraryW(L"jvm.dll");
     }
     #elif defined(__APPLE__)
-	extern void* GetModuleHandle(const char*);
+    extern void* GetModuleHandle(const char*);
     this->loadedJNI = true;
-	this->module = GetModuleHandle("libjvm.dylib");
+    this->module = GetModuleHandle("libjvm.dylib");
 
     ///Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/server/libjvm.dylib
     ///Library/Java/JavaVirtualMachines/jdk1.8.0_66.jdk/Contents/Home/jre/lib/server/libjvm.dylib
     #else
-	extern void* GetModuleHandle(const char*);
+    extern void* GetModuleHandle(const char*);
     this->loadedJNI = true;
     this->module = GetModuleHandle("libjvm.so");
     #endif // defined
 
-	#if defined(_WIN32) || defined(_WIN64)
+    #if defined(_WIN32) || defined(_WIN64)
     if (!this->module)
     {
         return;
     }
-	#else
-	if (!module && !dlsym(RTLD_DEFAULT, "JNI_GetCreatedJavaVMs"))
-	{
-		return;
-	}
-	
-	if (!module)
-	{
-		this->loadedJNI = false;
-		module = RTLD_DEFAULT;
-	}
-	#endif
+    #else
+    if (!module && !dlsym(RTLD_DEFAULT, "JNI_GetCreatedJavaVMs"))
+    {
+        return;
+    }
+
+    if (!module)
+    {
+        this->loadedJNI = false;
+        module = RTLD_DEFAULT;
+    }
+    #endif
 
     this->createdVM = false;
     jint num_vms = 0;

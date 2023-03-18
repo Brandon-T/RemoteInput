@@ -48,9 +48,9 @@ bool Injector::Inject(std::string module_path, std::int32_t pid, void* bootstrap
                                 WaitForSingleObject(hThread, 5000);
                                 CloseHandle(hThread);
 
-								VirtualFreeEx(ProcessHandle, RemoteAddress, module_path.size() * sizeof(char), MEM_RELEASE);
-								CloseHandle(ProcessHandle);
-								return true;
+                                VirtualFreeEx(ProcessHandle, RemoteAddress, module_path.size() * sizeof(char), MEM_RELEASE);
+                                CloseHandle(ProcessHandle);
+                                return true;
                             }
                         }
 

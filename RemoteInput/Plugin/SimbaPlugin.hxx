@@ -11,8 +11,8 @@
 static const char* PascalExports[] =
 {
     "Pascal_Reflect_Equal", "Function RIObjectsEqual(eios: Pointer; A, B: Pointer): Boolean; native;",
-	"Pascal_Reflect_InstanceOf", "Function RIObjectIsInstanceOf(eios: Pointer; instance: Pointer; cls: String): Boolean; native;",
-	"Pascal_Reflect_Object", "Function RIGetObject(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
+    "Pascal_Reflect_InstanceOf", "Function RIObjectIsInstanceOf(eios: Pointer; instance: Pointer; cls: String): Boolean; native;",
+    "Pascal_Reflect_Object", "Function RIGetObject(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
     "Pascal_Reflect_Release_Object", "Procedure RIReleaseObject(eios: Pointer; instance: Pointer); native;",
     "Pascal_Reflect_Release_Objects", "Procedure RIReleaseObjects(eios: Pointer; objects: Array of Pointer); native;",
     "Pascal_Reflect_Boolean", "Function RIGetBool(eios: Pointer; instance: Pointer; constref field: ^const RIField): Boolean; native;",
@@ -24,56 +24,53 @@ static const char* PascalExports[] =
     "Pascal_Reflect_Float", "Function RIGetFloat(eios: Pointer; instance: Pointer; constref field: ^const RIField): Single; native;",
     "Pascal_Reflect_Double", "Function RIGetDouble(eios: Pointer; instance: Pointer; constref field: ^const RIField): Double; native;",
     "Pascal_Reflect_String", "Function RIGetString(eios: Pointer; instance: Pointer; constref field: ^const RIField): String; native;",
-	"Pascal_Reflect_Array", "Function RIGetArray(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
+    "Pascal_Reflect_Array", "Function RIGetArray(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
 
-	//Array size
+    //Array size
     "Pascal_Reflect_Array_With_Size", "Function RIGetArray(eios: Pointer; instance: Pointer; output_size: ^SizeUInt; constref field: ^const RIField): Pointer; overload; native;",
     "Pascal_Reflect_Array_Size", "Function RIGetArraySize(eios: Pointer; arr: Pointer): SizeUInt; native;",
-    "Pascal_Reflect_Array_Size2D", "Function RIGetArraySize(eios: Pointer; arr: Pointer; index: SizeUInt): SizeUInt; overload; native;",
-    "Pascal_Reflect_Array_Size3D", "Function RIGetArraySize(eios: Pointer; arr: Pointer; x, y: SizeUInt): SizeUInt; overload; native;",
-    "Pascal_Reflect_Array_Size4D", "Function RIGetArraySize(eios: Pointer; arr: Pointer; x, y, z: SizeUInt): SizeUInt; overload; native;",
-	"Pascal_Reflect_Array_Indices", "Function RIGetArrayElements(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; indices: Array of Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Indices", "Function RIGetArrayElements(eios: Pointer; arr: Pointer; elementType: ReflectionType; indices: Array of Int32): Pointer; overload; native;",
 
-	//Array 1-D
-	"Pascal_Reflect_Array_SingleIndex", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index: SizeUInt): Pointer; native;",
-    "Pascal_Reflect_Array_Index", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; index, length: SizeUInt): Pointer; native;",
+    //Array 1-D
+    "Pascal_Reflect_Array_SingleIndex", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; index: SizeUInt): Pointer; native;",
+    "Pascal_Reflect_Array_Index", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; index, length: SizeUInt): Pointer; native;",
 
-	//Array 2-D
-	"Pascal_Reflect_Array_SingleIndex2D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y: Int32): Pointer; overload; native;",
-    "Pascal_Reflect_Array_Index2D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y: Int32): Pointer; overload; native;",
+    //Array 2-D
+    "Pascal_Reflect_Array_SingleIndex2D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; x, y: Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Index2D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; length: SizeUInt; x, y: Int32): Pointer; overload; native;",
 
-	//Array 3-D
-	"Pascal_Reflect_Array_SingleIndex3D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z: Int32): Pointer; overload; native;",
-    "Pascal_Reflect_Array_Index3D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z: Int32): Pointer; overload; native;",
+    //Array 3-D
+    "Pascal_Reflect_Array_SingleIndex3D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; x, y, z: Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Index3D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; length: SizeUInt; x, y, z: Int32): Pointer; overload; native;",
 
-	//Array 4-D
-	"Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; x, y, z, w: Int32): Pointer; overload; native;",
-    "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionArrayType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
+    //Array 4-D
+    "Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; x, y, z, w: Int32): Pointer; overload; native;",
+    "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
-	//Graphics
-	"Pascal_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
-	"Pascal_SetGraphicsDebugging", "Procedure EIOS_SetGraphicsDebugging(eios: Pointer; enabled: Boolean); native;",
+    //Graphics
+    "Pascal_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
+    "Pascal_SetGraphicsDebugging", "Procedure EIOS_SetGraphicsDebugging(eios: Pointer; enabled: Boolean); native;",
 
-	//Pairing
-	"Pascal_PairClient", "Function EIOS_PairClient(pid: Int32): Pointer; native;",
-	"Pascal_KillClientPID", "Procedure EIOS_KillClient(pid: Int32); native;",
-	"Pascal_KillClient", "Procedure EIOS_KillClient(eios: Pointer); overload; native;",
-	"Pascal_GetClients", "Function EIOS_GetClients(unpaired_only: Boolean): SizeUInt; native;",
-	"Pascal_GetClientPID", "Function EIOS_GetClientPID(index: SizeUInt): Int32; native;",
+    //Pairing
+    "Pascal_PairClient", "Function EIOS_PairClient(pid: Int32): Pointer; native;",
+    "Pascal_KillClientPID", "Procedure EIOS_KillClient(pid: Int32); native;",
+    "Pascal_KillClient", "Procedure EIOS_KillClient(eios: Pointer); overload; native;",
+    "Pascal_GetClients", "Function EIOS_GetClients(unpaired_only: Boolean): SizeUInt; native;",
+    "Pascal_GetClientPID", "Function EIOS_GetClientPID(index: SizeUInt): Int32; native;",
 
-	//Injecting
-	"Pascal_Inject", "Procedure RIInject(process_name: String); native;",
-	"Pascal_Inject_PID", "Procedure RIInject(pid: Int32); overload; native;",
-	
-	//Other
-	"Pascal_HasFocus", "Function EIOS_HasFocus(eios: Pointer): Boolean; native;",
-	"Pascal_GainFocus", "Procedure EIOS_GainFocus(eios: Pointer); native;",
-	"Pascal_LoseFocus", "Procedure EIOS_LoseFocus(eios: Pointer); native;",
+    //Injecting
+    "Pascal_Inject", "Procedure RIInject(process_name: String); native;",
+    "Pascal_Inject_PID", "Procedure RIInject(pid: Int32); overload; native;",
+
+    //Other
+    "Pascal_HasFocus", "Function EIOS_HasFocus(eios: Pointer): Boolean; native;",
+    "Pascal_GainFocus", "Procedure EIOS_GainFocus(eios: Pointer); native;",
+    "Pascal_LoseFocus", "Procedure EIOS_LoseFocus(eios: Pointer); native;",
     "Pascal_IsKeyboardInputEnabled", "Function EIOS_IsKeyboardInputEnabled(eios: Pointer): Boolean; native;",
     "Pascal_SetKeyboardInputEnabled", "Function EIOS_SetKeyboardInputEnabled(eios: Pointer; enabled: Boolean): Boolean; native;",
     "Pascal_IsMouseInputEnabled", "Function EIOS_IsMouseInputEnabled(eios: Pointer): Boolean; native;",
     "Pascal_SetMouseInputEnabled", "Function EIOS_SetMouseInputEnabled(eios: Pointer; enabled: Boolean): Boolean; native;",
-	"Pascal_GetRealMousePosition", "Procedure EIOS_GetRealMousePosition(eios: Pointer; var x, y: Int32); native;",
+    "Pascal_GetRealMousePosition", "Procedure EIOS_GetRealMousePosition(eios: Pointer; var x, y: Int32); native;",
     "Pascal_GetKeyboardSpeed", "Function EIOS_GetKeyboardSpeed(eios: Pointer): Int32; native;",
     "Pascal_SetKeyboardSpeed", "Procedure EIOS_SetKeyboardSpeed(eios: Pointer; speed: Int32); native;",
     "Pascal_GetKeyboardRepeatDelay", "Function EIOS_GetKeyboardRepeatDelay(eios: Pointer): Int32; native;",
@@ -229,10 +226,10 @@ static const char* PascalExports[] =
 
 static const char* PascalTypes[] =
 {
-	"ReflectionArrayType", "(RI_CHAR = 0, RI_BYTE = 1, RI_BOOLEAN = 2, RI_SHORT = 3, RI_INT = 4, RI_LONG = 5, RI_FLOAT = 6, RI_DOUBLE = 7, RI_STRING = 8, RI_OBJECT = 9)",
-	"RIField", "packed record cls, field, desc: String; end;",
+    "ReflectionType", "(RI_CHAR = 0, RI_BYTE = 1, RI_BOOLEAN = 2, RI_SHORT = 3, RI_INT = 4, RI_LONG = 5, RI_FLOAT = 6, RI_DOUBLE = 7, RI_STRING = 8, RI_OBJECT = 9)",
+    "RIField", "packed record cls, field, desc: String; end;",
 
-	//JVM Types
+    //JVM Types
     "jint", "Int32",
     "jlong", "Int64",
     "jbyte", "UInt8",
@@ -320,9 +317,6 @@ EXPORT void Pascal_Reflect_String(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_With_Size(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Size(void** Params, void** Result) noexcept;
-EXPORT void Pascal_Reflect_Array_Size2D(void** Params, void** Result) noexcept;
-EXPORT void Pascal_Reflect_Array_Size3D(void** Params, void** Result) noexcept;
-EXPORT void Pascal_Reflect_Array_Size4D(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Indices(void** Params, void** Result) noexcept;
 
 EXPORT void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept;

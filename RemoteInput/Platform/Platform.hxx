@@ -32,9 +32,9 @@ void yield_thread(std::chrono::duration<std::int64_t, T> time) noexcept
     auto end = start + time;
     do {
         //std::this_thread::yield();
-		std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+        std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     } while (std::chrono::high_resolution_clock::now() < end);*/
-	std::this_thread::sleep_for(time);
+    std::this_thread::sleep_for(time);
 }
 
 template<typename T>

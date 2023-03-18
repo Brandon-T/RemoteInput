@@ -21,13 +21,13 @@ void GetDesktopResolution(int &width, int &height) noexcept
 
 std::int32_t GetCurrentThreadID() noexcept
 {
-	return GetCurrentThreadId();
+    return GetCurrentThreadId();
 }
 
 bool IsProcessAlive(std::int32_t pid) noexcept
 {
-	HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
-	if (process)
+    HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
+    if (process)
     {
         DWORD ret = WaitForSingleObject(process, 0);
         CloseHandle(process);
@@ -50,55 +50,55 @@ bool IsThreadAlive(std::int32_t tid) noexcept
 
 std::vector<std::int32_t> get_pids() noexcept
 {
-	std::vector<std::int32_t> result;
-	PROCESSENTRY32 processInfo = {0};
-	processInfo.dwSize = sizeof(processInfo);
+    std::vector<std::int32_t> result;
+    PROCESSENTRY32 processInfo = {0};
+    processInfo.dwSize = sizeof(processInfo);
 
-	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (processesSnapshot != INVALID_HANDLE_VALUE)
-	{
-		if (Process32First(processesSnapshot, &processInfo))
-		{
-			result.push_back(processInfo.th32ProcessID);
+    HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (processesSnapshot != INVALID_HANDLE_VALUE)
+    {
+        if (Process32First(processesSnapshot, &processInfo))
+        {
+            result.push_back(processInfo.th32ProcessID);
 
-			while (Process32Next(processesSnapshot, &processInfo))
-			{
-				result.push_back(processInfo.th32ProcessID);
-			}
-		}
-		CloseHandle(processesSnapshot);
-	}
-	return result;
+            while (Process32Next(processesSnapshot, &processInfo))
+            {
+                result.push_back(processInfo.th32ProcessID);
+            }
+        }
+        CloseHandle(processesSnapshot);
+    }
+    return result;
 }
 
 std::vector<std::int32_t> get_pids(const char* process_name) noexcept
 {
-	std::vector<std::int32_t> result;
-	PROCESSENTRY32 processInfo = {0};
-	processInfo.dwSize = sizeof(processInfo);
+    std::vector<std::int32_t> result;
+    PROCESSENTRY32 processInfo = {0};
+    processInfo.dwSize = sizeof(processInfo);
 
-	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (processesSnapshot != INVALID_HANDLE_VALUE)
-	{
-		if (Process32First(processesSnapshot, &processInfo))
-		{
-			if (!_stricmp(process_name, processInfo.szExeFile))
-			{
-				result.push_back(processInfo.th32ProcessID);
-			}
+    HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (processesSnapshot != INVALID_HANDLE_VALUE)
+    {
+        if (Process32First(processesSnapshot, &processInfo))
+        {
+            if (!_stricmp(process_name, processInfo.szExeFile))
+            {
+                result.push_back(processInfo.th32ProcessID);
+            }
 
-			while (Process32Next(processesSnapshot, &processInfo))
-			{
-				if (!_stricmp(process_name, processInfo.szExeFile))
-				{
-					result.push_back(processInfo.th32ProcessID);
-				}
-			}
-		}
+            while (Process32Next(processesSnapshot, &processInfo))
+            {
+                if (!_stricmp(process_name, processInfo.szExeFile))
+                {
+                    result.push_back(processInfo.th32ProcessID);
+                }
+            }
+        }
 
-		CloseHandle(processesSnapshot);
-	}
-	return result;
+        CloseHandle(processesSnapshot);
+    }
+    return result;
 }
 
 PROCESSENTRY32 GetProcessInfo(std::int32_t pid) noexcept
@@ -125,48 +125,48 @@ PROCESSENTRY32 GetProcessInfo(std::int32_t pid) noexcept
 
 MODULEENTRY32 GetModuleInfo(std::int32_t pid, const char* module_name) noexcept
 {
-	HANDLE modulesSnapshot = nullptr;
-	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
+    HANDLE modulesSnapshot = nullptr;
+    if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
     {
-		return {0};
+        return {0};
     }
 
     MODULEENTRY32 moduleInfo = {0};
-	moduleInfo.dwSize = sizeof(MODULEENTRY32);
-	while (Module32Next(modulesSnapshot, &moduleInfo))
-	{
-		if (!_stricmp(module_name, moduleInfo.szModule))
-		{
-			CloseHandle(modulesSnapshot);
-			return moduleInfo;
-		}
-	}
+    moduleInfo.dwSize = sizeof(MODULEENTRY32);
+    while (Module32Next(modulesSnapshot, &moduleInfo))
+    {
+        if (!_stricmp(module_name, moduleInfo.szModule))
+        {
+            CloseHandle(modulesSnapshot);
+            return moduleInfo;
+        }
+    }
 
-	CloseHandle(modulesSnapshot);
-	return {0};
+    CloseHandle(modulesSnapshot);
+    return {0};
 }
 
 MODULEENTRY32 GetModuleInfo(std::int32_t pid, HMODULE module_handle) noexcept
 {
-	HANDLE modulesSnapshot = nullptr;
-	if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
+    HANDLE modulesSnapshot = nullptr;
+    if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)) == INVALID_HANDLE_VALUE)
     {
-		return {0};
+        return {0};
     }
 
     MODULEENTRY32 moduleInfo = {0};
-	moduleInfo.dwSize = sizeof(MODULEENTRY32);
-	while (Module32Next(modulesSnapshot, &moduleInfo))
-	{
-		if (module_handle == moduleInfo.hModule)
-		{
-			CloseHandle(modulesSnapshot);
-			return moduleInfo;
-		}
-	}
+    moduleInfo.dwSize = sizeof(MODULEENTRY32);
+    while (Module32Next(modulesSnapshot, &moduleInfo))
+    {
+        if (module_handle == moduleInfo.hModule)
+        {
+            CloseHandle(modulesSnapshot);
+            return moduleInfo;
+        }
+    }
 
-	CloseHandle(modulesSnapshot);
-	return {0};
+    CloseHandle(modulesSnapshot);
+    return {0};
 }
 
 void PrintProcessInfo(std::int32_t pid) noexcept
@@ -206,29 +206,29 @@ bool InjectSelf(std::int32_t pid) noexcept
 std::int32_t InjectProcess(std::int32_t pid) noexcept
 {
     extern HMODULE module;
-	MODULEENTRY32 info = GetModuleInfo(pid, module);
-	if (info.dwSize == 0)
-	{
-		if (InjectSelf(pid))
-		{
-			return pid;
-		}
-	}
-	return -1;
+    MODULEENTRY32 info = GetModuleInfo(pid, module);
+    if (info.dwSize == 0)
+    {
+        if (InjectSelf(pid))
+        {
+            return pid;
+        }
+    }
+    return -1;
 }
 
 std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept
 {
-	std::vector<std::int32_t> result;
+    std::vector<std::int32_t> result;
     std::vector<std::int32_t> pids = get_pids(process_name);
     for (std::int32_t pid : pids)
     {
         if (InjectProcess(pid) != -1)
-		{
-			result.push_back(pid);
-		}
+        {
+            result.push_back(pid);
+        }
     }
-	return result;
+    return result;
 }
 
 std::int32_t PIDFromWindow(void* window) noexcept
@@ -260,39 +260,39 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) noexcept
 Reflection* GetNativeReflector() noexcept
 {
     auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
-		auto start = std::chrono::high_resolution_clock::now();
-		while(!run())
-		{
-			if (elapsed_time<std::chrono::seconds>(start) >= time)
-			{
-				return false;
-			}
+        auto start = std::chrono::high_resolution_clock::now();
+        while(!run())
+        {
+            if (elapsed_time<std::chrono::seconds>(start) >= time)
+            {
+                return false;
+            }
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		}
-		return true;
-	};
-
-	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-		return reflection->IsDecendentOf(object, "java/awt/Frame");
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        return true;
     };
 
-	auto GetMainWindow = [&] {
-		HWND windowFrame = nullptr;
-		EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&windowFrame));
-		return windowFrame;
-	};
+    auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
+        return reflection->IsDecendentOf(object, "java/awt/Frame");
+    };
 
-	HMODULE awt = nullptr;
-	if (!TimeOut(20, [&]{ return (awt = GetModuleHandle("awt.dll")); }))
-	{
-		return nullptr;
-	}
+    auto GetMainWindow = [&] {
+        HWND windowFrame = nullptr;
+        EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&windowFrame));
+        return windowFrame;
+    };
 
-	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
-	{
-		return nullptr;
-	}
+    HMODULE awt = nullptr;
+    if (!TimeOut(20, [&]{ return (awt = GetModuleHandle("awt.dll")); }))
+    {
+        return nullptr;
+    }
+
+    if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
+    {
+        return nullptr;
+    }
 
     auto DSGetComponent = reinterpret_cast<jobject (__stdcall *)(JNIEnv*, void*)>(GetProcAddress(awt, "_DSGetComponent@8"));
     if (!DSGetComponent)
@@ -316,21 +316,21 @@ Reflection* GetNativeReflector() noexcept
 
     if (reflection->Attach())
     {
-		auto hasReflection = TimeOut(20, [&]{
-			HWND windowFrame = GetMainWindow();
-			if (windowFrame)
-			{
-				jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
-				return IsValidFrame(reflection, object) && reflection->Initialize(object);
-			}
-			return false;
-		});
+        auto hasReflection = TimeOut(20, [&]{
+            HWND windowFrame = GetMainWindow();
+            if (windowFrame)
+            {
+                jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+                return IsValidFrame(reflection, object) && reflection->Initialize(object);
+            }
+            return false;
+        });
 
-		if (hasReflection)
-		{
-			reflection->Detach();
-			return reflection;
-		}
+        if (hasReflection)
+        {
+            reflection->Detach();
+            return reflection;
+        }
 
         reflection->Detach();
     }

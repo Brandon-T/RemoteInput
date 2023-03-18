@@ -74,7 +74,7 @@ typedef struct
 
 STRUCT_PACK(typedef struct
 {
-	void (*Sync)(void(*synchronize_method)(void*), void* data);
+    void (*Sync)(void(*synchronize_method)(void*), void* data);
 }) TSimbaMethods;
 
 STRUCT_PACK(typedef struct

@@ -1,15 +1,15 @@
 #include "Reflection.hxx"
 #include <utility>
 
-Reflection::Reflection() noexcept : jvm(new JVM()), frame(nullptr), applet(nullptr), classLoader(nullptr)
+Reflection::Reflection() noexcept : jvm(new JVM()), frame(nullptr), applet(nullptr), classLoader(nullptr), cache(jvm, classLoader)
 {
 }
 
-Reflection::Reflection(JNIEnv* env) noexcept : jvm(new JVM(env)), frame(nullptr), applet(nullptr), classLoader(nullptr)
+Reflection::Reflection(JNIEnv* env) noexcept : jvm(new JVM(env)), frame(nullptr), applet(nullptr), classLoader(nullptr), cache(jvm, classLoader)
 {
 }
 
-Reflection::Reflection(Reflection&& other) noexcept : jvm(other.jvm), frame(other.frame), applet(other.applet), classLoader(other.classLoader)
+Reflection::Reflection(Reflection&& other) noexcept : jvm(other.jvm), frame(other.frame), applet(other.applet), classLoader(other.classLoader), cache(std::move(other.cache))
 {
     other.jvm = nullptr;
     other.frame = nullptr;
@@ -19,18 +19,20 @@ Reflection::Reflection(Reflection&& other) noexcept : jvm(other.jvm), frame(othe
 
 Reflection::~Reflection() noexcept
 {
-	#if defined(__APPLE__)
-	printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
-	#else
-	printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
-	/*if (this->jvm->getENV() || this->Attach())
-	{
-		jvm->DeleteGlobalRef(this->applet);
-		jvm->DeleteGlobalRef(this->classLoader);
-		jvm->DeleteGlobalRef(this->frame);
-		this->Detach();
-	}*/
-	#endif
+    #if defined(__APPLE__)
+    printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
+    #else
+    printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
+    /*if (this->jvm->getENV() || this->Attach())
+    {
+        jvm->DeleteGlobalRef(this->applet);
+        jvm->DeleteGlobalRef(this->classLoader);
+        jvm->DeleteGlobalRef(this->frame);
+        this->Detach();
+    }*/
+    #endif
+
+    cache.clear();
     delete jvm;
     jvm = nullptr;
 }
@@ -139,16 +141,17 @@ bool Reflection::Initialize(jobject awtFrame) noexcept
     if (this->applet)
     {
         this->frame = jvm->NewGlobalRef(awtFrame);
-
         jvm->DeleteLocalRef(std::exchange(this->applet, jvm->NewGlobalRef(this->applet)));
+
         auto cls = make_safe_local<jclass>(jvm->GetObjectClass(this->applet));
         jmethodID mid = jvm->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
         auto clsObj = make_safe_local<jobject>(jvm->CallObjectMethod(this->applet, mid));
-        cls = make_safe_local<jclass>(jvm->GetObjectClass(clsObj.get()));
+        cls.reset(jvm->GetObjectClass(clsObj.get()));
 
         //Get Canvas's ClassLoader.
         mid = jvm->GetMethodID(cls.get(), "getClassLoader", "()Ljava/lang/ClassLoader;");
         this->classLoader = jvm->NewGlobalRef(make_safe_local<jobject>(jvm->CallObjectMethod(clsObj.get(), mid)).get());
+        this->cache = {jvm, classLoader};
         return true;
     }
 
@@ -162,8 +165,8 @@ bool Reflection::Attach() const noexcept
 
 bool Reflection::AttachAsDaemon() const noexcept
 {
-	//JVM can shut down without waiting for our thread to detach..
-	return this->jvm && this->jvm->AttachCurrentThreadAsDaemon() == JNI_OK;
+    //JVM can shut down without waiting for our thread to detach..
+    return this->jvm && this->jvm->AttachCurrentThreadAsDaemon() == JNI_OK;
 }
 
 bool Reflection::Detach() const noexcept
@@ -183,7 +186,7 @@ void Reflection::PrintClasses() const noexcept
 
         printf("LOADED CLASSES:\n");
         for (int i = 0; i < jvm->GetArrayLength(clses.get()); ++i)
-		{
+        {
             auto clsObj = make_safe_local<jobject>(jvm->GetObjectArrayElement(clses.get(), i));
             std::string name = this->GetClassName(clsObj.get());
             printf("%s\n", name.c_str());
@@ -196,45 +199,45 @@ void Reflection::PrintClasses() const noexcept
 
 std::string Reflection::GetClassName(jobject object) const noexcept
 {
-    std::function<std::string(jobject)> getClassName = [&](jobject object) {
-		auto cls = make_safe_local<jclass>(jvm->GetObjectClass(object));
-		jmethodID mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
-		auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(object, mid));
+    auto getClassName = [&](jobject object) -> std::string {
+        auto cls = make_safe_local<jclass>(jvm->GetObjectClass(object));
+        jmethodID mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
+        auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(object, mid));
 
-		if (strObj)
-		{
+        if (strObj)
+        {
             const char *str = jvm->GetStringUTFChars(strObj.get(), nullptr);
             std::string class_name = str;
             jvm->ReleaseStringUTFChars(strObj.get(), str);
             return class_name;
         }
-		return std::string();
-	};
-	return getClassName(object);
+        return std::string();
+    };
+    return getClassName(object);
 }
 
 std::string Reflection::GetClassType(jobject object) const noexcept
 {
-    std::function<std::string(jobject)> getClassType = [&](jobject component) {
-		auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
-		jmethodID mid = jvm->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
-		auto clsObj = make_safe_local<jobject>(jvm->CallObjectMethod(component, mid));
+    auto getClassType = [&](jobject component) -> std::string {
+        auto cls = make_safe_local<jclass>(jvm->GetObjectClass(component));
+        jmethodID mid = jvm->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
+        auto clsObj = make_safe_local<jobject>(jvm->CallObjectMethod(component, mid));
 
-		cls = make_safe_local<jclass>(jvm->GetObjectClass(clsObj.get()));
-		mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
-		auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(clsObj.get(), mid));
+        cls.reset(jvm->GetObjectClass(clsObj.get()));
+        mid = jvm->GetMethodID(cls.get(), "getName", "()Ljava/lang/String;");
+        auto strObj = make_safe_local<jstring>(jvm->CallObjectMethod(clsObj.get(), mid));
 
-		if (strObj)
-		{
+        if (strObj)
+        {
             const char *str = jvm->GetStringUTFChars(strObj.get(), nullptr);
             std::string class_name = str;
             jvm->ReleaseStringUTFChars(strObj.get(), str);
             return class_name;
         }
-		return std::string();
-	};
+        return std::string();
+    };
 
-	return getClassType(object);
+    return getClassType(object);
 }
 
 bool Reflection::IsDecendentOf(jobject object, const char* className) const noexcept
@@ -243,22 +246,29 @@ bool Reflection::IsDecendentOf(jobject object, const char* className) const noex
     return jvm->IsInstanceOf(object, cls.get());
 }
 
-jclass Reflection::LoadClass(const char* clsToLoad) const noexcept
+jclass Reflection::LoadClass(const char* name) noexcept
 {
-    auto cls = make_safe_local<jclass>(jvm->GetObjectClass(classLoader));
-    jmethodID loadClass = jvm->GetMethodID(cls.get(), "loadClass", "(Ljava/lang/String;Z)Ljava/lang/Class;");
-	auto className = make_safe_local<jstring>(jvm->NewStringUTF(clsToLoad));
-    return static_cast<jclass>(jvm->CallObjectMethod(classLoader, loadClass, className.get(), true));
+    return cache.GetClass(name);
+}
+
+void Reflection::ClearCache() noexcept
+{
+    cache.clear();
+}
+
+jfieldID Reflection::GetFieldID(jclass cls, const char* name, const char* desc, bool is_static) noexcept
+{
+    return cache.GetFieldID(cls, name, desc, is_static);
 }
 
 jobject Reflection::getApplet() const noexcept
 {
-	return this->applet;
+    return this->applet;
 }
 
 JVM* Reflection::getVM() const noexcept
 {
-	return this->jvm;
+    return this->jvm;
 }
 
 JNIEnv* Reflection::getEnv() const noexcept

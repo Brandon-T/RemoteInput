@@ -17,14 +17,14 @@
 class SpinLock
 {
 private:
-	bool shared;
-	int shm_fd;
-	std::string name;
-	std::atomic_flag* flag;
-	std::int32_t* ref;
+    bool shared;
+    int shm_fd;
+    std::string name;
+    std::atomic_flag* flag;
+    std::int32_t* ref;
 
 public:
-	SpinLock();
+    SpinLock();
     SpinLock(std::string name);
     ~SpinLock();
 
@@ -50,15 +50,15 @@ public:
 class SpinningSemaphore
 {
 private:
-	bool shared;
-	int shm_fd;
-	std::string name;
-	std::atomic_flag* lock;
-	std::atomic<std::int32_t>* count;
-	std::int32_t* ref;
+    bool shared;
+    int shm_fd;
+    std::string name;
+    std::atomic_flag* lock;
+    std::atomic<std::int32_t>* count;
+    std::int32_t* ref;
 
 public:
-	SpinningSemaphore(std::int32_t count = 0);
+    SpinningSemaphore(std::int32_t count = 0);
     SpinningSemaphore(std::string name, std::int32_t count = 0);
     ~SpinningSemaphore();
 
@@ -88,14 +88,14 @@ public:
 class SpinningSignal
 {
 private:
-	bool shared;
-	int shm_fd;
-	std::string name;
-	std::atomic_bool* lock;
-	std::int32_t* ref;
+    bool shared;
+    int shm_fd;
+    std::string name;
+    std::atomic_bool* lock;
+    std::int32_t* ref;
 
 public:
-	SpinningSignal(std::int32_t count = 0);
+    SpinningSignal(std::int32_t count = 0);
     SpinningSignal(std::string name, std::int32_t count = 0);
     ~SpinningSignal();
 

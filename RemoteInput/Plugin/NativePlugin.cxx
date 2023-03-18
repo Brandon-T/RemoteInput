@@ -224,37 +224,7 @@ jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_s
     if (eios)
     {
         ReflectionHook hook{object, cls, field, desc};
-        return eios->control_center->reflect_array_with_size(hook, output_size);
-    }
-    return nullptr;
-}
-
-jarray Reflect_Array_With_Size2D(EIOS* eios, jobject object, std::size_t x, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept
-{
-    if (eios)
-    {
-        ReflectionHook hook{object, cls, field, desc};
-        return eios->control_center->reflect_array_with_size2d(hook, x, output_size);
-    }
-    return nullptr;
-}
-
-jarray Reflect_Array_With_Size3D(EIOS* eios, jobject object, std::size_t x, std::size_t y, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept
-{
-    if (eios)
-    {
-        ReflectionHook hook{object, cls, field, desc};
-        return eios->control_center->reflect_array_with_size3d(hook, x, y, output_size);
-    }
-    return nullptr;
-}
-
-jarray Reflect_Array_With_Size4D(EIOS* eios, jobject object, std::size_t x, std::size_t y, std::size_t z, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept
-{
-    if (eios)
-    {
-        ReflectionHook hook{object, cls, field, desc};
-        return eios->control_center->reflect_array_with_size4d(hook, x, y, z, output_size);
+        return eios->control_center->reflect_array(hook, output_size);
     }
     return nullptr;
 }
@@ -268,43 +238,51 @@ std::size_t Reflect_Array_Size(EIOS* eios, jarray array) noexcept
     return 0;
 }
 
-void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length) noexcept
+void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionType type, std::size_t index, std::size_t length) noexcept
 {
     if (eios)
     {
-        return eios->control_center->reflect_array_index(array, type, index, length);
+        ImageData* image_data = eios->control_center->reflect_array(array, type, length, index);
+        image_data->data_stream().seekg(sizeof(std::size_t));
+        return image_data->io_buffer(std::ios::in);
     }
     return nullptr;
 }
 
-void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t x, std::size_t y, std::size_t length) noexcept
+void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionType type, std::size_t x, std::size_t y, std::size_t length) noexcept
 {
     if (eios)
     {
-        return eios->control_center->reflect_array_index2d(array, type, length, x, y);
+        ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y);
+        image_data->data_stream().seekg(sizeof(std::size_t));
+        return image_data->io_buffer(std::ios::in);
     }
     return nullptr;
 }
 
-void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t x, std::size_t y, std::size_t z, std::size_t length) noexcept
+void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionType type, std::size_t x, std::size_t y, std::size_t z, std::size_t length) noexcept
 {
     if (eios)
     {
-        return eios->control_center->reflect_array_index3d(array, type, length, x, y, z);
+        ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z);
+        image_data->data_stream().seekg(sizeof(std::size_t));
+        return image_data->io_buffer(std::ios::in);
     }
     return nullptr;
 }
 
-void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t x, std::size_t y, std::size_t z, std::size_t w, std::size_t length) noexcept
+void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionType type, std::size_t x, std::size_t y, std::size_t z, std::size_t w, std::size_t length) noexcept
 {
     if (eios)
     {
-        return eios->control_center->reflect_array_index4d(array, type, length, x, y, z, w);
+        ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z, w);
+        image_data->data_stream().seekg(sizeof(std::size_t));
+        return image_data->io_buffer(std::ios::in);
     }
     return nullptr;
 }
 
-void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length) noexcept
+void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) noexcept
 {
     if (eios)
     {

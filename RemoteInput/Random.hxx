@@ -16,23 +16,23 @@
 class Random
 {
 private:
-	Random() {}
+    Random() {}
 
-	#if defined(__x86_64__)
-	std::mt19937_64 rng{std::random_device()()};
-	#else
-	std::mt19937 rng{std::random_device()()};
-	#endif
+    #if defined(__x86_64__)
+    std::mt19937_64 rng{std::random_device()()};
+    #else
+    std::mt19937 rng{std::random_device()()};
+    #endif
 
 public:
-	Random(Random const&) = delete;
+    Random(Random const&) = delete;
     Random& operator = (Random const&) = delete;
 
-	static std::shared_ptr<Random> instance() noexcept;
+    static std::shared_ptr<Random> instance() noexcept;
 
-	std::int64_t generate_random_int(std::int64_t min, std::int64_t max) noexcept;
-	float generate_random_float(float min, float max) noexcept;
-	double generate_random_double(double min, double max) noexcept;
+    std::int64_t generate_random_int(std::int64_t min, std::int64_t max) noexcept;
+    float generate_random_float(float min, float max) noexcept;
+    double generate_random_double(double min, double max) noexcept;
 };
 
 #endif /* RANDOM_HXX_INCLUDED */

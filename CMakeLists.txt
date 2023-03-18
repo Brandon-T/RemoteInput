@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 project(RemoteInput VERSION 1.0.0 DESCRIPTION "Remote Input")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # ----------------------------- BUILD -----------------------------
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
-set(PYTHON_BINDINGS ON)
+set(PYTHON_BINDINGS OFF)
 
 
 # ----------------------------- PACKAGES -----------------------------
@@ -144,6 +144,8 @@ set(SRC_LIST
         RemoteInput/Echo/SharedEvent.hxx
         #RemoteInput/Echo/SpinLock.cxx
         #RemoteInput/Echo/SpinLock.hxx
+        RemoteInput/Echo/Stream.cxx
+        RemoteInput/Echo/Stream.hxx
         RemoteInput/Echo/Time.cxx
         RemoteInput/Echo/Time.hxx
         RemoteInput/Echo/TypeTraits.hxx
@@ -205,16 +207,22 @@ set(SRC_LIST
         RemoteInput/Plugin/ControlCenter.hxx
         RemoteInput/Plugin/Graphics.cxx
         RemoteInput/Plugin/Graphics.hxx
+        RemoteInput/Plugin/ImageData.cxx
+        RemoteInput/Plugin/ImageData.hxx
         RemoteInput/Plugin/InputOutput.cxx
         RemoteInput/Plugin/InputOutput.hxx
         RemoteInput/Plugin/NativePlugin.cxx
         RemoteInput/Plugin/NativePlugin.hxx
+        RemoteInput/Plugin/MemoryMapStream.cxx
+        RemoteInput/Plugin/MemoryMapStream.hxx
         RemoteInput/Plugin/Plugin.cxx
         RemoteInput/Plugin/Plugin.hxx
         RemoteInput/Plugin/Signal.hxx
         RemoteInput/Plugin/SimbaPlugin.cxx
         RemoteInput/Plugin/SimbaPlugin.hxx
         RemoteInput/Plugin/TMemoryManager.hxx
+        RemoteInput/Plugin/JVM/JVMCache.cxx
+        RemoteInput/Plugin/JVM/JVMCache.hxx
         RemoteInput/Plugin/JVM/RemoteVM.hxx
         RemoteInput/Plugin/JVM/RemoteVM.cxx
         RemoteInput/DetachedThreadPool.cxx
@@ -279,14 +287,14 @@ IF(WIN32)
     IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${PROJECT_NAME} PRIVATE,
                 $<$<CONFIG:DEBUG>:-DDEBUG>
-                $<$<CONFIG:RELEASE>:>)
+                $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
         target_link_options(${PROJECT_NAME} PRIVATE
                 $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
                 $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
     ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(${PROJECT_NAME} PRIVATE
                 $<$<CONFIG:DEBUG>:-DDEBUG -Wl,--input-def=RemoteInput/RemoteInput.def>
-                $<$<CONFIG:RELEASE>:-Wl,--input-def=RemoteInput/RemoteInput.def>)
+                $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden -Wl,--input-def=RemoteInput/RemoteInput.def>)
         target_link_options(${PROJECT_NAME} PRIVATE
                 $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
                 $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
@@ -299,7 +307,7 @@ IF(WIN32)
                 "${CMAKE_EXE_LINKER_FLAGS} /DEF:RemoteInput/RemoteInput.def")
         target_compile_options(${PROJECT_NAME} PRIVATE
                 $<$<CONFIG:DEBUG>:/DDEBUG /DWIN32_LEAN_AND_MEAN /DNOMINMAX /MTd>
-                $<$<CONFIG:RELEASE>:/DWIN32_LEAN_AND_MEAN /DNOMINMAX /MT>)
+                $<$<CONFIG:RELEASE>:-O3 /DWIN32_LEAN_AND_MEAN /DNOMINMAX /MT>)
 
         IF(PYTHON_BINDINGS)
             target_link_options(${PROJECT_NAME} PRIVATE
@@ -323,8 +331,8 @@ ELSE()
             $<$<CONFIG:DEBUG>:-DDEBUG -g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}> #-static-libgcc -static-libstdc++
-            $<$<CONFIG:RELEASE>:-s -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
+            $<$<CONFIG:DEBUG>:-g ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}> #-static-libgcc -static-libstdc++
+            $<$<CONFIG:RELEASE>:-s ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
 ENDIF()
 
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})

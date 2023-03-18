@@ -40,13 +40,13 @@ std::int32_t GetCurrentThreadID() noexcept
     #ifdef SYS_gettid
     return syscall(SYS_gettid);
     #else
-	return gettid();
-	#endif
+    return gettid();
+    #endif
 }
 
 bool IsProcessAlive(std::int32_t pid) noexcept
 {
-	return !kill(pid, 0);
+    return !kill(pid, 0);
 }
 
 bool IsThreadAlive(std::int32_t tid) noexcept
@@ -57,12 +57,12 @@ bool IsThreadAlive(std::int32_t tid) noexcept
 #if __has_include("libproc.h") && __has_include("proc/readproc.h")
 std::vector<std::int32_t> get_pids() noexcept
 {
-	std::vector<std::int32_t> pids;
+    std::vector<std::int32_t> pids;
 
     proc_t proc_info = {0};
-	PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
-	if (proc_tab)
-	{
+    PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
+    if (proc_tab)
+    {
         while (readproc(proc_tab, &proc_info))
         {
             //task id, the POSIX thread ID (see also: tgid)
@@ -73,31 +73,31 @@ std::vector<std::int32_t> get_pids() noexcept
     }
 
 
-	std::vector<std::int32_t>(pids).swap(pids);
-	return pids;
+    std::vector<std::int32_t>(pids).swap(pids);
+    return pids;
 }
 
 std::vector<std::int32_t> get_pids(const char* process_name) noexcept
 {
-	std::vector<std::int32_t> result;
+    std::vector<std::int32_t> result;
 
-	proc_t proc_info = {0};
-	PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
-	if (proc_tab)
-	{
+    proc_t proc_info = {0};
+    PROCTAB* proc_tab = openproc(PROC_FILLSTAT);
+    if (proc_tab)
+    {
         while (readproc(proc_tab, &proc_info))
         {
             //basename of executable file in call to exec(2)
             if (!strcasecmp(process_name, proc_info.cmd))
-			{
+            {
                 //task id, the POSIX thread ID (see also: tgid)
-				result.push_back(proc_info.tid);
+                result.push_back(proc_info.tid);
             }
         }
 
         closeproc(proc_tab);
     }
-	return result;
+    return result;
 }
 #else
 std::vector<std::int32_t> get_pids(const char* process_name) noexcept
@@ -185,33 +185,33 @@ std::vector<std::int32_t> get_pids() noexcept
 
 std::int32_t InjectProcess(std::int32_t pid) noexcept
 {
-	Dl_info info = {0};
+    Dl_info info = {0};
     if (dladdr(reinterpret_cast<void*>(InjectProcess), &info))
-	{
-		std::string path = std::string(PATH_MAX, '\0');
-		if (realpath(info.dli_fname, &path[0]))
-		{
+    {
+        std::string path = std::string(PATH_MAX, '\0');
+        if (realpath(info.dli_fname, &path[0]))
+        {
             if (Injector::Inject(info.dli_fname, pid, nullptr))
             {
                 return pid;
             }
-		}
+        }
     }
-	return -1;
+    return -1;
 }
 
 std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept
 {
-	std::vector<std::int32_t> result;
+    std::vector<std::int32_t> result;
     std::vector<std::int32_t> pids = get_pids(process_name);
     for (std::int32_t pid : pids)
     {
         if (InjectProcess(pid) != -1)
-		{
-			result.push_back(pid);
-		}
+        {
+            result.push_back(pid);
+        }
     }
-	return result;
+    return result;
 }
 #endif
 
@@ -412,23 +412,23 @@ std::int32_t PIDFromWindow(void* window) noexcept
 void* GetModuleHandle(const char* module_name) noexcept
 {
     struct Module { const char* module_name; void* result; };
-	Module module_info = {0};
-	module_info.module_name = module_name;
-	module_info.result = nullptr;
+    Module module_info = {0};
+    module_info.module_name = module_name;
+    module_info.result = nullptr;
 
-	dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
-		if (info && info->dlpi_name)
-		{
-		    Module* module_info = static_cast<Module*>(data);
-			if (strcasestr(info->dlpi_name, module_info->module_name))
-			{
-				module_info->result = dlopen(module_info->module_name, RTLD_NOLOAD);
-				return 1;
-			}
-		}
-		return 0;
-	}, reinterpret_cast<void*>(&module_info));
-	return module_info.result ?: dlopen(module_name, RTLD_NOLOAD);
+    dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
+        if (info && info->dlpi_name)
+        {
+            Module* module_info = static_cast<Module*>(data);
+            if (strcasestr(info->dlpi_name, module_info->module_name))
+            {
+                module_info->result = dlopen(module_info->module_name, RTLD_NOLOAD);
+                return 1;
+            }
+        }
+        return 0;
+    }, reinterpret_cast<void*>(&module_info));
+    return module_info.result ?: dlopen(module_name, RTLD_NOLOAD);
 }
 #endif
 
@@ -481,30 +481,30 @@ Reflection* GetNativeReflector() noexcept
         return false;
     };
 
-	auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
-		auto start = std::chrono::high_resolution_clock::now();
-		while(!run())
-		{
-			if (elapsed_time<std::chrono::seconds>(start) >= time)
-			{
-				return false;
-			}
+    auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
+        auto start = std::chrono::high_resolution_clock::now();
+        while(!run())
+        {
+            if (elapsed_time<std::chrono::seconds>(start) >= time)
+            {
+                return false;
+            }
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		}
-		return true;
-	};
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        return true;
+    };
 
-	auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-		return reflection->IsDecendentOf(object, "java/awt/Frame");
-	};
+    auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
+        return reflection->IsDecendentOf(object, "java/awt/Frame");
+    };
 
-	if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
-	{
-		return nullptr;
-	}
+    if (!TimeOut(5, [&]{ return JVM().getVM() != nullptr; }))
+    {
+        return nullptr;
+    }
 
-	if (!TimeOut(20, [&]{ return ModuleLoaded("libawt_xawt.so"); })) {
+    if (!TimeOut(20, [&]{ return ModuleLoaded("libawt_xawt.so"); })) {
         return nullptr;
     }
 
@@ -514,36 +514,36 @@ Reflection* GetNativeReflector() noexcept
         return nullptr;
     }
 
-	auto GetMainWindow = [&]() -> Window {
-		Display* display = XOpenDisplay(nullptr);
+    auto GetMainWindow = [&]() -> Window {
+        Display* display = XOpenDisplay(nullptr);
         if (display)
         {
-		    Window windowFrame = 0;
-		    EnumWindows(display, EnumWindowsProc, &windowFrame);
-		    XCloseDisplay(display);
-		    return windowFrame;
+            Window windowFrame = 0;
+            EnumWindows(display, EnumWindowsProc, &windowFrame);
+            XCloseDisplay(display);
+            return windowFrame;
         }
         return 0;
-	};
+    };
 
     Reflection* reflection = new Reflection();
     if (reflection->Attach())
     {
-		auto hasReflection = TimeOut(20, [&]{
-			void* windowFrame = reinterpret_cast<void*>(GetMainWindow());
-			if (windowFrame)
-			{
-				jobject object = awt_GetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
-				return IsValidFrame(reflection, object) && reflection->Initialize(object);
-			}
-			return false;
-		});
+        auto hasReflection = TimeOut(20, [&]{
+            void* windowFrame = reinterpret_cast<void*>(GetMainWindow());
+            if (windowFrame)
+            {
+                jobject object = awt_GetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+                return IsValidFrame(reflection, object) && reflection->Initialize(object);
+            }
+            return false;
+        });
 
-		if (hasReflection)
-		{
-			reflection->Detach();
-			return reflection;
-		}
+        if (hasReflection)
+        {
+            reflection->Detach();
+            return reflection;
+        }
 
         reflection->Detach();
     }

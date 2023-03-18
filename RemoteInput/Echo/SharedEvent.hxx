@@ -68,7 +68,7 @@ private:
     #if defined(_WIN32) || defined(_WIN64)
     HANDLE hMutex;
     #else
-	bool shared;
+    bool shared;
     pthread_mutex_t* mutex;
     std::int32_t* ref;
     std::string name;
@@ -108,17 +108,17 @@ private:
     #if defined(_WIN32) || defined(_WIN64)
     HANDLE hSemaphore;
     #elif defined(_USE_POSIX_SEMAPHORES)
-	bool shared;
-	bool owned;
-	void* hSem;
-	std::string name;
-	#elif defined(_USE_SYSTEM_V_SEMAPHORES)
-	bool shared;
-	key_t id;
-	int handle;
-	std::string name;
-	#else
-	bool shared;
+    bool shared;
+    bool owned;
+    void* hSem;
+    std::string name;
+    #elif defined(_USE_SYSTEM_V_SEMAPHORES)
+    bool shared;
+    key_t id;
+    int handle;
+    std::string name;
+    #else
+    bool shared;
     pthread_mutex_t* mutex;
     pthread_cond_t* condition;
     std::int32_t* sem_count;
@@ -127,10 +127,10 @@ private:
     int shm_fd;
     #endif
 
-	#if !defined(_WIN32) && !defined(_WIN64)
-	template<typename T>
+    #if !defined(_WIN32) && !defined(_WIN64)
+    template<typename T>
     T* semaphore_cast(void* &ptr);
-	#endif
+    #endif
 
 public:
     Semaphore(std::int32_t count = 0);
@@ -159,38 +159,38 @@ public:
 class AtomicSignal
 {
 private:
-	#if defined(_WIN32) || defined(_WIN64)
-	HANDLE hEvent;
-	std::string name;
-	#else
-	bool shared;
-	int shm_fd;
-	std::string name;
-	std::atomic_bool* lock;
-	std::int32_t* ref;
-	#endif
+    #if defined(_WIN32) || defined(_WIN64)
+    HANDLE hEvent;
+    std::string name;
+    #else
+    bool shared;
+    int shm_fd;
+    std::string name;
+    std::atomic_bool* lock;
+    std::int32_t* ref;
+    #endif
 
 public:
-	AtomicSignal();
-	AtomicSignal(std::string name);
-	~AtomicSignal();
+    AtomicSignal();
+    AtomicSignal(std::string name);
+    ~AtomicSignal();
 
-	bool wait() const noexcept;
-	bool try_wait() const noexcept;
+    bool wait() const noexcept;
+    bool try_wait() const noexcept;
 
-	bool timed_wait(std::uint32_t milliseconds) const noexcept;
-	bool signal() const noexcept;
-	bool is_signalled() const noexcept;
+    bool timed_wait(std::uint32_t milliseconds) const noexcept;
+    bool signal() const noexcept;
+    bool is_signalled() const noexcept;
 
 
-	template<typename Rep, typename Period>
-	bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
+    template<typename Rep, typename Period>
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
 
-	template<typename Duration>
-	bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
+    template<typename Duration>
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
 
-	template<typename Clock, typename Duration>
-	bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
+    template<typename Clock, typename Duration>
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
 };
 
 #endif /* SHAREDEVENT_HXX_INCLUDED */

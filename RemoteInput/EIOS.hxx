@@ -23,94 +23,15 @@
 #define STD_CALL
 #endif
 
-
+#include "EIOSTypes.hxx"
 #include "ControlCenter.hxx"
-
-
-enum class EIOSCommand: std::uint32_t
-{
-    COMMAND_NONE,
-	KILL_APPLICATION,
-	
-	GET_TARGET_DIMENSIONS,
-	HAS_FOCUS,
-	GAIN_FOCUS,
-	LOSE_FOCUS,
-    IS_KEYBOARD_INPUT_ENABLED,
-    SET_KEYBOARD_INPUT_ENABLED,
-    IS_MOUSE_INPUT_ENABLED,
-    SET_MOUSE_INPUT_ENABLED,
-	GET_MOUSE,
-	GET_REAL_MOUSE,
-    MOVE_MOUSE,
-    HOLD_MOUSE,
-    RELEASE_MOUSE,
-	SCROLL_MOUSE,
-    IS_MOUSE_HELD,
-	SEND_STRING,
-	HOLD_KEY,
-	RELEASE_KEY,
-	IS_KEY_HELD,
-
-    GET_KEYBOARD_SPEED,
-    SET_KEYBOARD_SPEED,
-    GET_KEYBOARD_REPEAT_DELAY,
-    SET_KEYBOARD_REPEAT_DELAY,
-    STOP_ALL_PROCESSING,
-
-    GET_UI_SCALING,
-    SET_UI_SCALING,
-
-	REFLECT_OBJECT,
-    REFLECT_COMPARE_OBJECTS,
-	REFLECT_INSTANCE_OF,
-	REFLECT_RELEASE_OBJECT,
-	REFLECT_RELEASE_OBJECTS,
-	REFLECT_CHAR,
-	REFLECT_BYTE,
-	REFLECT_BOOLEAN,
-	REFLECT_SHORT,
-	REFLECT_INT,
-	REFLECT_LONG,
-	REFLECT_FLOAT,
-	REFLECT_DOUBLE,
-	REFLECT_STRING,
-	REFLECT_ARRAY,
-	REFLECT_ARRAY_WITH_SIZE,
-    REFLECT_ARRAY_WITH_SIZE2D,
-    REFLECT_ARRAY_WITH_SIZE3D,
-    REFLECT_ARRAY_WITH_SIZE4D,
-	REFLECT_ARRAY_SIZE,
-    REFLECT_ARRAY_SIZE2D,
-    REFLECT_ARRAY_SIZE3D,
-    REFLECT_ARRAY_SIZE4D,
-	REFLECT_ARRAY_INDEX,
-	REFLECT_ARRAY_INDEX2D,
-	REFLECT_ARRAY_INDEX3D,
-	REFLECT_ARRAY_INDEX4D,
-    REFLECT_ARRAY_INDICES,
-
-    REMOTE_VM_INSTRUCTION
-};
-
-typedef struct ImageData
-{
-	std::int32_t parent_process_id;
-    std::int32_t parent_thread_id;
-    std::int32_t width;
-    std::int32_t height;
-	bool debug_graphics;
-	bool ui_scaling;
-    EIOSCommand command;
-    std::uint8_t args[100000 * 8];
-} ImageData;
 
 typedef struct EIOS
 {
     std::int32_t pid;
-	std::int32_t width;
+    std::int32_t width;
     std::int32_t height;
-	std::intptr_t local_storage;
+    std::intptr_t local_storage;
     std::unique_ptr<ControlCenter> control_center;
 } EIOS;
 

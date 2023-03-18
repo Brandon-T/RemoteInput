@@ -152,6 +152,12 @@ enum class RemoteVMCommand: std::uint32_t
     GET_OBJECT_REF_TYPE
 };
 
+Stream& operator << (Stream& stream, const jvalue &value) noexcept
+{
+    stream.write(&value, sizeof(jvalue));
+    return stream;
+}
+
 template<class T>
 struct is_string
 {
@@ -165,93 +171,41 @@ struct is_string<std::basic_string<T>>
 };
 
 template<typename T>
-typename std::enable_if<!is_string<std::decay_t<T>>::value && !is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(void* &ptr) noexcept
+typename std::enable_if<!is_string<std::decay_t<T>>::value && !is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(ImageData* image_data) noexcept
 {
-    T result = *static_cast<T*>(ptr);
-    ptr = static_cast<T*>(ptr) + 1;
+    return image_data->data_stream().read<std::decay_t<T>>();
+}
+
+template<typename T>
+typename std::enable_if<is_string<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(ImageData* image_data) noexcept
+{
+    return image_data->data_stream().read<std::decay_t<T>>();
+}
+
+template<typename T>
+typename std::enable_if<is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(ImageData* image_data) noexcept
+{
+    std::decay_t<T> result;
+    image_data->data_stream().read(&result, sizeof(result));
     return result;
 }
 
 template<typename T>
-typename std::enable_if<is_string<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(void* &ptr) noexcept
+void Remote_VM_Write(ImageData* image_data, const T& result) noexcept
 {
-    using string_type = std::decay_t<T>;
-    using value_type = typename std::decay_t<T>::value_type;
-
-    std::size_t length = *static_cast<std::size_t*>(ptr);
-    ptr = static_cast<std::size_t*>(ptr) + 1;
-
-    if (length > 0)
-    {
-        string_type result = string_type(reinterpret_cast<const value_type*>(ptr), length);
-        ptr = static_cast<value_type*>(ptr) + (length * sizeof(value_type));
-        ptr = static_cast<value_type*>(ptr) + 1;
-        return result;
-    }
-    return string_type();
+    image_data->data_stream().write(result);
 }
 
 template<typename T>
-typename std::enable_if<is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(void* &ptr) noexcept
+void Remote_VM_Write(ImageData* image_data, const std::basic_string<T> &result) noexcept
 {
-    using vector_type = std::decay_t<T>;
-    using value_type = typename std::decay_t<T>::value_type;
-
-    std::size_t size = *static_cast<std::size_t*>(ptr);
-    ptr = static_cast<std::size_t*>(ptr) + 1;
-
-    if (size > 0)
-    {
-        vector_type result = vector_type(size);
-        std::memcpy(&result[0], ptr, size * sizeof(value_type));
-        ptr = static_cast<char*>(ptr) + (size * sizeof(value_type));
-        return result;
-    }
-    return vector_type();
+    image_data->data_stream().write(result);
 }
 
 template<typename T>
-void Remote_VM_Write(void* &ptr, const T& result) noexcept
+void Remote_VM_Write(ImageData* image_data, const std::vector<T> &result) noexcept
 {
-    *static_cast<T*>(ptr) = result;
-    ptr = static_cast<T*>(ptr) + 1;
-}
-
-template<typename T>
-void Remote_VM_Write(void* &ptr, const std::basic_string<T> &result) noexcept
-{
-    if (result.empty())
-    {
-        *static_cast<std::size_t*>(ptr) = 0;
-        ptr = static_cast<std::size_t*>(ptr) + 1;
-        return;
-    }
-
-    *static_cast<std::size_t*>(ptr) = result.length();
-    ptr = static_cast<std::size_t*>(ptr) + 1;
-
-    memcpy(ptr, &result[0], result.length() * sizeof(T));
-    ptr = static_cast<T*>(ptr) + (result.length() * sizeof(T));
-
-    *static_cast<T*>(ptr) = '\0';
-    ptr = static_cast<T*>(ptr) + 1;
-}
-
-template<typename T>
-void Remote_VM_Write(void* &ptr, const std::vector<T> &result) noexcept
-{
-    if (result.empty())
-    {
-        *static_cast<std::size_t*>(ptr) = 0;
-        ptr = static_cast<std::size_t*>(ptr) + 1;
-        return;
-    }
-
-    *static_cast<std::size_t*>(ptr) = result.size();
-    ptr = static_cast<std::size_t*>(ptr) + 1;
-
-    memcpy(ptr, &result[0], result.size() * sizeof(T));
-    ptr = static_cast<char*>(ptr) + (result.size() * sizeof(T));
+    image_data->data_stream().write(result);
 }
 
 template<typename T>
@@ -269,11 +223,10 @@ T RemoteVM::local_to_global(T object) const noexcept
 template<typename R, typename... Args>
 typename std::enable_if<!is_vector<R>::value, R>::type RemoteVM::SendCommand(RemoteVMCommand command, Args&&... args) const noexcept
 {
-    auto result = (control_center->*send_command)([&](ImageData* image_data) {
-        void* arguments = image_data->args;
-        image_data->command = EIOSCommand::REMOTE_VM_INSTRUCTION;
-        Remote_VM_Write(arguments, command);
-        (Remote_VM_Write(arguments, args), ...);
+    auto result = send_command([&](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::REMOTE_VM_INSTRUCTION);
+        Remote_VM_Write(image_data, command);
+        (Remote_VM_Write(image_data, args), ...);
 
         /*([](auto& arguments, auto& arg) {
             Remote_VM_Write(arguments, arg);
@@ -286,8 +239,8 @@ typename std::enable_if<!is_vector<R>::value, R>::type RemoteVM::SendCommand(Rem
     }
     else if (result)
     {
-        void* arguments = (control_center->*get_image_data)()->args;
-        return Remote_VM_Read<R>(arguments);
+        ImageData* image_data = (control_center->*get_image_data)();
+        return Remote_VM_Read<R>(image_data);
     }
     else if constexpr(std::is_same<R, jboolean>::value)
     {
@@ -303,8 +256,8 @@ typename std::enable_if<!is_vector<R>::value, R>::type RemoteVM::SendCommand(Rem
     }
     else if constexpr (std::is_same<R, jobjectRefType>::value)
     {
-        void* arguments = (control_center->*get_image_data)()->args;
-        return Remote_VM_Read<R>(arguments);
+        ImageData* image_data = (control_center->*get_image_data)();
+        return Remote_VM_Read<R>(image_data);
     }
     else
     {
@@ -315,11 +268,10 @@ typename std::enable_if<!is_vector<R>::value, R>::type RemoteVM::SendCommand(Rem
 template<typename R, typename... Args>
 typename std::enable_if<is_vector<R>::value, R>::type RemoteVM::SendCommand(RemoteVMCommand command, Args&&... args) const noexcept
 {
-    auto result = (control_center->*send_command)([&](ImageData* image_data) {
-        void* arguments = image_data->args;
-        image_data->command = EIOSCommand::REMOTE_VM_INSTRUCTION;
-        Remote_VM_Write(arguments, command);
-        (Remote_VM_Write(arguments, args), ...);
+    auto result = send_command([&](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::REMOTE_VM_INSTRUCTION);
+        Remote_VM_Write(image_data, command);
+        (Remote_VM_Write(image_data, args), ...);
 
         /*([](auto& arguments, auto& arg) {
             Remote_VM_Write(arguments, arg);
@@ -328,16 +280,16 @@ typename std::enable_if<is_vector<R>::value, R>::type RemoteVM::SendCommand(Remo
 
     if (result)
     {
-        void* arguments = (control_center->*get_image_data)()->args;
-        return Remote_VM_Read<R>(arguments);
+        ImageData* image_data = (control_center->*get_image_data)();
+        return Remote_VM_Read<R>(image_data);
     }
     return {};
 }
 
 template<typename R, typename... Args>
-R RemoteVM::ExecuteCommand(void* arguments, R (RemoteVM::*func)(Args...) const noexcept) const noexcept
+R RemoteVM::ExecuteCommand(ImageData* image_data, R (RemoteVM::*func)(Args...) const noexcept) const noexcept
 {
-    auto args = std::tuple<std::decay_t<Args>...>{Remote_VM_Read<std::decay_t<Args>>(arguments)...};
+    auto args = std::tuple<std::decay_t<Args>...>{Remote_VM_Read<std::decay_t<Args>>(image_data)...};
     return std::apply(func, std::tuple_cat(std::forward_as_tuple(this), std::forward<std::tuple<std::decay_t<Args>...>>(args)));
 }
 
@@ -346,7 +298,7 @@ RemoteVM::RemoteVM(JNIEnv* env,
 
 RemoteVM::RemoteVM(JNIEnv* env,
                    ControlCenter* control_center,
-                   bool (ControlCenter::*send_command)(std::function<void(ImageData*)>&&) const,
+                   std::function<bool(std::function<void(Stream&, ImageData*)>)>&& send_command,
                    ImageData* (ControlCenter::*get_image_data)() const) noexcept : env(env), control_center(control_center), send_command(send_command), get_image_data(get_image_data) {}
 RemoteVM::~RemoteVM() {}
 
@@ -373,7 +325,7 @@ RemoteVM& RemoteVM::operator = (RemoteVM&& other)
 
 std::size_t RemoteVM::MaxMemoryChunkSize() const noexcept
 {
-    std::size_t max_size = sizeof(ImageData::args);
+    std::size_t max_size = sizeof(EIOSData::args);
     max_size -= sizeof(std::underlying_type<RemoteVMCommand>);
     max_size -= sizeof(void*);
     max_size -= sizeof(std::size_t);
@@ -389,28 +341,26 @@ void* RemoteVM::AllocateMemory(std::size_t size) const noexcept
     return malloc(size);
 }
 
-bool RemoteVM::ReadMemory(void* destintation, void* source, std::size_t size) const noexcept
+bool RemoteVM::ReadMemory(void* destination, void* source, std::size_t size) const noexcept
 {
     if (this->send_command)
     {
-        auto result = (control_center->*send_command)([&](ImageData *image_data) {
-            void* arguments = image_data->args;
-            image_data->command = EIOSCommand::REMOTE_VM_INSTRUCTION;
-            Remote_VM_Write(arguments, RemoteVMCommand::READ_MEMORY);
-            Remote_VM_Write(arguments, source);
-            Remote_VM_Write(arguments, size);
+        auto result = send_command([&](Stream &stream, ImageData* image_data) {
+            image_data->set_command(EIOSCommand::REMOTE_VM_INSTRUCTION);
+            image_data->data_stream().write(RemoteVMCommand::READ_MEMORY);
+            image_data->data_stream().write(source);
+            image_data->data_stream().write(size);
         });
 
         if (result)
         {
-            void* arguments = (control_center->*get_image_data)()->args;
-            std::memcpy(destintation, arguments, size);
+            (control_center->*get_image_data)()->data_stream().read(destination, size);
             return true;
         }
         return false;
     }
 
-    std::memcpy(destintation, source, size);
+    std::memcpy(destination, source, size);
     return true;
 }
 
@@ -418,13 +368,12 @@ bool RemoteVM::WriteMemory(void* destination, void* source, std::size_t size) co
 {
     if (this->send_command)
     {
-        auto result = (control_center->*send_command)([&](ImageData *image_data) {
-            void* arguments = image_data->args;
-            image_data->command = EIOSCommand::REMOTE_VM_INSTRUCTION;
-            Remote_VM_Write(arguments, RemoteVMCommand::WRITE_MEMORY);
-            Remote_VM_Write(arguments, destination);
-            Remote_VM_Write(arguments, size);
-            std::memcpy(arguments, source, size);
+        auto result = send_command([&](Stream &stream, ImageData* image_data) {
+            image_data->set_command(EIOSCommand::REMOTE_VM_INSTRUCTION);
+            image_data->data_stream().write(RemoteVMCommand::WRITE_MEMORY);
+            image_data->data_stream().write(destination);
+            image_data->data_stream().write(size);
+            image_data->data_stream().write(source, size);
         });
 
         return result;
@@ -1934,977 +1883,977 @@ bool RemoteVM::is_remote() const noexcept
     return !env && control_center && send_command && get_image_data;
 }
 
-void RemoteVM::process_command(void* arguments, void* response) const noexcept
+void RemoteVM::process_command(ImageData* image_data) const noexcept
 {
-    RemoteVMCommand command = Remote_VM_Read<RemoteVMCommand>(arguments);
-    switch (command)
+    switch (image_data->data_stream().read<RemoteVMCommand>())
     {
         case RemoteVMCommand::ALLOCATE_MEMORY:
         {
-            void* result = this->ExecuteCommand(arguments, &RemoteVM::AllocateMemory);
-            Remote_VM_Write(response, result);
+            void* result = this->ExecuteCommand(image_data, &RemoteVM::AllocateMemory);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::READ_MEMORY:
         {
-            void* source = Remote_VM_Read<void*>(arguments);
-            jsize size = Remote_VM_Read<jsize>(arguments);
-            bool result = this->ReadMemory(response, source, size);
-            Remote_VM_Write(response, result);
+            void* source = Remote_VM_Read<void*>(image_data);
+            jsize size = Remote_VM_Read<jsize>(image_data);
+            bool result = this->ReadMemory(image_data->io_buffer(std::ios::out), source, size);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::WRITE_MEMORY:
         {
-            void* destinaton = Remote_VM_Read<void*>(arguments);
-            jsize size = Remote_VM_Read<jsize>(arguments);
-            bool result = this->WriteMemory(destinaton, arguments, size);
-            Remote_VM_Write(response, result);
+            void* destinaton = Remote_VM_Read<void*>(image_data);
+            jsize size = Remote_VM_Read<jsize>(image_data);
+            bool result = this->WriteMemory(destinaton, image_data->io_buffer(std::ios::in), size);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::FREE_MEMORY:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::FreeMemory);
+            this->ExecuteCommand(image_data, &RemoteVM::FreeMemory);
         }
             break;
 
         case RemoteVMCommand::GET_VERSION:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::GetVersion);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::GetVersion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::DEFINE_CLASS:
         {
-            std::string name = Remote_VM_Read<std::string>(arguments);
-            jobject loader = Remote_VM_Read<jobject>(arguments);
-            jbyte* buf = Remote_VM_Read<jbyte*>(arguments);
-            jsize len = Remote_VM_Read<jsize>(arguments);
-            jclass result = this->DefineClass(name.c_str(), loader, buf == nullptr ? static_cast<jbyte*>(arguments) : buf, len);
-            Remote_VM_Write(response, result);
+            std::string name = Remote_VM_Read<std::string>(image_data);
+            jobject loader = Remote_VM_Read<jobject>(image_data);
+            jbyte* buf = Remote_VM_Read<jbyte*>(image_data);
+            jsize len = Remote_VM_Read<jsize>(image_data);
+            jclass result = this->DefineClass(name.c_str(), loader, buf == nullptr ? static_cast<jbyte*>(image_data->io_buffer(
+                    std::ios::in)) : buf, len);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::FIND_CLASS:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::FindClass);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::FindClass);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::FROM_REFLECTED_METHOD:
         {
-            jmethodID result = this->ExecuteCommand(arguments, &RemoteVM::FromReflectedMethod);
-            Remote_VM_Write(response, result);
+            jmethodID result = this->ExecuteCommand(image_data, &RemoteVM::FromReflectedMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::FROM_REFLECTED_FIELD:
         {
-            jfieldID result = this->ExecuteCommand(arguments, &RemoteVM::FromReflectedField);
-            Remote_VM_Write(response, result);
+            jfieldID result = this->ExecuteCommand(image_data, &RemoteVM::FromReflectedField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::TO_REFLECTED_METHOD:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::ToReflectedMethod);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::ToReflectedMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_SUPER_CLASS:
         {
-            jclass result = this->ExecuteCommand(arguments, &RemoteVM::GetSuperclass);
-            Remote_VM_Write(response, result);
+            jclass result = this->ExecuteCommand(image_data, &RemoteVM::GetSuperclass);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::IS_ASSIGNABLE_FROM:
         {
-            bool result = this->ExecuteCommand(arguments, &RemoteVM::IsAssignableFrom);
-            Remote_VM_Write(response, result);
+            bool result = this->ExecuteCommand(image_data, &RemoteVM::IsAssignableFrom);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::TO_REFLECTED_FIELD:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::ToReflectedField);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::ToReflectedField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::THROW:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::Throw);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::Throw);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::THROW_NEW:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::ThrowNew);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::ThrowNew);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_EXCEPTION_MESSAGE:
         {
-            std::string result = this->ExecuteCommand(arguments, &RemoteVM::GetExceptionMessage);
-            Remote_VM_Write(response, result);
+            std::string result = this->ExecuteCommand(image_data, &RemoteVM::GetExceptionMessage);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::FATAL_ERROR:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::FatalError);
+            this->ExecuteCommand(image_data, &RemoteVM::FatalError);
         }
             break;
 
         case RemoteVMCommand::DELETE_GLOBAL_REF:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::DeleteGlobalRef);
+            this->ExecuteCommand(image_data, &RemoteVM::DeleteGlobalRef);
         }
             break;
 
         case RemoteVMCommand::IS_SAME_OBJECT:
         {
-            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::IsSameObject);
-            Remote_VM_Write(response, result);
+            jboolean result = this->ExecuteCommand(image_data, &RemoteVM::IsSameObject);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::ALLOC_OBJECT:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::AllocObject);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::AllocObject);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_OBJECT:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::NewObject);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::NewObject);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_CLASS:
         {
-            jclass result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectClass);
-            Remote_VM_Write(response, result);
+            jclass result = this->ExecuteCommand(image_data, &RemoteVM::GetObjectClass);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::IS_INSTANCE_OF:
         {
-            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::IsInstanceOf);
-            Remote_VM_Write(response, result);
+            jboolean result = this->ExecuteCommand(image_data, &RemoteVM::IsInstanceOf);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_METHOD_ID:
         {
-            jmethodID result = this->ExecuteCommand(arguments, &RemoteVM::GetMethodID);
-            Remote_VM_Write(response, result);
+            jmethodID result = this->ExecuteCommand(image_data, &RemoteVM::GetMethodID);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_OBJECT_METHOD:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::CallObjectMethod);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::CallObjectMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_BOOLEAN_METHOD:
         {
-            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::CallBooleanMethod);
-            Remote_VM_Write(response, result);
+            jboolean result = this->ExecuteCommand(image_data, &RemoteVM::CallBooleanMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_BYTE_METHOD:
         {
-            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::CallByteMethod);
-            Remote_VM_Write(response, result);
+            jbyte result = this->ExecuteCommand(image_data, &RemoteVM::CallByteMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_CHAR_METHOD:
         {
-            jchar result = this->ExecuteCommand(arguments, &RemoteVM::CallCharMethod);
-            Remote_VM_Write(response, result);
+            jchar result = this->ExecuteCommand(image_data, &RemoteVM::CallCharMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_SHORT_METHOD:
         {
-            jshort result = this->ExecuteCommand(arguments, &RemoteVM::CallShortMethod);
-            Remote_VM_Write(response, result);
+            jshort result = this->ExecuteCommand(image_data, &RemoteVM::CallShortMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_INT_METHOD:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::CallIntMethod);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::CallIntMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_LONG_METHOD:
         {
-            jlong result = this->ExecuteCommand(arguments, &RemoteVM::CallLongMethod);
-            Remote_VM_Write(response, result);
+            jlong result = this->ExecuteCommand(image_data, &RemoteVM::CallLongMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_FLOAT_METHOD:
         {
-            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::CallFloatMethod);
-            Remote_VM_Write(response, result);
+            jfloat result = this->ExecuteCommand(image_data, &RemoteVM::CallFloatMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_DOUBLE_METHOD:
         {
-            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::CallDoubleMethod);
-            Remote_VM_Write(response, result);
+            jdouble result = this->ExecuteCommand(image_data, &RemoteVM::CallDoubleMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_VOID_METHOD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::CallVoidMethod);
+            this->ExecuteCommand(image_data, &RemoteVM::CallVoidMethod);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_OBJECT_METHOD:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualObjectMethod);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualObjectMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_BOOLEAN_METHOD:
         {
-            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualBooleanMethod);
-            Remote_VM_Write(response, result);
+            jboolean result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualBooleanMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_BYTE_METHOD:
         {
-            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualByteMethod);
-            Remote_VM_Write(response, result);
+            jbyte result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualByteMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_CHAR_METHOD:
         {
-            jchar result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualCharMethod);
-            Remote_VM_Write(response, result);
+            jchar result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualCharMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_SHORT_METHOD:
         {
-            jshort result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualShortMethod);
-            Remote_VM_Write(response, result);
+            jshort result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualShortMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_INT_METHOD:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualIntMethod);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualIntMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_LONG_METHOD:
         {
-            jlong result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualLongMethod);
-            Remote_VM_Write(response, result);
+            jlong result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualLongMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_FLOAT_METHOD:
         {
-            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualFloatMethod);
-            Remote_VM_Write(response, result);
+            jfloat result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualFloatMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_DOUBLE_METHOD:
         {
-            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualDoubleMethod);
-            Remote_VM_Write(response, result);
+            jdouble result = this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualDoubleMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_NON_VIRTUAL_VOID_METHOD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::CallNonvirtualVoidMethod);
+            this->ExecuteCommand(image_data, &RemoteVM::CallNonvirtualVoidMethod);
         }
             break;
 
         case RemoteVMCommand::GET_FIELD_ID:
         {
-            jfieldID result = this->ExecuteCommand(arguments, &RemoteVM::GetFieldID);
-            Remote_VM_Write(response, result);
+            jfieldID result = this->ExecuteCommand(image_data, &RemoteVM::GetFieldID);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_FIELD:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectField);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::GetObjectField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_BOOLEAN_FIELD:
         {
-            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::GetBooleanField);
-            Remote_VM_Write(response, result);
+            jboolean result = this->ExecuteCommand(image_data, &RemoteVM::GetBooleanField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_BYTE_FIELD:
         {
-            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::GetByteField);
-            Remote_VM_Write(response, result);
+            jbyte result = this->ExecuteCommand(image_data, &RemoteVM::GetByteField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_CHAR_FIELD:
         {
-            jchar result = this->ExecuteCommand(arguments, &RemoteVM::GetCharField);
-            Remote_VM_Write(response, result);
+            jchar result = this->ExecuteCommand(image_data, &RemoteVM::GetCharField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_SHORT_FIELD:
         {
-            jshort result = this->ExecuteCommand(arguments, &RemoteVM::GetShortField);
-            Remote_VM_Write(response, result);
+            jshort result = this->ExecuteCommand(image_data, &RemoteVM::GetShortField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_INT_FIELD:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::GetIntField);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::GetIntField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_LONG_FIELD:
         {
-            jlong result = this->ExecuteCommand(arguments, &RemoteVM::GetLongField);
-            Remote_VM_Write(response, result);
+            jlong result = this->ExecuteCommand(image_data, &RemoteVM::GetLongField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_FLOAT_FIELD:
         {
-            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::GetFloatField);
-            Remote_VM_Write(response, result);
+            jfloat result = this->ExecuteCommand(image_data, &RemoteVM::GetFloatField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_DOUBLE_FIELD:
         {
-            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::GetDoubleField);
-            Remote_VM_Write(response, result);
+            jdouble result = this->ExecuteCommand(image_data, &RemoteVM::GetDoubleField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::SET_OBJECT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetObjectField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetObjectField);
         }
             break;
 
         case RemoteVMCommand::SET_BOOLEAN_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetBooleanField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetBooleanField);
         }
             break;
 
         case RemoteVMCommand::SET_BYTE_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetByteField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetByteField);
         }
             break;
 
         case RemoteVMCommand::SET_CHAR_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetCharField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetCharField);
         }
             break;
 
         case RemoteVMCommand::SET_SHORT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetShortField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetShortField);
         }
             break;
 
         case RemoteVMCommand::SET_INT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetIntField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetIntField);
         }
             break;
 
         case RemoteVMCommand::SET_LONG_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetLongField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetLongField);
         }
             break;
 
         case RemoteVMCommand::SET_FLOAT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetFloatField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetFloatField);
         }
             break;
 
         case RemoteVMCommand::SET_DOUBLE_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetDoubleField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetDoubleField);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_METHOD_ID:
         {
-            jmethodID result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticMethodID);
-            Remote_VM_Write(response, result);
+            jmethodID result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticMethodID);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_OBJECT_METHOD:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticObjectMethod);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticObjectMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_BOOLEAN_METHOD:
         {
-            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticBooleanMethod);
-            Remote_VM_Write(response, result);
+            jboolean result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticBooleanMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_BYTE_METHOD:
         {
-            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticByteMethod);
-            Remote_VM_Write(response, result);
+            jbyte result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticByteMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_CHAR_METHOD:
         {
-            jchar result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticCharMethod);
-            Remote_VM_Write(response, result);
+            jchar result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticCharMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_SHORT_METHOD:
         {
-            jshort result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticShortMethod);
-            Remote_VM_Write(response, result);
+            jshort result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticShortMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_INT_METHOD:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticIntMethod);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticIntMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_LONG_METHOD:
         {
-            jlong result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticLongMethod);
-            Remote_VM_Write(response, result);
+            jlong result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticLongMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_FLOAT_METHOD:
         {
-            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticFloatMethod);
-            Remote_VM_Write(response, result);
+            jfloat result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticFloatMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_DOUBLE_METHOD:
         {
-            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::CallStaticDoubleMethod);
-            Remote_VM_Write(response, result);
+            jdouble result = this->ExecuteCommand(image_data, &RemoteVM::CallStaticDoubleMethod);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::CALL_STATIC_VOID_METHOD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::CallStaticVoidMethod);
+            this->ExecuteCommand(image_data, &RemoteVM::CallStaticVoidMethod);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_FIELD_ID:
         {
-            jfieldID result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticFieldID);
-            Remote_VM_Write(response, result);
+            jfieldID result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticFieldID);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_OBJECT_FIELD:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticObjectField);
-            Remote_VM_Write(response, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticObjectField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_BOOLEAN_FIELD:
         {
-            jboolean result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticBooleanField);
-            Remote_VM_Write(response, result);
+            jboolean result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticBooleanField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_BYTE_FIELD:
         {
-            jbyte result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticByteField);
-            Remote_VM_Write(response, result);
+            jbyte result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticByteField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_CHAR_FIELD:
         {
-            jchar result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticCharField);
-            Remote_VM_Write(response, result);
+            jchar result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticCharField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_SHORT_FIELD:
         {
-            jshort result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticShortField);
-            Remote_VM_Write(response, result);
+            jshort result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticShortField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_INT_FIELD:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticIntField);
-            Remote_VM_Write(response, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticIntField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_LONG_FIELD:
         {
-            jlong result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticLongField);
-            Remote_VM_Write(response, result);
+            jlong result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticLongField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_FLOAT_FIELD:
         {
-            jfloat result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticFloatField);
-            Remote_VM_Write(response, result);
+            jfloat result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticFloatField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STATIC_DOUBLE_FIELD:
         {
-            jdouble result = this->ExecuteCommand(arguments, &RemoteVM::GetStaticDoubleField);
-            Remote_VM_Write(response, result);
+            jdouble result = this->ExecuteCommand(image_data, &RemoteVM::GetStaticDoubleField);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_OBJECT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticObjectField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticObjectField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_BOOLEAN_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticBooleanField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticBooleanField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_BYTE_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticByteField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticByteField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_CHAR_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticCharField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticCharField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_SHORT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticShortField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticShortField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_INT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticIntField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticIntField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_LONG_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticLongField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticLongField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_FLOAT_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticFloatField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticFloatField);
         }
             break;
 
         case RemoteVMCommand::SET_STATIC_DOUBLE_FIELD:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetStaticDoubleField);
+            this->ExecuteCommand(image_data, &RemoteVM::SetStaticDoubleField);
         }
             break;
 
         case RemoteVMCommand::NEW_STRING:
         {
-            jstring result = this->ExecuteCommand(arguments, &RemoteVM::NewString);
-            Remote_VM_Write(response, result);
+            jstring result = this->ExecuteCommand(image_data, &RemoteVM::NewString);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_LENGTH:
         {
-            jsize result = this->ExecuteCommand(arguments, &RemoteVM::GetStringLength);
-            Remote_VM_Write(response, result);
+            jsize result = this->ExecuteCommand(image_data, &RemoteVM::GetStringLength);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_CHARS:
         {
-            std::wstring result = this->ExecuteCommand(arguments, &RemoteVM::GetStringChars);
-            Remote_VM_Write(response, result);
+            std::wstring result = this->ExecuteCommand(image_data, &RemoteVM::GetStringChars);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_STRING_UTF:
         {
-            jstring result = this->ExecuteCommand(arguments, &RemoteVM::NewStringUTF);
-            Remote_VM_Write(response, result);
+            jstring result = this->ExecuteCommand(image_data, &RemoteVM::NewStringUTF);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_UTF_LENGTH:
         {
-            jsize result = this->ExecuteCommand(arguments, &RemoteVM::GetStringUTFLength);
-            Remote_VM_Write(response, result);
+            jsize result = this->ExecuteCommand(image_data, &RemoteVM::GetStringUTFLength);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_STRING_UTF_CHARS:
         {
-            std::string result = this->ExecuteCommand(arguments, &RemoteVM::GetStringUTFChars);
-            Remote_VM_Write(response, result);
+            std::string result = this->ExecuteCommand(image_data, &RemoteVM::GetStringUTFChars);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_ARRAY_LENGTH:
         {
-            jsize result = this->ExecuteCommand(arguments, &RemoteVM::GetArrayLength);
-            Remote_VM_Write(response, result);
+            jsize result = this->ExecuteCommand(image_data, &RemoteVM::GetArrayLength);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_OBJECT_ARRAY:
         {
-            jobjectArray result = this->ExecuteCommand(arguments, &RemoteVM::NewObjectArray);
-            Remote_VM_Write(response, result);
+            jobjectArray result = this->ExecuteCommand(image_data, &RemoteVM::NewObjectArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_ARRAY_ELEMENTS:
         {
-            std::vector<jobject> result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jobject> result = this->ExecuteCommand(image_data, &RemoteVM::GetObjectArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::SET_OBJECT_ARRAY_ELEMENTS:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetObjectArrayElements);
+            this->ExecuteCommand(image_data, &RemoteVM::SetObjectArrayElements);
         }
             break;
 
         case RemoteVMCommand::NEW_BOOLEAN_ARRAY:
         {
-            jbooleanArray result = this->ExecuteCommand(arguments, &RemoteVM::NewBooleanArray);
-            Remote_VM_Write(response, result);
+            jbooleanArray result = this->ExecuteCommand(image_data, &RemoteVM::NewBooleanArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_BYTE_ARRAY:
         {
-            jbyteArray result = this->ExecuteCommand(arguments, &RemoteVM::NewByteArray);
-            Remote_VM_Write(response, result);
+            jbyteArray result = this->ExecuteCommand(image_data, &RemoteVM::NewByteArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_CHAR_ARRAY:
         {
-            jcharArray result = this->ExecuteCommand(arguments, &RemoteVM::NewCharArray);
-            Remote_VM_Write(response, result);
+            jcharArray result = this->ExecuteCommand(image_data, &RemoteVM::NewCharArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_SHORT_ARRAY:
         {
-            jshortArray result = this->ExecuteCommand(arguments, &RemoteVM::NewShortArray);
-            Remote_VM_Write(response, result);
+            jshortArray result = this->ExecuteCommand(image_data, &RemoteVM::NewShortArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_INT_ARRAY:
         {
-            jintArray result = this->ExecuteCommand(arguments, &RemoteVM::NewIntArray);
-            Remote_VM_Write(response, result);
+            jintArray result = this->ExecuteCommand(image_data, &RemoteVM::NewIntArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_LONG_ARRAY:
         {
-            jlongArray result = this->ExecuteCommand(arguments, &RemoteVM::NewLongArray);
-            Remote_VM_Write(response, result);
+            jlongArray result = this->ExecuteCommand(image_data, &RemoteVM::NewLongArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_FLOAT_ARRAY:
         {
-            jfloatArray result = this->ExecuteCommand(arguments, &RemoteVM::NewFloatArray);
-            Remote_VM_Write(response, result);
+            jfloatArray result = this->ExecuteCommand(image_data, &RemoteVM::NewFloatArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_DOUBLE_ARRAY:
         {
-            jdoubleArray result = this->ExecuteCommand(arguments, &RemoteVM::NewDoubleArray);
-            Remote_VM_Write(response, result);
+            jdoubleArray result = this->ExecuteCommand(image_data, &RemoteVM::NewDoubleArray);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_BOOLEAN_ARRAY_ELEMENTS:
         {
-            std::vector<jboolean> result = this->ExecuteCommand(arguments, &RemoteVM::GetBooleanArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jboolean> result = this->ExecuteCommand(image_data, &RemoteVM::GetBooleanArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_BYTE_ARRAY_ELEMENTS:
         {
-            std::vector<jbyte> result = this->ExecuteCommand(arguments, &RemoteVM::GetByteArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jbyte> result = this->ExecuteCommand(image_data, &RemoteVM::GetByteArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_CHAR_ARRAY_ELEMENTS:
         {
-            std::vector<jchar> result = this->ExecuteCommand(arguments, &RemoteVM::GetCharArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jchar> result = this->ExecuteCommand(image_data, &RemoteVM::GetCharArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_SHORT_ARRAY_ELEMENTS:
         {
-            std::vector<jshort> result = this->ExecuteCommand(arguments, &RemoteVM::GetShortArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jshort> result = this->ExecuteCommand(image_data, &RemoteVM::GetShortArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_INT_ARRAY_ELEMENTS:
         {
-            std::vector<jint> result = this->ExecuteCommand(arguments, &RemoteVM::GetIntArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jint> result = this->ExecuteCommand(image_data, &RemoteVM::GetIntArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_LONG_ARRAY_ELEMENTS:
         {
-            std::vector<jlong> result = this->ExecuteCommand(arguments, &RemoteVM::GetLongArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jlong> result = this->ExecuteCommand(image_data, &RemoteVM::GetLongArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_FLOAT_ARRAY_ELEMENTS:
         {
-            std::vector<jfloat> result = this->ExecuteCommand(arguments, &RemoteVM::GetFloatArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jfloat> result = this->ExecuteCommand(image_data, &RemoteVM::GetFloatArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_DOUBLE_ARRAY_ELEMENTS:
         {
-            std::vector<jdouble> result = this->ExecuteCommand(arguments, &RemoteVM::GetDoubleArrayElements);
-            Remote_VM_Write(response, result);
+            std::vector<jdouble> result = this->ExecuteCommand(image_data, &RemoteVM::GetDoubleArrayElements);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_BOOLEAN_ARRAY_REGION:
         {
-            std::vector<jboolean> result = this->ExecuteCommand(arguments, &RemoteVM::GetBooleanArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jboolean> result = this->ExecuteCommand(image_data, &RemoteVM::GetBooleanArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_BYTE_ARRAY_REGION:
         {
-            std::vector<jbyte> result = this->ExecuteCommand(arguments, &RemoteVM::GetByteArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jbyte> result = this->ExecuteCommand(image_data, &RemoteVM::GetByteArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_CHAR_ARRAY_REGION:
         {
-            std::vector<jchar> result = this->ExecuteCommand(arguments, &RemoteVM::GetCharArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jchar> result = this->ExecuteCommand(image_data, &RemoteVM::GetCharArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_SHORT_ARRAY_REGION:
         {
-            std::vector<jshort> result = this->ExecuteCommand(arguments, &RemoteVM::GetShortArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jshort> result = this->ExecuteCommand(image_data, &RemoteVM::GetShortArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_INT_ARRAY_REGION:
         {
-            std::vector<jint> result = this->ExecuteCommand(arguments, &RemoteVM::GetIntArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jint> result = this->ExecuteCommand(image_data, &RemoteVM::GetIntArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_LONG_ARRAY_REGION:
         {
-            std::vector<jlong> result = this->ExecuteCommand(arguments, &RemoteVM::GetLongArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jlong> result = this->ExecuteCommand(image_data, &RemoteVM::GetLongArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_FLOAT_ARRAY_REGION:
         {
-            std::vector<jfloat> result = this->ExecuteCommand(arguments, &RemoteVM::GetFloatArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jfloat> result = this->ExecuteCommand(image_data, &RemoteVM::GetFloatArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_DOUBLE_ARRAY_REGION:
         {
-            std::vector<jdouble> result = this->ExecuteCommand(arguments, &RemoteVM::GetDoubleArrayRegion);
-            Remote_VM_Write(response, result);
+            std::vector<jdouble> result = this->ExecuteCommand(image_data, &RemoteVM::GetDoubleArrayRegion);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::SET_BOOLEAN_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetBooleanArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetBooleanArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_BYTE_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetByteArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetByteArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_CHAR_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetCharArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetCharArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_SHORT_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetShortArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetShortArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_INT_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetIntArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetIntArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_LONG_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetLongArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetLongArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_FLOAT_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetFloatArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetFloatArrayRegion);
         }
             break;
 
         case RemoteVMCommand::SET_DOUBLE_ARRAY_REGION:
         {
-            this->ExecuteCommand(arguments, &RemoteVM::SetDoubleArrayRegion);
+            this->ExecuteCommand(image_data, &RemoteVM::SetDoubleArrayRegion);
         }
             break;
 
         case RemoteVMCommand::MONITOR_ENTER:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::MonitorEnter);
-            Remote_VM_Write(arguments, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::MonitorEnter);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::MONITOR_EXIT:
         {
-            jint result = this->ExecuteCommand(arguments, &RemoteVM::MonitorExit);
-            Remote_VM_Write(arguments, result);
+            jint result = this->ExecuteCommand(image_data, &RemoteVM::MonitorExit);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_JAVA_VM:
         {
-            JavaVM* result = this->ExecuteCommand(arguments, &RemoteVM::GetJavaVM);
-            Remote_VM_Write(arguments, result);
+            JavaVM* result = this->ExecuteCommand(image_data, &RemoteVM::GetJavaVM);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::NEW_DIRECT_BYTE_BUFFER:
         {
-            jobject result = this->ExecuteCommand(arguments, &RemoteVM::NewDirectByteBuffer);
-            Remote_VM_Write(arguments, result);
+            jobject result = this->ExecuteCommand(image_data, &RemoteVM::NewDirectByteBuffer);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_DIRECT_BUFFER_ADDRESS:
         {
-            void* result = this->ExecuteCommand(arguments, &RemoteVM::GetDirectBufferAddress);
-            Remote_VM_Write(arguments, result);
+            void* result = this->ExecuteCommand(image_data, &RemoteVM::GetDirectBufferAddress);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_DIRECT_BUFFER_CAPACITY:
         {
-            jlong result = this->ExecuteCommand(arguments, &RemoteVM::GetDirectBufferCapacity);
-            Remote_VM_Write(arguments, result);
+            jlong result = this->ExecuteCommand(image_data, &RemoteVM::GetDirectBufferCapacity);
+            image_data->data_stream().write(result);
         }
             break;
 
         case RemoteVMCommand::GET_OBJECT_REF_TYPE:
         {
-            jobjectRefType result = this->ExecuteCommand(arguments, &RemoteVM::GetObjectRefType);
-            Remote_VM_Write(arguments, result);
+            jobjectRefType result = this->ExecuteCommand(image_data, &RemoteVM::GetObjectRefType);
+            image_data->data_stream().write(result);
         }
             break;
     }

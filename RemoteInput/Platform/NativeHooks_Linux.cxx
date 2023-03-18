@@ -378,51 +378,51 @@ void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, 
 #if !defined(USE_DETOURS)
 extern "C" [[gnu::visibility("default")]] Bool XShmPutImage(Display *display, Drawable d, GC gc, XImage *image, int src_x, int src_y, int dest_x, int dest_y, unsigned int width, unsigned int height, bool send_event) noexcept
 {
-	extern std::unique_ptr<ControlCenter> control_center;
-	if (control_center)
-	{
-		int bytes_per_pixel = image->bits_per_pixel / 8;
-		int stride = width * bytes_per_pixel;
-		void *rasBase = reinterpret_cast<std::uint8_t*>(image->data) + (stride * src_y) + (bytes_per_pixel * src_x);
+    extern std::unique_ptr<ControlCenter> control_center;
+    if (control_center)
+    {
+        int bytes_per_pixel = image->bits_per_pixel / 8;
+        int stride = width * bytes_per_pixel;
+        void *rasBase = reinterpret_cast<std::uint8_t*>(image->data) + (stride * src_y) + (bytes_per_pixel * src_x);
 
-		control_center->update_dimensions(width, height);
+        control_center->update_dimensions(width, height);
 
-		//Render to Shared Memory
-		std::uint8_t* dest = control_center->get_image();
-		if (dest)
-		{
-			std::memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
-		}
+        //Render to Shared Memory
+        std::uint8_t* dest = control_center->get_image();
+        if (dest)
+        {
+            std::memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
+        }
 
-		//Render Debug Graphics
-		if (control_center->get_debug_graphics())
-		{
-			std::uint8_t* src = control_center->get_debug_image();
-			if (src)
-			{
-				draw_image(rasBase, src, width, height, bytes_per_pixel);
-			}
-		}
+        //Render Debug Graphics
+        if (control_center->get_debug_graphics())
+        {
+            std::uint8_t* src = control_center->get_debug_image();
+            if (src)
+            {
+                draw_image(rasBase, src, width, height, bytes_per_pixel);
+            }
+        }
 
-		//Render Cursor
-		std::int32_t x = -1;
-		std::int32_t y = -1;
-		control_center->get_applet_mouse_position(&x, &y);
+        //Render Cursor
+        std::int32_t x = -1;
+        std::int32_t y = -1;
+        control_center->get_applet_mouse_position(&x, &y);
 
-		if (x > -1 && y > -1)
-		{
-			draw_circle(x, y, 2, rasBase, width, height, bytes_per_pixel, true, 0xFF0000FF);
-		}
+        if (x > -1 && y > -1)
+        {
+            draw_circle(x, y, 2, rasBase, width, height, bytes_per_pixel, true, 0xFF0000FF);
+        }
 
-		/*for (std::size_t i = 0; i < image->height; ++i)
-		{
-			for (std::size_t j = 0; j < image->width; ++j)
-			{
-				std::uint8_t pixel = image->data[i * image->width + (image->height - j - 1)];
-				*dest++ = pixel;
-			}
-		}*/
-	}
+        /*for (std::size_t i = 0; i < image->height; ++i)
+        {
+            for (std::size_t j = 0; j < image->width; ++j)
+            {
+                std::uint8_t pixel = image->data[i * image->width + (image->height - j - 1)];
+                *dest++ = pixel;
+            }
+        }*/
+    }
 
     typedef Bool (*XShmPutImage_t)(Display*, Drawable, GC, XImage*, int, int, int, int, unsigned int, unsigned int, bool);
     static XShmPutImage_t o_XShmPutImage = reinterpret_cast<XShmPutImage_t>(dlsym(RTLD_NEXT, "XShmPutImage"));
@@ -557,7 +557,7 @@ extern "C" [[gnu::visibility("default")]] void glXSwapBuffers(Display* dpy, GLXD
     return opengl_hook->call<void, decltype(glXSwapBuffers)>(dpy, drawable);
     #else
     static decltype(glXSwapBuffers)* o_glXSwapBuffers = reinterpret_cast<decltype(glXSwapBuffers)*>(dlsym(RTLD_NEXT, "glXSwapBuffers"));
-	return o_glXSwapBuffers(dpy, drawable);
+    return o_glXSwapBuffers(dpy, drawable);
     #endif
 }
 #endif
@@ -612,7 +612,7 @@ void InitialiseHooks() noexcept
         #endif
 
         //Signal that all hooks are finished initializing..
-		ControlCenter::signal_sync(getpid());
+        ControlCenter::signal_sync(getpid());
     }).detach();
     #endif
 }

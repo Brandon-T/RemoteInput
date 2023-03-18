@@ -1,4 +1,5 @@
 #include "DebugConsole.hxx"
+#include <cstdio>
 
 DebugConsole::DebugConsole() noexcept : input(nullptr), error(nullptr), output(nullptr), allocated_console(false)
 {
@@ -6,9 +7,15 @@ DebugConsole::DebugConsole() noexcept : input(nullptr), error(nullptr), output(n
     allocated_console = AllocConsole();
     #endif
 
+    #if defined(__STDC_LIB_EXT1__) && __STDC_WANT_LIB_EXT1__ == 1
     freopen_s(&input, "CONIN$", "r", stdin);
     freopen_s(&error, "CONOUT$", "w", stderr);
     freopen_s(&output, "CONOUT$", "w", stdout);
+    #else
+    input = std::freopen("CONIN$", "r", stdin);
+    error = std::freopen("CONOUT$", "w", stderr);
+    output = std::freopen("CONOUT$", "w", stdout);
+    #endif
 }
 
 DebugConsole::DebugConsole(DebugConsole&& other) : input(other.input), error(other.error), output(other.output), allocated_console(other.allocated_console)

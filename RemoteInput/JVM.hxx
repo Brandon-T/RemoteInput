@@ -44,7 +44,7 @@ public:
 
 
     jint AttachCurrentThread() noexcept;
-	jint AttachCurrentThreadAsDaemon() noexcept;
+    jint AttachCurrentThreadAsDaemon() noexcept;
     jint AttachCurrentThreadAsDaemon(JNIEnv** env) noexcept;
     jint DetachCurrentThread() noexcept;
     jint GetEnv(void **penv, jint version) const noexcept;

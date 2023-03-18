@@ -24,16 +24,16 @@ private:
 
 public:
     DetachedThreadPool() noexcept;
-	DetachedThreadPool(std::size_t max_threads) noexcept;
-	DetachedThreadPool(const DetachedThreadPool&) = delete;
-	DetachedThreadPool(DetachedThreadPool&& other) noexcept;
+    DetachedThreadPool(std::size_t max_threads) noexcept;
+    DetachedThreadPool(const DetachedThreadPool&) = delete;
+    DetachedThreadPool(DetachedThreadPool&& other) noexcept;
     ~DetachedThreadPool() noexcept;
 
 
     DetachedThreadPool& operator = (const DetachedThreadPool&) = delete;
     DetachedThreadPool& operator = (DetachedThreadPool&&) = delete;
 
-	void terminate() noexcept;
+    void terminate() noexcept;
 
     void add_task(std::function<void(std::atomic_bool&)> &&task);
 

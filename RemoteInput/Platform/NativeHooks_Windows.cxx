@@ -75,16 +75,16 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
     };
 
     static HMODULE module = GetModuleHandle("awt.dll");
-	static NativePrimitive* (__stdcall *GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(GetProcAddress(module, "_GetNativePrim@8",  "GetNativePrim"));
-	static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8", "SurfaceData_GetOps"));
-	static jint (__stdcall *Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(GetProcAddress(module, "_Region_GetInfo@12", "Region_GetInfo"));
+    static NativePrimitive* (__stdcall *GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(GetProcAddress(module, "_GetNativePrim@8",  "GetNativePrim"));
+    static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8", "SurfaceData_GetOps"));
+    static jint (__stdcall *Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(GetProcAddress(module, "_Region_GetInfo@12", "Region_GetInfo"));
     static void (__stdcall *SurfaceData_IntersectBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBounds@8", "SurfaceData_IntersectBounds"));
     static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16", "SurfaceData_IntersectBlitBounds"));
     static void (__stdcall *Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(GetProcAddress(module, "_Region_StartIteration@8", "Region_StartIteration"));
     static jint (__stdcall *Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(GetProcAddress(module, "_Region_NextIteration@8", "Region_NextIteration"));
     static void (__stdcall *Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(GetProcAddress(module, "_Region_EndIteration@8", "Region_EndIteration"));
 
-	if (!GetNativePrim || !SurfaceData_GetOps || !Region_GetInfo || !SurfaceData_IntersectBounds || !SurfaceData_IntersectBlitBounds || !Region_StartIteration || !Region_NextIteration || !Region_EndIteration || width <= 0 || height <= 0)
+    if (!GetNativePrim || !SurfaceData_GetOps || !Region_GetInfo || !SurfaceData_IntersectBounds || !SurfaceData_IntersectBlitBounds || !Region_StartIteration || !Region_NextIteration || !Region_EndIteration || width <= 0 || height <= 0)
     {
         return native_hook->call<void, decltype(JavaNativeBlit)>(env, self, srcData, dstData, comp, clip, srcx, srcy, dstx, dsty, width, height);
     }
@@ -408,96 +408,96 @@ void __stdcall JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, j
 void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
-	if (!control_center || !can_render(-1, width, height))
-	{
-		//Original
-		return native_hook->call<void, decltype(JavaNativeGDIBlit)>(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
-	}
+    if (!control_center || !can_render(-1, width, height))
+    {
+        //Original
+        return native_hook->call<void, decltype(JavaNativeGDIBlit)>(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
+    }
 
     auto GetProcAddress = [](HMODULE module, const char* stdcall_name, const char* cdecl_name) -> FARPROC {
         FARPROC result = ::GetProcAddress(module, stdcall_name);
         return result ? result : ::GetProcAddress(module, cdecl_name);
     };
 
-	//Setup Function Pointers
+    //Setup Function Pointers
     static HMODULE module = GetModuleHandle("awt.dll");
-	static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8", "SurfaceData_GetOps"));
-	static GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(GDIWindowSurfaceData_GetOps)>(GetProcAddress(module, "_GDIWindowSurfaceData_GetOps@8", "GDIWindowSurfaceData_GetOps"));
-	static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16", "SurfaceData_IntersectBlitBounds"));
+    static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8", "SurfaceData_GetOps"));
+    static GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(GDIWindowSurfaceData_GetOps)>(GetProcAddress(module, "_GDIWindowSurfaceData_GetOps@8", "GDIWindowSurfaceData_GetOps"));
+    static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16", "SurfaceData_IntersectBlitBounds"));
 
-	if (!SurfaceData_GetOps || !GDIWindowSurfaceData_GetOps || !SurfaceData_IntersectBlitBounds)
-	{
-		//Original
-		return native_hook->call<void, decltype(JavaNativeGDIBlit)>(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
-	}
+    if (!SurfaceData_GetOps || !GDIWindowSurfaceData_GetOps || !SurfaceData_IntersectBlitBounds)
+    {
+        //Original
+        return native_hook->call<void, decltype(JavaNativeGDIBlit)>(env, joSelf, srcData, dstData, clip, srcx, srcy, dstx, dsty, width, height, rmask, gmask, bmask, needLut);
+    }
 
-	//Setup Source Info
-	SurfaceDataOps* srcOps = SurfaceData_GetOps(env, srcData);
-	SurfaceDataRasInfo srcInfo = {0};
-	srcInfo.bounds.x1 = srcx;
-	srcInfo.bounds.y1 = srcy;
-	srcInfo.bounds.x2 = srcx + width;
-	srcInfo.bounds.y2 = srcy + height;
+    //Setup Source Info
+    SurfaceDataOps* srcOps = SurfaceData_GetOps(env, srcData);
+    SurfaceDataRasInfo srcInfo = {0};
+    srcInfo.bounds.x1 = srcx;
+    srcInfo.bounds.y1 = srcy;
+    srcInfo.bounds.x2 = srcx + width;
+    srcInfo.bounds.y2 = srcy + height;
 
-	if (srcOps->Lock(env, srcOps, &srcInfo, needLut ? (SD_LOCK_READ | SD_LOCK_LUT) : SD_LOCK_READ) == SD_SUCCESS)
-	{
-		//Setup Destination Clipping Info
-		GDIWinSDOps* dstOps = GDIWindowSurfaceData_GetOps(env, dstData);
-		SurfaceDataBounds dstBounds = {dstx, dsty, dstx + width, dsty + height};
-		SurfaceData_IntersectBlitBounds(&(srcInfo.bounds), &dstBounds, dstx - srcx, dsty - srcy);
-		srcx = srcInfo.bounds.x1;
-		srcy = srcInfo.bounds.y1;
-		dstx = dstBounds.x1;
-		dsty = dstBounds.y1;
-		width = srcInfo.bounds.x2 - srcInfo.bounds.x1;
-		height = srcInfo.bounds.y2 - srcInfo.bounds.y1;
+    if (srcOps->Lock(env, srcOps, &srcInfo, needLut ? (SD_LOCK_READ | SD_LOCK_LUT) : SD_LOCK_READ) == SD_SUCCESS)
+    {
+        //Setup Destination Clipping Info
+        GDIWinSDOps* dstOps = GDIWindowSurfaceData_GetOps(env, dstData);
+        SurfaceDataBounds dstBounds = {dstx, dsty, dstx + width, dsty + height};
+        SurfaceData_IntersectBlitBounds(&(srcInfo.bounds), &dstBounds, dstx - srcx, dsty - srcy);
+        srcx = srcInfo.bounds.x1;
+        srcy = srcInfo.bounds.y1;
+        dstx = dstBounds.x1;
+        dsty = dstBounds.y1;
+        width = srcInfo.bounds.x2 - srcInfo.bounds.x1;
+        height = srcInfo.bounds.y2 - srcInfo.bounds.y1;
 
-		if (width > 0 && height > 0)
-		{
-			srcOps->GetRasInfo(env, srcOps, &srcInfo);
-			if (srcInfo.rasBase)
-			{
-				void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
-				bool isRasterAligned = !(srcInfo.scanStride & 0x03);
+        if (width > 0 && height > 0)
+        {
+            srcOps->GetRasInfo(env, srcOps, &srcInfo);
+            if (srcInfo.rasBase)
+            {
+                void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
+                bool isRasterAligned = !(srcInfo.scanStride & 0x03);
 
-				control_center->update_dimensions(width, height);
-				std::uint8_t* dest = control_center->get_image();
+                control_center->update_dimensions(width, height);
+                std::uint8_t* dest = control_center->get_image();
 
-				//Render to Shared Memory
-				if (dest)
-				{
-					if (isRasterAligned)
-					{
-						memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-					}
-					else
-					{
-						for (int i = 0; i < height; ++i)
-						{
-							int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-							memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
-							rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
-						}
-					}
-				}
+                //Render to Shared Memory
+                if (dest)
+                {
+                    if (isRasterAligned)
+                    {
+                        memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < height; ++i)
+                        {
+                            int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
+                            memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+                            rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+                        }
+                    }
+                }
 
-				HDC hDC = dstOps->GetDC(env, dstOps, 0, nullptr, clip, nullptr, 0);
-				if (hDC)
-				{
-					//Clone Renderer
-					static jint screenWidth = 0;
-					static jint screenHeight = 0;
-					static std::unique_ptr<std::uint8_t[]> screenBuffer = nullptr;
+                HDC hDC = dstOps->GetDC(env, dstOps, 0, nullptr, clip, nullptr, 0);
+                if (hDC)
+                {
+                    //Clone Renderer
+                    static jint screenWidth = 0;
+                    static jint screenHeight = 0;
+                    static std::unique_ptr<std::uint8_t[]> screenBuffer = nullptr;
 
-					if (screenWidth < width || screenHeight < height)
-					{
+                    if (screenWidth < width || screenHeight < height)
+                    {
                         screenWidth = width;
                         screenHeight = height;
-						screenBuffer = std::make_unique<std::uint8_t[]>((srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-					}
+                        screenBuffer = std::make_unique<std::uint8_t[]>((srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                    }
 
-					if (screenBuffer)
-					{
+                    if (screenBuffer)
+                    {
                         memcpy(screenBuffer.get(), dest, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
 
                         //Render Debug Graphics
@@ -522,64 +522,64 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
                         }
                     }
 
-					//Render Screen
-					BmiType bmi = {0};
-					long dwHeight = srcInfo.bounds.y2 - srcInfo.bounds.y1;
-					bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-					bmi.bmiHeader.biWidth = srcInfo.scanStride / srcInfo.pixelStride;
-					bmi.bmiHeader.biHeight = isRasterAligned ? -dwHeight : -1;
-					bmi.bmiHeader.biPlanes = 1;
-					bmi.bmiHeader.biBitCount = srcInfo.pixelStride * 8;
-					bmi.bmiHeader.biCompression = srcInfo.pixelStride != 2 ? BI_RGB : BI_BITFIELDS;
-					bmi.bmiHeader.biSizeImage = (bmi.bmiHeader.biWidth * dwHeight * srcInfo.pixelStride);
-					bmi.bmiHeader.biXPelsPerMeter = 0;
-					bmi.bmiHeader.biYPelsPerMeter = 0;
-					bmi.bmiHeader.biClrUsed = 0;
-					bmi.bmiHeader.biClrImportant = 0;
-					bmi.colors.dwMasks[0] = 0x00FF0000;
-					bmi.colors.dwMasks[1] = 0x0000FF00;
-					bmi.colors.dwMasks[2] = 0x000000FF;
+                    //Render Screen
+                    BmiType bmi = {0};
+                    long dwHeight = srcInfo.bounds.y2 - srcInfo.bounds.y1;
+                    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+                    bmi.bmiHeader.biWidth = srcInfo.scanStride / srcInfo.pixelStride;
+                    bmi.bmiHeader.biHeight = isRasterAligned ? -dwHeight : -1;
+                    bmi.bmiHeader.biPlanes = 1;
+                    bmi.bmiHeader.biBitCount = srcInfo.pixelStride * 8;
+                    bmi.bmiHeader.biCompression = srcInfo.pixelStride != 2 ? BI_RGB : BI_BITFIELDS;
+                    bmi.bmiHeader.biSizeImage = (bmi.bmiHeader.biWidth * dwHeight * srcInfo.pixelStride);
+                    bmi.bmiHeader.biXPelsPerMeter = 0;
+                    bmi.bmiHeader.biYPelsPerMeter = 0;
+                    bmi.bmiHeader.biClrUsed = 0;
+                    bmi.bmiHeader.biClrImportant = 0;
+                    bmi.colors.dwMasks[0] = 0x00FF0000;
+                    bmi.colors.dwMasks[1] = 0x0000FF00;
+                    bmi.colors.dwMasks[2] = 0x000000FF;
 
-					rasBase = screenBuffer.get();
+                    rasBase = screenBuffer.get();
 
-					if (isRasterAligned)
-					{
-						if (::IsWindowVisible(dstOps->window))
-						{
-							SetDIBitsToDevice(hDC, dstx, dsty, width, height, 0, 0, 0, height, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
-						}
-					}
-					else
-					{
-						for (jint i = 0; i < height; i += 1)
-						{
-							if (::IsWindowVisible(dstOps->window))
-							{
-								SetDIBitsToDevice(hDC, dstx, dsty + i, width, 1, 0, 0, 0, 1, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
-								rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
-							}
-							else
-							{
-								break;
-							}
-						}
-					}
+                    if (isRasterAligned)
+                    {
+                        if (::IsWindowVisible(dstOps->window))
+                        {
+                            SetDIBitsToDevice(hDC, dstx, dsty, width, height, 0, 0, 0, height, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
+                        }
+                    }
+                    else
+                    {
+                        for (jint i = 0; i < height; i += 1)
+                        {
+                            if (::IsWindowVisible(dstOps->window))
+                            {
+                                SetDIBitsToDevice(hDC, dstx, dsty + i, width, 1, 0, 0, 0, 1, rasBase, reinterpret_cast<BITMAPINFO*>(&bmi), DIB_RGB_COLORS);
+                                rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
 
-					dstOps->ReleaseDC(env, dstOps, hDC);
-				}
+                    dstOps->ReleaseDC(env, dstOps, hDC);
+                }
 
-				if (srcOps->Release)
-				{
-					srcOps->Release(env, srcOps, &srcInfo);
-				}
-			}
-		}
+                if (srcOps->Release)
+                {
+                    srcOps->Release(env, srcOps, &srcInfo);
+                }
+            }
+        }
 
-		if (srcOps->Unlock)
-		{
-			srcOps->Unlock(env, srcOps, &srcInfo);
-		}
-	}
+        if (srcOps->Unlock)
+        {
+            srcOps->Unlock(env, srcOps, &srcInfo);
+        }
+    }
 }
 
 HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface, SurfaceDataRasInfo *pDstInfo, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty) noexcept
@@ -783,73 +783,73 @@ void LoadOpenGLExtensions() noexcept
 
 void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
-	static int w = 0;
-	static int h = 0;
+    static int w = 0;
+    static int h = 0;
 
-	#if defined(__APPLE__)
-	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
-	#endif
+    #if defined(__APPLE__)
+    CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+    #endif
 
-	//Buffer size changed
-	if (w != width || h != height)
-	{
-	    w = width;
-	    h = height;
+    //Buffer size changed
+    if (w != width || h != height)
+    {
+        w = width;
+        h = height;
 
-		//If buffers already exist, clean them up
-		if (pbo[1] != 0)
-		{
-			glDeleteBuffers(2, pbo);
-			pbo[0] = 0;
-			pbo[1] = 0;
-		}
+        //If buffers already exist, clean them up
+        if (pbo[1] != 0)
+        {
+            glDeleteBuffers(2, pbo);
+            pbo[0] = 0;
+            pbo[1] = 0;
+        }
 
-		//Generate buffers
-		glGenBuffers(2, pbo);
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
-		glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
+        //Generate buffers
+        glGenBuffers(2, pbo);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
+        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[1]);
-		glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-	}
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[1]);
+        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    }
 }
 
 void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
 {
-	static int index = 0;
-	static int nextIndex = 0;
+    static int index = 0;
+    static int nextIndex = 0;
 
-	#if defined(__APPLE__)
-	CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
-	#endif
+    #if defined(__APPLE__)
+    CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+    #endif
 
-	//Swap indices
-	index = (index + 1) % 2;
-	nextIndex = (index + 1) % 2;
+    //Swap indices
+    index = (index + 1) % 2;
+    nextIndex = (index + 1) % 2;
 
-	//read back-buffer.
+    //read back-buffer.
     glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
-	glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[nextIndex]);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
+    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[nextIndex]);
 
-	void* data = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    void* data = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 
-	if (data)
-	{
-		//memcpy(dest, data, width * height * 4);
-		void* pixels = dest;
-		FlipImageBytes(data, pixels, width, height, 32);
-		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-	}
-	else
-	{
-		glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, dest);
-	}
+    if (data)
+    {
+        //memcpy(dest, data, width * height * 4);
+        void* pixels = dest;
+        FlipImageBytes(data, pixels, width, height, 32);
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+    }
+    else
+    {
+        glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, dest);
+    }
 
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
 void PushGLContext(HDC hdc, GLint width, GLint height) noexcept
@@ -889,45 +889,45 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
 {
     extern std::unique_ptr<ControlCenter> control_center;
 
-	if (control_center)
-	{
-	    int src_x = 0;
-	    int src_y = 0;
-	    int bytes_per_pixel = 4; //TODO: Parse format  //can_render(format == GL_RGBA ? 3 : -1, width, height)
-		int stride = width * bytes_per_pixel;
+    if (control_center)
+    {
+        int src_x = 0;
+        int src_y = 0;
+        int bytes_per_pixel = 4; //TODO: Parse format  //can_render(format == GL_RGBA ? 3 : -1, width, height)
+        int stride = width * bytes_per_pixel;
         void *rasBase = static_cast<std::uint8_t*>(const_cast<void*>(data)) + (stride * src_y) + (bytes_per_pixel * src_x);
 
-		control_center->update_dimensions(width, height);
+        control_center->update_dimensions(width, height);
 
-		//Render to Shared Memory
-		std::uint8_t* dest = control_center->get_image();
-		if (dest)
-		{
-			memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
-		}
+        //Render to Shared Memory
+        std::uint8_t* dest = control_center->get_image();
+        if (dest)
+        {
+            memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
+        }
 
-		//Render Debug Graphics
-		if (control_center->get_debug_graphics())
-		{
-			std::uint8_t* src = control_center->get_debug_image();
-			if (src)
-			{
-				draw_image(rasBase, src, width, height, bytes_per_pixel);
-			}
-		}
+        //Render Debug Graphics
+        if (control_center->get_debug_graphics())
+        {
+            std::uint8_t* src = control_center->get_debug_image();
+            if (src)
+            {
+                draw_image(rasBase, src, width, height, bytes_per_pixel);
+            }
+        }
 
-		//Render Cursor
-		std::int32_t x = -1;
-		std::int32_t y = -1;
-		control_center->get_applet_mouse_position(&x, &y);
+        //Render Cursor
+        std::int32_t x = -1;
+        std::int32_t y = -1;
+        control_center->get_applet_mouse_position(&x, &y);
 
-		if (x > -1 && y > -1)
-		{
-			draw_circle(x, y, 3, rasBase, width, height, bytes_per_pixel, true, 0xFF0000FF);
-		}
-	}
+        if (x > -1 && y > -1)
+        {
+            draw_circle(x, y, 3, rasBase, width, height, bytes_per_pixel, true, 0xFF0000FF);
+        }
+    }
 
-	if (opengl_swap_hook)
+    if (opengl_swap_hook)
     {
         opengl_swap_hook->call<void, decltype(mglDrawPixels)>(width, height, format, type, data);
     }
@@ -935,29 +935,29 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
 
 BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
 {
-	extern std::unique_ptr<ControlCenter> control_center;
+    extern std::unique_ptr<ControlCenter> control_center;
 
-	if (control_center)
-	{
-		static GLint ViewPort[4] = {0};
-		static GLuint pbo[2] = {0};
+    if (control_center)
+    {
+        static GLint ViewPort[4] = {0};
+        static GLuint pbo[2] = {0};
 
-		glGetIntegerv(GL_VIEWPORT, ViewPort);
-		GLint width = ViewPort[2] - ViewPort[0];
-		GLint height = ViewPort[3] - ViewPort[1];
+        glGetIntegerv(GL_VIEWPORT, ViewPort);
+        GLint width = ViewPort[2] - ViewPort[0];
+        GLint height = ViewPort[3] - ViewPort[1];
 
-		if (can_render(-1, width, height))
-		{
-			control_center->update_dimensions(width, height);
+        if (can_render(-1, width, height))
+        {
+            control_center->update_dimensions(width, height);
 
-			//Check if extensions are supported
+            //Check if extensions are supported
             //This check is needed for renderers that do not support pixel buffer objects or vertex buffer objects
             bool hasGLExtension = IsGLExtensionsSupported(hdc, "GL_ARB_vertex_buffer_object") || IsGLExtensionsSupported(hdc, "GL_ARB_pixel_buffer_object");
 
-			//Render to Shared Memory
-			std::uint8_t* dest = control_center->get_image();
-			if (dest)
-			{
+            //Render to Shared Memory
+            std::uint8_t* dest = control_center->get_image();
+            if (dest)
+            {
                 if (hasGLExtension)
                 {
                     //Performance Boost! :D
@@ -971,46 +971,46 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
                     glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, dest);
                     FlipImageVertically(width, height, dest);
                 }
-			}
-
-			//Push Rendering Context
-			HGLRC old_ctx = nullptr;
-			if (!hasGLExtension)
-            {
-			    old_ctx = wglGetCurrentContext();
-			    PushGLContext(hdc, width, height);
             }
 
-			//Render Debug Graphics
-			if (control_center->get_debug_graphics())
-			{
-				std::uint8_t* src = control_center->get_debug_image();
-				if (src)
-				{
-					gl_draw_image(hdc, src, 0, 0, width, height, 4);
-				}
-			}
-
-			//Render Cursor
-			std::int32_t x = -1;
-			std::int32_t y = -1;
-			control_center->get_applet_mouse_position(&x, &y);
-
-			if (x > -1 && y > -1)
-			{
-				glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-				gl_draw_point(hdc, x, y, 0, 4);
-			}
-
-			//Pop Rendering Context
-			if (!hasGLExtension)
+            //Push Rendering Context
+            HGLRC old_ctx = nullptr;
+            if (!hasGLExtension)
             {
-			    PopGLContext(hdc, old_ctx);
+                old_ctx = wglGetCurrentContext();
+                PushGLContext(hdc, width, height);
             }
-		}
-	}
 
-	//Original
+            //Render Debug Graphics
+            if (control_center->get_debug_graphics())
+            {
+                std::uint8_t* src = control_center->get_debug_image();
+                if (src)
+                {
+                    gl_draw_image(hdc, src, 0, 0, width, height, 4);
+                }
+            }
+
+            //Render Cursor
+            std::int32_t x = -1;
+            std::int32_t y = -1;
+            control_center->get_applet_mouse_position(&x, &y);
+
+            if (x > -1 && y > -1)
+            {
+                glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+                gl_draw_point(hdc, x, y, 0, 4);
+            }
+
+            //Pop Rendering Context
+            if (!hasGLExtension)
+            {
+                PopGLContext(hdc, old_ctx);
+            }
+        }
+    }
+
+    //Original
     if (opengl_swap_hook)
     {
         return opengl_swap_hook->call<BOOL, decltype(mSwapBuffers)>(hdc);
@@ -1084,8 +1084,8 @@ void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLen
 void InitialiseHooks() noexcept
 {
     std::thread([&]{
-		#if defined(USE_DETOURS)
-		HMODULE module = GetModuleHandle("awt.dll");
+        #if defined(USE_DETOURS)
+        HMODULE module = GetModuleHandle("awt.dll");
 
         auto GetProcAddress = [](HMODULE module, const char* stdcall_name, const char* cdecl_name) -> FARPROC {
             FARPROC result = ::GetProcAddress(module, stdcall_name);
@@ -1099,16 +1099,16 @@ void InitialiseHooks() noexcept
             native_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeGDIBlit));
             native_hook->apply();
         }
-		else
-		{
-		    //_Java_sun_java2d_loops_ScaledBlit_Scale@72 //Java_sun_java2d_loops_ScaledBlit_Scale
+        else
+        {
+            //_Java_sun_java2d_loops_ScaledBlit_Scale@72 //Java_sun_java2d_loops_ScaledBlit_Scale
             blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_loops_Blit_Blit@48", "Java_sun_java2d_loops_Blit_Blit"));
             if (blit)
             {
                 native_hook = std::make_unique<Hook>(reinterpret_cast<void *>(blit), reinterpret_cast<void *>(JavaNativeBlit));
                 native_hook->apply();
             }
-		}
+        }
 
         //Hook DirectX Surface Blit
         blit = reinterpret_cast<void*>(GetProcAddress(module, "?D3DBL_CopyImageToIntXrgbSurface@@YAJPAUSurfaceDataRasInfo@@HPAVD3DResource@@JJJJJJ@Z", "?D3DBL_CopyImageToIntXrgbSurface@@YAJPEAUSurfaceDataRasInfo@@HPEAVD3DResource@@JJJJJJ@Z"));
@@ -1125,45 +1125,45 @@ void InitialiseHooks() noexcept
             directx_argb_hook->apply();
         }
 
-		//Hook OpenGL Blit
-		#if defined(HOOK_OPENGL_BLIT)
-		blit = reinterpret_cast<void*>(::GetProcAddress(module, "OGLBlitLoops_Blit"));
-		if (blit)
-		{
-			opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
-			opengl_hook->apply();
-		}
-		else
-		{
-			blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer@20", "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer"));
-			if (blit)
-			{
-				flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
-				flush_buffer_hook->apply();
-			}
-		}
+        //Hook OpenGL Blit
+        #if defined(HOOK_OPENGL_BLIT)
+        blit = reinterpret_cast<void*>(::GetProcAddress(module, "OGLBlitLoops_Blit"));
+        if (blit)
+        {
+            opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
+            opengl_hook->apply();
+        }
+        else
+        {
+            blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer@20", "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer"));
+            if (blit)
+            {
+                flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
+                flush_buffer_hook->apply();
+            }
+        }
 
-		if (blit)
-		{
-			HMODULE module = GetModuleHandle("opengl32.dll");
-			if (module)
-			{
-				#if !defined(HOOK_OPENGL_SWAP)
-				blit = reinterpret_cast<void*>(::GetProcAddress(module, "wglSwapBuffers"));
-				opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mSwapBuffers));
-				opengl_swap_hook->apply();
-				#else
-				blit = reinterpret_cast<void*>(::GetProcAddress(module, "glDrawPixels"));
+        if (blit)
+        {
+            HMODULE module = GetModuleHandle("opengl32.dll");
+            if (module)
+            {
+                #if !defined(HOOK_OPENGL_SWAP)
+                blit = reinterpret_cast<void*>(::GetProcAddress(module, "wglSwapBuffers"));
+                opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mSwapBuffers));
+                opengl_swap_hook->apply();
+                #else
+                blit = reinterpret_cast<void*>(::GetProcAddress(module, "glDrawPixels"));
                 opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mglDrawPixels));
                 opengl_swap_hook->apply();
-				#endif
-			}
-		}
-		#endif
+                #endif
+            }
+        }
+        #endif
         #endif
 
-		//Signal that all hooks are finished initializing..
-		ControlCenter::signal_sync(getpid());
+        //Signal that all hooks are finished initializing..
+        ControlCenter::signal_sync(getpid());
     }).detach();
 
     /*std::thread([]{
@@ -1196,7 +1196,7 @@ void StartHook() noexcept
 
 /*void limit_render(std::function<void()> render, uint32_t max_frames) noexcept
 {
-	render();
-	yield(std::chrono::milliseconds(1000 / max_frames));
+    render();
+    yield(std::chrono::milliseconds(1000 / max_frames));
 }*/
 #endif

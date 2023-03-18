@@ -35,15 +35,12 @@ EXPORT double Reflect_Double(EIOS* eios, jobject object, const char* cls, const 
 EXPORT void Reflect_String(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc, char* output, std::size_t output_size) noexcept;
 EXPORT jarray Reflect_Array(EIOS* eios, jobject object, const char* cls, const char* field, const char* desc) noexcept;
 EXPORT jarray Reflect_Array_With_Size(EIOS* eios, jobject object, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept;
-EXPORT jarray Reflect_Array_With_Size2D(EIOS* eios, jobject object, std::size_t x, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept;
-EXPORT jarray Reflect_Array_With_Size3D(EIOS* eios, jobject object, std::size_t x, std::size_t y, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept;
-EXPORT jarray Reflect_Array_With_Size4D(EIOS* eios, jobject object, std::size_t x, std::size_t y, std::size_t z, std::size_t* output_size, const char* cls, const char* field, const char* desc) noexcept;
 EXPORT std::size_t Reflect_Array_Size(EIOS* eios, jarray array) noexcept;
-EXPORT void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t index, std::size_t length) noexcept;
-EXPORT void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t x, std::size_t y, std::size_t length) noexcept;
-EXPORT void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t x, std::size_t y, std::size_t z, std::size_t length) noexcept;
-EXPORT void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionArrayType type, std::size_t x, std::size_t y, std::size_t z, std::size_t w, std::size_t length) noexcept;
-EXPORT void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionArrayType type, std::int32_t* indices, std::size_t length) noexcept;
+EXPORT void* Reflect_Array_Index(EIOS* eios, jarray array, ReflectionType type, std::size_t index, std::size_t length) noexcept;
+EXPORT void* Reflect_Array_Index2D(EIOS* eios, jarray array, ReflectionType type, std::size_t x, std::size_t y, std::size_t length) noexcept;
+EXPORT void* Reflect_Array_Index3D(EIOS* eios, jarray array, ReflectionType type, std::size_t x, std::size_t y, std::size_t z, std::size_t length) noexcept;
+EXPORT void* Reflect_Array_Index4D(EIOS* eios, jarray array, ReflectionType type, std::size_t x, std::size_t y, std::size_t z, std::size_t w, std::size_t length) noexcept;
+EXPORT void* Reflect_Array_Indices(EIOS* eios, jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) noexcept;
 
 #ifdef __cplusplus
 }
