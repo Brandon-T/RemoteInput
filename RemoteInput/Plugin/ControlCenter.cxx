@@ -1098,7 +1098,7 @@ bool ControlCenter::init_maps() noexcept
     if (is_controller)
 	{
 		//Open only..
-		memory_map = std::make_unique<MemoryMap<char>>(mapName, std::ios::in | std::ios::out);
+		memory_map = std::make_unique<MemoryMap<char>>(mapName, 0, std::ios::in | std::ios::out);
 		return memory_map && memory_map->open() && memory_map->map();
 	}
 
@@ -1405,7 +1405,7 @@ bool ControlCenter::controller_exists(std::int32_t pid) noexcept
 	snprintf(mapName, sizeof(mapName) - 1, "RemoteInput_%d", pid);
 	#endif
 
-	return MemoryMap<char>(mapName, std::ios::in).open();
+	return MemoryMap<char>(mapName, 0, std::ios::in).open();
 }
 
 bool ControlCenter::controller_is_paired(std::int32_t pid, bool* exists) noexcept
@@ -1424,7 +1424,7 @@ bool ControlCenter::controller_is_paired(std::int32_t pid, bool* exists) noexcep
 	#endif
 
 	*exists = false;
-	auto memory = MemoryMap<char>(mapName, std::ios::in | std::ios::out);
+	auto memory = MemoryMap<char>(mapName, 0, std::ios::in | std::ios::out);
 	if (memory.open())
 	{
         //*exists = true;

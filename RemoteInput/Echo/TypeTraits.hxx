@@ -197,8 +197,8 @@ std::string to_string(const std::tuple<Args...> &ts, const char* separator = "")
     };
 
     auto convert_pointer_to_string = [](const auto &value) -> std::string {
-        char buffer[(sizeof(void*) * 2) + 1] = {0};
-        snprintf(buffer, sizeof(buffer), "%p", value);
+        char buffer[(sizeof(void*) * 2) + 2] = {0};
+        snprintf(buffer, sizeof(buffer) - 1, "%p", value);
         return std::string(buffer);
     };
 

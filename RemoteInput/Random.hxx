@@ -30,7 +30,7 @@ public:
 
 	static std::shared_ptr<Random> instance() noexcept;
 
-	std::size_t generate_random_int(std::size_t min, std::size_t max) noexcept;
+	std::int64_t generate_random_int(std::int64_t min, std::int64_t max) noexcept;
 	float generate_random_float(float min, float max) noexcept;
 	double generate_random_double(double min, double max) noexcept;
 };

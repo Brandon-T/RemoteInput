@@ -427,14 +427,6 @@ void dx_draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, s
         std::uint8_t a;
     } bgra;
 
-    typedef struct argb_t
-    {
-        std::uint8_t a;
-        std::uint8_t r;
-        std::uint8_t g;
-        std::uint8_t b;
-    } argb;
-
     bgra* dest = static_cast<bgra*>(dest_buffer);
     bgra* source = static_cast<bgra*>(source_buffer);
 

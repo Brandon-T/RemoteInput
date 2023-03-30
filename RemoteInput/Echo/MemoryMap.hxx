@@ -42,7 +42,7 @@ private:
     std::ios_base::openmode mode;
 
 public:
-    explicit MemoryMap(const char_type* path, std::size_t size = 0, std::ios_base::openmode mode = std::ios::in | std::ios::out) noexcept;
+    explicit MemoryMap(const char_type* path, std::size_t size, std::ios_base::openmode mode) noexcept;
     ~MemoryMap() noexcept;
 
     bool open() noexcept;

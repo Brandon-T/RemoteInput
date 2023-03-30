@@ -14,9 +14,9 @@ std::shared_ptr<Random> Random::instance() noexcept
 	return instance;
 }
 
-std::size_t Random::generate_random_int(std::size_t min, std::size_t max) noexcept
+std::int64_t Random::generate_random_int(std::int64_t min, std::int64_t max) noexcept
 {
-    static std::uniform_int_distribution<std::size_t> dist{min, max};
+    static std::uniform_int_distribution<std::int64_t> dist{min, max};
 	return dist(rng, decltype(dist)::param_type(min, max));
 }
 

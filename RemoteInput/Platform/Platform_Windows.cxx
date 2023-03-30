@@ -237,11 +237,6 @@ std::int32_t PIDFromWindow(void* window) noexcept
     GetWindowThreadProcessId(static_cast<HWND>(window), &pid);
     return static_cast<std::int32_t>(pid);
 }
-
-HMODULE GetModuleHandle(const char* module_name) noexcept
-{
-    return ::GetModuleHandle(module_name);
-}
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)

@@ -8,17 +8,25 @@ IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+set(PYTHON_BINDINGS ON)
+
 
 # ----------------------------- PACKAGES -----------------------------
 set(JAVA_AWT_LIBRARY NotNeeded)
 set(JAVA_JVM_LIBRARY NotNeeded)
 set(JAVA_AWT_INCLUDE_PATH NotNeeded)
-set(PYTHON_BINDINGS OFF)
 
 find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
-#find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development)
 
+IF(PYTHON_BINDINGS)
+    find_package(Python 3.10 EXACT REQUIRED COMPONENTS Interpreter Development)
+    MESSAGE(STATUS, "${Python_LIBRARIES}")
+    MESSAGE(STATUS, "${Python_LIBRARY_DIRS}")
+    MESSAGE(STATUS, "${PYTHON_DYNAMIC_LINKER_FLAGS}")
+ENDIF()
+
+set(Py_LIMITED_API 0x03070000)
 
 
 # ----------------------- INCLUDE_DIRECTORIES -----------------------
@@ -138,8 +146,12 @@ set(SRC_LIST
         #RemoteInput/Echo/SpinLock.hxx
         RemoteInput/Echo/Time.cxx
         RemoteInput/Echo/Time.hxx
+        RemoteInput/Echo/TypeTraits.hxx
+        RemoteInput/Echo/TypeTraits_Functional.hxx
+        RemoteInput/Echo/TypeTraits_Functional_Attributes.hxx
         #RemoteInput/Hooks/ModelRendering.cpp
         #RemoteInput/Hooks/ModelRendering.hpp
+        RemoteInput/Java/JNI_Common.hxx
         RemoteInput/Java/Applet.cxx
         RemoteInput/Java/Applet.hxx
         RemoteInput/Java/AWTAccessor.cxx
@@ -195,6 +207,8 @@ set(SRC_LIST
         RemoteInput/Plugin/Graphics.hxx
         RemoteInput/Plugin/InputOutput.cxx
         RemoteInput/Plugin/InputOutput.hxx
+        RemoteInput/Plugin/NativePlugin.cxx
+        RemoteInput/Plugin/NativePlugin.hxx
         RemoteInput/Plugin/Plugin.cxx
         RemoteInput/Plugin/Plugin.hxx
         RemoteInput/Plugin/Signal.hxx
@@ -240,9 +254,13 @@ IF(PYTHON_BINDINGS)
             RemoteInput/Plugin/PythonTraits.hxx)
 ENDIF()
 
-set(EXTRA_LIBRARIES
-        ${EXTRA_LIBRARIES}
-        ${Python_LIBRARIES})
+IF(PYTHON_BINDINGS AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
+#    set(EXTRA_LIBRARIES
+#            ${EXTRA_LIBRARIES}
+#            ${Python_LIBRARIES})
+    set(PYTHON_DYNAMIC_LINKER_FLAGS
+            -undefined dynamic_lookup)
+ENDIF()
 
 # ---------------------------- COMPILE ----------------------------
 
@@ -251,29 +269,62 @@ add_library(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBR
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORIES})
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1)
+IF(Py_LIMITED_API)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 Py_LIMITED_API=${Py_LIMITED_API} Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+ELSE()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1)
+ENDIF()
 
 IF(WIN32)
-    target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-Wl,--input-def=RemoteInput/RemoteInput.def>
-            $<$<CONFIG:RELEASE>:-Wl,--input-def=RemoteInput/RemoteInput.def>)
-    target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at>
-            $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at>)
+    IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(${PROJECT_NAME} PRIVATE,
+                $<$<CONFIG:DEBUG>:-DDEBUG>
+                $<$<CONFIG:RELEASE>:>)
+        target_link_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
+                $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:-DDEBUG -Wl,--input-def=RemoteInput/RemoteInput.def>
+                $<$<CONFIG:RELEASE>:-Wl,--input-def=RemoteInput/RemoteInput.def>)
+        target_link_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
+                $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+    ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        set_property(TARGET ${PROJECT_NAME} PROPERTY
+                MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+        set(CMAKE_EXE_LINKER_FLAGS
+                "${CMAKE_EXE_LINKER_FLAGS} /DEF:RemoteInput/RemoteInput.def")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+                $<$<CONFIG:DEBUG>:/DDEBUG /DWIN32_LEAN_AND_MEAN /DNOMINMAX /MTd>
+                $<$<CONFIG:RELEASE>:/DWIN32_LEAN_AND_MEAN /DNOMINMAX /MT>)
+
+        IF(PYTHON_BINDINGS)
+            target_link_options(${PROJECT_NAME} PRIVATE
+                    $<$<CONFIG:DEBUG>:>
+                    $<$<CONFIG:RELEASE>:/LIBPATH:${Python_LIBRARY_DIRS} ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+        ELSE()
+            target_link_options(${PROJECT_NAME} PRIVATE
+                    $<$<CONFIG:DEBUG>:>
+                    $<$<CONFIG:RELEASE>:>)
+        ENDIF()
+    ENDIF()
 ELSEIF(APPLE)
     target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g -fvisibility=hidden>
+            $<$<CONFIG:DEBUG>:-DDEBUG -g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-static>
-            $<$<CONFIG:RELEASE>:-s -static>)
+            $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
+            $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
 ELSE()
     target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g -fvisibility=hidden>
+            $<$<CONFIG:DEBUG>:-DDEBUG -g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g> #-static-libgcc -static-libstdc++
-            $<$<CONFIG:RELEASE>:-s>) #-static-libgcc -static-libstdc++
+            $<$<CONFIG:DEBUG>:-g -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}> #-static-libgcc -static-libstdc++
+            $<$<CONFIG:RELEASE>:-s -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
 ENDIF()
 
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})

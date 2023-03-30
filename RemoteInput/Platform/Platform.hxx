@@ -21,9 +21,7 @@ std::int32_t InjectProcess(std::int32_t) noexcept;
 std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept;
 std::int32_t PIDFromWindow(void* window) noexcept;
 
-#if defined(_WIN32) || defined(_WIN64)
-HMODULE GetModuleHandle(const char* module_name) noexcept;
-#else
+#if !defined(_WIN32) && !defined(_WIN64)
 void* GetModuleHandle(const char* module_name) noexcept;
 #endif
 

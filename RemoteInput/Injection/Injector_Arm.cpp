@@ -32,7 +32,7 @@
 #if defined(__aarch64__) || defined(__arm__)
 auto find_library = [](std::int32_t pid, const char* library_name) -> std::uintptr_t {
     char file_map_name[256] = {0};
-    snprintf(file_map_name, sizeof(file_map_name), "/proc/%d/maps", pid);
+    snprintf(file_map_name, sizeof(file_map_name) - 1, "/proc/%d/maps", pid);
 
     std::fstream file = std::fstream(file_map_name, std::ios::in | std::ios::binary);
     if (file)
