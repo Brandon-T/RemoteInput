@@ -245,6 +245,39 @@ Reflection* GetNativeReflector() noexcept
     if (reflection->Attach())
     {
         auto hasReflection = TimeOut(20, [&]{
+            JNIEnv* env = reflection->getEnv();
+            jclass cls = env->FindClass("java/awt/Frame");
+            if (!cls)
+            {
+                return false;
+            }
+
+            jmethodID method = env->GetStaticMethodID(cls, "getFrames", "()[Ljava/awt/Frame;");
+            if (!method)
+            {
+                return false;
+            }
+
+            jobjectArray frames = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, method));
+            if (!frames)
+            {
+                return false;
+            }
+
+            jsize size = env->GetArrayLength(frames);
+            for (jsize i = 0; i < size; ++i)
+            {
+                jobject frame = env->GetObjectArrayElement(frames, i);
+                if (IsValidFrame(reflection, frame) && reflection->Initialize(frame))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        auto hasReflection2 = TimeOut(20, [&]{
             for (auto&& view : GetWindowViews())
             {
                 //TODO: Check if we can call "awt_GetComponent" from the JDK like on Linux
@@ -257,7 +290,7 @@ Reflection* GetNativeReflector() noexcept
             return false;
         });
 
-        if (hasReflection)
+        if (hasReflection || hasReflection2)
         {
             reflection->Detach();
             return reflection;

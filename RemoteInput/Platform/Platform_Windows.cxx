@@ -294,39 +294,72 @@ Reflection* GetNativeReflector() noexcept
         return nullptr;
     }
 
-    auto DSGetComponent = reinterpret_cast<jobject (__stdcall *)(JNIEnv*, void*)>(GetProcAddress(awt, "_DSGetComponent@8"));
-    if (!DSGetComponent)
-    {
-        DSGetComponent = reinterpret_cast<jobject (__stdcall* )(JNIEnv*, void*)>(GetProcAddress(awt, "DSGetComponent"));
-    }
-
-    if (!DSGetComponent)
-    {
-        int ordinal = 146;
-        char* procName = reinterpret_cast<char*>(static_cast<std::uint64_t>(static_cast<std::uint16_t>(ordinal)));
-        DSGetComponent = reinterpret_cast<jobject (__stdcall *)(JNIEnv*, void*)>(GetProcAddress(awt, procName));
-    }
-
-    if (!DSGetComponent)
-    {
-        return nullptr;
-    }
-
     Reflection* reflection = new Reflection();
 
     if (reflection->Attach())
     {
         auto hasReflection = TimeOut(20, [&]{
-            HWND windowFrame = GetMainWindow();
-            if (windowFrame)
+            JNIEnv* env = reflection->getEnv();
+            jclass cls = env->FindClass("java/awt/Frame");
+            if (!cls)
             {
-                jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
-                return IsValidFrame(reflection, object) && reflection->Initialize(object);
+                return false;
             }
-            return false;
+
+            jmethodID method = env->GetStaticMethodID(cls, "getFrames", "()[Ljava/awt/Frame;");
+            if (!method)
+            {
+                return false;
+            }
+
+            jobjectArray frames = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, method));
+            if (!frames)
+            {
+                return false;
+            }
+
+            jsize size = env->GetArrayLength(frames);
+            for (jsize i = 0; i < size; ++i)
+            {
+                jobject frame = env->GetObjectArrayElement(frames, i);
+                if (IsValidFrame(reflection, frame) && reflection->Initialize(frame))
+                {
+                    return true;
+                }
+            }
         });
 
-        if (hasReflection)
+        auto hasReflection2 = TimeOut(20, [&]{
+            auto DSGetComponent = reinterpret_cast<jobject (__stdcall *)(JNIEnv*, void*)>(GetProcAddress(awt, "_DSGetComponent@8"));
+            if (!DSGetComponent)
+            {
+                DSGetComponent = reinterpret_cast<jobject (__stdcall* )(JNIEnv*, void*)>(GetProcAddress(awt, "DSGetComponent"));
+            }
+
+            if (!DSGetComponent)
+            {
+                int ordinal = 146;
+                char* procName = reinterpret_cast<char*>(static_cast<std::uint64_t>(static_cast<std::uint16_t>(ordinal)));
+                DSGetComponent = reinterpret_cast<jobject (__stdcall *)(JNIEnv*, void*)>(GetProcAddress(awt, procName));
+            }
+
+            if (!DSGetComponent)
+            {
+                return false;
+            }
+
+            return TimeOut(20, [&]{
+                HWND windowFrame = GetMainWindow();
+                if (windowFrame)
+                {
+                    jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+                    return IsValidFrame(reflection, object) && reflection->Initialize(object);
+                }
+                return false;
+            });
+        });
+
+        if (hasReflection || hasReflection2)
         {
             reflection->Detach();
             return reflection;

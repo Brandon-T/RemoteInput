@@ -504,16 +504,6 @@ Reflection* GetNativeReflector() noexcept
         return nullptr;
     }
 
-    if (!TimeOut(20, [&]{ return ModuleLoaded("libawt_xawt.so"); })) {
-        return nullptr;
-    }
-
-    auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_DEFAULT, "awt_GetComponent"));
-    if (!awt_GetComponent)
-    {
-        return nullptr;
-    }
-
     auto GetMainWindow = [&]() -> Window {
         Display* display = XOpenDisplay(nullptr);
         if (display)
@@ -530,16 +520,60 @@ Reflection* GetNativeReflector() noexcept
     if (reflection->Attach())
     {
         auto hasReflection = TimeOut(20, [&]{
-            void* windowFrame = reinterpret_cast<void*>(GetMainWindow());
-            if (windowFrame)
+            JNIEnv* env = reflection->getEnv();
+            jclass cls = env->FindClass("java/awt/Frame");
+            if (!cls)
             {
-                jobject object = awt_GetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
-                return IsValidFrame(reflection, object) && reflection->Initialize(object);
+                return false;
             }
-            return false;
+
+            jmethodID method = env->GetStaticMethodID(cls, "getFrames", "()[Ljava/awt/Frame;");
+            if (!method)
+            {
+                return false;
+            }
+
+            jobjectArray frames = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, method));
+            if (!frames)
+            {
+                return false;
+            }
+
+            jsize size = env->GetArrayLength(frames);
+            for (jsize i = 0; i < size; ++i)
+            {
+                jobject frame = env->GetObjectArrayElement(frames, i);
+                if (IsValidFrame(reflection, frame) && reflection->Initialize(frame))
+                {
+                    return true;
+                }
+            }
         });
 
-        if (hasReflection)
+        auto hasReflection2 = TimeOut(20, [&]{
+            if (!ModuleLoaded("libawt_xawt.so"))
+            {
+                return false;
+            }
+
+            auto awt_GetComponent = reinterpret_cast<jobject (*)(JNIEnv*, void*)>(dlsym(RTLD_DEFAULT, "awt_GetComponent"));
+            if (!awt_GetComponent)
+            {
+                return false;
+            }
+
+            return TimeOut(20, [&]{
+                void* windowFrame = reinterpret_cast<void*>(GetMainWindow());
+                if (windowFrame)
+                {
+                    jobject object = awt_GetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+                    return IsValidFrame(reflection, object) && reflection->Initialize(object);
+                }
+                return false;
+            });
+        });
+
+        if (hasReflection || hasReflection2)
         {
             reflection->Detach();
             return reflection;
