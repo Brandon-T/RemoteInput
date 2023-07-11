@@ -15,12 +15,14 @@
 #include "NativeHooks.hxx"
 #include "ControlCenter.hxx"
 #include "EIOS.hxx"
+#include "DebugConsole.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 HMODULE module = nullptr;
 #endif
 
 std::unique_ptr<ControlCenter> control_center;
+std::unique_ptr<DebugConsole> console;
 
 // MARK: - MAIN
 
@@ -41,6 +43,10 @@ std::unique_ptr<ControlCenter> control_center;
         auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
         {
+            #if defined(DEBUG)
+            console = std::make_unique<DebugConsole>();
+            #endif
+
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
             StartHook();
         }
@@ -53,15 +59,24 @@ std::unique_ptr<ControlCenter> control_center;
 
 [[gnu::stdcall]] void __unload()
 {
+    #ifdef DEBUG
+    console.reset();
+    #endif
     control_center.reset();
 }
 #elif defined(__APPLE__)
 [[gnu::constructor]] void __load()
 {
+    #if defined(DEBUG)
     printf("ATTACHED TO: %d\n", getpid());
+    #endif
 
     extern void disable_app_nap();
     std::thread([&] {
+        #if defined(DEBUG)
+        console = std::make_unique<DebugConsole>();
+        #endif
+
         disable_app_nap();
 
         auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
@@ -75,12 +90,17 @@ std::unique_ptr<ControlCenter> control_center;
 
 [[gnu::destructor]] void __unload()
 {
+    #ifdef DEBUG
+    console.reset();
+    #endif
     control_center.reset();
 }
 #else
 [[gnu::constructor]] void __load()
 {
+    #if defined(DEBUG)
     printf("ATTACHED TO: %d\n", getpid());
+    #endif
 
     //Increase our reference count by 1..
     //So that if someone calls `dlclose` before the thread exists, we won't get a crash.
@@ -91,6 +111,9 @@ std::unique_ptr<ControlCenter> control_center;
     void* this_module = dlopen(this_info.dli_fname, RTLD_LAZY);
 
     std::thread([&](void* this_module) {
+        #if defined(DEBUG)
+        console = std::make_unique<DebugConsole>();
+        #endif
 
         auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
         if (reflector)
@@ -106,6 +129,9 @@ std::unique_ptr<ControlCenter> control_center;
 
 [[gnu::destructor]] void __unload()
 {
+    #ifdef DEBUG
+    console.reset();
+    #endif
     control_center.reset();
 }
 #endif // defined

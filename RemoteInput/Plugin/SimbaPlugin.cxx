@@ -58,12 +58,10 @@ T* GetString(void* ptr, std::size_t* size) noexcept;
 template<typename T>
 T PascalRead(void* ptr) noexcept;
 
-std::string PascalRead(void* &ptr) noexcept;
-
 template<typename T>
 void PascalWrite(void* ptr, T result) noexcept;
 
-void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionType type) noexcept;
+void PascalWrite(EIOS* eios, Stream &stream, void* ptr, ReflectionType type) noexcept;
 
 
 // MARK: - EXPORTS
@@ -246,38 +244,6 @@ void call_pascal_function(void** Params, void** Result, F&& fn, Extras... extras
 
         PascalWrite(Result, result);
     }
-}
-
-// MARK: Array Helpers
-
-void* Pascal_Reflect_Array_Native(void* array, ReflectionType type, std::size_t length) noexcept
-{
-    if (type == ReflectionType::STRING)
-    {
-        std::size_t element_size = ControlCenter::reflect_size_for_type(type);
-        void** buffer = AllocateArray<void*>(length, element_size);
-
-        for (std::size_t i = 0; i < length; ++i)
-        {
-            buffer[i] = nullptr;
-            std::string string = PascalRead(array);
-            if (!string.empty())
-            {
-                char* output = AllocateString<char>(string.length());
-                std::memcpy(output, &string[0], string.length());
-                output[string.length()] = '\0';
-
-                buffer[i] = output;
-            }
-        }
-
-        return buffer;
-    }
-
-    std::size_t element_size = ControlCenter::reflect_size_for_type(type);
-    void* buffer = AllocateArray<void>(length, element_size);
-    std::memcpy(buffer, array, length * element_size);
-    return buffer;
 }
 
 // MARK: Single Functions
@@ -498,7 +464,7 @@ void Pascal_Reflect_String(void** Params, void** Result) noexcept
 
 // MARK: - Array Functions
 
-void* read_array(void* array, ReflectionType type, std::size_t length)
+void* read_array(Stream &stream, ReflectionType type, std::size_t length)
 {
     if (type == ReflectionType::STRING)
     {
@@ -508,7 +474,7 @@ void* read_array(void* array, ReflectionType type, std::size_t length)
         for (std::size_t i = 0; i < length; ++i)
         {
             buffer[i] = nullptr;
-            std::string string = PascalRead(array);
+            std::string string = stream.read<std::string>();
             if (!string.empty())
             {
                 char* output = AllocateString<char>(string.length());
@@ -523,7 +489,7 @@ void* read_array(void* array, ReflectionType type, std::size_t length)
 
     std::size_t element_size = ControlCenter::reflect_size_for_type(type);
     void* buffer = AllocateArray<void>(length, element_size);
-    std::memcpy(buffer, array, length * element_size);
+    stream.read(buffer, length * element_size);
     return buffer;
 }
 
@@ -572,8 +538,9 @@ void Pascal_Reflect_Array_Indices(void** Params, void** Result) noexcept
         return;
     }
 
-    void* result = eios->control_center->reflect_array_indices(array, type, indices, length);
-    PascalWrite(Result, read_array(result, type, length));
+    ImageData* image_data = eios->control_center->reflect_array_indices(array, type, indices, length);
+    image_data->data_stream().seekg(sizeof(std::size_t));
+    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
 void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept
@@ -586,8 +553,7 @@ void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, 1, index);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(eios, Result, result, type);
+    PascalWrite(eios, image_data->data_stream(), Result, type);
 }
 
 void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result) noexcept
@@ -601,8 +567,7 @@ void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, 1, x, y);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(eios, Result, result, type);
+    PascalWrite(eios, image_data->data_stream(), Result, type);
 }
 
 void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result) noexcept
@@ -617,8 +582,7 @@ void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, 1, x, y, z);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(eios, Result, result, type);
+    PascalWrite(eios, image_data->data_stream(), Result, type);
 }
 
 void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result) noexcept
@@ -634,8 +598,7 @@ void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, 1, x, y, z, w);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(eios, Result, result, type);
+    PascalWrite(eios, image_data->data_stream(), Result, type);
 }
 
 void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept
@@ -654,8 +617,7 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, index);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(Result, read_array(result, type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
 void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept
@@ -675,8 +637,7 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(Result, read_array(result, type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
 void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept
@@ -697,8 +658,7 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(Result, read_array(result, type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
 void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
@@ -720,8 +680,7 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z, w);
     image_data->data_stream().seekg(sizeof(std::size_t));
-    void* result = image_data->io_buffer(std::ios::in);
-    PascalWrite(Result, read_array(result, type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
 void Pascal_GetDebugImageBuffer(void** Params, void** Result) noexcept
@@ -2373,15 +2332,15 @@ template<typename T>
 T* AllocateArray(std::size_t size, std::size_t element_size) noexcept
 {
     std::size_t new_size = (size * element_size) + sizeof(PascalArray);
-#if defined(PASCAL_CALLING_CONVENTION)
+    #if defined(PASCAL_CALLING_CONVENTION)
     PascalArray* ptr = static_cast<PascalArray*>(PLUGIN_MEMORY_MANAGER.AllocMem(new_size));
-#else
+    #else
     PascalArray* ptr = static_cast<PascalArray*>(
             PLUGIN_MEMORY_ALLOCATORS.GetMem ? PLUGIN_MEMORY_ALLOCATORS.GetMem(new_size) :
             PLUGIN_SIMBA_METHODS.GetMem ? PLUGIN_SIMBA_METHODS.GetMem(new_size) :
             nullptr
     );
-#endif
+    #endif
     ptr->refCount = 0;
     ptr->length = size - 1;
     return reinterpret_cast<T*>(++ptr);
@@ -2445,93 +2404,80 @@ T* GetString(void* ptr, std::size_t* size) noexcept
 template<typename T>
 T PascalRead(void* ptr) noexcept
 {
-    return *static_cast<T*>(ptr);
-}
-
-std::string PascalRead(void* &ptr) noexcept
-{
-    std::size_t length = *static_cast<std::size_t*>(ptr);
-    ptr = static_cast<std::size_t*>(ptr) + 1;
-
-    if (length > 0)
-    {
-        std::string result = std::string(reinterpret_cast<const char*>(ptr), length);
-        ptr = static_cast<char*>(ptr) + (result.length() * sizeof(char));
-        ptr = static_cast<char*>(ptr) + 1;
-        return result;
-    }
-    return std::string();
+    T result;
+    std::memcpy(&result, ptr, sizeof(T));
+    return result;
 }
 
 template<typename T>
 void PascalWrite(void* ptr, T result) noexcept
 {
-    *static_cast<T*>(ptr) = result;
+    std::memcpy(ptr, &result, sizeof(T));
 }
 
 template<typename T>
-void PascalProcess(EIOS* eios, void* ptr, void* result) noexcept
+void PascalProcess(EIOS* eios, void* ptr, Stream &result) noexcept
 {
     T* buffer = reinterpret_cast<T*>(&eios->local_storage);
-    *buffer = PascalRead<T>(result);
+    result.read<T>(*buffer);
     PascalWrite(ptr, buffer);
 }
 
-void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionType type) noexcept
+void PascalWrite(EIOS* eios, Stream &stream, void* ptr, ReflectionType type) noexcept
 {
     switch (type)
     {
         case ReflectionType::CHAR:
         {
-            PascalProcess<jchar>(eios, ptr, result);
+            PascalProcess<jchar>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::BYTE:
         {
-            PascalProcess<jbyte>(eios, ptr, result);
+            PascalProcess<jbyte>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::BOOL:
         {
-            PascalProcess<jboolean>(eios, ptr, result);
+            PascalProcess<jboolean>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::SHORT:
         {
-            PascalProcess<jshort>(eios, ptr, result);
+            PascalProcess<jshort>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::INT:
         {
-            PascalProcess<jint>(eios, ptr, result);
+            PascalProcess<jint>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::LONG:
         {
-            PascalProcess<jlong>(eios, ptr, result);
+            PascalProcess<jlong>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::FLOAT:
         {
-            PascalProcess<jfloat>(eios, ptr, result);
+            PascalProcess<jfloat>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::DOUBLE:
         {
-            PascalProcess<jdouble>(eios, ptr, result);
+            PascalProcess<jdouble>(eios, ptr, stream);
         }
             break;
 
         case ReflectionType::STRING:
         {
-            std::string string = PascalRead(result);
+            std::string string = stream.read<std::string>();
             if (!string.empty())
             {
                 char* output = AllocateString<char>(string.length());
@@ -2545,7 +2491,7 @@ void PascalWrite(EIOS* eios, void* ptr, void* result, ReflectionType type) noexc
 
         case ReflectionType::OBJECT:
         {
-            PascalWrite(ptr, PascalRead<jobject>(result));
+            PascalWrite(ptr, stream.read<jobject>());
         }
             break;
 

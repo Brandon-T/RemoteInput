@@ -85,7 +85,10 @@ jclass JVMCache::GetClass(const char* name) noexcept
 void JVMCache::clear()
 {
     field_cache.clear();
-    class_cache.clear();
+    for (auto &item: class_cache)
+    {
+        item.second.release();
+    }
 }
 
 std::size_t JVMCache::field_hash(const char* field_name, const char* signature) noexcept

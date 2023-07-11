@@ -327,6 +327,8 @@ Reflection* GetNativeReflector() noexcept
                     return true;
                 }
             }
+
+            return false;
         });
 
         auto hasReflection2 = TimeOut(20, [&]{

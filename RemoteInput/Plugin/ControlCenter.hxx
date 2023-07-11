@@ -126,7 +126,7 @@ public:
     typename std::enable_if<is_same_of<std::size_t, Index...>::value, ImageData*>::type reflect_array(const ReflectionHook &hook, const std::size_t length, const ReflectionType type, const Index... index) const noexcept;
 
 
-    void* reflect_array_indices(const jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept;
+    ImageData* reflect_array_indices(const jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept;
 
     static std::size_t reflect_size_for_type(ReflectionType type) noexcept;
 

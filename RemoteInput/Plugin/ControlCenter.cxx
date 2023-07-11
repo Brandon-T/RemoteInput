@@ -409,13 +409,11 @@ void ControlCenter::process_command() noexcept
             jclass cls = reflector->LoadClass(className.c_str());
             if (!cls)
             {
-                cls = reflector->getVM()->FindClass(className.c_str());
+                result = reflector->IsDecendentOf(object, className.c_str());
             }
-
-            if (cls)
+            else
             {
                 result = reflector->getEnv()->IsInstanceOf(object, cls);
-                reflector->getEnv()->DeleteLocalRef(cls);
             }
 
             stream.write(result);
@@ -608,6 +606,7 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
     if (!array)
     {
         stream << nullptr;
+        return;
     }
 
     if (length == 0)
@@ -727,7 +726,7 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
             for (std::size_t i = 0; i < length; ++i)
             {
                 jobject element = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
-                stream << reflector->getField<std::string>(static_cast<jstring>(element));
+                stream.write(reflector->getField<std::string>(static_cast<jstring>(element)));
                 reflector->getEnv()->DeleteLocalRef(element);
             }
         }
@@ -738,7 +737,7 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
             for (std::size_t i = 0; i < length; ++i)
             {
                 jobject result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
-                stream << (result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
+                stream.write(result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
                 reflector->getEnv()->DeleteLocalRef(result);
             }
         }
@@ -750,6 +749,7 @@ void ControlCenter::process_reflect_array_indices(Stream &stream, jarray array) 
 {
     ReflectionType type = stream.read<ReflectionType>();
     std::vector<std::int32_t> indices = stream.read<std::vector<std::int32_t>>();
+    stream.write(indices.size());
     send_array_response_indices(stream, array, type, &indices[0], indices.size());
 }
 
@@ -776,7 +776,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
         }
     }
 
-    std::size_t index = stream.read<jsize>();
+    std::size_t index = stream.read<std::size_t>();
     stream.write(length);
     send_array_response_index_length(stream, array, type, index, length);
     env->DeleteLocalRef(array);
@@ -1448,7 +1448,7 @@ bool ControlCenter::reflect_instance_of(const jobject object, std::string cls) c
     bool result = send_command([&](Stream &stream, ImageData* image_data) {
         image_data->set_command(EIOSCommand::REFLECT_INSTANCE_OF);
         stream.write<jobject>(object);
-        image_data->data_stream() << cls;
+        stream.write(cls);
     });
 
     if (result)
@@ -1659,7 +1659,7 @@ std::size_t ControlCenter::reflect_array_size(const jarray array) const noexcept
     return 0;
 }
 
-void* ControlCenter::reflect_array_indices(const jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept
+ImageData* ControlCenter::reflect_array_indices(const jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept
 {
     bool result = send_command([&](Stream &stream, ImageData* image_data) {
         image_data->set_command(EIOSCommand::REFLECT_ARRAY_INDICES);
@@ -1671,7 +1671,7 @@ void* ControlCenter::reflect_array_indices(const jarray array, ReflectionType ty
 
     if (result)
     {
-        return get_image_data()->data_stream().read<void*>();
+        return get_image_data();
     }
     return nullptr;
 }

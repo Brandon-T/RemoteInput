@@ -32,7 +32,7 @@ Reflection::~Reflection() noexcept
     }*/
     #endif
 
-    cache.clear();
+    this->ClearCache();
     delete jvm;
     jvm = nullptr;
 }

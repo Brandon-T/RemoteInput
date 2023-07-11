@@ -5,6 +5,7 @@
 #include <memory>
 #include <functional>
 #include <unordered_map>
+#include <cstdint>
 #include "JNI_Common.hxx"
 #include "JVM.hxx"
 #include "ReflectionHook.hxx"

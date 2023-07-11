@@ -2,9 +2,9 @@
 #define TMEMORYMANAGER_HXX_INCLUDED
 
 #if !defined(_MSC_VER)
-#if __has_attribute(regparm)
+//#if __has_attribute(regparm)
 #define PASCAL_CALLING_CONVENTION __attribute__((regparm(3)))
-#endif
+//#endif
 #endif
 
 #if defined(PASCAL_CALLING_CONVENTION)
