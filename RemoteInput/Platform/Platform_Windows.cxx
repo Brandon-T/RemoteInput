@@ -10,13 +10,57 @@
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
+int GetDpi(HWND hwnd)
+{
+    HDC hDC = GetDC(hwnd);
+    int ydpi = GetDeviceCaps(hDC, LOGPIXELSY);
+    ReleaseDC(hwnd, hDC);
+    return ydpi;
+}
+
+void ReverseScaleDPI(HWND hwnd, int &width, int &height)
+{
+    HDC hDC = GetDC(hwnd);
+    int xdpi = GetDeviceCaps(hDC, LOGPIXELSX);
+    int ydpi = GetDeviceCaps(hDC, LOGPIXELSY);
+    ReleaseDC(hwnd, hDC);
+
+    // Reverse DPI Scaling
+    width = static_cast<int>(96.0 * width / xdpi);
+    height = static_cast<int>(96.0 * height / ydpi);
+}
+
 void GetDesktopResolution(int &width, int &height) noexcept
 {
+    HMODULE user32 = GetModuleHandleA("User32.dll");
+    DPI_AWARENESS_CONTEXT (*GetThreadDpiAwarenessContext)() = reinterpret_cast<decltype(GetThreadDpiAwarenessContext)>(GetProcAddress(user32, "GetThreadDpiAwarenessContext"));
+    DPI_AWARENESS (*GetAwarenessFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT) = reinterpret_cast<decltype(GetAwarenessFromDpiAwarenessContext)>(GetProcAddress(user32, "GetAwarenessFromDpiAwarenessContext"));
+    BOOL (*SetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT) = reinterpret_cast<decltype(SetThreadDpiAwarenessContext)>(GetProcAddress(user32, "SetThreadDpiAwarenessContext"));
+
+    DPI_AWARENESS_CONTEXT context = nullptr;
+
+    if (GetThreadDpiAwarenessContext && GetAwarenessFromDpiAwarenessContext && SetThreadDpiAwarenessContext)
+    {
+        context = GetThreadDpiAwarenessContext();
+        DPI_AWARENESS awareness = GetAwarenessFromDpiAwarenessContext(context);
+
+        if (awareness == DPI_AWARENESS_INVALID || awareness == DPI_AWARENESS_UNAWARE)
+        {
+            SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        }
+    }
+
     RECT desktop = {0};
     const HWND hDesktop = GetDesktopWindow();
     GetWindowRect(hDesktop, &desktop);
+
     width = desktop.right;
     height = desktop.bottom;
+
+    if (context)
+    {
+        SetThreadDpiAwarenessContext(context);
+    }
 }
 
 std::int32_t GetCurrentThreadID() noexcept
