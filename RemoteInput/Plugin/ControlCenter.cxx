@@ -755,6 +755,13 @@ void ControlCenter::process_reflect_array_indices(Stream &stream, jarray array) 
 
 void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray array, ReflectionType type, std::size_t length, std::size_t dimensions) const noexcept
 {
+    if (!array)
+    {
+        stream.write(0);
+        stream << nullptr;
+        return;
+    }
+
     if (dimensions == 1)
     {
         std::size_t index = stream.read<jsize>();
@@ -772,13 +779,32 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
         if (array)
         {
+            jint length = env->GetArrayLength(array);
+            if (index >= length)
+            {
+                fprintf(stderr, "Index out of bounds\n");
+                stream.write(0);
+                stream << nullptr;
+                return;
+            }
+
             env->DeleteLocalRef(std::exchange(array, static_cast<jarray>(env->GetObjectArrayElement(static_cast<jobjectArray>(array), index))));
         }
     }
 
+    if (!array)
+    {
+        stream.write(0);
+        stream << nullptr;
+        return;
+    }
+
+    std::size_t real_length = env->GetArrayLength(array);
+    std::size_t ideal_length = std::min(length, real_length);
+
     std::size_t index = stream.read<std::size_t>();
-    stream.write(length);
-    send_array_response_index_length(stream, array, type, index, length);
+    stream.write(ideal_length);
+    send_array_response_index_length(stream, array, type, index, ideal_length);
     env->DeleteLocalRef(array);
 }
 
@@ -786,6 +812,13 @@ void ControlCenter::process_reflect_array_all(Stream &stream, jarray array, Refl
 {
     auto write_array = [](const ControlCenter* this_, JNIEnv* env, Stream &stream, jarray array, ReflectionType type, std::size_t dimensions) {
         auto write_impl = [](const ControlCenter* this_, JNIEnv* env, Stream &stream, jarray array, ReflectionType type, std::size_t dimensions, auto& self) mutable {
+            if (!array)
+            {
+                stream.write(0);
+                stream << nullptr;
+                return;
+            }
+
             if (dimensions == 1)
             {
                 std::size_t length = env->GetArrayLength(array);
