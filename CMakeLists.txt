@@ -285,7 +285,7 @@ ENDIF()
 
 IF(WIN32)
     IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_compile_options(${PROJECT_NAME} PRIVATE,
+        target_compile_options(${PROJECT_NAME} PRIVATE
                 $<$<CONFIG:DEBUG>:-DDEBUG>
                 $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
         target_link_options(${PROJECT_NAME} PRIVATE
