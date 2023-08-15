@@ -105,7 +105,7 @@ public:
 
     void read(void* value, std::size_t size);
 
-    template<typename T, typename... Args, template<typename, typename...> class U>
+    template<typename T, template<typename, typename...> class U, typename... Args>
     U<T, Args...> read();
 
     template<typename T>
@@ -124,7 +124,7 @@ public:
 
     void write(const void* value, std::size_t size);
 
-    template<typename T, typename... Args, template<typename, typename...> class U>
+    template<typename T, template<typename, typename...> class U, typename... Args>
     void write(const U<T, Args...> &value);
 
     // MARK: - Stream Positions
@@ -158,10 +158,10 @@ public:
 
     // MARK: - Container types
 
-    template<typename T, typename... Args, template<typename, typename...> class U>
+    template<typename T, template<typename, typename...> class U, typename... Args>
     Stream& operator << (const U<T, Args...> &value);
 
-    template<typename T, typename... Args, template<typename, typename...> class U>
+    template<typename T, template<typename, typename...> class U, typename... Args>
     Stream& operator >> (U<T, Args...> &value);
 
     template<typename T, std::size_t Size>
@@ -200,7 +200,7 @@ typename std::enable_if<std::is_same<char*, T*>::value, void>::type Stream::read
     read(value, size + 1);
 }
 
-template<typename T, typename... Args, template<typename, typename...> class U>
+template<typename T, template<typename, typename...> class U, typename... Args>
 U<T, Args...> Stream::read()
 {
     U<T, Args...> result;
@@ -237,7 +237,7 @@ typename std::enable_if<std::is_same<const char*, const T*>::value, void>::type 
     write(value, size);
 }
 
-template<typename T, typename... Args, template<typename, typename...> class U>
+template<typename T, template<typename, typename...> class U, typename... Args>
 void Stream::write(const U<T, Args...> &value)
 {
     *this << value;
@@ -265,7 +265,7 @@ typename std::enable_if<std::is_arithmetic<T>::value
     return *this;
 }
 
-template<typename T, typename... Args, template<typename, typename...> class U>
+template<typename T, template<typename, typename...> class U, typename... Args>
 Stream& Stream::operator << (const U<T, Args...> &value)
 {
     *this << std::size(value);
@@ -276,7 +276,7 @@ Stream& Stream::operator << (const U<T, Args...> &value)
     return *this;
 }
 
-template<typename T, typename... Args, template<typename, typename...> class U>
+template<typename T, template<typename, typename...> class U, typename... Args>
 Stream& Stream::operator >> (U<T, Args...> &value)
 {
     typename U<T, Args...>::size_type size = 0;
