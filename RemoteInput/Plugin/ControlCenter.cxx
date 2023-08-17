@@ -557,9 +557,17 @@ void ControlCenter::process_command() noexcept
             stream >> hook;
 
             jarray array = reflector->getField<jarray>(hook.object, hook);
-            std::size_t length = reflector->getEnv()->GetArrayLength(array);
-            stream.write(length);
-            stream.write(array);
+            if (array)
+            {
+                std::size_t length = reflector->getEnv()->GetArrayLength(array);
+                stream.write(length);
+                stream.write(array);
+            }
+            else
+            {
+                stream.write(0);
+                stream.write(nullptr);
+            }
         }
             break;
 
