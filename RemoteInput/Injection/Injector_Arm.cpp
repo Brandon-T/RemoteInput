@@ -4,6 +4,7 @@
 
 #include "Injector.hxx"
 
+#if !defined(__APPLE__)
 #if defined(__aarch64__) || defined(__arm__)
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -423,4 +424,5 @@ bool Injector::Inject(std::string module_path, std::int32_t pid, void* bootstrap
     ptrace(PTRACE_DETACH, pid, nullptr, nullptr);
     return false;
 }
+#endif
 #endif

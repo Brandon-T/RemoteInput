@@ -1,7 +1,7 @@
 #ifndef TMEMORYMANAGER_HXX_INCLUDED
 #define TMEMORYMANAGER_HXX_INCLUDED
 
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER)  && !defined(__APPLE__)
 //#if __has_attribute(regparm)
 #define PASCAL_CALLING_CONVENTION __attribute__((regparm(3)))
 //#endif
