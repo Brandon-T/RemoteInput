@@ -297,7 +297,7 @@ void ControlCenter::process_command() noexcept
         case EIOSCommand::IS_MOUSE_HELD:
         {
             std::int32_t button = stream.read<std::int32_t>();
-            jboolean result = io_controller->is_mouse_held(button);
+            bool result = io_controller->is_mouse_held(button);
             stream.write(result);
         }
             break;
@@ -328,7 +328,7 @@ void ControlCenter::process_command() noexcept
         case EIOSCommand::IS_KEY_HELD:
         {
             std::int32_t keycode = stream.read<std::int32_t>();
-            jboolean result = io_controller->is_key_held(keycode);
+            bool result = io_controller->is_key_held(keycode);
             stream.write(result);
         }
             break;

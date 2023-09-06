@@ -46,7 +46,7 @@ private:
     jchar NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers) const noexcept;
     std::int32_t GetJavaKeyCode(std::int32_t native_key_code) const noexcept;
     std::int32_t GetKeyLocation(std::int32_t keycode) const noexcept;
-    std::int32_t GetActiveKeyModifiers() const noexcept;
+    std::int32_t GetActiveKeyModifiers() noexcept;
     std::int32_t ModifiersForChar(char c) const noexcept;
     std::int32_t SimbaMouseButtonToJava(std::int32_t button) const noexcept;
 
@@ -54,7 +54,7 @@ private:
     void gain_focus(java::Component* component) const noexcept;
     void lose_focus(java::Component* component) const noexcept;
 
-    bool any_key_held(std::array<std::int32_t, 4>&& keys) const noexcept;
+    bool any_key_held(std::array<std::int32_t, 4>&& keys) noexcept;
     void handle_resize(java::Component* component) noexcept;
 
 public:
@@ -76,7 +76,7 @@ public:
 
     void hold_key(std::int32_t code) noexcept;
     void release_key(std::int32_t code) noexcept;
-    bool is_key_held(std::int32_t code) const noexcept;
+    bool is_key_held(std::int32_t code) noexcept;
     void send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait) const noexcept;
 
     void get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept;
