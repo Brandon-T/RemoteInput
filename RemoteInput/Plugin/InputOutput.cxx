@@ -207,9 +207,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
         if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
         {
             //Control Keys only generate a single held event..
-            this->mutex.lock();
             held_keys.push_back(code);
-            this->mutex.unlock();
 
             //PostEvent
             java::Component receiver = control_center->reflect_canvas();
@@ -239,10 +237,8 @@ void InputOutput::hold_key(std::int32_t code) noexcept
             //Key already being pressed so just replace it
             if (currently_held_key != -1 && this->keyboard_speed >= 0 && this->keyboard_repeat_delay >= 0)
             {
-                this->mutex.lock();
                 currently_held_key = code;
                 held_keys.push_back(code);
-                this->mutex.unlock();
 
                 //Post Event
                 java::Component receiver = control_center->reflect_canvas();
@@ -282,10 +278,8 @@ void InputOutput::hold_key(std::int32_t code) noexcept
             }
             else
             {
-                this->mutex.lock();
                 currently_held_key = code;
                 held_keys.push_back(code);
-                this->mutex.unlock();
 
                 //Post Event
                 java::Component receiver = control_center->reflect_canvas();
@@ -394,9 +388,7 @@ void InputOutput::release_key(std::int32_t code) noexcept
     {
         if (std::find(std::begin(control_keys), std::end(control_keys), code) != std::end(control_keys))
         {
-            this->mutex.lock();
             held_keys.erase(it); //held_keys.erase(std::remove(held_keys.begin(), held_keys.end(), code), held_keys.end());
-            this->mutex.unlock();
 
             //Post Event
             java::Component receiver = control_center->reflect_canvas();
@@ -423,7 +415,6 @@ void InputOutput::release_key(std::int32_t code) noexcept
         else
         {
             //Remove the held key from the list..
-            this->mutex.lock();
             held_keys.erase(it);
 
             //Find the next non-control held-key..
@@ -433,7 +424,6 @@ void InputOutput::release_key(std::int32_t code) noexcept
 
             //Set the next currently held key to the first non-control key..
             currently_held_key = jt != held_keys.crend() ? *jt : -1;
-            this->mutex.unlock();
 
             //Post Event
             java::Component receiver = control_center->reflect_canvas();
@@ -460,22 +450,16 @@ void InputOutput::release_key(std::int32_t code) noexcept
     }
 }
 
-bool InputOutput::is_key_held(std::int32_t code) noexcept
+bool InputOutput::is_key_held(std::int32_t code) const noexcept
 {
-    this->mutex.lock();
-    bool result = std::find(std::begin(held_keys), std::end(held_keys), code) != std::end(held_keys);
-    this->mutex.unlock();
-    return result;
+    return std::find(std::begin(held_keys), std::end(held_keys), code) != std::end(held_keys);
 }
 
-bool InputOutput::any_key_held(std::array<std::int32_t, 4>&& keys) noexcept
+bool InputOutput::any_key_held(std::array<std::int32_t, 4>&& keys) const noexcept
 {
-    this->mutex.lock();
-    bool result = std::any_of(std::cbegin(held_keys), std::cend(held_keys), [&](std::int32_t key){
+    return std::any_of(std::cbegin(held_keys), std::cend(held_keys), [&](std::int32_t key){
         return std::find(std::cbegin(keys), std::cend(keys), key) != std::cend(keys);
     });
-    this->mutex.unlock();
-    return result;
 }
 
 void InputOutput::send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait) const noexcept
@@ -1193,7 +1177,7 @@ std::int32_t InputOutput::GetKeyLocation(std::int32_t keycode) const noexcept
     return java::KeyEvent::KeyCodes::KEY_LOCATION_STANDARD;
 }
 
-std::int32_t InputOutput::GetActiveKeyModifiers() noexcept
+std::int32_t InputOutput::GetActiveKeyModifiers() const noexcept
 {
     std::int32_t modifiers = 0;
 
