@@ -2509,6 +2509,12 @@ void PascalWrite(EIOS* eios, Stream &stream, void* ptr, ReflectionType type) noe
         }
             break;
 
+        case ReflectionType::ARRAY:
+        {
+            PascalWrite(ptr, stream.read<jarray>());
+        }
+            break;
+
         default:
         {
             std::terminate();

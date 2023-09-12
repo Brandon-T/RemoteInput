@@ -670,6 +670,7 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
             break;
 
         case ReflectionType::OBJECT:
+        case ReflectionType::ARRAY:
         {
             JNIEnv* env = reflector->getEnv();
             for (std::size_t i = 0; i < length; ++i)
@@ -746,6 +747,7 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
             break;
 
         case ReflectionType::OBJECT:
+        case ReflectionType::ARRAY:
         {
             for (std::size_t i = 0; i < length; ++i)
             {
@@ -1755,7 +1757,8 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept
                   sizeof(jfloat) == sizeof(float) &&
                   sizeof(jdouble) == sizeof(double) &&
                   sizeof(jstring) == sizeof(void*) &&
-                  sizeof(jobject) == sizeof(void*),
+                  sizeof(jobject) == sizeof(void*) &&
+                  sizeof(jarray) == sizeof(void*),
                   "Size of primitive types must be equal");
 
     static std::size_t mapping[] = {
@@ -1768,7 +1771,8 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept
         sizeof(jfloat),
         sizeof(jdouble),
         sizeof(jstring),
-        sizeof(jobject)
+        sizeof(jobject),
+        sizeof(jarray)
     };
 
     return mapping[static_cast<std::underlying_type<ReflectionType>::type>(type)];

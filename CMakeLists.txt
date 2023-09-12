@@ -8,7 +8,7 @@ IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
-set(PYTHON_BINDINGS OFF)
+set(PYTHON_BINDINGS ON)
 
 
 # ----------------------------- PACKAGES -----------------------------
@@ -20,7 +20,7 @@ find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
 
 IF(PYTHON_BINDINGS)
-    find_package(Python 3.10 EXACT REQUIRED COMPONENTS Interpreter Development)
+    find_package(Python 3.10 REQUIRED COMPONENTS Interpreter Development)
     MESSAGE(STATUS, "${Python_LIBRARIES}")
     MESSAGE(STATUS, "${Python_LIBRARY_DIRS}")
     MESSAGE(STATUS, "${PYTHON_DYNAMIC_LINKER_FLAGS}")
@@ -257,17 +257,27 @@ ENDIF()
 IF(PYTHON_BINDINGS)
     set(SRC_LIST
             ${SRC_LIST}
-            RemoteInput/Plugin/PythonPlugin.cxx
-            RemoteInput/Plugin/PythonPlugin.hxx
-            RemoteInput/Plugin/PythonTraits.hxx)
+            RemoteInput/Plugin/Python/PythonCommon.cxx
+            RemoteInput/Plugin/Python/PythonCommon.hxx
+            RemoteInput/Plugin/Python/PythonPlugin.cxx
+            RemoteInput/Plugin/Python/PythonPlugin.hxx
+            RemoteInput/Plugin/Python/PythonEIOS.cxx
+            RemoteInput/Plugin/Python/PythonEIOS.hxx
+            RemoteInput/Plugin/Python/PythonJavaObject.cxx
+            RemoteInput/Plugin/Python/PythonJavaObject.hxx
+            RemoteInput/Plugin/Python/PythonJavaArray.cxx
+            RemoteInput/Plugin/Python/PythonJavaArray.hxx
+            RemoteInput/Plugin/Python/PythonCommon_Templates.hxx
+            RemoteInput/Plugin/Python/Python.cxx
+            RemoteInput/Plugin/Python/Python.hxx)
 ENDIF()
 
 IF(PYTHON_BINDINGS AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
 #    set(EXTRA_LIBRARIES
 #            ${EXTRA_LIBRARIES}
 #            ${Python_LIBRARIES})
-    set(PYTHON_DYNAMIC_LINKER_FLAGS
-            -undefined dynamic_lookup)
+#    set(PYTHON_DYNAMIC_LINKER_FLAGS
+#            -undefined dynamic_lookup)
 ENDIF()
 
 # ---------------------------- COMPILE ----------------------------
