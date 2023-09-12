@@ -578,14 +578,10 @@ void ControlCenter::process_command() noexcept
 
         case EIOSCommand::REFLECT_ARRAY_ALL:
         {
-            ReflectionHook hook;
-            stream >> hook;
-            jarray array = reflector->getField<jarray>(hook.object, hook);
-
+            jarray array = stream.read<jarray>();
             ReflectionType type = stream.read<ReflectionType>();
             std::size_t dimensions = stream.read<std::size_t>();
             process_reflect_array_all(stream, array, type, dimensions);
-            reflector->getEnv()->DeleteGlobalRef(array);
         }
             break;
 
@@ -670,6 +666,7 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
             break;
 
         case ReflectionType::OBJECT:
+        case ReflectionType::ARRAY:
         {
             JNIEnv* env = reflector->getEnv();
             for (std::size_t i = 0; i < length; ++i)
@@ -746,6 +743,7 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
             break;
 
         case ReflectionType::OBJECT:
+        case ReflectionType::ARRAY:
         {
             for (std::size_t i = 0; i < length; ++i)
             {
@@ -777,9 +775,21 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
     if (dimensions == 1)
     {
+        JNIEnv* env = reflector->getEnv();
         std::size_t index = stream.read<jsize>();
-        stream.write(length);
-        send_array_response_index_length(stream, array, type, index, length);
+        std::size_t real_length = env->GetArrayLength(array);
+        std::size_t ideal_length = std::min(length, real_length);
+
+        if (index >= real_length)
+        {
+            fprintf(stderr, "Index out of bounds\n");
+            stream.write(0);
+            stream << nullptr;
+            return;
+        }
+
+        stream.write(ideal_length);
+        send_array_response_index_length(stream, array, type, index, ideal_length);
         return;
     }
 
@@ -792,8 +802,8 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
         if (array)
         {
-            jint length = env->GetArrayLength(array);
-            if (index >= length)
+            jint real_length = env->GetArrayLength(array);
+            if (index >= real_length)
             {
                 fprintf(stderr, "Index out of bounds\n");
                 stream.write(0);
@@ -814,8 +824,16 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
     std::size_t real_length = env->GetArrayLength(array);
     std::size_t ideal_length = std::min(length, real_length);
-
     std::size_t index = stream.read<std::size_t>();
+
+    if (index >= real_length)
+    {
+        fprintf(stderr, "Index out of bounds\n");
+        stream.write(0);
+        stream << nullptr;
+        return;
+    }
+
     stream.write(ideal_length);
     send_array_response_index_length(stream, array, type, index, ideal_length);
     env->DeleteLocalRef(array);
@@ -823,38 +841,32 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
 void ControlCenter::process_reflect_array_all(Stream &stream, jarray array, ReflectionType type, std::size_t dimensions) const noexcept
 {
-    auto write_array = [](const ControlCenter* this_, JNIEnv* env, Stream &stream, jarray array, ReflectionType type, std::size_t dimensions) {
-        auto write_impl = [](const ControlCenter* this_, JNIEnv* env, Stream &stream, jarray array, ReflectionType type, std::size_t dimensions, auto& self) mutable {
-            if (!array)
-            {
-                stream.write(0);
-                stream << nullptr;
-                return;
-            }
+    if (!array)
+    {
+        stream.write(0);
+        return;
+    }
 
-            if (dimensions == 1)
-            {
-                std::size_t length = env->GetArrayLength(array);
-                stream.write(length);
-                this_->send_array_response_index_length(stream, array, type, 0, length);
-                return;
-            }
-
-            std::size_t length = env->GetArrayLength(array);
-            stream.write(length);
-
-            for (std::size_t i = 0; i < dimensions; ++i)
-            {
-                self(this_, env, stream, array, type, dimensions - 1, self);
-            }
-        };
-
-        return write_impl(this_, env, stream, array, type, dimensions, write_impl);
-    };
+    if (dimensions == 1)
+    {
+        JNIEnv* env = reflector->getEnv();
+        std::size_t length = env->GetArrayLength(array);
+        stream.write(length);
+        this->send_array_response_index_length(stream, array, type, 0, length);
+        return;
+    }
 
     JNIEnv* env = reflector->getEnv();
-    write_array(this, env, stream, array, type, dimensions);
-    env->DeleteLocalRef(array);
+    std::size_t length = env->GetArrayLength(array);
+    stream.write(length);
+
+    for (std::size_t i = 0; i < length; ++i)
+    {
+        jarray result = static_cast<jarray>(env->GetObjectArrayElement(
+                static_cast<jobjectArray>(array), i));
+        process_reflect_array_all(stream, result, type, dimensions - 1);
+        env->DeleteLocalRef(result);
+    }
 }
 
 bool ControlCenter::init_maps() noexcept
@@ -1728,6 +1740,22 @@ std::size_t ControlCenter::reflect_array_size(const jarray array) const noexcept
     return 0;
 }
 
+ImageData* ControlCenter::reflect_array_all(const jarray array, ReflectionType type, std::size_t dimensions) const noexcept
+{
+    bool result = send_command([&](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::REFLECT_ARRAY_ALL);
+        stream.write(array);
+        stream.write(type);
+        stream.write(dimensions);
+    });
+
+    if (result)
+    {
+        return get_image_data();
+    }
+    return 0;
+}
+
 ImageData* ControlCenter::reflect_array_indices(const jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept
 {
     bool result = send_command([&](Stream &stream, ImageData* image_data) {
@@ -1755,7 +1783,8 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept
                   sizeof(jfloat) == sizeof(float) &&
                   sizeof(jdouble) == sizeof(double) &&
                   sizeof(jstring) == sizeof(void*) &&
-                  sizeof(jobject) == sizeof(void*),
+                  sizeof(jobject) == sizeof(void*) &&
+                  sizeof(jarray) == sizeof(void*),
                   "Size of primitive types must be equal");
 
     static std::size_t mapping[] = {
@@ -1768,7 +1797,8 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept
         sizeof(jfloat),
         sizeof(jdouble),
         sizeof(jstring),
-        sizeof(jobject)
+        sizeof(jobject),
+        sizeof(jarray)
     };
 
     return mapping[static_cast<std::underlying_type<ReflectionType>::type>(type)];

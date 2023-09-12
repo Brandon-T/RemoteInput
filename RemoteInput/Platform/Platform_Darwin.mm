@@ -130,6 +130,22 @@ std::int32_t PIDFromWindow(void* window) noexcept
     return 0;
 }
 
+std::vector<std::string> GetLoadedModuleNames(const char* partial_module_name) noexcept
+{
+    std::vector<std::string> result;
+    std::uint32_t count = _dyld_image_count();
+    for (std::uint32_t i = 0; i < count; ++i)
+    {
+        const char* name = _dyld_get_image_name(i);
+        if (!strcasestr(name, partial_module_name))
+        {
+            result.push_back(name);
+        }
+    }
+
+    return result;
+}
+
 void* GetModuleHandle(const char* module_name) noexcept
 {
     std::uint32_t count = _dyld_image_count();

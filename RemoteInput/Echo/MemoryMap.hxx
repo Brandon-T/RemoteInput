@@ -24,6 +24,7 @@
 #endif
 
 #include <istream>
+#include <Stream.hxx>
 
 template<typename char_type>
 class MemoryMap

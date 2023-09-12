@@ -119,6 +119,7 @@ public:
     jarray reflect_array(const ReflectionHook &hook) const noexcept;
     jarray reflect_array(const ReflectionHook &hook, std::size_t* output_size) const noexcept;
     std::size_t reflect_array_size(const jarray array) const noexcept;
+    ImageData* reflect_array_all(const jarray array, ReflectionType type, std::size_t dimensions) const noexcept;
 
     template<typename... Index>
     typename std::enable_if<is_same_of<std::size_t, Index...>::value, ImageData*>::type reflect_array(const jarray array, const ReflectionType type, const std::size_t length, const Index... index) const noexcept;

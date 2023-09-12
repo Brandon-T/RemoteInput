@@ -409,6 +409,27 @@ std::int32_t PIDFromWindow(void* window) noexcept
     return pid;
 }
 
+std::vector<std::string> GetLoadedModuleNames(const char* partial_module_name) noexcept
+{
+    struct Module { const char* module_name; std::vector<std::string> result; };
+    Module module_info = {0};
+    module_info.module_name = partial_module_name;
+
+    dl_iterate_phdr([](struct dl_phdr_info *info, size_t size, void *data) -> int {
+        if (info && info->dlpi_name)
+        {
+            Module* module_info = static_cast<Module*>(data);
+            if (strcasestr(info->dlpi_name, module_info->module_name))
+            {
+                module_info->result->push_back(info->dlpi_name);
+                return 1;
+            }
+        }
+        return 0;
+    }, reinterpret_cast<void*>(&module_info));
+    return module_info.result;
+}
+
 void* GetModuleHandle(const char* module_name) noexcept
 {
     struct Module { const char* module_name; void* result; };

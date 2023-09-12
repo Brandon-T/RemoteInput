@@ -324,7 +324,7 @@ EIOS* STD_CALL EIOS_PairClient(std::int32_t pid) noexcept
     }
     catch(std::exception& e)
     {
-        printf("%s\n", e.what());
+        fprintf(stderr, "%s\n", e.what());
     }
     return nullptr;
 }
