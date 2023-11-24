@@ -88,16 +88,40 @@ STRUCT_PACK(typedef struct
     std::int32_t SimbaMinor;
     std::int32_t SimbaMajor;
     const char* FileName;
+    void* Compiler;
 }) TSimbaInfomation;
 
 STRUCT_PACK(typedef struct
 {
-    void (*Sync)(void(*synchronize_method)(void*), void* data);
+    void (*RunOnMainThread)(void(*TMainThreadMethod)(void*), void* data);
     void* (*GetMem)(std::size_t size);
     void (*FreeMem)(void* ptr);
     void* (*AllocMem)(std::size_t size);
     void* (*ReAllocMem)(void** ptr, std::size_t size);
     std::size_t (*MemSize)(void* ptr);
+
+    void(*RaiseException)(const char* message);
+
+    void* (*GetTypeInfo)(void* Compiler, const char* Type);
+    std::size_t (*GetTypeInfoFieldOffset)(void* TypeInfo, const char* FieldName);
+
+    void* (*AllocateRawArray)(std::size_t element_size, std::size_t length);
+    void (*ReAllocateRawArray)(void** array, std::size_t element_size, std::size_t new_length);
+
+    void* (*AllocateArray)(void* TypeInfo, std::size_t length);
+    void* (*AllocateString)(const char* data);
+    void* (*AllocateUnicodeString)(const wchar_t* data);
+    void (*SetArrayLength)(void* TypeInfo, void** var, std::size_t new_len);
+    std::size_t (*GetArrayLength)(void* array);
+
+    void* (*ExternalImage_Create)(bool FreeOnTerminate);
+    void (*ExternalImage_SetMemory)(void* img, void* bgra_data, std::int32_t width, std::int32_t height);
+    bool (*ExternalImage_TryLock)(void* image);
+    void (*ExternalImage_Lock)(void* image);
+    void (*ExternalImage_UnLock)(void* image);
+
+    void (*ExternalImage_AddCallbackOnUnlock)(void* img, void (*callback)());
+    void (*ExternalImage_RemoveCallbackOnUnlock)(void* img, void (*callback)());
 }) TSimbaMethodsExtended;
 
 #endif // TMEMORYMANAGER_HXX_INCLUDED

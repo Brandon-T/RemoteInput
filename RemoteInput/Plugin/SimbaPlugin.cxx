@@ -26,7 +26,7 @@ TSimbaMemoryAllocators PLUGIN_MEMORY_ALLOCATORS = {nullptr};
 
 // MARK: - Simba v1.4+
 TSimbaInfomation PLUGIN_SIMBA_INFO = {0};
-TSimbaMethodsExtended PLUGIN_SIMBA_METHODS = {nullptr};
+TSimbaMethodsExtended PLUGIN_SIMBA_METHODS = {0};
 
 // Internal
 extern std::unique_ptr<ControlCenter> control_center;
@@ -126,8 +126,16 @@ void SetPluginSimbaMemoryAllocators(TSimbaMemoryAllocators Allocators) noexcept
 
 void RegisterSimbaPlugin(TSimbaInfomation* Information, TSimbaMethodsExtended* Methods) noexcept
 {
-    std::memcpy(&PLUGIN_SIMBA_INFO, Information, sizeof(TSimbaInfomation));
-    std::memcpy(&PLUGIN_SIMBA_METHODS, Methods, sizeof(TSimbaMethodsExtended));
+    if (Information->SimbaMajor < 1500)
+    {
+        std::memcpy(&PLUGIN_SIMBA_INFO, Information, offsetof(TSimbaInfomation, Compiler));
+        std::memcpy(&PLUGIN_SIMBA_METHODS, Methods, offsetof(TSimbaMethodsExtended, RaiseException));
+    }
+    else
+    {
+        std::memcpy(&PLUGIN_SIMBA_INFO, Information, sizeof(TSimbaInfomation));
+        std::memcpy(&PLUGIN_SIMBA_METHODS, Methods, sizeof(TSimbaMethodsExtended));
+    }
 }
 
 void OnAttach(void* info) noexcept
@@ -712,6 +720,12 @@ void Pascal_KillClient(void** Params, void** Result) noexcept
 {
     std::int32_t pid = PascalRead<std::int32_t>(Params[0]);
     EIOS_KillClientPID(pid);
+}
+
+void Pascal_ReleaseClient(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    EIOS_ReleaseClient(eios);
 }
 
 void Pascal_GetClients(void** Params, void** Result) noexcept

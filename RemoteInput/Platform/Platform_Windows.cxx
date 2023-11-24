@@ -7,6 +7,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #include <tlhelp32.h>
+#include <shellscalingapi.h>
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -32,35 +33,40 @@ void ReverseScaleDPI(HWND hwnd, int &width, int &height)
 
 void GetDesktopResolution(int &width, int &height) noexcept
 {
-    HMODULE user32 = GetModuleHandleA("User32.dll");
-    DPI_AWARENESS_CONTEXT (*GetThreadDpiAwarenessContext)() = reinterpret_cast<decltype(GetThreadDpiAwarenessContext)>(GetProcAddress(user32, "GetThreadDpiAwarenessContext"));
-    DPI_AWARENESS (*GetAwarenessFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT) = reinterpret_cast<decltype(GetAwarenessFromDpiAwarenessContext)>(GetProcAddress(user32, "GetAwarenessFromDpiAwarenessContext"));
-    BOOL (*SetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT) = reinterpret_cast<decltype(SetThreadDpiAwarenessContext)>(GetProcAddress(user32, "SetThreadDpiAwarenessContext"));
-
-    DPI_AWARENESS_CONTEXT context = nullptr;
-
-    if (GetThreadDpiAwarenessContext && GetAwarenessFromDpiAwarenessContext && SetThreadDpiAwarenessContext)
-    {
-        context = GetThreadDpiAwarenessContext();
-        DPI_AWARENESS awareness = GetAwarenessFromDpiAwarenessContext(context);
-
-        if (awareness == DPI_AWARENESS_INVALID || awareness == DPI_AWARENESS_UNAWARE)
-        {
-            SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-        }
-    }
-
-    RECT desktop = {0};
     const HWND hDesktop = GetDesktopWindow();
+    RECT desktop = {0};
     GetWindowRect(hDesktop, &desktop);
-
     width = desktop.right;
     height = desktop.bottom;
 
-    if (context)
+    // DPI Scaling
+    HMODULE user32 = GetModuleHandleA("User32.dll");
+    HMODULE shcore = GetModuleHandleA("Shcore.dll");
+
+    DPI_AWARENESS_CONTEXT (*GetWindowDpiAwarenessContext)(HWND) = reinterpret_cast<decltype(GetWindowDpiAwarenessContext)>(GetProcAddress(user32, "GetWindowDpiAwarenessContext"));
+    DPI_AWARENESS (*GetAwarenessFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT) = reinterpret_cast<decltype(GetAwarenessFromDpiAwarenessContext)>(GetProcAddress(user32, "GetAwarenessFromDpiAwarenessContext"));
+    HRESULT (*GetDpiForMonitor)(HMONITOR, MONITOR_DPI_TYPE, UINT*, UINT*) = reinterpret_cast<decltype(GetDpiForMonitor)>(GetProcAddress(shcore, "GetDpiForMonitor"));
+
+    if (GetWindowDpiAwarenessContext && GetAwarenessFromDpiAwarenessContext && GetDpiForMonitor)
     {
-        SetThreadDpiAwarenessContext(context);
+        DPI_AWARENESS_CONTEXT context = GetWindowDpiAwarenessContext(hDesktop);
+        if (context)
+        {
+            DPI_AWARENESS awareness = GetAwarenessFromDpiAwarenessContext(context);
+            if (awareness != DPI_AWARENESS_INVALID && awareness != DPI_AWARENESS_UNAWARE)
+            {
+                UINT xdpi = 0;
+                UINT ydpi = 0;
+                HMONITOR hMonitor = MonitorFromWindow(hDesktop, MONITOR_DEFAULTTONEAREST);
+                if (GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, &xdpi, &ydpi) == S_OK)
+                {
+                    width = static_cast<int>(width / (xdpi / 96.0));
+                    height = static_cast<int>(height / (ydpi / 96.0));
+                }
+            }
+        }
     }
+
 }
 
 std::int32_t GetCurrentThreadID() noexcept

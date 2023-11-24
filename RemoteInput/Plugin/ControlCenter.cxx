@@ -269,28 +269,22 @@ void ControlCenter::process_command() noexcept
 
         case EIOSCommand::HOLD_MOUSE:
         {
-            std::int32_t x = stream.read<std::int32_t>();
-            std::int32_t y = stream.read<std::int32_t>();
             std::int32_t button = stream.read<std::int32_t>();
-            io_controller->hold_mouse(x, y, button);
+            io_controller->hold_mouse(button);
         }
             break;
 
         case EIOSCommand::RELEASE_MOUSE:
         {
-            std::int32_t x = stream.read<std::int32_t>();
-            std::int32_t y = stream.read<std::int32_t>();
             std::int32_t button = stream.read<std::int32_t>();
-            io_controller->release_mouse(x, y, button);
+            io_controller->release_mouse(button);
         }
             break;
 
         case EIOSCommand::SCROLL_MOUSE:
         {
-            std::int32_t x = stream.read<std::int32_t>();
-            std::int32_t y = stream.read<std::int32_t>();
             std::int32_t lines = stream.read<std::int32_t>();
-            io_controller->scroll_mouse(x, y, lines);
+            io_controller->scroll_mouse(lines);
         }
             break;
 
@@ -308,6 +302,17 @@ void ControlCenter::process_command() noexcept
             std::int32_t keywait = stream.read<std::int32_t>();
             std::int32_t keymodwait = stream.read<std::int32_t>();
             io_controller->send_string(string, keywait, keymodwait);
+        }
+            break;
+
+        case EIOSCommand::SEND_KEY:
+        {
+            char key = stream.read<char>();
+            std::int32_t key_down_time = stream.read<std::int32_t>();
+            std::int32_t key_up_time = stream.read<std::int32_t>();
+            std::int32_t modifier_down_time = stream.read<std::int32_t>();
+            std::int32_t modifier_up_time = stream.read<std::int32_t>();
+            io_controller->send_key(key, key_down_time, key_up_time, modifier_down_time, modifier_up_time);
         }
             break;
 
@@ -861,6 +866,30 @@ bool ControlCenter::init_maps() noexcept
     snprintf(mapName, sizeof(mapName) - 1, "RemoteInput_%d", pid);
     #endif
 
+    if (is_controller)
+    {
+        //Open existing map to retrieve its dimensions..
+        memory_map = std::make_unique<MemoryMapStream>(mapName, sizeof(ImageData), MemoryMapStream::open_mode::read);
+        if (memory_map && memory_map->is_mapped())
+        {
+            int width = memory_map->image_data().width();
+            int height = memory_map->image_data().height();
+
+            if (width && height)
+            {
+                std::size_t image_size = width * height * 4 * sizeof(std::uint8_t);
+                std::size_t debug_size = width * height * 4 * sizeof(std::uint8_t);
+                std::size_t extra_size = (1024 * sizeof(std::int32_t));
+                std::int32_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
+
+                //Open only..
+                memory_map = std::make_unique<MemoryMapStream>(mapName, map_size, MemoryMapStream::open_mode::read | MemoryMapStream::open_mode::write);
+                return memory_map && memory_map->is_mapped();
+            }
+        }
+        return false;
+    }
+
     int width = 0;
     int height = 0;
     GetDesktopResolution(width, height); //TODO: Change to Target Window size..
@@ -869,13 +898,6 @@ bool ControlCenter::init_maps() noexcept
     std::size_t debug_size = width * height * 4 * sizeof(std::uint8_t);
     std::size_t extra_size = (1024 * sizeof(std::int32_t));
     std::int32_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
-
-    if (is_controller)
-    {
-        //Open only..
-        memory_map = std::make_unique<MemoryMapStream>(mapName, map_size, MemoryMapStream::open_mode::read | MemoryMapStream::open_mode::write);
-        return memory_map && memory_map->is_mapped();
-    }
 
     //Create only..
     memory_map = std::make_unique<MemoryMapStream>(mapName, map_size, MemoryMapStream::open_mode::read | MemoryMapStream::open_mode::write | MemoryMapStream::open_mode::create);
@@ -1336,32 +1358,26 @@ void ControlCenter::move_mouse(std::int32_t x, std::int32_t y) const noexcept
     });
 }
 
-void ControlCenter::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button) const noexcept
+void ControlCenter::hold_mouse(std::int32_t button) const noexcept
 {
-    send_command([x, y, button](Stream &stream, ImageData* image_data) {
+    send_command([button](Stream &stream, ImageData* image_data) {
         image_data->set_command(EIOSCommand::HOLD_MOUSE);
-        stream.write<std::int32_t>(x);
-        stream.write<std::int32_t>(y);
         stream.write<std::int32_t>(button);
     });
 }
 
-void ControlCenter::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button) const noexcept
+void ControlCenter::release_mouse(std::int32_t button) const noexcept
 {
-    send_command([x, y, button](Stream &stream, ImageData* image_data) {
+    send_command([button](Stream &stream, ImageData* image_data) {
         image_data->set_command(EIOSCommand::RELEASE_MOUSE);
-        stream.write<std::int32_t>(x);
-        stream.write<std::int32_t>(y);
         stream.write<std::int32_t>(button);
     });
 }
 
-void ControlCenter::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines) const noexcept
+void ControlCenter::scroll_mouse(std::int32_t lines) const noexcept
 {
-    send_command([x, y, lines](Stream &stream, ImageData* image_data) {
+    send_command([lines](Stream &stream, ImageData* image_data) {
         image_data->set_command(EIOSCommand::SCROLL_MOUSE);
-        stream.write<std::int32_t>(x);
-        stream.write<std::int32_t>(y);
         stream.write<std::int32_t>(lines);
     });
 }
@@ -1387,6 +1403,18 @@ void ControlCenter::send_string(const char* string, std::int32_t keywait, std::i
         image_data->data_stream() << string;
         stream.write<std::int32_t>(keywait);
         stream.write<std::int32_t>(keymodwait);
+    });
+}
+
+void ControlCenter::send_key(char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) const noexcept
+{
+    send_command([key, key_down_time, key_up_time, modifier_down_time, modifier_up_time](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::SEND_KEY);
+        stream.write<char>(key);
+        stream.write<std::int32_t>(key_down_time);
+        stream.write<std::int32_t>(key_up_time);
+        stream.write<std::int32_t>(modifier_down_time);
+        stream.write<std::int32_t>(modifier_up_time);
     });
 }
 

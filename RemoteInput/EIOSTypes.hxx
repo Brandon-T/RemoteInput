@@ -28,6 +28,7 @@ enum class EIOSCommand: std::uint32_t
     SCROLL_MOUSE,
     IS_MOUSE_HELD,
     SEND_STRING,
+    SEND_KEY,
     HOLD_KEY,
     RELEASE_KEY,
     IS_KEY_HELD,

@@ -55,6 +55,7 @@ static const char* PascalExports[] =
     "Pascal_PairClient", "Function EIOS_PairClient(pid: Int32): Pointer; native;",
     "Pascal_KillClientPID", "Procedure EIOS_KillClient(pid: Int32); native;",
     "Pascal_KillClient", "Procedure EIOS_KillClient(eios: Pointer); overload; native;",
+    "Pascal_ReleaseClient", "Procedure EIOS_ReleaseClient(eios: Pointer); overload; native;",
     "Pascal_GetClients", "Function EIOS_GetClients(unpaired_only: Boolean): SizeUInt; native;",
     "Pascal_GetClientPID", "Function EIOS_GetClientPID(index: SizeUInt): Int32; native;",
 
@@ -334,6 +335,7 @@ EXPORT void Pascal_SetGraphicsDebugging(void** Params, void** Result) noexcept;
 EXPORT void Pascal_PairClient(void** Params, void** Result) noexcept;
 EXPORT void Pascal_KillClientPID(void** Params, void** Result) noexcept;
 EXPORT void Pascal_KillClient(void** Params, void** Result) noexcept;
+EXPORT void Pascal_ReleaseClient(void** Params, void** Result) noexcept;
 EXPORT void Pascal_GetClients(void** Params, void** Result) noexcept;
 EXPORT void Pascal_GetClientPID(void** Params, void** Result) noexcept;
 

@@ -78,13 +78,14 @@ public:
     void release_key(std::int32_t code) noexcept;
     bool is_key_held(std::int32_t code) const noexcept;
     void send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait) const noexcept;
+    void send_key(char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) const noexcept;
 
     void get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept;
     void get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept;
     void move_mouse(std::int32_t x, std::int32_t y) noexcept;
-    void hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
-    void release_mouse(std::int32_t x, std::int32_t y, std::int32_t button) noexcept;
-    void scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines) noexcept;
+    void hold_mouse(std::int32_t button) noexcept;
+    void release_mouse(std::int32_t button) noexcept;
+    void scroll_mouse(std::int32_t lines) noexcept;
     bool is_mouse_held(std::int32_t button) const noexcept;
     void stop_all_processing() noexcept;
 

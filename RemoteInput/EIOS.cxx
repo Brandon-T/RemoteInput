@@ -12,6 +12,7 @@
 #include <memory>
 #include <atomic>
 #include <cstring>
+#include "SimbaPlugin.hxx"
 #include "MemoryMap.hxx"
 #include "SharedEvent.hxx"
 #include "Reflection.hxx"
@@ -19,6 +20,8 @@
 
 std::unordered_map<std::int32_t, EIOS*> clients;
 std::vector<std::int32_t> all_clients;
+extern TSimbaInfomation PLUGIN_SIMBA_INFO;
+extern TSimbaMethodsExtended PLUGIN_SIMBA_METHODS;
 
 EIOS* STD_CALL EIOS_RequestTarget(const char* initargs) noexcept
 {
@@ -173,7 +176,7 @@ void STD_CALL EIOS_HoldMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::in
 {
     if (eios)
     {
-        eios->control_center->hold_mouse(x, y, button);
+        eios->control_center->hold_mouse(button);
     }
 }
 
@@ -181,7 +184,7 @@ void STD_CALL EIOS_ReleaseMouse(EIOS* eios, std::int32_t x, std::int32_t y, std:
 {
     if (eios)
     {
-        eios->control_center->release_mouse(x, y, button);
+        eios->control_center->release_mouse(button);
     }
 }
 
@@ -189,7 +192,7 @@ void STD_CALL EIOS_ScrollMouse(EIOS* eios, std::int32_t x, std::int32_t y, std::
 {
     if (eios)
     {
-        eios->control_center->scroll_mouse(x, y, lines);
+        eios->control_center->scroll_mouse(lines);
     }
 }
 
@@ -350,6 +353,11 @@ void STD_CALL EIOS_KillClient(EIOS* eios) noexcept
     }
 }
 
+void STD_CALL EIOS_ReleaseClient(EIOS* eios) noexcept
+{
+    EIOS_ReleaseTarget(eios);
+}
+
 void STD_CALL EIOS_KillZombieClients() noexcept
 {
     std::vector<std::int32_t> dead_clients;
@@ -401,4 +409,98 @@ std::size_t STD_CALL EIOS_GetClients(bool unpaired_only) noexcept
 std::int32_t STD_CALL EIOS_GetClientPID(std::size_t index) noexcept
 {
     return index < all_clients.size() && all_clients.size() > 0 ? all_clients[index] : -1;
+}
+
+EIOS* SimbaPluginTarget_Request(const char* initargs) noexcept
+{
+    return EIOS_RequestTarget(initargs);
+}
+
+EIOS* SimbaPluginTarget_RequestWithDebugImage(const char* initargs, void** image) noexcept
+{
+    EIOS* eios = EIOS_RequestTarget(initargs);
+
+    if (image)
+    {
+        *image = PLUGIN_SIMBA_METHODS.ExternalImage_Create(true);
+        PLUGIN_SIMBA_METHODS.ExternalImage_SetMemory(*image, EIOS_GetImageBuffer(eios), eios->width, eios->height);
+
+        PLUGIN_SIMBA_METHODS.ExternalImage_AddCallbackOnUnlock(*image, []{
+
+        });
+    }
+
+    return eios;
+}
+
+void SimbaPluginTarget_Release(EIOS* eios) noexcept
+{
+    EIOS_ReleaseTarget(eios);
+}
+
+void SimbaPluginTarget_GetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height) noexcept
+{
+    EIOS_GetTargetDimensions(eios, width, height);
+}
+
+void SimbaPluginTarget_GetImageData(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t width, std::int32_t height, void** pColorBGRA, std::int32_t* data_width) noexcept
+{
+    std::uint8_t* image_buffer = EIOS_GetImageBuffer(eios);
+    *pColorBGRA = &image_buffer[y * eios->width + x];
+    *data_width = eios->width;
+}
+
+bool SimbaPluginTarget_MousePressed(EIOS* eios, int mouse_button) noexcept
+{
+    return EIOS_IsMouseButtonHeld(eios, mouse_button);
+}
+
+TPoint SimbaPluginTarget_MousePosition(EIOS* eios) noexcept
+{
+    std::int32_t x, y;
+    EIOS_GetMousePosition(eios, &x, &y);
+    return {x, y};
+}
+
+void SimbaPluginTarget_Teleport(EIOS* eios, const TPoint &p) noexcept
+{
+    EIOS_MoveMouse(eios, p.x, p.y);
+}
+
+void SimbaPluginTarget_MouseUp(EIOS* eios, int mouse_button) noexcept
+{
+    EIOS_ReleaseMouse(eios, 0, 0, mouse_button);
+}
+
+void SimbaPluginTarget_MouseDown(EIOS* eios, int mouse_button) noexcept
+{
+    EIOS_HoldMouse(eios, 0, 0, mouse_button);
+}
+
+void SimbaPluginTarget_MouseScroll(EIOS* eios, int scrolls) noexcept
+{
+    EIOS_ScrollMouse(eios, 0, 0, scrolls);
+}
+
+void SimbaPluginTarget_KeyDown(EIOS* eios, std::int32_t key) noexcept
+{
+    EIOS_HoldKey(eios, key);
+}
+
+void SimbaPluginTarget_KeyUp(EIOS* eios, std::int32_t key) noexcept
+{
+    EIOS_ReleaseKey(eios, key);
+}
+
+void SimbaPluginTarget_KeySend(EIOS* eios, char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) noexcept
+{
+    if (eios)
+    {
+        eios->control_center->send_key(key, key_down_time, key_up_time, modifier_down_time, modifier_up_time);
+    }
+}
+
+bool SimbaPluginTarget_KeyPressed(EIOS* eios, std::int32_t key) noexcept
+{
+    return EIOS_IsKeyHeld(eios, key);
 }

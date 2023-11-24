@@ -575,6 +575,108 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
     }
 }
 
+void InputOutput::send_key(char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) const noexcept
+{
+    extern std::unique_ptr<ControlCenter> control_center;
+    if (!control_center)
+    {
+        return;
+    }
+
+    java::Component receiver = control_center->reflect_canvas();
+    JNIEnv* env = receiver.getEnv();
+
+    if (!this->has_focus(&receiver))
+    {
+        this->gain_focus(&receiver);
+    }
+
+    std::int32_t modifiers = this->ModifiersForChar(key);
+
+    //Modifier Key is already pressed
+    bool isShiftDown = GetActiveKeyModifiers() & java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+
+    //Modifier Key
+    if (!isShiftDown && (modifiers & java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK))
+    {
+        std::int32_t code = VK_LSHIFT;
+        std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        std::int32_t modifiers = java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+        std::int32_t keycode = GetJavaKeyCode(code);
+        std::int32_t location = GetKeyLocation(code);
+
+        java::KeyEvent::Post(env,
+                             &receiver,
+                             java::KeyEvent::KeyCodes::KEY_PRESSED,
+                             when,
+                             modifiers,
+                             keycode,
+                             static_cast<jchar>(java::KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                             location);
+
+        yield_thread(std::chrono::milliseconds(modifier_down_time));
+    }
+
+    //Character Key
+    std::int32_t code = static_cast<std::int32_t>(key);
+    std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    std::int32_t keycode = CharToJavaKeyCode(code);
+    std::int32_t location = GetKeyLocation(code);
+
+    java::KeyEvent::Post(env,
+                         &receiver,
+                         java::KeyEvent::KeyCodes::KEY_PRESSED,
+                         when,
+                         modifiers,
+                         keycode,
+                         static_cast<jchar>(key),
+                         location);
+
+    java::KeyEvent::Post(env,
+                         &receiver,
+                         java::KeyEvent::KeyCodes::KEY_TYPED,
+                         when,
+                         modifiers,
+                         0,
+                         static_cast<jchar>(key),
+                         java::KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+
+    yield_thread(std::chrono::milliseconds(key_down_time));
+    when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+    java::KeyEvent::Post(env,
+                         &receiver,
+                         java::KeyEvent::KeyCodes::KEY_RELEASED,
+                         when,
+                         modifiers,
+                         keycode,
+                         static_cast<jchar>(key),
+                         location);
+
+    yield_thread(std::chrono::milliseconds(key_up_time));
+
+    //Modifier Key
+    if (!isShiftDown && (modifiers & java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK))
+    {
+        std::int32_t code = VK_LSHIFT;
+        std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        std::int32_t modifiers = java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+        std::int32_t keycode = GetJavaKeyCode(code);
+        std::int32_t location = GetKeyLocation(code);
+
+        java::KeyEvent::Post(env,
+                             &receiver,
+                             java::KeyEvent::KeyCodes::KEY_RELEASED,
+                             when,
+                             modifiers,
+                             keycode,
+                             static_cast<jchar>(java::KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                             location);
+
+        yield_thread(std::chrono::milliseconds(modifier_up_time));
+    }
+}
+
 bool InputOutput::has_focus() const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
@@ -835,7 +937,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
     }
 }
 
-void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button) noexcept
+void InputOutput::hold_mouse(std::int32_t button) noexcept
 {
     if (!this->is_mouse_held(button))
     {
@@ -849,8 +951,7 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
         JNIEnv* env = receiver.getEnv();
         this->handle_resize(&receiver);
 
-        this->x = x; this->y = y;
-        bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+        bool isRequestedPositionInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
         if (isRequestedPositionInsideComponent)
         {
             std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -870,7 +971,7 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
 
             //Key extended masks
             buttonMask |= GetActiveKeyModifiers();
-            java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, x, y, click_count, false, button);
+            java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_PRESSED, when, buttonMask, this->x, this->y, click_count, false, button);
         }
         else
         {
@@ -883,7 +984,7 @@ void InputOutput::hold_mouse(std::int32_t x, std::int32_t y, std::int32_t button
     }
 }
 
-void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t button) noexcept
+void InputOutput::release_mouse(std::int32_t button) noexcept
 {
     if (this->is_mouse_held(button))
     {
@@ -893,14 +994,13 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
             return;
         }
 
-        this->x = x; this->y = y;
         java::Component receiver = control_center->reflect_canvas();
         JNIEnv* env = receiver.getEnv();
         this->handle_resize(&receiver);
 
         std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-        bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+        bool isRequestedPositionInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
         bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
         bool isDragging = mouse_buttons[0] || mouse_buttons[1] || mouse_buttons[2];
 
@@ -916,17 +1016,17 @@ void InputOutput::release_mouse(std::int32_t x, std::int32_t y, std::int32_t but
         buttonMask |= GetActiveKeyModifiers();
 
         //MOUSE_RELEASED
-        java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, x, y, click_count, false, button);
+        java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_RELEASED, when, buttonMask, this->x, this->y, click_count, false, button);
 
         if (!isDragging && isRequestedPositionInsideComponent && isMouseInsideComponent)
         {
             //MOUSE_CLICKED
-            java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, x, y, click_count, false, button);
+            java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_CLICKED, when, buttonMask, this->x, this->y, click_count, false, button);
         }
     }
 }
 
-void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t lines) noexcept
+void InputOutput::scroll_mouse(std::int32_t lines) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -938,12 +1038,11 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
     JNIEnv* env = receiver.getEnv();
     this->handle_resize(&receiver);
 
-    bool isRequestedPositionInsideComponent = !(x < 0 || y < 0 || x > static_cast<std::int32_t>(this->w) || y > static_cast<std::int32_t>(this->h));
+    bool isRequestedPositionInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
     bool isMouseInsideComponent = !(this->x < 0 || this->y < 0 || this->x > static_cast<std::int32_t>(this->w) || this->y > static_cast<std::int32_t>(this->h));
 
     if (isRequestedPositionInsideComponent && isMouseInsideComponent)
     {
-        this->x = x; this->y = y;
         //Relative Mouse Position
         std::int32_t cx = 0;
         std::int32_t cy = 0;
@@ -967,10 +1066,10 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
                                     java::MouseEvent::MouseEventCodes::MOUSE_WHEEL,
                                     when,
                                     modifiers,
-                                    x,
-                                    y,
-                                    cx + x,
-                                    cy + y,
+                                    this->x,
+                                    this->y,
+                                    cx + this->x,
+                                    cy + this->y,
                                     0,
                                     false,
                                     java::MouseWheelEvent::MouseWheelEventCodes::WHEEL_UNIT_SCROLL,
@@ -998,12 +1097,11 @@ void InputOutput::scroll_mouse(std::int32_t x, std::int32_t y, std::int32_t line
 
 
         //MOUSE_ENTERED
-        this->x = x; this->y = y;
-        java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, x, y, 0, false, 0);
-        java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, x, y, 0, false, 0);
+        java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_ENTERED, when, buttonMask, this->x, this->y, 0, false, 0);
+        java::MouseEvent::Post(env, &receiver, java::MouseEvent::MouseEventCodes::MOUSE_MOVED, when, buttonMask, this->x, this->y, 0, false, 0);
 
         // Recursive call
-        scroll_mouse(x, y, lines);
+        scroll_mouse(lines);
     }
 }
 
@@ -1024,9 +1122,9 @@ void InputOutput::stop_all_processing() noexcept
     std::int32_t y = 0;
 
     this->get_mouse_position(&x, &y);
-    this->release_mouse(x, y, 0);
-    this->release_mouse(x, y, 1);
-    this->release_mouse(x, y, 2);
+    this->release_mouse(0);
+    this->release_mouse(1);
+    this->release_mouse(2);
 
     for (std::int32_t key : std::vector<std::int32_t>(held_keys.begin(), held_keys.end()))
     {
