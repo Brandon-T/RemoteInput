@@ -281,8 +281,11 @@ PyObject* Python_EIOS_GetImageBuffer(PyEIOS* self, PyObject* args[], Py_ssize_t 
     }
     #endif
 
+    std::int32_t width = 0;
+    std::int32_t height = 0;
+    EIOS_GetTargetDimensions(python_get_eios(self), &width, &height);
     std::uint8_t* buffer = EIOS_GetImageBuffer(python_get_eios(self));
-    return python->PyLong_FromVoidPtr(buffer);
+    return python->PyMemoryView_FromMemory(reinterpret_cast<char*>(buffer), width * height * 4, 0x200);
 }
 
 PyObject* Python_EIOS_GetDebugImageBuffer(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept
@@ -295,8 +298,11 @@ PyObject* Python_EIOS_GetDebugImageBuffer(PyEIOS* self, PyObject* args[], Py_ssi
     }
     #endif
 
+    std::int32_t width = 0;
+    std::int32_t height = 0;
+    EIOS_GetTargetDimensions(python_get_eios(self), &width, &height);
     std::uint8_t* buffer = EIOS_GetDebugImageBuffer(python_get_eios(self));
-    return python->PyLong_FromVoidPtr(buffer);
+    return python->PyMemoryView_FromMemory(reinterpret_cast<char*>(buffer), width * height * 4, 0x200);
 }
 
 PyObject* Python_EIOS_SetGraphicsDebugging(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept

@@ -8,8 +8,21 @@ extern std::unique_ptr<Python> python;
 
 #if !defined(METH_FASTCALL)
 // Non-Keywords Args
-template<PyObject* (*fn)(PyObject*, PyObject* const*, Py_ssize_t)>
-PyObject* python_fastcall(PyObject* self, PyObject* args)
+
+template<typename T>
+struct PyFunctionType
+{
+    typedef typename std::tuple_element<0, typename function_arguments_type<T>::type>::type self_type;
+    typedef PyObject* (*fn_type)(self_type, PyObject*[], Py_ssize_t) noexcept;
+    typedef PyObject* (*fn_keyword_type)(self_type, PyObject*[], Py_ssize_t, PyObject*) noexcept;
+};
+
+template<typename T, T fn>
+typename std::enable_if<std::is_same<
+        decltype(fn),
+        typename PyFunctionType<T>::fn_type
+        >::value, PyObject*>::type
+python_fastcall(PyObject* self, PyObject* args)
 {
     #if defined(Py_LIMITED_API)
     typedef struct
@@ -19,55 +32,20 @@ PyObject* python_fastcall(PyObject* self, PyObject* args)
     } PyTupleObject;
     #endif
 
-    return fn(self, reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args));
-}
-
-// Aliases
-template<PyObject* (*fn)(PyEIOS*, PyObject*[], Py_ssize_t)>
-PyObject* python_fastcall(PyObject* self, PyObject* args)
-{
-    #if defined(Py_LIMITED_API)
-    typedef struct
-    {
-        PyObject_VAR_HEAD
-        PyObject *ob_item[1];
-    } PyTupleObject;
-    #endif
-
-    return fn(reinterpret_cast<PyEIOS*>(self), reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args));
-}
-
-template<PyObject* (*fn)(PyJavaObject*, PyObject*[], Py_ssize_t)>
-PyObject* python_fastcall(PyObject* self, PyObject* args)
-{
-    #if defined(Py_LIMITED_API)
-    typedef struct
-    {
-        PyObject_VAR_HEAD
-        PyObject *ob_item[1];
-    } PyTupleObject;
-    #endif
-
-    return fn(reinterpret_cast<PyJavaObject*>(self), reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args));
-}
-
-template<PyObject* (*fn)(PyJavaArray*, PyObject*[], Py_ssize_t)>
-PyObject* python_fastcall(PyObject* self, PyObject* args)
-{
-    #if defined(Py_LIMITED_API)
-    typedef struct
-    {
-        PyObject_VAR_HEAD
-        PyObject *ob_item[1];
-    } PyTupleObject;
-    #endif
-
-    return fn(self, reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args));
+    typedef typename PyFunctionType<decltype(fn)>::self_type self_type;
+    return fn(reinterpret_cast<self_type>(self),
+              reinterpret_cast<PyTupleObject*>(args)->ob_item,
+              python->PyTuple_Size(args));
 }
 
 // Keyword Args
-template<PyObject* (*fn)(PyObject*, PyObject*[], Py_ssize_t, PyObject*)>
-PyObject* python_fastcall(PyObject* self, PyObject* args, PyObject* kwnames)
+
+template<typename T, T fn>
+typename std::enable_if<std::is_same<
+        decltype(fn),
+        typename PyFunctionType<T>::fn_keyword_type
+        >::value, PyObject*>::type
+python_fastcall(PyObject* self, PyObject* args, PyObject* kwnames)
 {
     #if defined(Py_LIMITED_API)
     typedef struct
@@ -77,52 +55,31 @@ PyObject* python_fastcall(PyObject* self, PyObject* args, PyObject* kwnames)
     } PyTupleObject;
     #endif
 
-    return fn(self, reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args), kwnames);
-}
+    Py_ssize_t args_size = python->PyTuple_Size(args);
+    Py_ssize_t keywords_size = python->PyDict_Size(kwnames);
+    PyObject* keys = python->PyList_AsTuple(python->PyDict_Keys(kwnames));
+    PyObject* values = python->PyDict_Values(kwnames);
 
-template<PyObject* (*fn)(PyEIOS*, PyObject*[], Py_ssize_t, PyObject*)>
-PyObject* python_fastcall(PyObject* self, PyObject* args, PyObject* kwnames)
-{
-    #if defined(Py_LIMITED_API)
-    typedef struct
+    std::vector<PyObject*> arguments;
+    arguments.reserve(args_size + keywords_size);
+    for (std::size_t i = 0; i < arguments.size(); ++i)
     {
-        PyObject_VAR_HEAD
-        PyObject *ob_item[1];
-    } PyTupleObject;
-    #endif
+        arguments.push_back(reinterpret_cast<PyTupleObject*>(args)->ob_item[i]);
+    }
 
-    return fn(self, reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args), kwnames);
-}
-
-template<PyObject* (*fn)(PyJavaObject*, PyObject*[], Py_ssize_t, PyObject*)>
-PyObject* python_fastcall(PyObject* self, PyObject* args, PyObject* kwnames)
-{
-    #if defined(Py_LIMITED_API)
-    typedef struct
+    for (Py_ssize_t i = 0; i < keywords_size; ++i)
     {
-        PyObject_VAR_HEAD
-        PyObject *ob_item[1];
-    } PyTupleObject;
-    #endif
+        arguments.push_back(python->PyList_GetItem(values, i));
+    }
 
-    return fn(self, reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args), kwnames);
+    typedef typename PyFunctionType<decltype(fn)>::self_type self_type;
+    return fn(reinterpret_cast<self_type>(self),
+              &arguments[0],
+              args_size,
+              keys);
 }
 
-template<PyObject* (*fn)(PyJavaArray*, PyObject*[], Py_ssize_t, PyObject*)>
-PyObject* python_fastcall(PyObject* self, PyObject* args, PyObject* kwnames)
-{
-    #if defined(Py_LIMITED_API)
-    typedef struct
-    {
-        PyObject_VAR_HEAD
-        PyObject *ob_item[1];
-    } PyTupleObject;
-    #endif
-
-    return fn(reinterpret_cast<PyJavaArray*>(self), reinterpret_cast<PyTupleObject*>(args)->ob_item, python->PyTuple_Size(args), kwnames);
-}
-
-#define PYTHON_FASTCALL(f) (PyCFunction)python_fastcall<f>
+#define PYTHON_FASTCALL(f) (PyCFunction)python_fastcall<decltype(f), f>
 #define METH_FASTCALL METH_VARARGS
 #else
 #define PYTHON_FASTCALL(f) reinterpret_cast<PyCFunction>(f)

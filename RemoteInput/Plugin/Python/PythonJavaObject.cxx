@@ -242,7 +242,6 @@ PyObject* Python_Reflect_String(PyJavaObject* self, PyObject* args[], Py_ssize_t
     jobject object = from_python_object<jobject>(self);
     std::string cls = from_python_object<std::string>(args[0]);
     std::string field = from_python_object<std::string>(args[1]);
-    std::string desc = from_python_object<std::string>(args[2]);
     std::string result = eios->control_center->reflect_string({object, cls, field, "Ljava/lang/String;"});
     return to_python_object(result);
 }

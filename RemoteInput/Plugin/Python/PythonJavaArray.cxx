@@ -107,7 +107,7 @@ template<std::size_t keywords_size>
 std::vector<PyObject*> python_parse_arguments(const char* (&keywords)[keywords_size], PyObject* args[], Py_ssize_t args_length, PyObject* kwnames)
 {
     std::vector<PyObject*> result;
-    result.resize(keywords_size);
+    result.resize(args_length + keywords_size);
 
     for (std::size_t i = 0; i < args_length; ++i)
     {
@@ -130,7 +130,7 @@ std::vector<PyObject*> python_parse_arguments(const char* (&keywords)[keywords_s
 
 PyObject* Python_JavaArray_Get1D(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length, PyObject* kwnames) noexcept
 {
-    static const char* kwlist[] = {"type", "index", "length", nullptr};
+    static const char* kwlist[] = {"type", "indices", "index", "length", nullptr};
     std::vector<PyObject*> arguments = python_parse_arguments(kwlist, args, args_length, kwnames);
 
     ReflectionType type = ReflectionType::OBJECT;
@@ -139,18 +139,27 @@ PyObject* Python_JavaArray_Get1D(PyJavaArray* self, PyObject* args[], Py_ssize_t
         type = from_python_object<ReflectionType>(arguments[0]);
     }
 
-    PyObject* index_object = arguments[1];
-    PyObject* length_object = arguments[2];
+    PyObject* indices_object = arguments[1];
+    PyObject* index_object = arguments[2];
+    PyObject* length_object = arguments[3];
 
     EIOS* eios = python_get_eios(self);
     jarray array = from_python_object<jarray>(self);
     std::size_t index = 0;
     std::size_t length = 0;
 
-    if (!index_object && !length_object)
+    if (!index_object && !length_object && !indices_object)
     {
         // Read entire array
         Stream &stream = eios->control_center->reflect_array_all(array, type, 1)->data_stream();
+        return read_array_type(stream, self, type, 1);
+    }
+
+    if (indices_object)
+    {
+        // Read array indexed by indices
+        std::vector<std::int32_t> indices = from_python_array<std::int32_t>(indices_object);
+        Stream &stream = eios->control_center->reflect_array_indices(array, type, &indices[0], indices.size())->data_stream();
         return read_array_type(stream, self, type, 1);
     }
 
@@ -164,13 +173,7 @@ PyObject* Python_JavaArray_Get1D(PyJavaArray* self, PyObject* args[], Py_ssize_t
         length = from_python_object<std::size_t>(length_object);
     }
 
-    length = length == 0 ? self->size : std::min(length, self->size);
-    if (length == 0 || !array || index > length)
-    {
-        Reflect_Release_Object(eios, array);
-        (python->Py_INCREF)(python->Py_GetNone_Object());
-        return python->Py_GetNone_Object();
-    }
+    length = std::min(std::max<std::size_t>(length, 1), self->size);
 
     // Read array of [index..<length]
     Stream &stream = eios->control_center->reflect_array(array, type, length, index)->data_stream();

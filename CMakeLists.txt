@@ -20,13 +20,13 @@ find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
 
 IF(PYTHON_BINDINGS)
-    find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development)
+    find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
     MESSAGE(STATUS, "${Python_LIBRARIES}")
     MESSAGE(STATUS, "${Python_LIBRARY_DIRS}")
     MESSAGE(STATUS, "${PYTHON_DYNAMIC_LINKER_FLAGS}")
 ENDIF()
 
-set(Py_LIMITED_API 0x03050000)
+set(Py_LIMITED_API 0x03080000)
 
 
 # ----------------------- INCLUDE_DIRECTORIES -----------------------
