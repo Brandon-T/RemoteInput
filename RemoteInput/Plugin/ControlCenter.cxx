@@ -1262,6 +1262,19 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
     }
 }
 
+ImageFormat ControlCenter::get_image_format() const noexcept
+{
+    return memory_map && memory_map->is_mapped() ? get_image_data()->image_format() : ImageFormat::BGR_BGRA;
+}
+
+void ControlCenter::set_image_format(ImageFormat format) noexcept
+{
+    if (memory_map && memory_map->is_mapped())
+    {
+        get_image_data()->set_image_format(format);
+    }
+}
+
 bool ControlCenter::has_focus() const noexcept
 {
     bool result = send_command([](Stream &stream, ImageData* image_data) {

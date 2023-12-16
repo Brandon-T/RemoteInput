@@ -206,40 +206,14 @@ private:
 };
 #endif
 
-// /**
-// * This table contains the "pixel formats" for all system memory surfaces
-// * that OpenGL is capable of handling, indexed by the "PF_" constants defined
-// * in OGLSurfaceData.java.  These pixel formats contain information that is
-// * passed to OpenGL when copying from a system memory ("Sw") surface to
-// * an OpenGL "Surface" (via glDrawPixels()) or "Texture" (via glTexImage2D()).
-// */
-//OGLPixelFormat PixelFormats[] = {
-//        { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-//                4, 1, 0,                                     }, /* 0 - IntArgb      */
-//        { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-//                4, 1, 1,                                     }, /* 1 - IntArgbPre   */
-//        { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-//                4, 0, 1,                                     }, /* 2 - IntRgb       */
-//        { GL_RGBA, GL_UNSIGNED_INT_8_8_8_8,
-//                4, 0, 1,                                     }, /* 3 - IntRgbx      */
-//        { GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV,
-//                4, 0, 1,                                     }, /* 4 - IntBgr       */
-//        { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8,
-//                4, 0, 1,                                     }, /* 5 - IntBgrx      */
-//        { GL_RGB,  GL_UNSIGNED_SHORT_5_6_5,
-//                2, 0, 1,                                     }, /* 6 - Ushort565Rgb */
-//        { GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV,
-//                2, 0, 1,                                     }, /* 7 - Ushort555Rgb */
-//        { GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1,
-//                2, 0, 1,                                     }, /* 8 - Ushort555Rgbx*/
-//        { GL_LUMINANCE, GL_UNSIGNED_BYTE,
-//                1, 0, 1,                                     }, /* 9 - ByteGray     */
-//        { GL_LUMINANCE, GL_UNSIGNED_SHORT,
-//                2, 0, 1,                                     }, /*10 - UshortGray   */
-//        { GL_BGR,  GL_UNSIGNED_BYTE,
-//                1, 0, 1,                                     }, /*11 - ThreeByteBgr */};
+typedef struct _OGLSDOps OGLSDOps;
+typedef unsigned char jubyte;
+typedef unsigned int juint;
 
-/*typedef struct _OGLSDOps OGLSDOps;
+typedef struct {
+    GLenum src;
+    GLenum dst;
+} OGLBlendRule;
 
 typedef struct {
     GLenum   format;
@@ -248,6 +222,40 @@ typedef struct {
     jboolean hasAlpha;
     jboolean isPremult;
 } OGLPixelFormat;
+
+OGLPixelFormat PixelFormats[] = {
+    {GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,  4, 1, 0},   // 0 - IntArgb
+    { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 1, 1},   // 1 - IntArgbPre
+    { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0, 1},   // 2 - IntRgb
+    { GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, 4, 0, 1},       // 3 - IntRgbx
+    { GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0, 1},   // 4 - IntBgr
+    { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, 4, 0, 1},       // 5 - IntBgrx
+    { GL_RGB,  GL_UNSIGNED_SHORT_5_6_5, 2, 0, 1},       // 6 - Ushort565Rgb
+    { GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, 2, 0, 1}, // 7 - Ushort555Rgb
+    { GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 2, 0, 1},     // 8 - Ushort555Rgbx
+    { GL_LUMINANCE, GL_UNSIGNED_BYTE, 1, 0, 1},         // 9 - ByteGray
+    { GL_LUMINANCE, GL_UNSIGNED_SHORT, 2, 0, 1},        // 10 - UshortGray
+    { GL_BGR,  GL_UNSIGNED_BYTE, 1, 0, 1},              // 11 - ThreeByteBgr
+};
+
+typedef struct {
+    void       *ctxInfo;
+    jint       caps;
+    jint       compState;
+    jfloat     extraAlpha;
+    jint       xorPixel;
+    jint       pixel;
+    jubyte     r;
+    jubyte     g;
+    jubyte     b;
+    jubyte     a;
+    jint       paintState;
+    jboolean   useMask;
+    GLdouble   *xformMatrix;
+    GLuint     blitTextureID;
+    GLint      textureFunction;
+    jboolean   vertexCacheEnabled;
+} OGLContext;
 
 struct _OGLSDOps {
     SurfaceDataOps               sdOps;
@@ -267,9 +275,7 @@ struct _OGLSDOps {
     GLint                        textureFilter;
     GLuint                       fbobjectID;
     GLuint                       depthID;
-};*/
-
-typedef unsigned int juint;
+};
 
 typedef struct _CompositeInfo {
     jint        rule;

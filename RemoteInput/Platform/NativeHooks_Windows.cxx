@@ -11,6 +11,7 @@ typedef std::uintptr_t GLsizeiptr;
 #define GL_STREAM_READ                    0x88E1
 #define GL_READ_ONLY                      0x88B8
 #define GL_BGRA                           0x80E1
+#define GL_RGBA                           0x1908
 #else
 #include <windows.h>
 #include <gl/gl.h>
@@ -173,11 +174,13 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
 
                     control_center->update_dimensions(width, height);
                     std::uint8_t* dest = control_center->get_image();
+                    ImageFormat format = control_center->get_image_format();
 
                     //Render to Shared Memory
                     if (dest)
                     {
                         memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                        TransformImage(dest, width, height, format);
                     }
 
                     //Render Debug Graphics
@@ -187,7 +190,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
                         if (src)
                         {
                             rasBase = reinterpret_cast<std::uint8_t*>(dstInfo.rasBase) + (dstInfo.scanStride * dsty) + (dstInfo.pixelStride * dstx);
-                            draw_image(rasBase, src, (dstInfo.scanStride / dstInfo.pixelStride), height, dstInfo.pixelStride);
+                            draw_image(rasBase, src, (dstInfo.scanStride / dstInfo.pixelStride), height, dstInfo.pixelStride, format);
                         }
                     }
 
@@ -273,6 +276,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
 
                 control_center->update_dimensions(width, height);
                 std::uint8_t* dest = control_center->get_image();
+                ImageFormat format = control_center->get_image_format();
 
                 //Render to Shared Memory
                 if (dest)
@@ -290,6 +294,8 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
                             rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
                         }
                     }
+
+                    TransformImage(dest, width, height, format);
                 }
 
                 //Render Debug Graphics
@@ -299,7 +305,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
                     if (src)
                     {
                         rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
-                        draw_image(rasBase, src, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride);
+                        draw_image(rasBase, src, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride, format);
                     }
                 }
 
@@ -462,6 +468,7 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 
                 control_center->update_dimensions(width, height);
                 std::uint8_t* dest = control_center->get_image();
+                ImageFormat format = control_center->get_image_format();
 
                 //Render to Shared Memory
                 if (dest)
@@ -499,6 +506,7 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
                     if (screenBuffer)
                     {
                         memcpy(screenBuffer.get(), dest, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                        TransformImage(dest, width, height, format);
 
                         //Render Debug Graphics
                         if (control_center->get_debug_graphics())
@@ -506,7 +514,7 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
                             std::uint8_t* src = control_center->get_debug_image();
                             if (src)
                             {
-                                draw_image(screenBuffer.get(), src, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride);
+                                draw_image(screenBuffer.get(), src, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride, format);
                             }
                         }
 
@@ -671,6 +679,7 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     std::uint8_t* destImage = offset_image(control_center->get_image(), srcx, srcy, width, 4);
     std::uint8_t* debugImage = offset_image(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, width, 4);
 
+
     //Begin Rendering
     void *pDstBase = PtrCoord(lockedRect.pBits, dstx, pixelStride, dsty, scanStride);
     uint8_t* dest = static_cast<uint8_t*>(pDstBase);
@@ -816,7 +825,7 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
     }
 }
 
-void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
+void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, GLint height, GLint stride, ImageFormat format) noexcept
 {
     static int index = 0;
     static int nextIndex = 0;
@@ -825,6 +834,17 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
     CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
     #endif
 
+    GLenum gl_format = [](ImageFormat format) -> GLenum {
+        switch(format)
+        {
+            case ImageFormat::BGR_BGRA: return GL_BGRA;
+            case ImageFormat::BGRA: return GL_BGRA;
+            case ImageFormat::RGBA: return GL_RGBA;
+            case ImageFormat::ARGB: return 0;  // Not Supported
+            case ImageFormat::ABGR: return 0;  // Not Supported
+        }
+    }(format);
+
     //Swap indices
     index = (index + 1) % 2;
     nextIndex = (index + 1) % 2;
@@ -832,7 +852,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
     //read back-buffer.
     glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
-    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+    glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, nullptr);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[nextIndex]);
 
     void* data = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
@@ -840,13 +860,12 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
     if (data)
     {
         //memcpy(dest, data, width * height * 4);
-        void* pixels = dest;
-        FlipImageBytes(data, pixels, width, height, 32);
+        FlipImageBytes(data, reinterpret_cast<void*&>(dest), width, height, 32);
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     }
     else
     {
-        glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, dest);
+        glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, dest);
     }
 
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -901,9 +920,11 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
 
         //Render to Shared Memory
         std::uint8_t* dest = control_center->get_image();
+        ImageFormat format = control_center->get_image_format();
         if (dest)
         {
             memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
+            TransformImage(dest, width, height, format);
         }
 
         //Render Debug Graphics
@@ -912,7 +933,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
             std::uint8_t* src = control_center->get_debug_image();
             if (src)
             {
-                draw_image(rasBase, src, width, height, bytes_per_pixel);
+                draw_image(rasBase, src, width, height, bytes_per_pixel, format);
             }
         }
 
@@ -956,6 +977,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
 
             //Render to Shared Memory
             std::uint8_t* dest = control_center->get_image();
+            ImageFormat format = control_center->get_image_format();
             if (dest)
             {
                 if (hasGLExtension)
@@ -963,12 +985,23 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
                     //Performance Boost! :D
                     LoadOpenGLExtensions();
                     GeneratePixelBuffers(hdc, pbo, width, height, 4);
-                    ReadPixelBuffers(hdc, dest, pbo, width, height, 4);
+                    ReadPixelBuffers(hdc, dest, pbo, width, height, 4, format);
                 }
                 else
                 {
+                    GLenum gl_format = [](ImageFormat format) -> GLenum {
+                        switch(format)
+                        {
+                            case ImageFormat::BGR_BGRA: return GL_BGRA;
+                            case ImageFormat::BGRA: return GL_BGRA;
+                            case ImageFormat::RGBA: return GL_RGBA;
+                            case ImageFormat::ARGB: return 0;  // Not Supported
+                            case ImageFormat::ABGR: return 0;  // Not Supported
+                        }
+                    }(format);
+
                     //Sad rendering implementation
-                    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, dest);
+                    glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, dest);
                     FlipImageVertically(width, height, dest);
                 }
             }
@@ -987,7 +1020,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
                 std::uint8_t* src = control_center->get_debug_image();
                 if (src)
                 {
-                    gl_draw_image(hdc, src, 0, 0, width, height, 4);
+                    gl_draw_image(hdc, src, 0, 0, width, height, 4, format);
                 }
             }
 

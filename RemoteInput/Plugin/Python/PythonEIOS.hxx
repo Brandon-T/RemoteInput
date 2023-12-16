@@ -19,6 +19,8 @@ PyObject* Python_EIOS_From_PID(PyEIOS* self, PyObject* args[], Py_ssize_t args_l
 PyObject* Python_EIOS_RequestTarget(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 //PyObject* Python_EIOS_ReleaseTarget(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_GetTargetDimensions(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
+PyObject* Python_EIOS_GetImageFormat(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
+PyObject* Python_EIOS_SetImageFormat(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_GetImageBuffer(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_GetDebugImageBuffer(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_SetGraphicsDebugging(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;

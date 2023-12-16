@@ -368,9 +368,9 @@ T from_python_object(PyObject* object)
     {
         return PythonUnwrapJavaObject(reinterpret_cast<PyJavaObject*>(object));
     }
-    else if constexpr(std::is_same<T, ReflectionType>::value)
+    else if constexpr(std::is_enum<T>::value)
     {
-        return static_cast<ReflectionType>(from_python_object<typename std::underlying_type<ReflectionType>::type>(object));
+        return static_cast<T>(from_python_object<typename std::underlying_type<T>::type>(object));
     }
     else if constexpr(std::is_void<T>::value)
     {
@@ -465,6 +465,11 @@ PyObject* to_python_object(const T& value)
     else if constexpr(is_same_of<T, EIOS*>::value)
     {
         return PythonWrapEIOS(value);
+    }
+    else if constexpr(std::is_enum<T>::value)
+    {
+        typedef typename std::underlying_type<T>::type type;
+        return to_python_object<type>(static_cast<type>(value));
     }
     else
     {

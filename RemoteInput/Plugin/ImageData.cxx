@@ -57,6 +57,11 @@ bool ImageData::ui_scaling() const
     return image_data->ui_scaling;
 }
 
+ImageFormat ImageData::image_format() const
+{
+    return image_data->image_format;
+}
+
 EIOSCommand ImageData::command() const
 {
     return image_data->command;
@@ -90,6 +95,11 @@ void ImageData::set_debug_graphics(bool debug_graphics)
 void ImageData::set_ui_scaling(bool ui_scaling)
 {
     image_data->ui_scaling = ui_scaling;
+}
+
+void ImageData::set_image_format(ImageFormat format)
+{
+    image_data->image_format = format;
 }
 
 void ImageData::set_command(EIOSCommand command)

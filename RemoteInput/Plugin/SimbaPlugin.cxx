@@ -690,6 +690,19 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
     PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
+void Pascal_GetImageFormat(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    PascalWrite(Result, eios->control_center->get_image_format());
+}
+
+void Pascal_SetImageFormat(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    ImageFormat format = PascalRead<ImageFormat>(Params[1]);
+    EIOS_SetImageFormat(eios, format);
+}
+
 void Pascal_GetDebugImageBuffer(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);

@@ -155,6 +155,14 @@ PyMODINIT_FUNC MODINIT(remote_input)()
         return nullptr;
     }
 
+    RegisterEnum(module, "ImageFormat", {
+        {"BGR_BGRA", static_cast<std::int32_t>(ImageFormat::BGR_BGRA)},
+        {"BGRA", static_cast<std::int32_t>(ImageFormat::BGRA)},
+        {"RGBA", static_cast<std::int32_t>(ImageFormat::RGBA)},
+        {"ARGB", static_cast<std::int32_t>(ImageFormat::ARGB)},
+        {"ABGR", static_cast<std::int32_t>(ImageFormat::ABGR)},
+    });
+
     RegisterEnum(module, "ReflectType", {
         {"BOOLEAN", static_cast<std::int32_t>(ReflectionType::BOOL)},
         {"CHAR", static_cast<std::int32_t>(ReflectionType::CHAR)},

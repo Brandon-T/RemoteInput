@@ -83,6 +83,8 @@ public:
     bool is_mouse_input_enabled() const noexcept;
     void set_mouse_input_enabled(bool enabled) const noexcept;
     void get_target_dimensions(std::int32_t* width, std::int32_t* height) const noexcept;
+    ImageFormat get_image_format() const noexcept;
+    void set_image_format(ImageFormat format) noexcept;
     void get_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept;
     void get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept;
     void move_mouse(std::int32_t x, std::int32_t y) const noexcept;

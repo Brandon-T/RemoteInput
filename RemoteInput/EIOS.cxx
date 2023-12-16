@@ -56,6 +56,23 @@ void STD_CALL EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int
     }
 }
 
+ImageFormat STD_CALL EIOS_GetImageFormat(EIOS* eios) noexcept
+{
+    if (eios)
+    {
+        return eios->control_center->get_image_format();
+    }
+    return ImageFormat::BGRA;
+}
+
+void STD_CALL EIOS_SetImageFormat(EIOS* eios, ImageFormat format) noexcept
+{
+    if (eios)
+    {
+        eios->control_center->set_image_format(format);
+    }
+}
+
 std::uint8_t* STD_CALL EIOS_GetImageBuffer(EIOS* eios) noexcept
 {
     if (eios)

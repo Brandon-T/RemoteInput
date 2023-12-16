@@ -48,6 +48,8 @@ static const char* PascalExports[] =
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
     //Graphics
+    "Pascal_GetImageFormat", "Function EIOS_GetImageFormat(eios: Pointer): RIImageFormat; native;",
+    "Pascal_SetImageFormat", "Procedure EIOS_SetImageFormat(eios: Pointer; format: RIImageFormat); native;",
     "Pascal_GetDebugImageBuffer", "Function EIOS_GetDebugImageBuffer(eios: Pointer): ^UInt8; native;",
     "Pascal_SetGraphicsDebugging", "Procedure EIOS_SetGraphicsDebugging(eios: Pointer; enabled: Boolean); native;",
 
@@ -228,6 +230,7 @@ static const char* PascalExports[] =
 static const char* PascalTypes[] =
 {
     "ReflectionType", "(RI_CHAR = 0, RI_BYTE = 1, RI_BOOLEAN = 2, RI_SHORT = 3, RI_INT = 4, RI_LONG = 5, RI_FLOAT = 6, RI_DOUBLE = 7, RI_STRING = 8, RI_OBJECT = 9)",
+    "RIImageFormat", "(RI_BGR_BGRA = 0, RI_BGRA = 1, RI_RGBA = 2, RI_ARGB = 3, RI_ABGR = 4)",
     "RIField", "packed record cls, field, desc: String; end;",
 
     //JVM Types
@@ -330,6 +333,8 @@ EXPORT void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept;
 
+EXPORT void Pascal_GetImageFormat(void** Params, void** Result) noexcept;
+EXPORT void Pascal_SetImageFormat(void** Params, void** Result) noexcept;
 EXPORT void Pascal_GetDebugImageBuffer(void** Params, void** Result) noexcept;
 EXPORT void Pascal_SetGraphicsDebugging(void** Params, void** Result) noexcept;
 EXPORT void Pascal_PairClient(void** Params, void** Result) noexcept;

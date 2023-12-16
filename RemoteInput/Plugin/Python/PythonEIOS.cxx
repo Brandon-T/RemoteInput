@@ -83,6 +83,8 @@ PyMethodDef PyEIOS_Methods[] = {
         {(char*)"from_pid",               PYTHON_FASTCALL(Python_EIOS_From_PID), METH_FASTCALL | METH_STATIC,             PyDoc_STR("Gets an existing EIOS by PID")},
         {(char*)"request_target",         PYTHON_FASTCALL(Python_EIOS_RequestTarget), METH_FASTCALL | METH_STATIC,        PyDoc_STR("Requests an EIOS by PID, and Pairs to it if not already paired")},
         {(char*)"get_target_dimensions",  PYTHON_FASTCALL(Python_EIOS_GetTargetDimensions),  METH_FASTCALL, PyDoc_STR("Returns an existing EIOS for the specified pid")},
+        {(char*)"get_image_format",       PYTHON_FASTCALL(Python_EIOS_GetImageFormat), METH_FASTCALL, (char*)""},
+        {(char*)"set_image_format",       PYTHON_FASTCALL(Python_EIOS_SetImageFormat), METH_FASTCALL, (char*)""},
         {(char*)"get_image_buffer",       PYTHON_FASTCALL(Python_EIOS_GetImageBuffer),       METH_FASTCALL,          (char*)""},
         {(char*)"get_debug_image_buffer", PYTHON_FASTCALL(Python_EIOS_GetDebugImageBuffer),  METH_FASTCALL,     (char*)""},
         {(char*)"set_graphics_debugging", PYTHON_FASTCALL(Python_EIOS_SetGraphicsDebugging), METH_FASTCALL,    (char*)""},
@@ -269,6 +271,19 @@ PyObject* Python_EIOS_GetTargetDimensions(PyEIOS* self, PyObject* args[], Py_ssi
     std::int32_t height = 0;
     EIOS_GetTargetDimensions(python_get_eios(self), &width, &height);
     return python->PyTuple_Pack(2, python->PyLong_FromLong(width), python->PyLong_FromLong(height));
+}
+
+PyObject* Python_EIOS_GetImageFormat(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept
+{
+    ImageFormat format = EIOS_GetImageFormat(python_get_eios(self));
+    return to_python_object(format);
+}
+
+PyObject* Python_EIOS_SetImageFormat(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept
+{
+    EIOS_SetImageFormat(python_get_eios(self), from_python_object<ImageFormat>(args[0]));
+    (python->Py_INCREF)(python->Py_GetNone_Object());
+    return python->Py_GetNone_Object();
 }
 
 PyObject* Python_EIOS_GetImageBuffer(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept
