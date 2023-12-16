@@ -168,8 +168,7 @@ void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData,
                     //Render to Shared Memory
                     if (dest)
                     {
-                        memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-                        TransformImage(dest, width, height, format);
+                        copy_image(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride, format);
                     }
 
                     //Render Debug Graphics
@@ -260,19 +259,17 @@ void JavaNativeOGLBlit(JNIEnv *env, OGLContext *oglc, jlong pSrcOps, jlong pDstO
                 {
                     if (isRasterAligned)
                     {
-                        memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                        copy_image(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride, format);
                     }
                     else
                     {
                         for (int i = 0; i < height; ++i)
                         {
                             int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-                            memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+                            copy_image(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), 1, srcInfo.pixelStride, format);
                             rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
                         }
                     }
-
-                    TransformImage(dest, width, height, format);
                 }
 
                 //Render Debug Graphics

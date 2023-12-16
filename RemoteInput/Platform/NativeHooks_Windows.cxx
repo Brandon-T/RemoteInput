@@ -179,8 +179,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
                     //Render to Shared Memory
                     if (dest)
                     {
-                        memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-                        TransformImage(dest, width, height, format);
+                        copy_image(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride, format);
                     }
 
                     //Render Debug Graphics
@@ -283,19 +282,17 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
                 {
                     if (isRasterAligned)
                     {
-                        memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                        copy_image(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride, format);
                     }
                     else
                     {
                         for (int i = 0; i < height; ++i)
                         {
                             int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-                            memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+                            copy_image(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), 1, srcInfo.pixelStride, format);
                             rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
                         }
                     }
-
-                    TransformImage(dest, width, height, format);
                 }
 
                 //Render Debug Graphics
@@ -475,14 +472,14 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
                 {
                     if (isRasterAligned)
                     {
-                        memcpy(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                        copy_image(dest, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), height, srcInfo.pixelStride, format);
                     }
                     else
                     {
                         for (int i = 0; i < height; ++i)
                         {
                             int offset = (srcInfo.scanStride / srcInfo.pixelStride) * i;
-                            memcpy(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride));
+                            copy_image(dest + offset, rasBase, (srcInfo.scanStride / srcInfo.pixelStride), 1, srcInfo.pixelStride, format);
                             rasBase = static_cast<void*>(reinterpret_cast<std::uint8_t*>(rasBase) + srcInfo.scanStride);
                         }
                     }
@@ -506,7 +503,6 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
                     if (screenBuffer)
                     {
                         memcpy(screenBuffer.get(), dest, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
-                        TransformImage(dest, width, height, format);
 
                         //Render Debug Graphics
                         if (control_center->get_debug_graphics())
@@ -923,8 +919,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
         ImageFormat format = control_center->get_image_format();
         if (dest)
         {
-            memcpy(dest, rasBase, (stride / bytes_per_pixel) * height * bytes_per_pixel);
-            TransformImage(dest, width, height, format);
+            copy_image(dest, rasBase, (stride / bytes_per_pixel), height, bytes_per_pixel, format);
         }
 
         //Render Debug Graphics

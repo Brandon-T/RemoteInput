@@ -72,104 +72,116 @@ typedef struct bgra_t
 
 std::uint32_t argb_to_abgr(std::uint32_t argb_colour)
 {
-    return ((argb_colour & 0xFF000000) >> 0)  |  // A -> A
-           ((argb_colour & 0x00FF0000) >> 16) |  // R -> B
-           ((argb_colour & 0x0000FF00) << 0)  |  // G -> G
-           ((argb_colour & 0x000000FF) << 16);   // B -> R
+    std::uint8_t a = (argb_colour >> 24) & 0xFF;
+    std::uint8_t r = (argb_colour >> 16) & 0xFF;
+    std::uint8_t g = (argb_colour >> 8)  & 0xFF;
+    std::uint8_t b = (argb_colour >> 0)  & 0xFF;
+    return (a << 24) | (b << 16) | (g << 8) | r;
 }
 
 std::uint32_t argb_to_bgra(std::uint32_t argb_colour)
 {
-    return ((argb_colour & 0xFF000000) >> 24) |  // A -> B
-           ((argb_colour & 0x00FF0000) >> 8)  |  // R -> G
-           ((argb_colour & 0x0000FF00) << 8)  |  // G -> R
-           ((argb_colour & 0x000000FF) << 24);   // B -> A
+    std::uint8_t a = (argb_colour >> 24) & 0xFF;
+    std::uint8_t r = (argb_colour >> 16) & 0xFF;
+    std::uint8_t g = (argb_colour >> 8)  & 0xFF;
+    std::uint8_t b = (argb_colour >> 0)  & 0xFF;
+    return (b << 24) | (g << 16) | (r << 8) | a;
 }
 
 std::uint32_t argb_to_rgba(std::uint32_t argb_colour)
 {
-    return ((argb_colour & 0xFF000000) >> 24) |  // A -> R
-           ((argb_colour & 0x00FF0000) << 8)  |  // R -> G
-           ((argb_colour & 0x0000FF00) << 8)  |  // G -> B
-           ((argb_colour & 0x000000FF) << 8);    // B -> A
+    std::uint8_t a = (argb_colour >> 24) & 0xFF;
+    std::uint8_t r = (argb_colour >> 16) & 0xFF;
+    std::uint8_t g = (argb_colour >> 8)  & 0xFF;
+    std::uint8_t b = (argb_colour >> 0)  & 0xFF;
+    return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
 // ABGR to Format
 
 std::uint32_t abgr_to_argb(std::uint32_t abgr_colour)
 {
-    return ((abgr_colour & 0xFF000000) >> 0)  |  // A -> A
-           ((abgr_colour & 0x00FF0000) << 16) |  // B -> R
-           ((abgr_colour & 0x0000FF00) << 0)  |  // G -> G
-           ((abgr_colour & 0x000000FF) >> 16);   // R -> B
+    std::uint8_t a = (abgr_colour >> 24) & 0xFF;
+    std::uint8_t b = (abgr_colour >> 16) & 0xFF;
+    std::uint8_t g = (abgr_colour >> 8)  & 0xFF;
+    std::uint8_t r = (abgr_colour >> 0)  & 0xFF;
+    return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
 std::uint32_t abgr_to_bgra(std::uint32_t abgr_colour)
 {
-    return ((abgr_colour & 0xFF000000) >> 24) |  // A -> B
-           ((abgr_colour & 0x00FF0000) << 8)  |  // B -> G
-           ((abgr_colour & 0x0000FF00) << 8)  |  // G -> R
-           ((abgr_colour & 0x000000FF) << 8);    // R -> A
+    std::uint8_t a = (abgr_colour >> 24) & 0xFF;
+    std::uint8_t b = (abgr_colour >> 16) & 0xFF;
+    std::uint8_t g = (abgr_colour >> 8)  & 0xFF;
+    std::uint8_t r = (abgr_colour >> 0)  & 0xFF;
+    return (a << 24) | (b << 16) | (g << 8) | r;
 }
 
 std::uint32_t abgr_to_rgba(std::uint32_t abgr_colour)
 {
-    return ((abgr_colour & 0xFF000000) >> 24) |  // A -> R
-           ((abgr_colour & 0x00FF0000) >> 8)  |  // B -> G
-           ((abgr_colour & 0x0000FF00) << 8)  |  // G -> B
-           ((abgr_colour & 0x000000FF) << 24);   // R -> A
+    std::uint8_t a = (abgr_colour >> 24) & 0xFF;
+    std::uint8_t b = (abgr_colour >> 16) & 0xFF;
+    std::uint8_t g = (abgr_colour >> 8)  & 0xFF;
+    std::uint8_t r = (abgr_colour >> 0)  & 0xFF;
+    return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
 // RGBA to Format
 
 std::uint32_t rgba_to_argb(std::uint32_t rgba_colour)
 {
-    return ((rgba_colour & 0xFF000000) >> 8)  |  // R -> A
-           ((rgba_colour & 0x00FF0000) >> 8)  |  // G -> R
-           ((rgba_colour & 0x0000FF00) >> 8)  |  // B -> G
-           ((rgba_colour & 0x000000FF) << 24);   // A -> B
+    std::uint8_t r = (rgba_colour >> 24) & 0xFF;
+    std::uint8_t g = (rgba_colour >> 16) & 0xFF;
+    std::uint8_t b = (rgba_colour >> 8)  & 0xFF;
+    std::uint8_t a = (rgba_colour >> 0)  & 0xFF;
+    return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
 std::uint32_t rgba_to_abgr(std::uint32_t rgba_colour)
 {
-    return ((rgba_colour & 0xFF000000) >> 24) |  // R -> A
-           ((rgba_colour & 0x00FF0000) >> 8)  |  // G -> B
-           ((rgba_colour & 0x0000FF00) << 8)  |  // B -> G
-           ((rgba_colour & 0x000000FF) << 24);   // A -> R
+    std::uint8_t r = (rgba_colour >> 24) & 0xFF;
+    std::uint8_t g = (rgba_colour >> 16) & 0xFF;
+    std::uint8_t b = (rgba_colour >> 8)  & 0xFF;
+    std::uint8_t a = (rgba_colour >> 0)  & 0xFF;
+    return (a << 24) | (b << 16) | (g << 8) | r;
 }
 
 std::uint32_t rgba_to_bgra(std::uint32_t rgba_colour)
 {
-    return ((rgba_colour & 0xFF000000) >> 16) |  // R -> B
-           ((rgba_colour & 0x00FF0000) << 0)  |  // G -> G
-           ((rgba_colour & 0x0000FF00) << 16) |  // B -> R
-           ((rgba_colour & 0x000000FF) >> 0);    // A -> A
+    std::uint8_t r = (rgba_colour >> 24) & 0xFF;
+    std::uint8_t g = (rgba_colour >> 16) & 0xFF;
+    std::uint8_t b = (rgba_colour >> 8)  & 0xFF;
+    std::uint8_t a = (rgba_colour >> 0)  & 0xFF;
+    return (b << 24) | (g << 16) | (r << 8) | a;
 }
 
 // BGRA to Format
 
 std::uint32_t bgra_to_abgr(std::uint32_t bgra_colour)
 {
-    return ((bgra_colour & 0xFF000000) >> 8)  |  // B -> A
-           ((bgra_colour & 0x00FF0000) >> 8)  |  // G -> B
-           ((bgra_colour & 0x0000FF00) >> 8)  |  // R -> G
-           ((bgra_colour & 0x000000FF) << 24);   // A -> R
+    std::uint8_t b = (bgra_colour >> 24) & 0xFF;
+    std::uint8_t g = (bgra_colour >> 16) & 0xFF;
+    std::uint8_t r = (bgra_colour >> 8)  & 0xFF;
+    std::uint8_t a = (bgra_colour >> 0)  & 0xFF;
+    return (a << 24) | (b << 16) | (g << 8) | r;
 }
 
 std::uint32_t bgra_to_argb(std::uint32_t bgra_colour)
 {
-    return ((bgra_colour & 0xFF000000) >> 24) |  // B -> A
-           ((bgra_colour & 0x00FF0000) >> 8)  |  // G -> R
-           ((bgra_colour & 0x0000FF00) << 8)  |  // R -> G
-           ((bgra_colour & 0x000000FF) << 24);   // A -> B
+    std::uint8_t b = (bgra_colour >> 24) & 0xFF;
+    std::uint8_t g = (bgra_colour >> 16) & 0xFF;
+    std::uint8_t r = (bgra_colour >> 8)  & 0xFF;
+    std::uint8_t a = (bgra_colour >> 0)  & 0xFF;
+    return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
 std::uint32_t bgra_to_rgba(std::uint32_t bgra_colour)
 {
-    return ((bgra_colour & 0xFF000000) << 16) |  // B -> R
-           ((bgra_colour & 0x00FF0000) << 0)  |  // G -> G
-           ((bgra_colour & 0x0000FF00) >> 16) |  // R -> B
-           ((bgra_colour & 0x000000FF) >> 0);    // A -> A
+    std::uint8_t b = (bgra_colour >> 24) & 0xFF;
+    std::uint8_t g = (bgra_colour >> 16) & 0xFF;
+    std::uint8_t r = (bgra_colour >> 8)  & 0xFF;
+    std::uint8_t a = (bgra_colour >> 0)  & 0xFF;
+    return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
 // Other
@@ -238,51 +250,6 @@ void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t*
         std::memcpy(row.get(), it, stride);
         std::memcpy(it, jt, stride);
         std::memcpy(jt, row.get(), stride);
-    }
-}
-
-void TransformImage(void* image_buffer, std::int32_t width, std::int32_t height, ImageFormat format) noexcept
-{
-    auto convert_pixel = [](void* &buffer_ptr, std::uint32_t (*convert)(std::uint32_t)) {
-        std::uint32_t* pixel = reinterpret_cast<std::uint32_t*>(buffer_ptr);
-        *pixel = convert(*pixel);
-        buffer_ptr = reinterpret_cast<char*>(buffer_ptr) + sizeof(std::uint32_t);
-    };
-
-    switch (format)
-    {
-        case ImageFormat::BGR_BGRA:
-            break;
-
-        case ImageFormat::BGRA:
-            break;
-
-        case ImageFormat::RGBA:
-        {
-            for (std::size_t i = 0; i < width * height; i += sizeof(bgra_t))
-            {
-                convert_pixel(image_buffer, rgba_to_bgra);
-            }
-        }
-            break;
-
-        case ImageFormat::ARGB:
-        {
-            for (std::size_t i = 0; i < width * height; i += sizeof(bgra_t))
-            {
-                convert_pixel(image_buffer, argb_to_bgra);
-            }
-        }
-            break;
-
-        case ImageFormat::ABGR:
-        {
-            for (std::size_t i = 0; i < width * height; i += sizeof(bgra_t))
-            {
-                convert_pixel(image_buffer, abgr_to_bgra);
-            }
-        }
-            break;
     }
 }
 
@@ -362,6 +329,44 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
                 }
             }
         }
+    }
+}
+
+void copy_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept
+{
+    auto convert = []<typename S, typename D>(S source, D dest, std::int32_t width, std::int32_t height, std::int32_t stride) {
+        for (std::int32_t i = 0; i < width * height * stride; i += stride)
+        {
+            dest->r = source->r;
+            dest->g = source->g;
+            dest->b = source->b;
+            dest->a = source->a;
+            ++source;
+            ++dest;
+        }
+    };
+
+    switch (format)
+    {
+        case ImageFormat::BGR_BGRA:
+            std::memcpy(dest_buffer, source_buffer, width * height * stride);
+            break;
+
+        case ImageFormat::BGRA:
+            std::memcpy(dest_buffer, source_buffer, width * height * stride);
+            break;
+
+        case ImageFormat::RGBA:
+            convert(static_cast<bgra_t*>(source_buffer), static_cast<rgba_t*>(dest_buffer), width, height, stride);
+            break;
+
+        case ImageFormat::ARGB:
+            convert(static_cast<bgra_t*>(source_buffer), static_cast<argb_t*>(dest_buffer), width, height, stride);
+            break;
+
+        case ImageFormat::ABGR:
+            convert(static_cast<bgra_t*>(source_buffer), static_cast<abgr_t*>(dest_buffer), width, height, stride);
+            break;
     }
 }
 

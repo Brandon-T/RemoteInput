@@ -18,10 +18,10 @@ enum class ImageFormat : std::uint32_t;
 void FlipImageBytes(void* In, void* &Out, std::int32_t width, std::int32_t height, std::uint32_t Bpp) noexcept;
 void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept;
 void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept;
-void TransformImage(void* image_buffer, std::int32_t width, std::int32_t height, ImageFormat format) noexcept;
 
 //Native
 void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t abgr_colour) noexcept;
+void copy_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept;
 void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept;
 
 //OpenGL
