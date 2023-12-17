@@ -218,7 +218,7 @@ void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData,
     }
 }
 
-void JavaNativeOGLBlit(JNIEnv *env, OGLContext *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2) noexcept
+void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jboolean xform, jint hint, jint srctype, jboolean texture, jint sx1, jint sy1, jint sx2, jint sy2, jdouble dx1, jdouble dy1, jdouble dx2, jdouble dy2) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (control_center)

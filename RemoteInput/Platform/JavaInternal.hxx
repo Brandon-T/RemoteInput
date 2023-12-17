@@ -206,9 +206,11 @@ private:
 };
 #endif
 
+typedef unsigned int juint;
+
+/*
 typedef struct _OGLSDOps OGLSDOps;
 typedef unsigned char jubyte;
-typedef unsigned int juint;
 
 typedef struct {
     GLenum src;
@@ -275,7 +277,7 @@ struct _OGLSDOps {
     GLint                        textureFilter;
     GLuint                       fbobjectID;
     GLuint                       depthID;
-};
+};*/
 
 typedef struct _CompositeInfo {
     jint        rule;

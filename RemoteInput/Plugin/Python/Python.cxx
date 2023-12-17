@@ -38,7 +38,7 @@ void Python::steal(Python& a, Python& b)
     a.PyBool_FromLong_Ptr = b.PyBool_FromLong_Ptr;
     b.PyBool_FromLong_Ptr = nullptr;
 
-    #if PY_VERSION_HEX >= 0x030B1000
+    #if HAS_PYTHON_VERSION(0x030B1000)
     a.PyBuffer_FillContiguousStrides_Ptr = b.PyBuffer_FillContiguousStrides_Ptr;
     b.PyBuffer_FillContiguousStrides_Ptr = nullptr;
     a.PyBuffer_FillInfo_Ptr = b.PyBuffer_FillInfo_Ptr;
@@ -525,7 +525,7 @@ void Python::steal(Python& a, Python& b)
     b.PyMem_Malloc_Ptr = nullptr;
     a.PyMem_Realloc_Ptr = b.PyMem_Realloc_Ptr;
     b.PyMem_Realloc_Ptr = nullptr;
-    #if PY_VERSION_HEX >= 0x030B1000
+    #if HAS_PYTHON_VERSION(0x030B1000)
     a.PyMemoryView_FromBuffer_Ptr = b.PyMemoryView_FromBuffer_Ptr;
     b.PyMemoryView_FromBuffer_Ptr = nullptr;
     #endif
@@ -751,7 +751,7 @@ void Python::steal(Python& a, Python& b)
     b.PyObject_GetAttr_Ptr = nullptr;
     a.PyObject_GetAttrString_Ptr = b.PyObject_GetAttrString_Ptr;
     b.PyObject_GetAttrString_Ptr = nullptr;
-    #if PY_VERSION_HEX >= 0x030B1000
+    #if HAS_PYTHON_VERSION(0x030B1000)
     a.PyObject_GetBuffer_Ptr = b.PyObject_GetBuffer_Ptr;
     b.PyObject_GetBuffer_Ptr = nullptr;
     #endif
@@ -1406,7 +1406,7 @@ Python::Python() : module(nullptr)
     PyArg_VaParseTupleAndKeywords_Ptr = reinterpret_cast<decltype(PyArg_VaParseTupleAndKeywords_Ptr)>(address_of(module, "PyArg_VaParseTupleAndKeywords"));
     PyArg_ValidateKeywordArguments_Ptr = reinterpret_cast<decltype(PyArg_ValidateKeywordArguments_Ptr)>(address_of(module, "PyArg_ValidateKeywordArguments"));
     PyBool_FromLong_Ptr = reinterpret_cast<decltype(PyBool_FromLong_Ptr)>(address_of(module, "PyBool_FromLong"));
-    #if PY_VERSION_HEX >= 0x030B1000
+    #if HAS_PYTHON_VERSION(0x030B1000)
     PyBuffer_FillContiguousStrides_Ptr = reinterpret_cast<decltype(PyBuffer_FillContiguousStrides_Ptr)>(address_of(module, "PyBuffer_FillContiguousStrides"));
     PyBuffer_FillInfo_Ptr = reinterpret_cast<decltype(PyBuffer_FillInfo_Ptr)>(address_of(module, "PyBuffer_FillInfo"));
     PyBuffer_FromContiguous_Ptr = reinterpret_cast<decltype(PyBuffer_FromContiguous_Ptr)>(address_of(module, "PyBuffer_FromContiguous"));
@@ -1659,7 +1659,7 @@ Python::Python() : module(nullptr)
     PyMem_Free_Ptr = reinterpret_cast<decltype(PyMem_Free_Ptr)>(address_of(module, "PyMem_Free"));
     PyMem_Malloc_Ptr = reinterpret_cast<decltype(PyMem_Malloc_Ptr)>(address_of(module, "PyMem_Malloc"));
     PyMem_Realloc_Ptr = reinterpret_cast<decltype(PyMem_Realloc_Ptr)>(address_of(module, "PyMem_Realloc"));
-    #if PY_VERSION_HEX >= 0x030B1000
+    #if HAS_PYTHON_VERSION(0x030B1000)
     PyMemoryView_FromBuffer_Ptr = reinterpret_cast<decltype(PyMemoryView_FromBuffer_Ptr)>(address_of(module, "PyMemoryView_FromBuffer"));
     #endif
     PyMemoryView_FromMemory_Ptr = reinterpret_cast<decltype(PyMemoryView_FromMemory_Ptr)>(address_of(module, "PyMemoryView_FromMemory"));
@@ -1773,7 +1773,7 @@ Python::Python() : module(nullptr)
     PyObject_GetAIter_Ptr = reinterpret_cast<decltype(PyObject_GetAIter_Ptr)>(address_of(module, "PyObject_GetAIter"));
     PyObject_GetAttr_Ptr = reinterpret_cast<decltype(PyObject_GetAttr_Ptr)>(address_of(module, "PyObject_GetAttr"));
     PyObject_GetAttrString_Ptr = reinterpret_cast<decltype(PyObject_GetAttrString_Ptr)>(address_of(module, "PyObject_GetAttrString"));
-    #if PY_VERSION_HEX >= 0x030B1000
+    #if HAS_PYTHON_VERSION(0x030B1000)
     PyObject_GetBuffer_Ptr = reinterpret_cast<decltype(PyObject_GetBuffer_Ptr)>(address_of(module, "PyObject_GetBuffer"));
     #endif
     PyObject_GetItem_Ptr = reinterpret_cast<decltype(PyObject_GetItem_Ptr)>(address_of(module, "PyObject_GetItem"));
@@ -2139,7 +2139,7 @@ PyObject* Python::PyBool_FromLong(long v)
     return (*PyBool_FromLong_Ptr)(v);
 }
 
-#if PY_VERSION_HEX >= 0x030B1000
+#if HAS_PYTHON_VERSION(0x030B1000)
 void Python::PyBuffer_FillContiguousStrides(int ndims, Py_ssize_t* shape, Py_ssize_t* strides, int itemsize, char fort)
 {
     return (*PyBuffer_FillContiguousStrides_Ptr)(ndims, shape, strides, itemsize, fort);
@@ -3332,7 +3332,7 @@ void* Python::PyMem_Realloc(void* ptr, size_t new_size)
     return (*PyMem_Realloc_Ptr)(ptr, new_size);
 }
 
-#if PY_VERSION_HEX >= 0x030B1000
+#if HAS_PYTHON_VERSION(0x030B1000)
 PyObject* Python::PyMemoryView_FromBuffer(const Py_buffer* info)
 {
     return (*PyMemoryView_FromBuffer_Ptr)(info);
@@ -3869,7 +3869,7 @@ PyObject* Python::PyObject_GetAttrString(PyObject* o, const char* attr)
     return (*PyObject_GetAttrString_Ptr)(o, attr);
 }
 
-#if PY_VERSION_HEX >= 0x030B1000
+#if HAS_PYTHON_VERSION(0x030B1000)
 int Python::PyObject_GetBuffer(PyObject* obj, Py_buffer* view, int flags)
 {
     return (*PyObject_GetBuffer_Ptr)(obj, view, flags);

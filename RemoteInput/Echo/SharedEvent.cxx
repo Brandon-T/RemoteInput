@@ -1167,12 +1167,6 @@ void atomic_signal_sleep(int* count)
         do {
             #if defined(_WIN32) || defined(_WIN64)
             SwitchToThread();
-            #elif defined(_POSIX_THREADS)
-                #if defined(__APPLE__)
-                pthread_yield_np();
-                #else
-                pthread_yield();
-                #endif
             #else
             sched_yield();
             #endif
@@ -1183,12 +1177,6 @@ void atomic_signal_sleep(int* count)
     {
         #if defined(_WIN32) || defined(_WIN64)
         SwitchToThread();
-        #elif defined(_POSIX_THREADS)
-            #if defined(__APPLE__)
-            pthread_yield_np();
-            #else
-            pthread_yield();
-            #endif
         #else
         sched_yield();
         #endif

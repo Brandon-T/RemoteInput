@@ -295,11 +295,11 @@ void copy_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
     switch (format)
     {
         case ImageFormat::BGR_BGRA:
-            std::memcpy(dest_buffer, source_buffer, width * height * stride);
+            convert_pixels(static_cast<bgr_bgra_t*>(source_buffer), static_cast<bgr_bgra_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::BGRA:
-            std::memcpy(dest_buffer, source_buffer, width * height * stride);
+            convert_pixels(static_cast<bgra_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::RGBA:

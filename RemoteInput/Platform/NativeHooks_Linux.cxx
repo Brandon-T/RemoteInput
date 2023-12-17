@@ -484,6 +484,7 @@ void ReadPixelBuffers(GLXDrawable ctx, GLubyte* dest, GLuint (&pbo)[2], GLint wi
             case ImageFormat::RGBA: return GL_RGBA;
             case ImageFormat::ARGB: return 0;  // Not Supported
             case ImageFormat::ABGR: return 0;  // Not Supported
+            default: return GL_BGRA;
         }
     }(format);
 

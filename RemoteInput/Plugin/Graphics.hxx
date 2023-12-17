@@ -59,14 +59,21 @@ typedef struct bgra_t
 template<typename S, typename D>
 void convert_pixels(S source, D dest, std::int32_t width, std::int32_t height, std::int32_t stride)
 {
-    for (std::int32_t i = 0; i < width * height * stride; i += stride)
+    if constexpr(std::is_same<S, D>::value)
     {
-        dest->r = source->r;
-        dest->g = source->g;
-        dest->b = source->b;
-        dest->a = source->a;
-        ++source;
-        ++dest;
+        std::memcpy(dest, source, width * height * stride);
+    }
+    else
+    {
+        for (std::int32_t i = 0; i < width * height * stride; i += stride)
+        {
+            dest->r = source->r;
+            dest->g = source->g;
+            dest->b = source->b;
+            dest->a = source->a;
+            ++source;
+            ++dest;
+        }
     }
 };
 

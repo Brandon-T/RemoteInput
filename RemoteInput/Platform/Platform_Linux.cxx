@@ -421,7 +421,7 @@ std::vector<std::string> GetLoadedModuleNames(const char* partial_module_name) n
             Module* module_info = static_cast<Module*>(data);
             if (strcasestr(info->dlpi_name, module_info->module_name))
             {
-                module_info->result->push_back(info->dlpi_name);
+                module_info->result.push_back(info->dlpi_name);
                 return 1;
             }
         }
@@ -569,6 +569,7 @@ Reflection* GetNativeReflector() noexcept
                     return true;
                 }
             }
+            return false;
         });
 
         auto hasReflection2 = TimeOut(20, [&]{
