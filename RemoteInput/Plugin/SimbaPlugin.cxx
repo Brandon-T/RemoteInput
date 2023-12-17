@@ -474,6 +474,9 @@ void Pascal_Reflect_String(void** Params, void** Result) noexcept
 
 void* read_array(Stream &stream, ReflectionType type, std::size_t length)
 {
+    std::size_t array_size = stream.read<std::size_t>();
+    length = std::min(length, array_size);
+
     if (type == ReflectionType::STRING)
     {
         std::size_t element_size = ControlCenter::reflect_size_for_type(type);
@@ -624,7 +627,6 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, index);
-    image_data->data_stream().seekg(sizeof(std::size_t));
     PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
@@ -644,7 +646,6 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y);
-    image_data->data_stream().seekg(sizeof(std::size_t));
     PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
@@ -665,7 +666,6 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z);
-    image_data->data_stream().seekg(sizeof(std::size_t));
     PascalWrite(Result, read_array(image_data->data_stream(), type, length));
 }
 
@@ -687,8 +687,20 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z, w);
-    image_data->data_stream().seekg(sizeof(std::size_t));
     PascalWrite(Result, read_array(image_data->data_stream(), type, length));
+}
+
+void Pascal_GetImageFormat(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    PascalWrite(Result, eios->control_center->get_image_format());
+}
+
+void Pascal_SetImageFormat(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    ImageFormat format = PascalRead<ImageFormat>(Params[1]);
+    EIOS_SetImageFormat(eios, format);
 }
 
 void Pascal_GetDebugImageBuffer(void** Params, void** Result) noexcept
@@ -2506,6 +2518,12 @@ void PascalWrite(EIOS* eios, Stream &stream, void* ptr, ReflectionType type) noe
         case ReflectionType::OBJECT:
         {
             PascalWrite(ptr, stream.read<jobject>());
+        }
+            break;
+
+        case ReflectionType::ARRAY:
+        {
+            PascalWrite(ptr, stream.read<jarray>());
         }
             break;
 

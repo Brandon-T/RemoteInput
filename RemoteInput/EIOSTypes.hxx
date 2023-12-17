@@ -7,6 +7,15 @@
 
 #include <cstdint>
 
+enum class ImageFormat: std::uint32_t
+{
+    BGR_BGRA,  // Compatibility for Simba's Black pixels representing Transparency. Simba should really fix this.
+    BGRA,
+    RGBA,
+    ARGB,
+    ABGR
+};
+
 enum class EIOSCommand: std::uint32_t
 {
     COMMAND_NONE,
@@ -75,6 +84,7 @@ typedef struct EIOSData
     std::int32_t height;
     bool debug_graphics;
     bool ui_scaling;
+    ImageFormat image_format;
     EIOSCommand command;
     std::uint8_t args[100000 * 8];
 } EIOSData;

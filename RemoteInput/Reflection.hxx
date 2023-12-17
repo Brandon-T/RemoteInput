@@ -22,7 +22,8 @@ enum class ReflectionType: std::uint8_t
     FLOAT,
     DOUBLE,
     STRING,
-    OBJECT
+    OBJECT,
+    ARRAY
 };
 
 class Reflection final

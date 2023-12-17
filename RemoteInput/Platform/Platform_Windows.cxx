@@ -173,6 +173,36 @@ PROCESSENTRY32 GetProcessInfo(std::int32_t pid) noexcept
     return {0};
 }
 
+std::vector<std::string> GetLoadedModuleNames(const char* partial_module_name) noexcept
+{
+    auto find_substring = [](std::string_view haystack, std::string_view needle) -> bool {
+        auto it = std::search(haystack.begin(), haystack.end(), needle.begin(), needle.end(), [](char a, char b) {
+            return std::toupper(a) == std::toupper(b);
+        });
+        return it != haystack.end();
+    };
+
+    HANDLE modulesSnapshot = nullptr;
+    if ((modulesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId())) == INVALID_HANDLE_VALUE)
+    {
+        return {};
+    }
+
+    std::vector<std::string> result;
+    MODULEENTRY32 moduleInfo = {0};
+    moduleInfo.dwSize = sizeof(MODULEENTRY32);
+    while (Module32Next(modulesSnapshot, &moduleInfo))
+    {
+        if (find_substring(moduleInfo.szModule, partial_module_name))
+        {
+            result.push_back(moduleInfo.szModule);
+        }
+    }
+
+    CloseHandle(modulesSnapshot);
+    return result;
+}
+
 MODULEENTRY32 GetModuleInfo(std::int32_t pid, const char* module_name) noexcept
 {
     HANDLE modulesSnapshot = nullptr;

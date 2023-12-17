@@ -42,6 +42,8 @@ extern "C" {
 EXPORT EIOS* STD_CALL EIOS_RequestTarget(const char* initargs) noexcept;
 EXPORT void STD_CALL EIOS_ReleaseTarget(EIOS* eios) noexcept;
 EXPORT void STD_CALL EIOS_GetTargetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height) noexcept;
+EXPORT ImageFormat STD_CALL EIOS_GetImageFormat(EIOS* eios) noexcept;
+EXPORT void STD_CALL EIOS_SetImageFormat(EIOS* eios, ImageFormat format) noexcept;
 EXPORT std::uint8_t* STD_CALL EIOS_GetImageBuffer(EIOS* eios) noexcept;
 EXPORT std::uint8_t* STD_CALL EIOS_GetDebugImageBuffer(EIOS* eios) noexcept;
 EXPORT void STD_CALL EIOS_SetGraphicsDebugging(EIOS* eios, bool enabled) noexcept;

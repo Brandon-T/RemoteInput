@@ -21,6 +21,8 @@ std::int32_t InjectProcess(std::int32_t) noexcept;
 std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept;
 std::int32_t PIDFromWindow(void* window) noexcept;
 
+std::vector<std::string> GetLoadedModuleNames(const char* partial_module_name) noexcept;
+
 #if !defined(_WIN32) && !defined(_WIN64)
 void* GetModuleHandle(const char* module_name) noexcept;
 #endif

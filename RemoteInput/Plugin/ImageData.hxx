@@ -31,6 +31,7 @@ public:
     std::int32_t height() const;
     bool debug_graphics() const;
     bool ui_scaling() const;
+    ImageFormat image_format() const;
     EIOSCommand command() const;
 
     void set_parent_process_id(std::int32_t pid);
@@ -39,6 +40,7 @@ public:
     void set_height(std::int32_t height);
     void set_debug_graphics(bool debug_graphics);
     void set_ui_scaling(bool ui_scaling);
+    void set_image_format(ImageFormat format);
     void set_command(EIOSCommand command);
 
     void* io_buffer(std::ios_base::openmode mode) const noexcept;
