@@ -1,7 +1,5 @@
 #include "Graphics.hxx"
-#include "EIOSTypes.hxx"
 #include <cstdint>
-#include <cstring>
 #include <memory>
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -27,46 +25,6 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #endif
-
-typedef struct bgr_bgra_t
-{
-    std::uint8_t b;
-    std::uint8_t g;
-    std::uint8_t r;
-    std::uint8_t a;
-} bgr_bgra;
-
-typedef struct abgr_t
-{
-    std::uint8_t a;
-    std::uint8_t b;
-    std::uint8_t g;
-    std::uint8_t r;
-} abgr;
-
-typedef struct argb_t
-{
-    std::uint8_t a;
-    std::uint8_t r;
-    std::uint8_t g;
-    std::uint8_t b;
-} argb;
-
-typedef struct rgba_t
-{
-    std::uint8_t r;
-    std::uint8_t g;
-    std::uint8_t b;
-    std::uint8_t a;
-} rgba;
-
-typedef struct bgra_t
-{
-    std::uint8_t b;
-    std::uint8_t g;
-    std::uint8_t r;
-    std::uint8_t a;
-} bgra;
 
 // ARGB To Format
 
@@ -334,18 +292,6 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
 
 void copy_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept
 {
-    auto convert = []<typename S, typename D>(S source, D dest, std::int32_t width, std::int32_t height, std::int32_t stride) {
-        for (std::int32_t i = 0; i < width * height * stride; i += stride)
-        {
-            dest->r = source->r;
-            dest->g = source->g;
-            dest->b = source->b;
-            dest->a = source->a;
-            ++source;
-            ++dest;
-        }
-    };
-
     switch (format)
     {
         case ImageFormat::BGR_BGRA:
@@ -357,68 +303,41 @@ void copy_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
             break;
 
         case ImageFormat::RGBA:
-            convert(static_cast<bgra_t*>(source_buffer), static_cast<rgba_t*>(dest_buffer), width, height, stride);
+            convert_pixels(static_cast<bgra_t*>(source_buffer), static_cast<rgba_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::ARGB:
-            convert(static_cast<bgra_t*>(source_buffer), static_cast<argb_t*>(dest_buffer), width, height, stride);
+            convert_pixels(static_cast<bgra_t*>(source_buffer), static_cast<argb_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::ABGR:
-            convert(static_cast<bgra_t*>(source_buffer), static_cast<abgr_t*>(dest_buffer), width, height, stride);
+            convert_pixels(static_cast<bgra_t*>(source_buffer), static_cast<abgr_t*>(dest_buffer), width, height, stride);
             break;
     }
 }
 
 void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept
 {
-    auto convert = []<typename S, typename D>(S source, D dest, std::int32_t width, std::int32_t height, std::int32_t stride) {
-        for (std::int32_t i = 0; i < width * height * stride; i += stride)
-        {
-            if constexpr(std::is_same<S, D>::value && std::is_same<S, bgr_bgra_t*>::value)
-            {
-                dest->a = *reinterpret_cast<std::uint32_t*>(source) == 0x00 ? 0x00 : 0xFF;
-                if (dest->a != 0x00)
-                {
-                    dest->r = source->r;
-                    dest->g = source->g;
-                    dest->b = source->b;
-                }
-            }
-            else
-            {
-                // Pre-Multiplied Alpha
-                dest->r = blend_alpha(dest->r, source->r, source->a);
-                dest->g = blend_alpha(dest->g, source->g, source->a);
-                dest->b = blend_alpha(dest->b, source->b, source->a);
-                dest->a = 0xFF;
-            }
-
-            ++source;
-            ++dest;
-        }
-    };
-
     switch (format)
     {
         case ImageFormat::BGR_BGRA:
-            convert(static_cast<bgr_bgra_t*>(source_buffer), static_cast<bgr_bgra_t*>(dest_buffer), width, height, stride);
+            alpha_blend_pixels(static_cast<bgr_bgra_t*>(source_buffer), static_cast<bgr_bgra_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::BGRA:
-            convert(static_cast<bgra_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            alpha_blend_pixels(static_cast<bgra_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::RGBA:
-            convert(static_cast<rgba_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            alpha_blend_pixels(static_cast<rgba_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::ARGB:
-            convert(static_cast<argb_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            alpha_blend_pixels(static_cast<argb_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::ABGR:
-            convert(static_cast<abgr_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            alpha_blend_pixels(static_cast<abgr_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
             break;
     }
 }
@@ -499,6 +418,7 @@ void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_
             case ImageFormat::RGBA: return GL_RGBA;
             case ImageFormat::ARGB: return 0;  // Not Supported
             case ImageFormat::ABGR: return 0;  // Not Supported
+            default: return GL_BGRA;
         }
     }(format);
 
@@ -532,11 +452,29 @@ void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_
     //Load Texture
     switch (format)
     {
-        case ImageFormat::BGR_BGRA: return convert(static_cast<bgr_bgra_t*>(source_buffer), width, height, stride, format);
-        case ImageFormat::BGRA: return convert(static_cast<bgra_t*>(source_buffer), width, height, stride, format);
-        case ImageFormat::RGBA: return convert(static_cast<rgba_t*>(source_buffer), width, height, stride, format);
-        case ImageFormat::ARGB: return convert(static_cast<argb_t*>(source_buffer), width, height, stride, format);
-        case ImageFormat::ABGR: return convert(static_cast<abgr_t*>(source_buffer), width, height, stride, format);
+        case ImageFormat::BGR_BGRA:
+            convert(static_cast<bgr_bgra_t*>(source_buffer), width, height, stride, format);
+            break;
+
+        case ImageFormat::BGRA:
+            convert(static_cast<bgra_t*>(source_buffer), width, height, stride, format);
+            break;
+
+        case ImageFormat::RGBA:
+            convert(static_cast<rgba_t*>(source_buffer), width, height, stride, format);
+            break;
+
+        case ImageFormat::ARGB:
+            convert(static_cast<argb_t*>(source_buffer), width, height, stride, format);
+            break;
+
+        case ImageFormat::ABGR:
+            convert(static_cast<abgr_t*>(source_buffer), width, height, stride, format);
+            break;
+
+        default:
+            convert(static_cast<bgra_t*>(source_buffer), width, height, stride, format);
+            break;
     }
 
     static GLuint ID = 0;

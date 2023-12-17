@@ -502,7 +502,7 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
 
                     if (screenBuffer)
                     {
-                        memcpy(screenBuffer.get(), dest, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
+                        std::memcpy(screenBuffer.get(), rasBase, (srcInfo.scanStride / srcInfo.pixelStride) * height * srcInfo.pixelStride);
 
                         //Render Debug Graphics
                         if (control_center->get_debug_graphics())
@@ -668,47 +668,70 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     jint width = pSrcInfo->bounds.x2 - pSrcInfo->bounds.x1;
     jint height = pSrcInfo->bounds.y2 - pSrcInfo->bounds.y1;
     jint scanStride = lockedRect.Pitch;
-    jint pixelStride = 4;
+    const jint pixelStride = 4;
 
     //Prepare for BackBuffer Rendering
     control_center->update_dimensions(width, height);
-    std::uint8_t* destImage = offset_image(control_center->get_image(), srcx, srcy, width, 4);
-    std::uint8_t* debugImage = offset_image(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, width, 4);
-
+    ImageFormat format = control_center->get_image_format();
+    std::uint8_t* destImage = offset_image(control_center->get_image(), srcx, srcy, width, pixelStride);
+    std::uint8_t* debugImage = offset_image(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, width, pixelStride);
 
     //Begin Rendering
     void *pDstBase = PtrCoord(lockedRect.pBits, dstx, pixelStride, dsty, scanStride);
-    uint8_t* dest = static_cast<uint8_t*>(pDstBase);
+    std::uint8_t* dest = static_cast<std::uint8_t*>(pDstBase);
 
     for (jint i = 0; i < srcHeight; ++i)
     {
+        //NOTE: Do NOT call copy_image and draw_image here for performance reasons!
+        //      For some odd reason, the function call is significantly slower than the inlined functions below
         //Render to Shared Memory
-        memcpy(destImage, dest, srcWidth * 4);
-
-        for (jint j = 0; j < srcWidth; ++j)
+        //Render Debug Graphics
+        switch (format)
         {
-            //Render to Shared Memory
-            /*destImage[4 * j + 3] = dest[4 * j + 3]; //Alpha
-            destImage[4 * j + 2] = dest[4 * j + 2]; //Red
-            destImage[4 * j + 1] = dest[4 * j + 1]; //Green
-            destImage[4 * j + 0] = dest[4 * j + 0]; //Blue*/
+            case ImageFormat::BGR_BGRA:
+                convert_pixels(reinterpret_cast<bgr_bgra_t*>(dest), reinterpret_cast<bgr_bgra_t*>(destImage), srcWidth, 1, pixelStride);
+                if (debugImage)
+                {
+                    alpha_blend_pixels(reinterpret_cast<bgr_bgra_t*>(debugImage), reinterpret_cast<bgr_bgra_t*>(dest), srcWidth, 1, pixelStride);
+                }
+                break;
 
-            //Render Debug Graphics
-            if (debugImage && (debugImage[4 * j + 2] || debugImage[4 * j + 1] || debugImage[4 * j + 0]))
-            {
-                dest[4 * j + 3] = debugImage[4 * j + 3]; //Alpha
-                dest[4 * j + 2] = debugImage[4 * j + 2]; //Red
-                dest[4 * j + 1] = debugImage[4 * j + 1]; //Green
-                dest[4 * j + 0] = debugImage[4 * j + 0]; //Blue
-            }
+            case ImageFormat::BGRA:
+                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<bgra_t*>(destImage), srcWidth, 1, pixelStride);
+                if (debugImage)
+                {
+                    alpha_blend_pixels(reinterpret_cast<bgra_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                }
+                break;
+
+            case ImageFormat::RGBA:
+                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<rgba_t*>(destImage), srcWidth, 1, pixelStride);
+                alpha_blend_pixels(reinterpret_cast<rgba_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                break;
+
+            case ImageFormat::ARGB:
+                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<argb_t*>(destImage), srcWidth, 1, pixelStride);
+                if (debugImage)
+                {
+                    alpha_blend_pixels(reinterpret_cast<argb_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                }
+                break;
+
+            case ImageFormat::ABGR:
+                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<abgr_t*>(destImage), srcWidth, 1, pixelStride);
+                if (debugImage)
+                {
+                    alpha_blend_pixels(reinterpret_cast<abgr_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                }
+                break;
         }
 
         dest += scanStride;
-        destImage += ((pSrcInfo->bounds.x2 - pSrcInfo->bounds.x1) * 4);
+        destImage += (width * pixelStride);
 
         if (debugImage)
         {
-            debugImage += ((pSrcInfo->bounds.x2 - pSrcInfo->bounds.x1) * 4);
+            debugImage += (width * pixelStride);
         }
     }
 
@@ -838,6 +861,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
             case ImageFormat::RGBA: return GL_RGBA;
             case ImageFormat::ARGB: return 0;  // Not Supported
             case ImageFormat::ABGR: return 0;  // Not Supported
+            default: return GL_BGRA;
         }
     }(format);
 
@@ -992,6 +1016,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
                             case ImageFormat::RGBA: return GL_RGBA;
                             case ImageFormat::ARGB: return 0;  // Not Supported
                             case ImageFormat::ABGR: return 0;  // Not Supported
+                            default: return GL_BGRA;
                         }
                     }(format);
 
