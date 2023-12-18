@@ -83,7 +83,6 @@ jobject PythonUnwrapJavaObject(PyJavaObject* object) noexcept;
 PyJavaArray* PythonWrapJavaArray(PyEIOS* eios, jarray array, std::size_t size) noexcept;
 jarray PythonUnwrapJavaArray(PyJavaArray* array) noexcept;
 
-
 template<typename T>
 T from_python_object(PyObject* object);
 

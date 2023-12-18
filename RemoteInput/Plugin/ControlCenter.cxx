@@ -570,7 +570,7 @@ void ControlCenter::process_command() noexcept
             }
             else
             {
-                stream.write(0);
+                stream.write<std::size_t>(0);
                 stream.write(nullptr);
             }
         }
@@ -614,14 +614,11 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
 {
     if (!array)
     {
-        stream << nullptr;
         return;
     }
 
     if (length == 0)
     {
-        //length = reflector->getEnv()->GetArrayLength(array);
-        stream << nullptr;
         return;
     }
 
@@ -684,14 +681,11 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
 {
     if (!array)
     {
-        stream << nullptr;
         return;
     }
 
     if (length == 0)
     {
-        //length = reflector->getEnv()->GetArrayLength(array);
-        stream << nullptr;
         return;
     }
 
@@ -768,8 +762,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 {
     if (!array)
     {
-        stream.write(0);
-        stream << nullptr;
+        stream.write<std::size_t>(0);
         return;
     }
 
@@ -783,8 +776,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
         if (index >= real_length)
         {
             fprintf(stderr, "Index out of bounds\n");
-            stream.write(0);
-            stream << nullptr;
+            stream.write<std::size_t>(0);
             return;
         }
 
@@ -802,12 +794,11 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
         if (array)
         {
-            jint real_length = env->GetArrayLength(array);
+            std::size_t real_length = env->GetArrayLength(array);
             if (index >= real_length)
             {
                 fprintf(stderr, "Index out of bounds\n");
-                stream.write(0);
-                stream << nullptr;
+                stream.write<std::size_t>(0);
                 return;
             }
 
@@ -817,8 +808,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
     if (!array)
     {
-        stream.write(0);
-        stream << nullptr;
+        stream.write<std::size_t>(0);
         return;
     }
 
@@ -829,8 +819,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
     if (index >= real_length)
     {
         fprintf(stderr, "Index out of bounds\n");
-        stream.write(0);
-        stream << nullptr;
+        stream.write<std::size_t>(0);
         return;
     }
 
@@ -843,7 +832,7 @@ void ControlCenter::process_reflect_array_all(Stream &stream, jarray array, Refl
 {
     if (!array)
     {
-        stream.write(0);
+        stream.write<std::size_t>(0);
         return;
     }
 
@@ -862,8 +851,7 @@ void ControlCenter::process_reflect_array_all(Stream &stream, jarray array, Refl
 
     for (std::size_t i = 0; i < length; ++i)
     {
-        jarray result = static_cast<jarray>(env->GetObjectArrayElement(
-                static_cast<jobjectArray>(array), i));
+        jarray result = static_cast<jarray>(env->GetObjectArrayElement(static_cast<jobjectArray>(array), i));
         process_reflect_array_all(stream, result, type, dimensions - 1);
         env->DeleteLocalRef(result);
     }

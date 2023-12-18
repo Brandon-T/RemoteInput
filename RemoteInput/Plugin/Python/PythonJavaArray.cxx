@@ -111,7 +111,10 @@ std::vector<PyObject*> python_parse_arguments(const char* (&keywords)[keywords_s
 
     for (std::size_t i = 0; i < args_length; ++i)
     {
-        result[i] = args[i];
+        if (!(python->Py_IsNone)(args[i]))
+        {
+            result[i] = args[i];
+        }
     }
 
     if (kwnames)
@@ -121,7 +124,11 @@ std::vector<PyObject*> python_parse_arguments(const char* (&keywords)[keywords_s
             std::string keyword = from_python_object<std::string>(python->PyTuple_GetItem(kwnames, i));
             if (auto it = std::find(std::begin(keywords), std::end(keywords), keyword); it != std::end(keywords))
             {
-                result[std::distance(std::begin(keywords), it)] = args[i + args_length];
+                PyObject* argument = args[i + args_length];
+                if (!(python->Py_IsNone)(argument))
+                {
+                    result[std::distance(std::begin(keywords), it)] = argument;
+                }
             }
         }
     }
@@ -194,11 +201,6 @@ PyObject* Python_JavaArray_Get2D(PyJavaArray* self, PyObject* args[], Py_ssize_t
     EIOS* eios = python_get_eios(self);
     jarray array = from_python_object<jarray>(self);
 
-    if (arguments[0])
-    {
-        type = from_python_object<ReflectionType>(arguments[0]);
-    }
-
     PyObject* x_object = arguments[1];
     PyObject* y_object = arguments[2];
 
@@ -214,16 +216,7 @@ PyObject* Python_JavaArray_Get2D(PyJavaArray* self, PyObject* args[], Py_ssize_t
 
     // Array[][]
     Stream &stream = eios->control_center->reflect_array_all(array, type, 2)->data_stream();
-
-    std::size_t x_size = stream.read<std::size_t>();
-    PyObject* result = python->PyList_New(x_size);
-
-    for (std::size_t i = 0; i < x_size; ++i)
-    {
-        PyObject* values = read_array_type(stream, self, type, 2);
-        python->PyList_SetItem(result, i, values);
-    }
-    return result;
+    return read_array_type(stream, self, type, 2);
 }
 
 PyObject* Python_JavaArray_Get3D(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length, PyObject* kwnames) noexcept
@@ -297,7 +290,7 @@ PyObject* Python_JavaArray_Get4D(PyJavaArray* self, PyObject* args[], Py_ssize_t
 }
 
 template<typename T>
-PyObject* read_array_type(Stream &stream, PyJavaArray* object, ReflectionType type)
+PyObject* read_array_type(Stream &stream, PyJavaArray* object)
 {
     if constexpr(std::is_same<T, std::string>::value)
     {
@@ -355,28 +348,23 @@ PyObject* read_array_type(Stream &stream, PyJavaArray* object, ReflectionType ty
 
 PyObject* read_array_type(Stream &stream, PyJavaArray* object, ReflectionType type, std::size_t dimensions)
 {
-    static auto read_array = [](Stream &stream, PyJavaArray* object, ReflectionType type) -> PyObject*
+    if (dimensions == 1)
     {
         switch(type)
         {
-            case ReflectionType::CHAR: return read_array_type<char>(stream, object, type);
-            case ReflectionType::BYTE: return read_array_type<std::uint8_t>(stream, object, type);
-            case ReflectionType::BOOL: return read_array_type<bool>(stream, object, type);
-            case ReflectionType::SHORT: return read_array_type<std::int16_t>(stream, object, type);
-            case ReflectionType::INT: return read_array_type<std::int32_t>(stream, object, type);
-            case ReflectionType::LONG: return read_array_type<std::int64_t>(stream, object, type);
-            case ReflectionType::FLOAT: return read_array_type<float>(stream, object, type);
-            case ReflectionType::DOUBLE: return read_array_type<double>(stream, object, type);
-            case ReflectionType::STRING: return read_array_type<std::string>(stream, object, type);
-            case ReflectionType::OBJECT: return read_array_type<jobject>(stream, object, type);
-            case ReflectionType::ARRAY: return read_array_type<jobject>(stream, object, type);
+            case ReflectionType::CHAR: return read_array_type<char>(stream, object);
+            case ReflectionType::BYTE: return read_array_type<std::uint8_t>(stream, object);
+            case ReflectionType::BOOL: return read_array_type<bool>(stream, object);
+            case ReflectionType::SHORT: return read_array_type<std::int16_t>(stream, object);
+            case ReflectionType::INT: return read_array_type<std::int32_t>(stream, object);
+            case ReflectionType::LONG: return read_array_type<std::int64_t>(stream, object);
+            case ReflectionType::FLOAT: return read_array_type<float>(stream, object);
+            case ReflectionType::DOUBLE: return read_array_type<double>(stream, object);
+            case ReflectionType::STRING: return read_array_type<std::string>(stream, object);
+            case ReflectionType::OBJECT: return read_array_type<jobject>(stream, object);
+            case ReflectionType::ARRAY: return read_array_type<jarray>(stream, object);
             default: (python->Py_INCREF)(python->Py_GetNone_Object()); return python->Py_GetNone_Object();
         }
-    };
-
-    if (dimensions == 1)
-    {
-        return read_array(stream, object, type);
     }
 
     std::size_t length = stream.read<std::size_t>();

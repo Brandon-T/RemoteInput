@@ -85,11 +85,11 @@ int GetFunctionInfo(int Index, void** Address, char** Definition) noexcept
 {
     if (Index < PascalExportCount)
     {
-#if defined(_WIN32) || defined(_WIN64)
+        #if defined(_WIN32) || defined(_WIN64)
         *Address = (void*)GetProcAddress(module, PascalExports[Index * 2]);
-#else
+        #else
         *Address = (void*)dlsym(RTLD_DEFAULT, PascalExports[Index * 2]);
-#endif
+        #endif
         strcpy(*Definition, PascalExports[Index * 2 + 1]);
         return Index;
     }
@@ -472,10 +472,9 @@ void Pascal_Reflect_String(void** Params, void** Result) noexcept
 
 // MARK: - Array Functions
 
-void* read_array(Stream &stream, ReflectionType type, std::size_t length)
+void* read_array(Stream &stream, ReflectionType type)
 {
-    std::size_t array_size = stream.read<std::size_t>();
-    length = std::min(length, array_size);
+    std::size_t length = stream.read<std::size_t>();
 
     if (type == ReflectionType::STRING)
     {
@@ -550,8 +549,7 @@ void Pascal_Reflect_Array_Indices(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array_indices(array, type, indices, length);
-    image_data->data_stream().seekg(sizeof(std::size_t));
-    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type));
 }
 
 void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept
@@ -562,9 +560,13 @@ void Pascal_Reflect_Array_SingleIndex(void** Params, void** Result) noexcept
     ReflectionType type = PascalRead<ReflectionType>(Params[2]);
     std::size_t index = PascalRead<std::size_t>(Params[3]);
 
-    ImageData* image_data = eios->control_center->reflect_array(array, type, 1, index);
-    image_data->data_stream().seekg(sizeof(std::size_t));
-    PascalWrite(eios, image_data->data_stream(), Result, type);
+    Stream &stream = eios->control_center->reflect_array(array, type, 1, index)->data_stream();
+    if (stream.read<std::size_t>() == 0)
+    {
+        PascalWrite(Result, nullptr);
+        return;
+    }
+    PascalWrite(eios, stream, Result, type);
 }
 
 void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result) noexcept
@@ -576,9 +578,13 @@ void Pascal_Reflect_Array_SingleIndex2D(void** Params, void** Result) noexcept
     std::size_t x = PascalRead<std::int32_t>(Params[3]);
     std::size_t y = PascalRead<std::int32_t>(Params[4]);
 
-    ImageData* image_data = eios->control_center->reflect_array(array, type, 1, x, y);
-    image_data->data_stream().seekg(sizeof(std::size_t));
-    PascalWrite(eios, image_data->data_stream(), Result, type);
+    Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y)->data_stream();
+    if (stream.read<std::size_t>() == 0)
+    {
+        PascalWrite(Result, nullptr);
+        return;
+    }
+    PascalWrite(eios, stream, Result, type);
 }
 
 void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result) noexcept
@@ -591,9 +597,13 @@ void Pascal_Reflect_Array_SingleIndex3D(void** Params, void** Result) noexcept
     std::size_t y = PascalRead<std::int32_t>(Params[4]);
     std::size_t z = PascalRead<std::int32_t>(Params[5]);
 
-    ImageData* image_data = eios->control_center->reflect_array(array, type, 1, x, y, z);
-    image_data->data_stream().seekg(sizeof(std::size_t));
-    PascalWrite(eios, image_data->data_stream(), Result, type);
+    Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y, z)->data_stream();
+    if (stream.read<std::size_t>() == 0)
+    {
+        PascalWrite(Result, nullptr);
+        return;
+    }
+    PascalWrite(eios, stream, Result, type);
 }
 
 void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result) noexcept
@@ -607,9 +617,13 @@ void Pascal_Reflect_Array_SingleIndex4D(void** Params, void** Result) noexcept
     std::size_t z = PascalRead<std::int32_t>(Params[5]);
     std::size_t w = PascalRead<std::int32_t>(Params[6]);
 
-    ImageData* image_data = eios->control_center->reflect_array(array, type, 1, x, y, z, w);
-    image_data->data_stream().seekg(sizeof(std::size_t));
-    PascalWrite(eios, image_data->data_stream(), Result, type);
+    Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y, z, w)->data_stream();
+    if (stream.read<std::size_t>() == 0)
+    {
+        PascalWrite(Result, nullptr);
+        return;
+    }
+    PascalWrite(eios, stream, Result, type);
 }
 
 void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept
@@ -627,7 +641,7 @@ void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, index);
-    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type));
 }
 
 void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept
@@ -646,7 +660,7 @@ void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y);
-    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type));
 }
 
 void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept
@@ -666,7 +680,7 @@ void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z);
-    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type));
 }
 
 void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
@@ -687,7 +701,7 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
     }
 
     ImageData* image_data = eios->control_center->reflect_array(array, type, length, x, y, z, w);
-    PascalWrite(Result, read_array(image_data->data_stream(), type, length));
+    PascalWrite(Result, read_array(image_data->data_stream(), type));
 }
 
 void Pascal_GetImageFormat(void** Params, void** Result) noexcept

@@ -368,6 +368,10 @@ T from_python_object(PyObject* object)
     {
         return PythonUnwrapJavaObject(reinterpret_cast<PyJavaObject*>(object));
     }
+    else if constexpr(std::is_same<T, jarray>::value)
+    {
+        return PythonUnwrapJavaArray(reinterpret_cast<PyJavaArray*>(object));
+    }
     else if constexpr(std::is_enum<T>::value)
     {
         return static_cast<T>(from_python_object<typename std::underlying_type<T>::type>(object));
