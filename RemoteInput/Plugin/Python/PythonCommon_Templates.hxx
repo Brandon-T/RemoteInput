@@ -416,6 +416,10 @@ std::vector<T> from_python_array(PyObject* object)
             {
                 result.push_back(reinterpret_cast<PyJavaObject*>(next));
             }
+            else if constexpr(std::is_same<T, PyJavaArray*>::value)
+            {
+                result.push_back(reinterpret_cast<PyJavaObject*>(next));
+            }
             else
             {
                 result.push_back(from_python_object<T>(next));

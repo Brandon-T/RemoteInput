@@ -9,6 +9,7 @@
 #include <sstream>
 #include <ios>
 #include <iomanip>
+#include <stack>
 
 int PyEIOS_Clear(PyObject* object)
 {
@@ -116,7 +117,6 @@ PyMethodDef PyEIOS_Methods[] = {
         {(char*)"kill_client",               PYTHON_FASTCALL(Python_EIOS_KillClient),        METH_FASTCALL, (char*)""},
 
         {(char*)"reflect_object",            PYTHON_FASTCALL(Python_Reflect_Object), METH_FASTCALL,      (char*)""},
-        //{(char*)"release_objects",            PYTHON_FASTCALL(Python_Reflect_Release_Objects), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_bool",            PYTHON_FASTCALL(Python_Reflect_Bool), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_char",            PYTHON_FASTCALL(Python_Reflect_Char), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_byte",            PYTHON_FASTCALL(Python_Reflect_Byte), METH_FASTCALL,      (char*)""},
@@ -127,6 +127,7 @@ PyMethodDef PyEIOS_Methods[] = {
         {(char*)"reflect_double",            PYTHON_FASTCALL(Python_Reflect_Double), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_string",            PYTHON_FASTCALL(Python_Reflect_String), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_array",            PYTHON_FASTCALL(Python_Reflect_Array), METH_FASTCALL,      (char*)""},
+        {(char*)"release_objects",            PYTHON_FASTCALL(Python_Reflect_Release_Objects), METH_FASTCALL,      (char*)""},
         {nullptr}  /* Sentinel */
 };
 
@@ -871,6 +872,69 @@ PyObject* Python_EIOS_KillClient(PyEIOS* self, PyObject* args[], Py_ssize_t args
 
     EIOS_KillClient(python_get_eios(self));
     
+    (python->Py_INCREF)(python->Py_GetNone_Object());
+    return python->Py_GetNone_Object();
+}
+
+PyObject* Python_Reflect_Release_Objects(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept
+{
+    extern int PyJavaObject_Clear(PyObject* object);
+    extern int PyJavaArray_Clear(PyObject* object);
+
+    // Flatten the List
+    std::stack<PyObject*> stack;
+    std::vector<PyObject*> objects;
+    stack.push(args[0]);
+
+    while (!stack.empty()) {
+        PyObject* object = stack.top();
+        stack.pop();
+
+        if ((python->PyList_Check)(object))
+        {
+            for (std::size_t i = 0; i < python->PyList_Size(object); ++i)
+            {
+                stack.push(python->PyList_GetItem(object, i));
+            }
+        }
+        else
+        {
+            objects.push_back(object);
+        }
+    }
+
+    // Early exit if no objects to free
+    if (objects.empty())
+    {
+        (python->Py_INCREF)(python->Py_GetNone_Object());
+        return python->Py_GetNone_Object();
+    }
+
+    // Unwrap each object and clear as we go along to prevent double-free
+    std::vector<jobject> result;
+    result.reserve(objects.size());
+
+    for (PyObject* object : objects)
+    {
+        PyRemoteInputType type = GetObjectType(object);
+        if (type == PyRemoteInputType::JAVA_OBJECT)
+        {
+            result.push_back(from_python_object<jobject>(object));
+            PyJavaObject_Clear(object);
+        }
+        else if (type == PyRemoteInputType::JAVA_ARRAY)
+        {
+            result.push_back(from_python_object<jarray>(object));
+            PyJavaArray_Clear(object);
+        }
+    }
+
+    // Release all objects at once
+    Reflect_Release_Objects(python_get_eios(self), &result[0], result.size());
+
+    // Clear the List
+    python->PySequence_DelSlice(args[0], 0, python->PySequence_Length(args[0]));
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }

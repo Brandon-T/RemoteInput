@@ -8,7 +8,10 @@
 int PyJavaArray_Clear(PyObject* object)
 {
     PyJavaArray* py_java_array = reinterpret_cast<PyJavaArray*>(object);
-    (python->Py_CLEAR)(reinterpret_cast<PyObject*>(py_java_array->eios));
+    if (py_java_array->eios)
+    {
+        (python->Py_CLEAR)(reinterpret_cast<PyObject*>(py_java_array->eios));
+    }
     py_java_array->eios = nullptr;
     py_java_array->array = nullptr;
     return 0;
@@ -33,6 +36,18 @@ PyMemberDef PyJavaArray_Members[] = {
 };
 
 PyGetSetDef PyJavaArray_PropertyMembers[] = {
+        {(char*)"eios", [](PyObject* object, void *closure) -> PyObject* {
+            if (object)
+            {
+                PyObject* eios = reinterpret_cast<PyObject*>(PythonGetEIOS(object));
+                (python->Py_INCREF)(eios);
+                return eios;
+            }
+
+            (python->Py_INCREF)(python->Py_GetNone_Object());
+            return python->Py_GetNone_Object();
+        }, nullptr, PyDoc_STR("EIOS Object"), nullptr},
+
         {(char*)"size", [](PyObject* object, void *closure) -> PyObject* {
             return object ? python->PyLong_FromLong(reinterpret_cast<PyJavaArray*>(object)->size) : python->PyLong_FromLong(0);
         }, nullptr, PyDoc_STR("Array Size"), nullptr},
@@ -45,6 +60,7 @@ PyMethodDef PyJavaArray_Methods[] = {
         {(char*)"get_2d",          PYTHON_FASTCALL(Python_JavaArray_Get2D), METH_FASTCALL | METH_KEYWORDS,      (char*)""},
         {(char*)"get_3d",          PYTHON_FASTCALL(Python_JavaArray_Get3D), METH_FASTCALL | METH_KEYWORDS,      (char*)""},
         {(char*)"get_4d",          PYTHON_FASTCALL(Python_JavaArray_Get4D), METH_FASTCALL | METH_KEYWORDS,      (char*)""},
+        {(char*)"release",         PYTHON_FASTCALL(Python_JavaArray_Release_Object), METH_FASTCALL,      (char*)""},
         {nullptr}  /* Sentinel */
 };
 
@@ -287,6 +303,20 @@ PyObject* Python_JavaArray_Get4D(PyJavaArray* self, PyObject* args[], Py_ssize_t
     // Array[][][][]
     Stream &stream = eios->control_center->reflect_array_all(array, type, 4)->data_stream();
     return read_array_type(stream, self, type, 4);
+}
+
+PyObject* Python_JavaArray_Release_Object(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length) noexcept
+{
+    if (self->eios && self->array)
+    {
+        EIOS* eios = python_get_eios(self);
+        jarray object = from_python_object<jarray>(self);
+        eios->control_center->reflect_release_object(object);
+        PyJavaArray_Clear(reinterpret_cast<PyObject*>(self));
+    }
+
+    (python->Py_INCREF)(python->Py_GetNone_Object());
+    return python->Py_GetNone_Object();
 }
 
 template<typename T>

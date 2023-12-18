@@ -50,6 +50,7 @@ PyObject* Python_EIOS_GetClientsPIDs(PyEIOS* self, PyObject* args[], Py_ssize_t 
 PyObject* Python_EIOS_PairClient_PID(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_KillClientPID(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_KillClient(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
+PyObject* Python_Reflect_Release_Objects(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 
 #ifdef __cplusplus
 }

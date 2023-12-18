@@ -8,9 +8,12 @@
 int PyJavaObject_Clear(PyObject* object)
 {
     PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject*>(object);
-    (python->Py_CLEAR)(reinterpret_cast<PyObject*>(py_java_object->eios));
-    py_java_object->eios = nullptr;
-    py_java_object->object = nullptr;
+    if (py_java_object->eios)
+    {
+        (python->Py_CLEAR)(reinterpret_cast<PyObject*>(py_java_object->eios));
+        py_java_object->eios = nullptr;
+        py_java_object->object = nullptr;
+    }
     return 0;
 }
 
@@ -33,6 +36,18 @@ PyMemberDef PyJavaObject_Members[] = {
 };
 
 PyGetSetDef PyJavaObject_PropertyMembers[] = {
+        {(char*)"eios", [](PyObject* object, void *closure) -> PyObject* {
+            if (object)
+            {
+                PyObject* eios = reinterpret_cast<PyObject*>(PythonGetEIOS(object));
+                (python->Py_INCREF)(eios);
+                return eios;
+            }
+
+            (python->Py_INCREF)(python->Py_GetNone_Object());
+            return python->Py_GetNone_Object();
+        }, nullptr, PyDoc_STR("EIOS Object"), nullptr},
+
         {nullptr}  /* Sentinel */
 };
 
@@ -40,8 +55,6 @@ PyMethodDef PyJavaObject_Methods[] = {
         {(char*)"reflect_object",            PYTHON_FASTCALL(Python_Reflect_Object), METH_FASTCALL,      (char*)""},
         {(char*)"is_same_object",            PYTHON_FASTCALL(Python_Reflect_IsSame_Object), METH_FASTCALL,      (char*)""},
         {(char*)"is_instance_of",            PYTHON_FASTCALL(Python_Reflect_InstanceOf), METH_FASTCALL,      (char*)""},
-        //{(char*)"release_object",            PYTHON_FASTCALL(Python_Reflect_Release_Object), METH_FASTCALL,      (char*)""},
-        //{(char*)"release_objects",            PYTHON_FASTCALL(Python_Reflect_Release_Objects), METH_FASTCALL | METH_STATIC,      (char*)""},
         {(char*)"reflect_bool",            PYTHON_FASTCALL(Python_Reflect_Bool), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_char",            PYTHON_FASTCALL(Python_Reflect_Char), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_byte",            PYTHON_FASTCALL(Python_Reflect_Byte), METH_FASTCALL,      (char*)""},
@@ -51,8 +64,8 @@ PyMethodDef PyJavaObject_Methods[] = {
         {(char*)"reflect_float",            PYTHON_FASTCALL(Python_Reflect_Float), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_double",            PYTHON_FASTCALL(Python_Reflect_Double), METH_FASTCALL,      (char*)""},
         {(char*)"reflect_string",            PYTHON_FASTCALL(Python_Reflect_String), METH_FASTCALL,      (char*)""},
-
         {(char*)"reflect_array",            PYTHON_FASTCALL(Python_Reflect_Array), METH_FASTCALL,      (char*)""},
+        {(char*)"release",            PYTHON_FASTCALL(Python_JavaObject_Release_Object), METH_FASTCALL,      (char*)""},
         {nullptr}  /* Sentinel */
 };
 
@@ -134,26 +147,6 @@ PyObject* Python_Reflect_InstanceOf(PyJavaObject* self, PyObject* args[], Py_ssi
     std::string cls = from_python_object<std::string>(args[0]);
     jboolean result = eios->control_center->reflect_instance_of(object, cls);
     return to_python_object(result);
-}
-
-PyObject* Python_JavaObject_Release_Object(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept
-{
-    EIOS* eios = python_get_eios(self);
-    jobject object = from_python_object<jobject>(self);
-    eios->control_center->reflect_release_object(object);
-
-    (python->Py_INCREF)(python->Py_GetNone_Object());
-    return python->Py_GetNone_Object();
-}
-
-PyObject* Python_JavaObject_Release_Objects(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept
-{
-    std::vector<jobject> array = from_python_array<jobject>(args[0]);
-    Reflect_Release_Objects(python_get_eios(self), &array[0], array.size());
-    python->PyList_SetSlice(args[0], 0, python->PyList_Size(args[0]), nullptr);
-
-    (python->Py_INCREF)(python->Py_GetNone_Object());
-    return python->Py_GetNone_Object();
 }
 
 PyObject* Python_Reflect_Bool(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept
@@ -259,4 +252,18 @@ PyObject* Python_Reflect_Array(PyJavaObject* self, PyObject* args[], Py_ssize_t 
     std::size_t array_size = 0;
     jarray array = eios->control_center->reflect_array({object, cls, field, desc}, &array_size);
     return reinterpret_cast<PyObject*>(PythonWrapJavaArray(PythonGetEIOS(reinterpret_cast<PyObject*>(self)), array, array_size));
+}
+
+PyObject* Python_JavaObject_Release_Object(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept
+{
+    if (self->eios && self->object)
+    {
+        EIOS* eios = python_get_eios(self);
+        jobject object = from_python_object<jobject>(self);
+        eios->control_center->reflect_release_object(object);
+        PyJavaObject_Clear(reinterpret_cast<PyObject*>(self));
+    }
+
+    (python->Py_INCREF)(python->Py_GetNone_Object());
+    return python->Py_GetNone_Object();
 }
