@@ -307,54 +307,21 @@ bool Mutex::try_lock() const noexcept
     #endif
 }
 
-
-template<typename Rep, typename Period>
-bool Mutex::try_lock_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
+bool Mutex::timed_lock(std::uint64_t nanoseconds) const noexcept
 {
-    std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
-    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
-    {
-        ++rtime;
-    }
-    return try_lock_until(std::chrono::steady_clock::now() + rtime);
-}
-
-template<typename Duration>
-bool Mutex::try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
-{
-    #if defined (_WIN32) || defined(_WIN64)
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
-    return WaitForSingleObject(hMutex, msec.time_since_epoch().count()) == WAIT_OBJECT_0;
-    #else
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-    return mutex && !pthread_mutex_timedlock(mutex, &ts);
-    #endif
-}
-
-template<typename Clock, typename Duration>
-bool Mutex::try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
-{
-    return try_lock_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
-}
-
-bool Mutex::timed_lock(std::uint32_t milliseconds) const noexcept
-{
-    if(!milliseconds)
+    if (!nanoseconds)
     {
         return lock();
     }
 
     #if defined(_WIN32) || defined(_WIN64)
-    return WaitForSingleObject(hMutex, milliseconds) == WAIT_OBJECT_0;
+    return WaitForSingleObject(hMutex, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(nanoseconds)).count()) == WAIT_OBJECT_0;
     #else
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { static_cast<time_t>(seconds.count()), static_cast<long>(nanoseconds.count()) };
+    struct timespec ts = { static_cast<time_t>(seconds.count()), static_cast<long>(nano_seconds.count()) };
     return mutex && !pthread_mutex_timedlock(mutex, &ts);
     #endif
 }
@@ -895,128 +862,42 @@ bool Semaphore::try_wait() const noexcept
     #endif
 }
 
-
-template<typename Rep, typename Period>
-bool Semaphore::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
+bool Semaphore::timed_wait(std::uint64_t nanoseconds) const noexcept
 {
-    std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
-    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
-    {
-        ++rtime;
-    }
-    return try_wait_until(std::chrono::steady_clock::now() + rtime);
-}
-
-template<typename Duration>
-bool Semaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
-{
-    #if defined(_WIN32) || defined(_WIN64)
-    if (!hSemaphore) { return false; }
-
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
-    return WaitForSingleObject(hSemaphore, msec.time_since_epoch().count()) == WAIT_OBJECT_0;
-    #elif defined(_USE_POSIX_SEMAPHORES)
-    #if defined(__APPLE__)
-    if (owned && !shared)
-    {
-        if (hSem == nullptr) { return false; }
-
-        std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::nanoseconds> now = std::chrono::high_resolution_clock::now();
-        dispatch_time_t time_out = dispatch_time(DISPATCH_TIME_NOW, (absolute_time - now).count());
-        return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), time_out);
-    }
-    #endif
-
-    if (hSem == SEM_FAILED) { return false; }
-
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-    return !sem_timedwait(static_cast<sem_t*>(hSem), &ts);
-    #elif defined(_USE_SYSTEM_V_SEMAPHORES)
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-
-    struct sembuf operations[1];
-    operations[0].sem_num = 0;
-    operations[0].sem_op = -1;
-    operations[0].sem_flg = IPC_NOWAIT;
-    return !semtimedop(handle, operations, 1, &ts);
-    #else
-    if (!mutex || !condition) { return false; }
-
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-
-    int res = pthread_mutex_lock(mutex);
-    if (!res && res != EBUSY && res != EDEADLK)
-    {
-        while (*sem_count == 0)
-        {
-            int res2 = pthread_cond_timedwait(condition, mutex, &ts);
-            if (res2 == ETIMEDOUT || res2 == EINVAL)
-            {
-                pthread_mutex_unlock(mutex);
-                return false;
-            }
-
-            *sem_count -= 1;
-            msync(mutex, sizeof(*this), MS_SYNC);
-            pthread_mutex_unlock(mutex);
-            return true;
-        }
-    }
-    return false;
-    #endif
-}
-
-template<typename Clock, typename Duration>
-bool Semaphore::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
-{
-    return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
-}
-
-bool Semaphore::timed_wait(std::uint32_t milliseconds) const noexcept
-{
-    if(!milliseconds)
+    if (!nanoseconds)
     {
         return wait();
     }
 
     #if defined(_WIN32) || defined(_WIN64)
     if (!hSemaphore) { return false; }
-    return WaitForSingleObject(hSemaphore, milliseconds) == WAIT_OBJECT_0;
+    return WaitForSingleObject(hSemaphore, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(nanoseconds)).count()) == WAIT_OBJECT_0;
     #elif defined(_USE_POSIX_SEMAPHORES)
     #if defined(__APPLE__)
     if (owned && !shared)
     {
         if (hSem == nullptr) { return false; }
-        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(milliseconds));
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::nanoseconds(nanoseconds));
         dispatch_time_t time_out = dispatch_time(DISPATCH_TIME_NOW, duration.count());
         return !dispatch_semaphore_wait(static_cast<dispatch_semaphore_t>(hSem), time_out);
     }
     #endif
     if (hSem == SEM_FAILED) { return false; }
 
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { seconds.count(), nanoseconds.count() };
+    struct timespec ts = { seconds.count(), nano_seconds.count() };
     return !sem_timedwait(static_cast<sem_t*>(hSem), &ts);
     #elif defined(_USE_SYSTEM_V_SEMAPHORES)
     if (handle == -1) { return false; }
 
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { seconds.count(), nanoseconds.count() };
+    struct timespec ts = { seconds.count(), nano_seconds.count() };
 
     struct sembuf operations[1];
     operations[0].sem_num = 0;
@@ -1026,11 +907,11 @@ bool Semaphore::timed_wait(std::uint32_t milliseconds) const noexcept
     #else
     if (!mutex || !condition) { return false; }
 
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { seconds.count(), nanoseconds.count() };
+    struct timespec ts = { seconds.count(), nano_seconds.count() };
 
     int res = pthread_mutex_lock(mutex);
     if (!res && res != EBUSY && res != EDEADLK)
@@ -1360,22 +1241,22 @@ bool AtomicSignal::try_wait() const noexcept
     #endif
 }
 
-bool AtomicSignal::timed_wait(std::uint32_t milliseconds) const noexcept
+bool AtomicSignal::timed_wait(std::uint64_t nanoseconds) const noexcept
 {
-    if(!milliseconds)
+    if (!nanoseconds)
     {
         return wait();
     }
 
     #if defined(_WIN32) || defined(_WIN64)
     if (!hEvent) { return false; }
-    return WaitForSingleObject(hEvent, milliseconds) == WAIT_OBJECT_0;
+    return WaitForSingleObject(hEvent, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(nanoseconds)).count()) == WAIT_OBJECT_0;
     #else
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { static_cast<time_t>(seconds.count()), static_cast<long>(nanoseconds.count()) };
+    struct timespec ts = { static_cast<time_t>(seconds.count()), static_cast<long>(nano_seconds.count()) };
     return atomic_signal_timedlock(lock, &ts);
     #endif
 }
@@ -1399,38 +1280,4 @@ bool AtomicSignal::is_signalled() const noexcept
     #else
     return lock->load(std::memory_order_relaxed);
     #endif
-}
-
-template<typename Rep, typename Period>
-bool AtomicSignal::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
-{
-    std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
-    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
-    {
-        ++rtime;
-    }
-    return try_wait_until(std::chrono::steady_clock::now() + rtime);
-}
-
-template<typename Duration>
-bool AtomicSignal::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
-{
-    #if defined(_WIN32) || defined(_WIN64)
-    if (!hEvent) { return false; }
-
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> msec = std::chrono::time_point_cast<std::chrono::milliseconds>(absolute_time);
-    return WaitForSingleObject(hEvent, msec.time_since_epoch().count()) == WAIT_OBJECT_0;
-    #else
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-    return atomic_signal_timedlock(lock, &ts);
-    #endif
-}
-
-template<typename Clock, typename Duration>
-bool AtomicSignal::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
-{
-    return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
 }

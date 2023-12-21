@@ -19,6 +19,7 @@
 #include <numeric>
 #include <locale>
 #include <codecvt>
+#include <string_view>
 
 template<typename T, typename... Ts>
 struct is_same_of : std::bool_constant<(std::is_same<typename std::remove_cv<T>::type, typename std::remove_cv<Ts>::type>::value || ...)> { };
@@ -43,6 +44,33 @@ struct any_of : std::bool_constant<(Ts::value || ...)> { };  //std::disjunction<
 
 template<typename... Ts>
 struct none_of : std::bool_constant<!any_of<Ts...>::value> { };
+
+struct string_hash
+{
+    using is_transparent = void;  //c++20 heterogeneous lookup
+
+    size_t operator()(const char* string) const
+    {
+        return std::hash<std::string_view>{}(string);
+    }
+
+    size_t operator()(std::string_view string) const
+    {
+        return std::hash<std::string_view>{}(string);
+    }
+
+    size_t operator()(const std::string &string) const
+    {
+        return std::hash<std::string>{}(string);
+    }
+};
+
+template<typename T>
+inline void hash_combine(std::size_t& seed, const T &value)
+{
+    // boost::hash
+    seed ^= std::hash<T>{}(value) + 0x9E3779B9 + (seed << 6) + (seed >> 2);
+}
 
 template<typename Tuple, std::size_t... Ints>
 auto select_tuple(Tuple&& tuple, std::index_sequence<Ints...>)

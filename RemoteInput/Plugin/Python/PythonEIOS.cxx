@@ -15,8 +15,6 @@ int PyEIOS_Clear(PyObject* object)
 {
     PyEIOS* py_eios = reinterpret_cast<PyEIOS*>(object);
     py_eios->pid = -1;
-    py_eios->width = 0;
-    py_eios->height = 0;
     py_eios->native_eios = nullptr;
     return 0;
 }
@@ -24,6 +22,7 @@ int PyEIOS_Clear(PyObject* object)
 void PyEIOS_Dealloc(PyObject* object)
 {
     PyEIOS* py_eios = reinterpret_cast<PyEIOS*>(object);
+
     EIOS_ReleaseTarget(py_eios->native_eios);
     // PyObject_GC_UnTrack(object);
     PyEIOS_Clear(object);
@@ -47,8 +46,6 @@ PyObject* PyEIOS_Str(PyObject* object)
 
     stream << "{"<<"\n";
     stream<< "    pid: " << py_eios->pid << "\n";
-    stream<< "    width: " << py_eios->width << "\n";
-    stream<< "    height: " << py_eios->height << "\n";
     stream<< "}";
 
     std::string result = stream.str();
@@ -67,13 +64,13 @@ PyGetSetDef PyEIOS_PropertyMembers[] = {
             return object ? python->PyLong_FromLong(reinterpret_cast<PyEIOS*>(object)->pid) : python->PyLong_FromLong(-1);
         }, nullptr, PyDoc_STR("Process ID"), nullptr},
 
-        {(char*)"width", [](PyObject* object, void *closure) -> PyObject* {
-            return object ? python->PyLong_FromLong(reinterpret_cast<PyEIOS*>(object)->width) : python->PyLong_FromLong(0);
-        }, nullptr, PyDoc_STR("Client Width"), nullptr},
-
-        {(char*)"height", [](PyObject* object, void *closure) -> PyObject* {
-            return object ? python->PyLong_FromLong(reinterpret_cast<PyEIOS*>(object)->height) : python->PyLong_FromLong(0);
-        }, nullptr, PyDoc_STR("Client Height"), nullptr},
+        {(char*)"dimensions", [](PyObject* object, void *closure) -> PyObject* {
+            if (object)
+            {
+                return Python_EIOS_GetTargetDimensions(reinterpret_cast<PyEIOS*>(object), nullptr, 0);
+            }
+            return python->PyTuple_Pack(2, python->PyLong_FromLong(0), python->PyLong_FromLong(0));
+        }, nullptr, PyDoc_STR("Client Dimensions"), nullptr},
 
         {nullptr}  /* Sentinel */
 };

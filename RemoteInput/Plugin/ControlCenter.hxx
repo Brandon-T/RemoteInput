@@ -10,6 +10,7 @@
 #include "InputOutput.hxx"
 #include "TypeTraits.hxx"
 #include "EIOSTypes.hxx"
+#include "ImageData.hxx"
 
 
 class RemoteVM;
@@ -21,19 +22,17 @@ private:
     std::int32_t pid;
     bool is_controller;
     std::atomic_bool stopped;
-    std::unique_ptr<Mutex> map_lock;
     std::unique_ptr<Signal> command_signal;
     std::unique_ptr<Signal> response_signal;
     std::unique_ptr<AtomicSignal> sync_signal;
     std::unique_ptr<Reflection> reflector;
-    std::unique_ptr<MemoryMapStream> memory_map;
+    std::unique_ptr<MemoryMapStream<ImageData>> memory_map;
     std::unique_ptr<InputOutput> io_controller;
     std::unique_ptr<RemoteVM> remote_vm;
 
     bool init_maps() noexcept;
-    bool init_locks() noexcept;
-    bool init_wait() noexcept;
     bool init_signals() noexcept;
+    bool init_wait() noexcept;
     void process_command() noexcept;
 
     ImageData* get_image_data() const noexcept;

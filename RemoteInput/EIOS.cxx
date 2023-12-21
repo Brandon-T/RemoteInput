@@ -329,8 +329,6 @@ EIOS* STD_CALL EIOS_PairClient(std::int32_t pid) noexcept
         {
             EIOS* eios = new EIOS();
             eios->pid = pid;
-            eios->width = control_center->get_width();
-            eios->height = control_center->get_height();
             eios->control_center = std::move(control_center);
             eios->control_center->set_parent_process_id(getpid());
             eios->control_center->set_parent_thread_id(tid);
@@ -439,8 +437,12 @@ EIOS* SimbaPluginTarget_RequestWithDebugImage(const char* initargs, void** image
 
     if (image)
     {
+        std::int32_t width = 0;
+        std::int32_t height = 0;
+        eios->control_center->get_target_dimensions(&width, &height);
+
         *image = PLUGIN_SIMBA_METHODS.ExternalImage_Create(true);
-        PLUGIN_SIMBA_METHODS.ExternalImage_SetMemory(*image, EIOS_GetImageBuffer(eios), eios->width, eios->height);
+        PLUGIN_SIMBA_METHODS.ExternalImage_SetMemory(*image, EIOS_GetImageBuffer(eios), width, height);
 
         PLUGIN_SIMBA_METHODS.ExternalImage_AddCallbackOnUnlock(*image, []{
 
@@ -463,8 +465,8 @@ void SimbaPluginTarget_GetDimensions(EIOS* eios, std::int32_t* width, std::int32
 void SimbaPluginTarget_GetImageData(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t width, std::int32_t height, void** pColorBGRA, std::int32_t* data_width) noexcept
 {
     std::uint8_t* image_buffer = EIOS_GetImageBuffer(eios);
-    *pColorBGRA = &image_buffer[y * eios->width + x];
-    *data_width = eios->width;
+    *pColorBGRA = &image_buffer[y * width + x];
+    *data_width = width;
 }
 
 bool SimbaPluginTarget_MousePressed(EIOS* eios, int mouse_button) noexcept

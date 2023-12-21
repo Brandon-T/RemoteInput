@@ -768,29 +768,12 @@ void Pascal_GetClientPID(void** Params, void** Result) noexcept
 
 void Pascal_Inject(void** Params, void** Result) noexcept
 {
-    const char* process_name = PascalRead<const char*>(Params[0]);
-    if (process_name)
-    {
-        extern std::vector<std::int32_t> InjectProcesses(const char* process_name);
-        std::vector<std::int32_t> result = InjectProcesses(process_name);
-        for (std::int32_t pid : result)
-        {
-            ControlCenter::wait_for_sync(pid);
-        }
-    }
+    EIOS_Inject(PascalRead<const char*>(Params[0]));
 }
 
 void Pascal_Inject_PID(void** Params, void** Result) noexcept
 {
-    std::int32_t pid = PascalRead<std::int32_t>(Params[0]);
-    if (pid)
-    {
-        extern std::int32_t InjectProcess(std::int32_t);
-        if (InjectProcess(pid) != -1)
-        {
-            ControlCenter::wait_for_sync(pid);
-        }
-    }
+    EIOS_Inject_PID(PascalRead<std::int32_t>(Params[0]));
 }
 
 void Pascal_HasFocus(void** Params, void** Result) noexcept

@@ -28,7 +28,7 @@ ThreadPool::ThreadPool(std::size_t max_threads) noexcept : mutex(), condition(),
                 this->tasks.pop();
 
                 lock.unlock();
-                task();
+                task(this->stop);
             }
         });
     }
@@ -70,9 +70,9 @@ void ThreadPool::terminate() noexcept
     }
 }
 
-void ThreadPool::add_task(std::function<void()> &&task)
+void ThreadPool::add_task(std::function<void(std::atomic_bool&)> &&task)
 {
-    if (!this->stop)
+    if (!stop)
     {
         std::unique_lock<std::mutex> lock(this->mutex);
         this->tasks.emplace(task);

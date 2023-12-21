@@ -19,9 +19,9 @@ Reflection::Reflection(Reflection&& other) noexcept : jvm(other.jvm), frame(othe
 
 Reflection::~Reflection() noexcept
 {
-    #if defined(__APPLE__)
+#if defined(__APPLE__)
     printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
-    #else
+#else
     printf("EXITING VM -- VM ABORTS ON CLEANUP\n");
     /*if (this->jvm->getENV() || this->Attach())
     {
@@ -30,7 +30,7 @@ Reflection::~Reflection() noexcept
         jvm->DeleteGlobalRef(this->frame);
         this->Detach();
     }*/
-    #endif
+#endif
 
     this->ClearCache();
     delete jvm;
@@ -246,7 +246,7 @@ bool Reflection::IsDecendentOf(jobject object, const char* className) const noex
     return jvm->IsInstanceOf(object, cls.get());
 }
 
-jclass Reflection::LoadClass(const char* name) noexcept
+jclass Reflection::LoadClass(std::string_view name) noexcept
 {
     return cache.GetClass(name);
 }
@@ -256,7 +256,7 @@ void Reflection::ClearCache() noexcept
     cache.clear();
 }
 
-jfieldID Reflection::GetFieldID(jclass cls, const char* name, const char* desc, bool is_static) noexcept
+jfieldID Reflection::GetFieldID(jclass cls, std::string_view name, std::string_view desc, bool is_static) noexcept
 {
     return cache.GetFieldID(cls, name, desc, is_static);
 }

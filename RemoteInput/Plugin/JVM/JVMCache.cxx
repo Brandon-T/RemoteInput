@@ -22,8 +22,8 @@ JVMCache::JVMCache(JVMCache&& other) : jvm(other.jvm), class_loader(other.class_
     other.jvm = nullptr;
     other.class_loader = nullptr;
     other.load_class_method = nullptr;
-    other.field_cache.clear();
     other.class_cache.clear();
+    other.field_cache.clear();
 }
 
 JVMCache& JVMCache::operator = (JVMCache&& other)
@@ -31,38 +31,18 @@ JVMCache& JVMCache::operator = (JVMCache&& other)
     jvm = other.jvm;
     class_loader = other.class_loader;
     load_class_method = other.load_class_method;
-    field_cache = std::move(other.field_cache);
     class_cache = std::move(other.class_cache);
+    field_cache = std::move(other.field_cache);
 
     other.jvm = nullptr;
     other.class_loader = nullptr;
     other.load_class_method = nullptr;
-    other.field_cache.clear();
     other.class_cache.clear();
+    other.field_cache.clear();
     return *this;
 }
 
-jfieldID JVMCache::GetFieldID(jclass clazz, const char* name, const char* sig, bool is_static) noexcept
-{
-    std::size_t key = field_hash(name, sig);
-    if (auto it = field_cache.find(clazz); it != field_cache.end())
-    {
-        if (auto jt = it->second.find(key); jt != it->second.end())
-        {
-            return jt->second;
-        }
-    }
-
-    jfieldID field = is_static ? jvm->GetStaticFieldID(clazz, name, sig) : jvm->GetFieldID(clazz, name, sig);
-    if (field)
-    {
-        field_cache[clazz][key] = field;
-        return field;
-    }
-    return nullptr;
-}
-
-jclass JVMCache::GetClass(const char* name) noexcept
+jclass JVMCache::GetClass(std::string_view name) noexcept
 {
     if (auto it = class_cache.find(name); it != class_cache.end())
     {
@@ -70,20 +50,44 @@ jclass JVMCache::GetClass(const char* name) noexcept
     }
     else
     {
-        auto class_name = make_safe_local<jstring>(jvm->NewStringUTF(name));
-        auto clazz = make_safe_global<jclass>(jvm->CallObjectMethod(class_loader, load_class_method, class_name.get(), true));
-        if (clazz)
+        jstring class_name = jvm->NewStringUTF(name.data());
+        if (class_name)
         {
-            jclass result = clazz.get();
-            class_cache[name] = std::move(clazz);
-            return result;
+            jclass clazz = static_cast<jclass>(jvm->CallObjectMethod(class_loader, load_class_method, class_name, true));
+            jvm->DeleteLocalRef(class_name);
+
+            if (clazz)
+            {
+                jvm->DeleteLocalRef(std::exchange(clazz, static_cast<jclass>(jvm->NewGlobalRef(clazz))));
+                class_cache.emplace(name, clazz);
+                return clazz;
+            }
         }
+
         return nullptr;
     }
 }
 
+jfieldID JVMCache::GetFieldID(jclass clazz, std::string_view name, std::string_view sig, bool is_static) noexcept
+{
+    std::size_t key = field_hash(clazz, name, sig);
+    if (auto it = field_cache.find(key); it != field_cache.end())
+    {
+        return it->second;
+    }
+
+    jfieldID field = is_static ? jvm->GetStaticFieldID(clazz, name.data(), sig.data()) : jvm->GetFieldID(clazz, name.data(), sig.data());
+    if (field)
+    {
+        field_cache[key] = field;
+        return field;
+    }
+    return nullptr;
+}
+
 void JVMCache::clear()
 {
+    class_cache.clear();
     field_cache.clear();
     for (auto &item: class_cache)
     {
@@ -91,7 +95,16 @@ void JVMCache::clear()
     }
 }
 
-std::size_t JVMCache::field_hash(const char* field_name, const char* signature) noexcept
+std::size_t JVMCache::field_hash(jclass clazz, std::string_view field_name, std::string_view signature) noexcept
+{
+    std::size_t hash = 0;
+    hash_combine(hash, clazz);
+    hash_combine(hash, field_name);
+    hash_combine(hash, signature);
+    return hash;
+}
+
+/*std::size_t JVMCache::field_hash(const char* field_name, const char* signature) noexcept
 {
     std::size_t field_hash = std::hash<std::string>()(field_name);
     std::size_t desc_hash = std::hash<std::string>()(signature);
@@ -114,4 +127,4 @@ std::size_t JVMCache::field_hash(const char* field_name, const char* signature) 
     }
 
     return hash_one + (hash_two * 1566083941);
-}
+}*/

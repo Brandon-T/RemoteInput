@@ -78,6 +78,8 @@ private:
     T* mutex_cast(void* &ptr);
     #endif
 
+    bool timed_lock(std::uint64_t nanoseconds) const noexcept;
+
 public:
     Mutex();
     Mutex(std::string name);
@@ -88,18 +90,30 @@ public:
 
     bool lock() const noexcept;
     bool try_lock() const noexcept;
-    bool timed_lock(std::uint32_t milliseconds) const noexcept;
     bool unlock() const noexcept;
 
-
     template<typename Rep, typename Period>
-    bool try_lock_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
+    bool try_lock_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
+    {
+        std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
+        if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
+        {
+            ++rtime;
+        }
+        return try_lock_until(std::chrono::steady_clock::now() + rtime);
+    }
 
     template<typename Duration>
-    bool try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
+    bool try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
+    {
+        return timed_lock(std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - std::chrono::high_resolution_clock::now()).count());
+    }
 
     template<typename Clock, typename Duration>
-    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
+    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
+    {
+        return try_lock_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
+    }
 };
 
 class Semaphore
@@ -132,6 +146,8 @@ private:
     T* semaphore_cast(void* &ptr);
     #endif
 
+    bool timed_wait(std::uint64_t nanoseconds) const noexcept;
+
 public:
     Semaphore(std::int32_t count = 0);
     Semaphore(std::string name, std::int32_t count = 0);
@@ -142,18 +158,31 @@ public:
 
     bool wait() const noexcept;
     bool try_wait() const noexcept;
-    bool timed_wait(std::uint32_t milliseconds) const noexcept;
     bool signal() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
+    {
+        std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
+        if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
+        {
+            ++rtime;
+        }
+        return try_wait_until(std::chrono::steady_clock::now() + rtime);
+    }
 
     template<typename Duration>
-    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
+    {
+        return timed_wait(std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - std::chrono::high_resolution_clock::now()).count());
+    }
 
     template<typename Clock, typename Duration>
-    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
+    {
+        return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
+    }
 };
 
 class AtomicSignal
@@ -170,6 +199,8 @@ private:
     std::int32_t* ref;
     #endif
 
+    bool timed_wait(std::uint64_t nanoseconds) const noexcept;
+
 public:
     AtomicSignal();
     AtomicSignal(std::string name);
@@ -177,20 +208,32 @@ public:
 
     bool wait() const noexcept;
     bool try_wait() const noexcept;
-
-    bool timed_wait(std::uint32_t milliseconds) const noexcept;
     bool signal() const noexcept;
     bool is_signalled() const noexcept;
 
 
     template<typename Rep, typename Period>
-    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
+    {
+        std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
+        if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
+        {
+            ++rtime;
+        }
+        return try_wait_until(std::chrono::steady_clock::now() + rtime);
+    }
 
     template<typename Duration>
-    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept;
+    bool try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
+    {
+        return timed_wait(std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - std::chrono::high_resolution_clock::now()).count());
+    }
 
     template<typename Clock, typename Duration>
-    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
+    {
+        return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
+    }
 };
 
 #endif /* SHAREDEVENT_HXX_INCLUDED */

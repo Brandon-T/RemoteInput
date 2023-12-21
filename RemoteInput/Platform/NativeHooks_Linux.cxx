@@ -581,7 +581,6 @@ extern "C" [[gnu::visibility("default")]] void glXSwapBuffers(Display* dpy, GLXD
 void InitialiseHooks() noexcept
 {
     #if defined(USE_DETOURS)
-    std::thread([&]{
         //Hook Native Blit
         void* blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_loops_Blit_Blit");
         if (blit)
@@ -625,15 +624,14 @@ void InitialiseHooks() noexcept
             opengl_hook->apply();
         }
         #endif
-
-        //Signal that all hooks are finished initializing..
-        ControlCenter::signal_sync(getpid());
-    }).detach();
     #endif
 }
 
 void StartHook() noexcept
 {
     InitialiseHooks();
+
+    //Signal that all hooks are finished initializing..
+    ControlCenter::signal_sync(getpid());
 }
 #endif

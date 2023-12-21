@@ -29,8 +29,6 @@
 typedef struct EIOS
 {
     std::int32_t pid;
-    std::int32_t width;
-    std::int32_t height;
     std::intptr_t local_storage;
     std::unique_ptr<ControlCenter> control_center;
 } EIOS;

@@ -86,7 +86,7 @@ typedef struct EIOSData
     bool ui_scaling;
     ImageFormat image_format;
     EIOSCommand command;
-    std::uint8_t args[100000 * 8];
+    std::uint8_t data[100000 * 8];
 } EIOSData;
 
 #endif /* EIOSTYPES_HXX_INCLUDED */

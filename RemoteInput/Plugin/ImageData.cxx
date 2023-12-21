@@ -4,10 +4,10 @@
 
 #include "ImageData.hxx"
 
-ImageData::ImageData(void* buffer, std::size_t size) : stream(nullptr), image_data(static_cast<EIOSData*>(buffer), [](EIOSData* data) { }) //image_data(std::construct_at(static_cast<EIOSData*>(buffer)), [](EIOSData* data) { std::destroy_at(data); })
+ImageData::ImageData(void* buffer, std::size_t size) : stream(), image_data(static_cast<EIOSData*>(buffer), [](EIOSData* data) { }) //data(std::construct_at(static_cast<EIOSData*>(buffer)), [](EIOSData* data) { std::destroy_at(data); })
 {
-    std::size_t offset = offsetof(EIOSData, args);
-    stream = std::make_unique<Stream>(image_data->args, size - offset);
+    std::size_t offset = offsetof(EIOSData, data);
+    stream = std::make_unique<Stream>(image_data->data, size - offset);
     stream->seekg(0, std::ios::beg);
     stream->seekp(0, std::ios::beg);
 }
@@ -107,15 +107,15 @@ void ImageData::set_command(EIOSCommand command)
     image_data->command = command;
 }
 
-void* ImageData::io_buffer(std::ios_base::openmode mode) const noexcept
+void* ImageData::data_buffer(std::ios_base::openmode mode) const noexcept
 {
     if (mode & std::ios_base::in)
     {
-        return image_data->args + stream->tellg();
+        return image_data->data + stream->tellg();
     }
     else if (mode & std::ios_base::out)
     {
-        return image_data->args + stream->tellp();
+        return image_data->data + stream->tellp();
     }
     else
     {

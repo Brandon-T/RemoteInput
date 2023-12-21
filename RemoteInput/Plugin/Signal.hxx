@@ -33,7 +33,6 @@ public:
 
     bool wait() const noexcept;
     bool try_wait() const noexcept;
-    bool timed_wait(std::uint32_t milliseconds) const noexcept;
     bool signal() const noexcept;
 
 
@@ -117,32 +116,6 @@ bool Signal<T>::try_wait() const noexcept
     else if constexpr (std::is_same<T, SpinningSignal>::value)
     {
         return static_cast<SpinningSignal*>(underlying_type)->try_wait();
-    }
-    return false;
-}
-
-template<typename T>
-bool Signal<T>::timed_wait(std::uint32_t milliseconds) const noexcept
-{
-    if constexpr (std::is_same<T, Semaphore>::value)
-    {
-        return static_cast<Semaphore*>(underlying_type)->timed_wait(milliseconds);
-    }
-    else if constexpr (std::is_same<T, SpinLock>::value)
-    {
-        return static_cast<SpinLock*>(underlying_type)->timed_lock(milliseconds);
-    }
-    else if constexpr (std::is_same<T, Mutex>::value)
-    {
-        return static_cast<Mutex*>(underlying_type)->timed_lock(milliseconds);
-    }
-    else if constexpr (std::is_same<T, SpinningSemaphore>::value)
-    {
-        return static_cast<SpinningSemaphore*>(underlying_type)->timed_wait(milliseconds);
-    }
-    else if constexpr (std::is_same<T, SpinningSignal>::value)
-    {
-        return static_cast<SpinningSignal*>(underlying_type)->timed_wait(milliseconds);
     }
     return false;
 }

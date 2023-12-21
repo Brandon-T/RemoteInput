@@ -30,8 +30,6 @@ PyObject* PythonWrapEIOS(EIOS* eios) noexcept
     {
         PyEIOS* py_eios = (python->PyObject_New<PyEIOS>)(PyEIOS_Type());
         py_eios->pid = eios->pid;
-        py_eios->width = eios->width;
-        py_eios->height = eios->height;
         py_eios->native_eios = eios;
         return reinterpret_cast<PyObject*>(py_eios);
     }

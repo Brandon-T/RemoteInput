@@ -1136,8 +1136,7 @@ void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLen
 #if defined(_WIN32) || defined(_WIN64)
 void InitialiseHooks() noexcept
 {
-    std::thread([&]{
-        #if defined(USE_DETOURS)
+    #if defined(USE_DETOURS)
         HMODULE module = GetModuleHandle("awt.dll");
 
         auto GetProcAddress = [](HMODULE module, const char* stdcall_name, const char* cdecl_name) -> FARPROC {
@@ -1213,11 +1212,7 @@ void InitialiseHooks() noexcept
             }
         }
         #endif
-        #endif
-
-        //Signal that all hooks are finished initializing..
-        ControlCenter::signal_sync(getpid());
-    }).detach();
+    #endif
 
     /*std::thread([]{
         auto start = std::chrono::high_resolution_clock::now();
@@ -1245,6 +1240,9 @@ void InitialiseHooks() noexcept
 void StartHook() noexcept
 {
     InitialiseHooks();
+
+    //Signal that all hooks are finished initializing..
+    ControlCenter::signal_sync(getpid());
 }
 
 /*void limit_render(std::function<void()> render, uint32_t max_frames) noexcept

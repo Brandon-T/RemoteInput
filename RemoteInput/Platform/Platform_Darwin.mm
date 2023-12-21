@@ -59,6 +59,10 @@ bool IsThreadAlive(std::int32_t tid) noexcept
 
 std::vector<std::int32_t> get_pids() noexcept
 {
+    /*for (NSRunningApplication *app in [[NSWorkspace sharedWorkspace] runningApplications])
+    {
+        pids.push_back([app processIdentifier]);
+    }*/
     std::vector<std::int32_t> pids(2048);
     pids.resize(proc_listpids(PROC_ALL_PIDS, 0, &pids[0], 2048 * sizeof(std::int32_t)) / sizeof(std::int32_t));
     std::vector<std::int32_t>(pids).swap(pids);
@@ -78,6 +82,27 @@ std::vector<std::int32_t> get_pids(const char* process_name) noexcept
             if (!strcmp(process_name, proc.pbi_name))
             {
                 result.push_back(pids[i]);
+            }
+            else
+            {
+                // MacOS sometimes uses the localized name as the process name instead of the executable name
+                // So the BSD pbi_name will not always work!
+                // Instead, we need to get the running application's localized name
+                // This is because a process can have two names on MacOS
+                @autoreleasepool {
+                    NSRunningApplication *application = [NSRunningApplication runningApplicationWithProcessIdentifier:pids[i]];
+                    if (application)
+                    {
+                        NSString *localized_name = [application localizedName];
+                        if (localized_name)
+                        {
+                            if ([[NSString stringWithUTF8String:process_name] isEqualToString:localized_name])
+                            {
+                                result.push_back(pids[i]);
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -9,8 +9,10 @@
 #include <utility>
 #include <memory>
 #include <functional>
+#include <string_view>
 #include "ReflectionHook.hxx"
 #include "JVM.hxx"
+#include "TypeTraits.hxx"
 
 class JVMCache
 {
@@ -23,8 +25,8 @@ public:
     JVMCache& operator = (const JVMCache&) = delete;
     JVMCache& operator = (JVMCache&&);
 
-    jfieldID GetFieldID(jclass clazz, const char* name, const char* sig, bool is_static) noexcept;
-    jclass GetClass(const char* name) noexcept;
+    jclass GetClass(std::string_view name) noexcept;
+    jfieldID GetFieldID(jclass clazz, std::string_view name, std::string_view sig, bool is_static) noexcept;
 
     void clear();
 
@@ -33,8 +35,8 @@ private:
     jobject class_loader;
     jmethodID load_class_method;
 
-    std::unordered_map<jclass, std::unordered_map<std::size_t, jfieldID>> field_cache;
-    std::unordered_map<std::string, std::unique_ptr<typename std::remove_pointer<jclass>::type, std::function<void(jclass)>>> class_cache;
+    std::unordered_map<std::string, std::unique_ptr<typename std::remove_pointer<jclass>::type, std::function<void(jclass)>>, string_hash, std::equal_to<>> class_cache;
+    std::unordered_map<std::size_t, jfieldID> field_cache;
 
     template<typename T>
     inline auto make_safe_local(auto object) const noexcept
@@ -57,7 +59,7 @@ private:
         return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
     }
 
-    static std::size_t field_hash(const char* field_name, const char* signature) noexcept;
+    static std::size_t field_hash(jclass clazz, std::string_view field_name, std::string_view signature) noexcept;
 };
 
 

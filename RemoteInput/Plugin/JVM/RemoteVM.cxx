@@ -325,7 +325,7 @@ RemoteVM& RemoteVM::operator = (RemoteVM&& other)
 
 std::size_t RemoteVM::MaxMemoryChunkSize() const noexcept
 {
-    std::size_t max_size = sizeof(EIOSData::args);
+    std::size_t max_size = sizeof(EIOSData::data);
     max_size -= sizeof(std::underlying_type<RemoteVMCommand>);
     max_size -= sizeof(void*);
     max_size -= sizeof(std::size_t);
@@ -1898,7 +1898,7 @@ void RemoteVM::process_command(ImageData* image_data) const noexcept
         {
             void* source = Remote_VM_Read<void*>(image_data);
             jsize size = Remote_VM_Read<jsize>(image_data);
-            bool result = this->ReadMemory(image_data->io_buffer(std::ios::out), source, size);
+            bool result = this->ReadMemory(image_data->data_buffer(std::ios::out), source, size);
             image_data->data_stream().write(result);
         }
             break;
@@ -1907,7 +1907,7 @@ void RemoteVM::process_command(ImageData* image_data) const noexcept
         {
             void* destinaton = Remote_VM_Read<void*>(image_data);
             jsize size = Remote_VM_Read<jsize>(image_data);
-            bool result = this->WriteMemory(destinaton, image_data->io_buffer(std::ios::in), size);
+            bool result = this->WriteMemory(destinaton, image_data->data_buffer(std::ios::in), size);
             image_data->data_stream().write(result);
         }
             break;
@@ -1931,7 +1931,7 @@ void RemoteVM::process_command(ImageData* image_data) const noexcept
             jobject loader = Remote_VM_Read<jobject>(image_data);
             jbyte* buf = Remote_VM_Read<jbyte*>(image_data);
             jsize len = Remote_VM_Read<jsize>(image_data);
-            jclass result = this->DefineClass(name.c_str(), loader, buf == nullptr ? static_cast<jbyte*>(image_data->io_buffer(
+            jclass result = this->DefineClass(name.c_str(), loader, buf == nullptr ? static_cast<jbyte*>(image_data->data_buffer(
                     std::ios::in)) : buf, len);
             image_data->data_stream().write(result);
         }

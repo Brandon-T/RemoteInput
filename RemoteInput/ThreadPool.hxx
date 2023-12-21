@@ -16,7 +16,7 @@ class ThreadPool final
 private:
     std::mutex mutex;
     std::condition_variable condition;
-    std::queue<std::function<void()>> tasks;
+    std::queue<std::function<void(std::atomic_bool& stopped)>> tasks;
     std::vector<std::thread> threads;
     std::atomic_bool stop;
 
@@ -29,7 +29,7 @@ public:
 
     void terminate() noexcept;
 
-    void add_task(std::function<void()> &&task);
+    void add_task(std::function<void(std::atomic_bool&)> &&task);
 
     template<typename Task, typename... Args>
     auto enqueue(Task &&task, Args&&... args) noexcept -> std::future<std::invoke_result_t<Task, Args...>>;

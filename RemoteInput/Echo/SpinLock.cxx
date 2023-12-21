@@ -151,18 +151,18 @@ bool SpinLock::try_lock() const noexcept
     return flag->test_and_set(std::memory_order_acquire);
 }
 
-bool SpinLock::timed_lock(std::uint32_t milliseconds) const noexcept
+bool SpinLock::timed_lock(std::uint64_t nanoseconds) const noexcept
 {
-    if(!milliseconds)
+    if (!nanoseconds)
     {
         return lock();
     }
 
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { seconds.count(), nanoseconds.count() };
+    struct timespec ts = { seconds.count(), nano_seconds.count() };
     return spinlock_timedlock(flag, &ts) == 1;
 }
 
@@ -173,35 +173,7 @@ bool SpinLock::unlock() const noexcept
 }
 
 
-template<typename Rep, typename Period>
-bool SpinLock::try_lock_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
-{
-    std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
-    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
-    {
-        ++rtime;
-    }
-    return try_lock_until(std::chrono::steady_clock::now() + rtime);
-}
-
-template<typename Duration>
-bool SpinLock::try_lock_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
-{
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-    return spinlock_timedlock(flag, &ts) == 1;
-}
-
-template<typename Clock, typename Duration>
-bool SpinLock::try_lock_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
-{
-    return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
-}
-
-
-void spinning_semaphore_sleep(int* count) const noexcept
+void spinning_semaphore_sleep(int* count) noexcept
 {
     if (*count++ >= 500)
     {
@@ -219,7 +191,7 @@ void spinning_semaphore_sleep(int* count) const noexcept
     }
 }
 
-bool spinning_semaphore_timedlock(std::atomic_flag* lock, std::atomic_int32_t* count, const struct timespec* timeout) const noexcept
+bool spinning_semaphore_timedlock(std::atomic_flag* lock, std::atomic_int32_t* count, const struct timespec* timeout) noexcept
 {
     struct timespec sleeptime;
     sleeptime.tv_sec = 0;
@@ -265,7 +237,7 @@ bool spinning_semaphore_timedlock(std::atomic_flag* lock, std::atomic_int32_t* c
 }
 
 template<typename T>
-T* spinning_semaphore_cast(void* &ptr) const noexcept
+T* spinning_semaphore_cast(void* &ptr) noexcept
 {
     std::uint8_t* it = static_cast<std::uint8_t*>(ptr);
     T* result = static_cast<T*>(ptr);
@@ -394,18 +366,18 @@ bool SpinningSemaphore::try_wait() const noexcept
     return false;
 }
 
-bool SpinningSemaphore::timed_wait(std::uint32_t milliseconds) const noexcept
+bool SpinningSemaphore::timed_wait(std::uint64_t nanoseconds) const noexcept
 {
-    if(!milliseconds)
+    if (!nanoseconds)
     {
         return wait();
     }
 
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { seconds.count(), nanoseconds.count() };
+    struct timespec ts = { seconds.count(), nano_seconds.count() };
     return spinning_semaphore_timedlock(lock, count, &ts) == 1;
 }
 
@@ -414,39 +386,6 @@ bool SpinningSemaphore::signal() const noexcept
     count->fetch_add(1, std::memory_order_release);
     return true;
 }
-
-
-template<typename Rep, typename Period>
-bool SpinningSemaphore::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
-{
-    std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
-    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
-    {
-        ++rtime;
-    }
-    return try_wait_until(std::chrono::steady_clock::now() + rtime);
-}
-
-template<typename Duration>
-bool SpinningSemaphore::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
-{
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-    return spinning_semaphore_timedlock(lock, count, &ts) == 1;
-}
-
-template<typename Clock, typename Duration>
-bool SpinningSemaphore::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
-{
-    return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
-}
-
-
-
-
-
 
 
 
@@ -611,18 +550,18 @@ bool SpinningSignal::try_wait() const noexcept
     return false;
 }
 
-bool SpinningSignal::timed_wait(std::uint32_t milliseconds) const noexcept
+bool SpinningSignal::timed_wait(std::uint64_t nanoseconds) const noexcept
 {
-    if(!milliseconds)
+    if (!nanoseconds)
     {
         return wait();
     }
 
-    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds)).time_since_epoch();
+    auto duration = (std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(nanoseconds)).time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+    auto nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
-    struct timespec ts = { seconds.count(), nanoseconds.count() };
+    struct timespec ts = { seconds.count(), nano_seconds.count() };
     return spinning_signal_timedlock(lock, &ts);
 }
 
@@ -630,32 +569,4 @@ bool SpinningSignal::signal() const noexcept
 {
     lock->store(true, std::memory_order_release);
     return true;
-}
-
-
-template<typename Rep, typename Period>
-bool SpinningSignal::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
-{
-    std::chrono::steady_clock::duration rtime = std::chrono::duration_cast<std::chrono::steady_clock::duration>(relative_time);
-    if(std::ratio_greater<std::chrono::steady_clock::period, Period>())
-    {
-        ++rtime;
-    }
-    return try_wait_until(std::chrono::steady_clock::now() + rtime);
-}
-
-template<typename Duration>
-bool SpinningSignal::try_wait_until(const std::chrono::time_point<std::chrono::high_resolution_clock, Duration>& absolute_time) const noexcept
-{
-    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::seconds> sec = std::chrono::time_point_cast<std::chrono::seconds>(absolute_time);
-    std::chrono::nanoseconds nano = std::chrono::duration_cast<std::chrono::nanoseconds>(absolute_time - sec);
-
-    struct timespec ts = { sec.time_since_epoch().count(), nano.count() };
-    return spinning_signal_timedlock(lock, &ts);
-}
-
-template<typename Clock, typename Duration>
-bool SpinningSignal::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
-{
-    return try_wait_until(std::chrono::high_resolution_clock::now() + (absolute_time - Clock::now()));
 }

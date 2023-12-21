@@ -43,10 +43,10 @@ public:
     void set_image_format(ImageFormat format);
     void set_command(EIOSCommand command);
 
-    void* io_buffer(std::ios_base::openmode mode) const noexcept;
+    void* data_buffer(std::ios_base::openmode mode) const noexcept;
+
     std::uint8_t* image_buffer() const noexcept;
     Stream& data_stream() const noexcept;
 };
-
 
 #endif /* IMAGEDATA_HXX_INCLUDED */

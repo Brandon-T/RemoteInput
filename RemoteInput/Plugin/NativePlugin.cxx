@@ -17,8 +17,8 @@ void EIOS_Inject(const char* process_name) noexcept
 {
     if (process_name)
     {
-        std::vector<std::int32_t> result = InjectProcesses(process_name);
-        for (std::int32_t pid : result)
+        std::vector<std::int32_t> pids = InjectProcesses(process_name);
+        for (std::int32_t pid : pids)
         {
             ControlCenter::wait_for_sync(pid);
         }
@@ -29,10 +29,7 @@ void EIOS_Inject_PID(std::int32_t pid) noexcept
 {
     if (pid != -1)
     {
-        if (InjectProcess(pid) != -1)
-        {
-            ControlCenter::wait_for_sync(pid);
-        }
+        InjectProcess(pid);
     }
 }
 

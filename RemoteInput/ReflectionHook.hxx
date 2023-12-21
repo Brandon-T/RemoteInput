@@ -14,6 +14,7 @@
 
 #include "JNI_Common.hxx"
 #include "Stream.hxx"
+#include "TypeTraits.hxx"
 
 struct ReflectionHook
 {
@@ -33,28 +34,11 @@ struct std::hash<ReflectionHook>
 {
     std::size_t operator()(const ReflectionHook& hook) const noexcept
     {
-        std::size_t cls_hash = std::hash<std::string>()(hook.cls);
-        std::size_t field_hash = std::hash<std::string>()(hook.field);
-        std::size_t desc_hash = std::hash<std::string>()(hook.desc);
-
-        std::size_t hashes[] = {cls_hash, field_hash, desc_hash};
-
-        std::size_t hash_one = (5381 << 16) + 5381;
-        std::size_t hash_two = hash_one;
-
-        for(std::size_t i = 0; i < sizeof(hashes) / sizeof(std::size_t); ++i)
-        {
-            if (i % 2 == 0)
-            {
-                hash_one = ((hash_one << 5) + hash_one + (hash_one >> 27)) ^ hashes[i];
-            }
-            else
-            {
-                hash_two = ((hash_two << 5) + hash_two + (hash_two >> 27)) ^ hashes[i];
-            }
-        }
-
-        return hash_one + (hash_two * 1566083941);
+        std::size_t hash = 0;
+        hash_combine(hash, hook.cls);
+        hash_combine(hash, hook.field);
+        hash_combine(hash, hook.desc);
+        return hash;
     }
 };
 

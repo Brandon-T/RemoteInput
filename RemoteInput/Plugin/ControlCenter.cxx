@@ -3,14 +3,12 @@
 #include <unordered_map>
 #include <cstring>
 #include <utility>
-#include "EIOS.hxx"
 #include "Platform.hxx"
-#include "NativeHooks.hxx"
 #include "Graphics.hxx"
 #include "ReflectionHook.hxx"
 #include "RemoteVM.hxx"
 
-ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), map_lock(), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller(), remote_vm()
+ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller(), remote_vm()
 {
     if (pid <= 0)
     {
@@ -22,19 +20,14 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
         throw std::runtime_error("Cannot Initialize Maps");
     }
 
-    if (!init_wait())
-    {
-        throw std::runtime_error("Cannot Initialize Wait Signal");
-    }
-
-    /*if (!init_locks())
-    {
-        throw std::runtime_error("Cannot Initialize Locks");
-    }*/
-
     if (!init_signals())
     {
         throw std::runtime_error("Cannot Initialize Signals");
+    }
+
+    if (!init_wait())
+    {
+        throw std::runtime_error("Cannot Initialize Wait Signal");
     }
 
     if (!is_controller)
@@ -44,8 +37,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 
         if (this->reflector)
         {
-            std::thread thread = std::thread([&]{
-
+            std::thread thread = std::thread([this]{
                 #if defined(_WIN32) || defined(_WIN64)
                 HANDLE this_process = GetCurrentProcess();
                 SetPriorityClass(this_process, NORMAL_PRIORITY_CLASS);
@@ -70,7 +62,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 
                     while(!stopped)
                     {
-                        if (!command_signal || /*!map_lock ||*/ !response_signal || !memory_map)
+                        if (!command_signal || !response_signal || !memory_map)
                         {
                             break;
                         }
@@ -119,11 +111,6 @@ ControlCenter::~ControlCenter()
     terminate();
     //reflector.reset();
 
-    if (map_lock)
-    {
-        map_lock.reset();
-    }
-
     if (memory_map)
     {
         memory_map.reset();
@@ -152,7 +139,7 @@ void ControlCenter::terminate() noexcept
 
 void ControlCenter::process_command() noexcept
 {
-    ImageData& image_data = memory_map->image_data();
+    ImageData& image_data = memory_map->data();
     Stream& stream = image_data.data_stream();
     image_data.prepare_for_read();
     image_data.prepare_for_write();
@@ -437,13 +424,13 @@ void ControlCenter::process_command() noexcept
 
         case EIOSCommand::REFLECT_RELEASE_OBJECTS:
         {
-            std::size_t size = stream.read<std::size_t>();
-            for (std::size_t i = 0; i < size; ++i)
+            std::vector<jobject> objects = stream.read<std::vector<jobject>>();
+            for (std::size_t i = 0; i < objects.size(); ++i)
             {
                 jobject object = stream.read<jobject>();
-                if (object)
+                if (objects[i])
                 {
-                    reflector->getEnv()->DeleteGlobalRef(object);
+                    reflector->getEnv()->DeleteGlobalRef(objects[i]);
                 }
             }
         }
@@ -869,11 +856,11 @@ bool ControlCenter::init_maps() noexcept
     if (is_controller)
     {
         //Open existing map to retrieve its dimensions..
-        memory_map = std::make_unique<MemoryMapStream>(mapName, sizeof(ImageData), MemoryMapStream::open_mode::read);
+        memory_map = std::make_unique<MemoryMapStream<ImageData>>(mapName, sizeof(ImageData), MemoryMapStream<ImageData>::open_mode::read);
         if (memory_map && memory_map->is_mapped())
         {
-            int width = memory_map->image_data().width();
-            int height = memory_map->image_data().height();
+            int width = memory_map->data().width();
+            int height = memory_map->data().height();
 
             if (width && height)
             {
@@ -883,7 +870,7 @@ bool ControlCenter::init_maps() noexcept
                 std::int32_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
 
                 //Open only..
-                memory_map = std::make_unique<MemoryMapStream>(mapName, map_size, MemoryMapStream::open_mode::read | MemoryMapStream::open_mode::write);
+                memory_map = std::make_unique<MemoryMapStream<ImageData>>(mapName, map_size, MemoryMapStream<ImageData>::open_mode::read | MemoryMapStream<ImageData>::open_mode::write);
                 return memory_map && memory_map->is_mapped();
             }
         }
@@ -900,48 +887,13 @@ bool ControlCenter::init_maps() noexcept
     std::int32_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
 
     //Create only..
-    memory_map = std::make_unique<MemoryMapStream>(mapName, map_size, MemoryMapStream::open_mode::read | MemoryMapStream::open_mode::write | MemoryMapStream::open_mode::create);
+    memory_map = std::make_unique<MemoryMapStream<ImageData>>(mapName, map_size, MemoryMapStream<ImageData>::open_mode::read | MemoryMapStream<ImageData>::open_mode::write | MemoryMapStream<ImageData>::open_mode::create);
     bool result = memory_map && memory_map->is_mapped();
     if (result)
     {
         update_dimensions(width, height);
     }
     return result;
-}
-
-
-bool ControlCenter::init_locks() noexcept
-{
-    #if defined(_WIN32) || defined(_WIN64)
-    char lockName[256] = {0};
-    snprintf(lockName, sizeof(lockName) - 1, "Local\\RemoteInput_Lock_%d", pid);
-    #elif defined(__linux__)
-    char lockName[256] = {0};
-    snprintf(lockName, sizeof(lockName) - 1, "/RemoteInput_Lock_%d", pid);
-    #else
-    char lockName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-    snprintf(lockName, sizeof(lockName) - 1, "/RemoteInput_Lock_%d", pid);
-    #endif
-
-    map_lock = std::make_unique<Mutex>(lockName);
-    return map_lock != nullptr;
-}
-
-bool ControlCenter::init_wait() noexcept
-{
-    #if defined(_WIN32) || defined(_WIN64)
-    char signalName[256] = {0};
-    snprintf(signalName, sizeof(signalName) - 1, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
-    #elif defined(__linux__)
-    char signalName[256] = {0};
-    snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
-    #else
-    char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-    snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
-    #endif
-
-    sync_signal = std::make_unique<AtomicSignal>(signalName);
-    return sync_signal != nullptr;
 }
 
 bool ControlCenter::init_signals() noexcept
@@ -966,6 +918,23 @@ bool ControlCenter::init_signals() noexcept
     command_signal = std::make_unique<Signal>(readName);
     response_signal = std::make_unique<Signal>(writeName);
     return command_signal && response_signal;
+}
+
+bool ControlCenter::init_wait() noexcept
+{
+    #if defined(_WIN32) || defined(_WIN64)
+    char signalName[256] = {0};
+    snprintf(signalName, sizeof(signalName) - 1, "Local\\RemoteInput_ControlCenter_SyncSignal_%d", pid);
+    #elif defined(__linux__)
+    char signalName[256] = {0};
+    snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
+    #else
+    char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
+    snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
+    #endif
+
+    sync_signal = std::make_unique<AtomicSignal>(signalName);
+    return sync_signal != nullptr;
 }
 
 void ControlCenter::kill_zombie_process(std::int32_t pid) noexcept
@@ -1016,7 +985,7 @@ bool ControlCenter::hasReflector() const noexcept
 
 ImageData* ControlCenter::get_image_data() const noexcept
 {
-    return memory_map && memory_map->is_mapped() ? &memory_map->image_data() : nullptr;
+    return memory_map && memory_map->is_mapped() ? &memory_map->data() : nullptr;
 }
 
 std::int32_t ControlCenter::parent_process_id() const noexcept
@@ -1136,7 +1105,7 @@ void ControlCenter::wait_for_sync(std::int32_t pid) noexcept
     if (!sync_signal->is_signalled())
     {
         //We shall wait no longer than 5 seconds for initialization of sync signals.
-        sync_signal->timed_wait(5000);
+        sync_signal->try_wait_for(std::chrono::seconds(5));
     }
 }
 
@@ -1154,7 +1123,7 @@ bool ControlCenter::controller_exists(std::int32_t pid) noexcept
     snprintf(mapName, sizeof(mapName) - 1, "RemoteInput_%d", pid);
     #endif
 
-    return MemoryMapStream(mapName, 0, MemoryMapStream::open_mode::read).is_mapped();
+    return MemoryMapStream<ImageData>(mapName, 0, MemoryMapStream<ImageData>::open_mode::read).is_mapped();
 }
 
 bool ControlCenter::controller_is_paired(std::int32_t pid, bool* exists) noexcept
@@ -1173,11 +1142,11 @@ bool ControlCenter::controller_is_paired(std::int32_t pid, bool* exists) noexcep
     #endif
 
     *exists = false;
-    auto memory_map = MemoryMapStream(mapName, sizeof(EIOSData), MemoryMapStream::open_mode::read | MemoryMapStream::open_mode::write);
+    auto memory_map = MemoryMapStream<ImageData>(mapName, sizeof(EIOSData), MemoryMapStream<ImageData>::open_mode::read | MemoryMapStream<ImageData>::open_mode::write);
     if (memory_map.is_mapped())
     {
         *exists = true;
-        ImageData &data = memory_map.image_data();
+        ImageData &data = memory_map.data();
 
         if (data.parent_process_id() != -1 && !IsProcessAlive(data.parent_process_id()))
         {

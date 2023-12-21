@@ -213,7 +213,6 @@ set(SRC_LIST
         RemoteInput/Plugin/InputOutput.hxx
         RemoteInput/Plugin/NativePlugin.cxx
         RemoteInput/Plugin/NativePlugin.hxx
-        RemoteInput/Plugin/MemoryMapStream.cxx
         RemoteInput/Plugin/MemoryMapStream.hxx
         RemoteInput/Plugin/Plugin.cxx
         RemoteInput/Plugin/Plugin.hxx
