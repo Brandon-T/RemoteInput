@@ -126,7 +126,8 @@ bool RegisterPythonType(PyObject* module, PyTypeObject* type_object, const char*
     return true;
 }
 
-PyMODINIT_FUNC MODINIT(remote_input)()
+//PyMODINIT_FUNC MODINIT(remote_input)()
+PyObject* PyInit_remote_input()
 {
     python = std::make_unique<Python>();
     if (!python->IsPythonLoaded())
