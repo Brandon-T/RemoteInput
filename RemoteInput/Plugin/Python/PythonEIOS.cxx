@@ -883,7 +883,8 @@ PyObject* Python_Reflect_Release_Objects(PyEIOS* self, PyObject* args[], Py_ssiz
     std::vector<PyObject*> objects;
     stack.push(args[0]);
 
-    while (!stack.empty()) {
+    while (!stack.empty())
+    {
         PyObject* object = stack.top();
         stack.pop();
 
@@ -891,12 +892,16 @@ PyObject* Python_Reflect_Release_Objects(PyEIOS* self, PyObject* args[], Py_ssiz
         {
             for (std::size_t i = 0; i < python->PyList_Size(object); ++i)
             {
+                PyObject* object = python->PyList_GetItem(object, i);
                 stack.push(python->PyList_GetItem(object, i));
             }
         }
         else
         {
-            objects.push_back(object);
+            if (Py_REFCNT(object) == 1)
+            {
+                objects.push_back(object);
+            }
         }
     }
 
@@ -916,11 +921,21 @@ PyObject* Python_Reflect_Release_Objects(PyEIOS* self, PyObject* args[], Py_ssiz
         PyRemoteInputType type = GetObjectType(object);
         if (type == PyRemoteInputType::JAVA_OBJECT)
         {
+            if (!self)
+            {
+                self = reinterpret_cast<PyJavaObject*>(object)->eios;
+            }
+
             result.push_back(from_python_object<jobject>(object));
             PyJavaObject_Clear(object);
         }
         else if (type == PyRemoteInputType::JAVA_ARRAY)
         {
+            if (!self)
+            {
+                self = reinterpret_cast<PyJavaArray*>(object)->eios;
+            }
+
             result.push_back(from_python_object<jarray>(object));
             PyJavaArray_Clear(object);
         }
@@ -928,9 +943,6 @@ PyObject* Python_Reflect_Release_Objects(PyEIOS* self, PyObject* args[], Py_ssiz
 
     // Release all objects at once
     Reflect_Release_Objects(python_get_eios(self), &result[0], result.size());
-
-    // Clear the List
-    python->PySequence_DelSlice(args[0], 0, python->PySequence_Length(args[0]));
 
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();

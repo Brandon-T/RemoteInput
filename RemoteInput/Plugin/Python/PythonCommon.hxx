@@ -47,8 +47,6 @@ struct PyEIOS
 {
     PyObject_HEAD
     std::int32_t pid;
-    std::int32_t width;
-    std::int32_t height;
     EIOS* native_eios;
 };
 

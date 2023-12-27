@@ -58,6 +58,7 @@ private:
     void* Py_NoneStruct_Ptr;
     void* Py_TrueStruct_Ptr;
     void* Py_FalseStruct_Ptr;
+    void* Py_ListType_Ptr;
 
     int (*PyAIter_Check_Ptr)(PyObject*);
     int (*PyArg_Parse_Ptr)(PyObject*, const char*, ...);
@@ -466,6 +467,9 @@ private:
     Py_ssize_t (*PyObject_Size_Ptr)(PyObject*);
     PyObject* (*PyObject_Str_Ptr)(PyObject*);
     PyObject* (*PyObject_Type_Ptr)(PyObject*);
+    #if HAS_PYTHON_VERSION(0x030B0000)
+    int (*PyObject_TypeCheck_Ptr)(PyObject*, PyTypeObject*);
+    #endif
     PyObject* (*PySeqIter_New_Ptr)(PyObject*);
     int (*PySequence_Check_Ptr)(PyObject*);
     PyObject* (*PySequence_Concat_Ptr)(PyObject*, PyObject*);
@@ -572,6 +576,9 @@ private:
     int (*PyTuple_SetItem_Ptr)(PyObject*, Py_ssize_t, PyObject*);
     Py_ssize_t (*PyTuple_Size_Ptr)(PyObject*);
     unsigned int (*PyType_ClearCache_Ptr)();
+    #if !defined(Py_LIMITED_API)
+    const char* (*PyType_Name_Ptr)(PyTypeObject*);
+    #endif
     PyObject* (*PyType_FromModuleAndSpec_Ptr)(PyObject*, PyType_Spec*, PyObject*);
     PyObject* (*PyType_FromSpec_Ptr)(PyType_Spec*);
     PyObject* (*PyType_FromSpecWithBases_Ptr)(PyType_Spec*, PyObject*);
@@ -1237,6 +1244,9 @@ public:
     Py_ssize_t PyObject_Size(PyObject* o);
     PyObject* PyObject_Str(PyObject* o);
     PyObject* PyObject_Type(PyObject* o);
+    #if HAS_PYTHON_VERSION(0x030B0000)
+    int (PyObject_TypeCheck)(PyObject* o, PyTypeObject* type);
+    #endif
     PyObject* PySeqIter_New(PyObject* o);
     int PySequence_Check(PyObject* o);
     PyObject* PySequence_Concat(PyObject* o1, PyObject* o2);
@@ -1385,6 +1395,7 @@ public:
     int PyTuple_SetItem(PyObject* tuple, Py_ssize_t index, PyObject* item);
     Py_ssize_t PyTuple_Size(PyObject* tuple);
     unsigned int PyType_ClearCache();
+    const char* _PyType_Name(PyTypeObject* type);
     PyObject* PyType_FromModuleAndSpec(PyObject* module, PyType_Spec* spec, PyObject* bases);
     PyObject* PyType_FromSpec(PyType_Spec* spec);
     PyObject* PyType_FromSpecWithBases(PyType_Spec* spec, PyObject* bases);
@@ -1644,6 +1655,11 @@ public:
     PyObject* Py_GetNone_Object() const
     {
         return static_cast<PyObject*>(Py_NoneStruct_Ptr);
+    }
+
+    PyTypeObject* PyList_Type() const
+    {
+        return static_cast<PyTypeObject*>(Py_ListType_Ptr);
     }
 };
 

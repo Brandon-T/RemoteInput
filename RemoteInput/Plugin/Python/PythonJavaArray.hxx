@@ -13,6 +13,7 @@ extern "C"
 {
 #endif
 
+PyObject* Python_JavaArray_GetLength(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_JavaArray_Get1D(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length, PyObject* kwnames) noexcept;
 PyObject* Python_JavaArray_Get2D(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length, PyObject* kwnames) noexcept;
 PyObject* Python_JavaArray_Get3D(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length, PyObject* kwnames) noexcept;

@@ -272,6 +272,8 @@ IF(PYTHON_BINDINGS)
             RemoteInput/Plugin/Python/PythonJavaObject.hxx
             RemoteInput/Plugin/Python/PythonJavaArray.cxx
             RemoteInput/Plugin/Python/PythonJavaArray.hxx
+            RemoteInput/Plugin/Python/PythonJavaList.cxx
+            RemoteInput/Plugin/Python/PythonJavaList.hxx
             RemoteInput/Plugin/Python/PythonCommon_Templates.hxx
             RemoteInput/Plugin/Python/Python.cxx
             RemoteInput/Plugin/Python/Python.hxx)

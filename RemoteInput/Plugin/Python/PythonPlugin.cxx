@@ -9,6 +9,7 @@
 #include "PythonPlugin.hxx"
 #include "PythonEIOS.hxx"
 #include "PythonJavaObject.hxx"
+#include "PythonJavaList.hxx"
 #include "Python.hxx"
 
 #include <unordered_map>

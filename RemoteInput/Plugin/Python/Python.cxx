@@ -19,6 +19,9 @@ void Python::steal(Python& a, Python& b)
     a.Py_FalseStruct_Ptr = b.Py_FalseStruct_Ptr;
     b.Py_FalseStruct_Ptr = nullptr;
 
+    a.Py_ListType_Ptr = b.Py_ListType_Ptr;
+    b.Py_ListType_Ptr = nullptr;
+
     a.PyAIter_Check_Ptr = b.PyAIter_Check_Ptr;
     b.PyAIter_Check_Ptr = nullptr;
     a.PyArg_Parse_Ptr = b.PyArg_Parse_Ptr;
@@ -805,6 +808,10 @@ void Python::steal(Python& a, Python& b)
     b.PyObject_Str_Ptr = nullptr;
     a.PyObject_Type_Ptr = b.PyObject_Type_Ptr;
     b.PyObject_Type_Ptr = nullptr;
+    #if HAS_PYTHON_VERSION(0x030B0000)
+    a.PyObject_TypeCheck_Ptr = b.PyObject_TypeCheck_Ptr;
+    b.PyObject_TypeCheck_Ptr = nullptr;
+    #endif
     a.PySeqIter_New_Ptr = b.PySeqIter_New_Ptr;
     b.PySeqIter_New_Ptr = nullptr;
     a.PySequence_Check_Ptr = b.PySequence_Check_Ptr;
@@ -1013,6 +1020,10 @@ void Python::steal(Python& a, Python& b)
     b.PyTuple_Size_Ptr = nullptr;
     a.PyType_ClearCache_Ptr = b.PyType_ClearCache_Ptr;
     b.PyType_ClearCache_Ptr = nullptr;
+    #if !defined(Py_LIMITED_API)
+    a.PyType_Name_Ptr = b.PyType_Name_Ptr;
+    b.PyType_Name_Ptr = nullptr;
+    #endif
     a.PyType_FromModuleAndSpec_Ptr = b.PyType_FromModuleAndSpec_Ptr;
     b.PyType_FromModuleAndSpec_Ptr = nullptr;
     a.PyType_FromSpec_Ptr = b.PyType_FromSpec_Ptr;
@@ -1396,6 +1407,7 @@ Python::Python() : module(nullptr)
     Py_NoneStruct_Ptr = reinterpret_cast<decltype(Py_NoneStruct_Ptr)>(address_of(module, "_Py_NoneStruct"));
     Py_TrueStruct_Ptr = reinterpret_cast<decltype(Py_TrueStruct_Ptr)>(address_of(module, "_Py_TrueStruct"));
     Py_FalseStruct_Ptr = reinterpret_cast<decltype(Py_FalseStruct_Ptr)>(address_of(module, "_Py_FalseStruct"));
+    Py_ListType_Ptr = reinterpret_cast<decltype(Py_ListType_Ptr)>(address_of(module, "PyList_Type"));
 
     PyAIter_Check_Ptr = reinterpret_cast<decltype(PyAIter_Check_Ptr)>(address_of(module, "PyAIter_Check"));
     PyArg_Parse_Ptr = reinterpret_cast<decltype(PyArg_Parse_Ptr)>(address_of(module, "PyArg_Parse"));
@@ -1801,6 +1813,9 @@ Python::Python() : module(nullptr)
     PyObject_Size_Ptr = reinterpret_cast<decltype(PyObject_Size_Ptr)>(address_of(module, "PyObject_Size"));
     PyObject_Str_Ptr = reinterpret_cast<decltype(PyObject_Str_Ptr)>(address_of(module, "PyObject_Str"));
     PyObject_Type_Ptr = reinterpret_cast<decltype(PyObject_Type_Ptr)>(address_of(module, "PyObject_Type"));
+    #if HAS_PYTHON_VERSION(0x030B0000)
+    PyObject_TypeCheck_Ptr = reinterpret_cast<decltype(PyObject_TypeCheck_Ptr)>(address_of(module, "PyObject_TypeCheck"));
+    #endif
     PySeqIter_New_Ptr = reinterpret_cast<decltype(PySeqIter_New_Ptr)>(address_of(module, "PySeqIter_New"));
     PySequence_Check_Ptr = reinterpret_cast<decltype(PySequence_Check_Ptr)>(address_of(module, "PySequence_Check"));
     PySequence_Concat_Ptr = reinterpret_cast<decltype(PySequence_Concat_Ptr)>(address_of(module, "PySequence_Concat"));
@@ -1909,6 +1924,9 @@ Python::Python() : module(nullptr)
     PyTuple_SetItem_Ptr = reinterpret_cast<decltype(PyTuple_SetItem_Ptr)>(address_of(module, "PyTuple_SetItem"));
     PyTuple_Size_Ptr = reinterpret_cast<decltype(PyTuple_Size_Ptr)>(address_of(module, "PyTuple_Size"));
     PyType_ClearCache_Ptr = reinterpret_cast<decltype(PyType_ClearCache_Ptr)>(address_of(module, "PyType_ClearCache"));
+    #if !defined(Py_LIMITED_API)
+    PyType_Name_Ptr = reinterpret_cast<decltype(PyType_Name_Ptr)>(address_of(module, "_PyType_Name"));
+    #endif
     PyType_FromModuleAndSpec_Ptr = reinterpret_cast<decltype(PyType_FromModuleAndSpec_Ptr)>(address_of(module, "PyType_FromModuleAndSpec"));
     PyType_FromSpec_Ptr = reinterpret_cast<decltype(PyType_FromSpec_Ptr)>(address_of(module, "PyType_FromSpec"));
     PyType_FromSpecWithBases_Ptr = reinterpret_cast<decltype(PyType_FromSpecWithBases_Ptr)>(address_of(module, "PyType_FromSpecWithBases"));
@@ -4001,6 +4019,13 @@ PyObject* Python::PyObject_Type(PyObject* o)
     return (*PyObject_Type_Ptr)(o);
 }
 
+#if HAS_PYTHON_VERSION(0x030B0000)
+int (Python::PyObject_TypeCheck)(PyObject* o, PyTypeObject* type)
+{
+    return (*PyObject_TypeCheck_Ptr)(o, type);
+}
+#endif
+
 PyObject* Python::PySeqIter_New(PyObject* o)
 {
     return (*PySeqIter_New_Ptr)(o);
@@ -4483,6 +4508,13 @@ unsigned int Python::PyType_ClearCache()
 {
     return (*PyType_ClearCache_Ptr)();
 }
+
+#if !defined(Py_LIMITED_API)
+const char* Python::_PyType_Name(PyTypeObject* type)
+{
+    return (*PyType_Name_Ptr)(type);
+}
+#endif
 
 PyObject* Python::PyType_FromModuleAndSpec(PyObject* module, PyType_Spec* spec, PyObject* bases)
 {

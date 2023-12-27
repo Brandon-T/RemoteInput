@@ -4,6 +4,9 @@
 
 #include "PythonJavaArray.hxx"
 #include "NativePlugin.hxx"
+#include <sstream>
+#include <ios>
+#include <iomanip>
 
 int PyJavaArray_Clear(PyObject* object)
 {
@@ -31,6 +34,29 @@ void PyJavaArray_Dealloc(PyObject* object)
     python->PyObject_Free(object);
 }
 
+PyObject* PyJavaArray_Str(PyObject* object)
+{
+    PyJavaArray* py_java_array = reinterpret_cast<PyJavaArray*>(object);
+    std::ostringstream stream;
+
+    std::ios state(nullptr);
+    state.copyfmt(stream);
+
+    stream << std::setfill('0') << std::uppercase << std::hex;
+    stream << "JavaArray(";
+    stream << "0x" << reinterpret_cast<std::uintptr_t>(object);
+    stream << "): ";
+    stream.copyfmt(state);
+
+    stream << "{"<<"\n";
+    stream<< "    eios: " << py_java_array->eios << "\n";
+    stream<< "    array: " << py_java_array->array << "\n";
+    stream<< "}";
+
+    std::string result = stream.str();
+    return python->PyUnicode_FromStringAndSize(result.c_str(), result.size());
+}
+
 PyMemberDef PyJavaArray_Members[] = {
         {nullptr}  /* Sentinel */
 };
@@ -56,6 +82,7 @@ PyGetSetDef PyJavaArray_PropertyMembers[] = {
 };
 
 PyMethodDef PyJavaArray_Methods[] = {
+        {(char*)"get_length",      PYTHON_FASTCALL(Python_JavaArray_GetLength), METH_FASTCALL,      (char*)""},
         {(char*)"get_1d",          PYTHON_FASTCALL(Python_JavaArray_Get1D), METH_FASTCALL | METH_KEYWORDS,      (char*)""},
         {(char*)"get_2d",          PYTHON_FASTCALL(Python_JavaArray_Get2D), METH_FASTCALL | METH_KEYWORDS,      (char*)""},
         {(char*)"get_3d",          PYTHON_FASTCALL(Python_JavaArray_Get3D), METH_FASTCALL | METH_KEYWORDS,      (char*)""},
@@ -71,6 +98,7 @@ PyType_Slot PyJavaArray_Slots[] = {
         {Py_tp_getset, PyJavaArray_PropertyMembers},
         {Py_tp_dealloc, reinterpret_cast<void*>(&PyJavaArray_Dealloc)},
         {Py_tp_clear, reinterpret_cast<void*>(&PyJavaArray_Clear)},
+        {Py_tp_str, reinterpret_cast<void*>(&PyJavaArray_Str)},
         {Py_tp_doc, static_cast<void*>(const_cast<char*>(PyDoc_STR("JavaArray Structure")))},
         {Py_tp_setattr, nullptr},
         {0, NULL},
@@ -151,6 +179,14 @@ std::vector<PyObject*> python_parse_arguments(const char* (&keywords)[keywords_s
     return result;
 }
 
+PyObject* Python_JavaArray_GetLength(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length) noexcept
+{
+    EIOS* eios = python_get_eios(self);
+    jarray array = from_python_object<jarray>(self);
+    std::size_t length = eios->control_center->reflect_array_size(array);
+    return to_python_object(length);
+}
+
 PyObject* Python_JavaArray_Get1D(PyJavaArray* self, PyObject* args[], Py_ssize_t args_length, PyObject* kwnames) noexcept
 {
     static const char* kwlist[] = {"type", "indices", "index", "length", nullptr};
@@ -196,6 +232,13 @@ PyObject* Python_JavaArray_Get1D(PyJavaArray* self, PyObject* args[], Py_ssize_t
         length = from_python_object<std::size_t>(length_object);
     }
 
+    if (index_object && !length_object)
+    {
+        // Read array[index]
+        Stream &stream = eios->control_center->reflect_array(array, type, 1, index)->data_stream();
+        return read_array_type(stream, self, type, 0);
+    }
+
     length = std::min(std::max<std::size_t>(length, 1), self->size);
 
     // Read array of [index..<length]
@@ -227,7 +270,7 @@ PyObject* Python_JavaArray_Get2D(PyJavaArray* self, PyObject* args[], Py_ssize_t
         std::size_t y = from_python_object<std::size_t>(y_object);
 
         Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y)->data_stream();
-        return read_array_type(stream, self, type, 2);
+        return read_array_type(stream, self, type, 0);
     }
 
     // Array[][]
@@ -261,7 +304,7 @@ PyObject* Python_JavaArray_Get3D(PyJavaArray* self, PyObject* args[], Py_ssize_t
         std::size_t z = from_python_object<std::size_t>(z_object);
 
         Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y, z)->data_stream();
-        return read_array_type(stream, self, type, 3);
+        return read_array_type(stream, self, type, 0);
     }
 
     // Array[][][]
@@ -297,7 +340,7 @@ PyObject* Python_JavaArray_Get4D(PyJavaArray* self, PyObject* args[], Py_ssize_t
         std::size_t w = from_python_object<std::size_t>(z_object);
 
         Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y, z, w)->data_stream();
-        return read_array_type(stream, self, type, 4);
+        return read_array_type(stream, self, type, 0);
     }
 
     // Array[][][][]
@@ -322,6 +365,8 @@ PyObject* Python_JavaArray_Release_Object(PyJavaArray* self, PyObject* args[], P
 template<typename T>
 PyObject* read_array_type(Stream &stream, PyJavaArray* object)
 {
+    extern PyObject* create_java_list(PyEIOS* eios, Py_ssize_t length);
+
     if constexpr(std::is_same<T, std::string>::value)
     {
         return to_python_array(stream.read<std::vector<std::string>>());
@@ -333,7 +378,7 @@ PyObject* read_array_type(Stream &stream, PyJavaArray* object)
     else if constexpr(std::is_same<T, jobject>::value)
     {
         std::size_t length = stream.read<std::size_t>();
-        PyObject* list = python->PyList_New(length);
+        PyObject* list = create_java_list(PythonGetEIOS(reinterpret_cast<PyObject*>(object)), length); //python->PyList_New(length);
         for (std::size_t i = 0; i < length; ++i)
         {
             python->PyList_SetItem(list, i, python_create_object(object, stream.read<jobject>()));
@@ -343,7 +388,7 @@ PyObject* read_array_type(Stream &stream, PyJavaArray* object)
     else if constexpr(std::is_same<T, jarray>::value)
     {
         std::size_t length = stream.read<std::size_t>();
-        PyObject* list = python->PyList_New(length);
+        PyObject* list = create_java_list(PythonGetEIOS(reinterpret_cast<PyObject*>(object)), length); //python->PyList_New(length);
         for (std::size_t i = 0; i < length; ++i)
         {
             python->PyList_SetItem(list, i, python_create_array(object, stream.read<jarray>(), length));
@@ -378,6 +423,32 @@ PyObject* read_array_type(Stream &stream, PyJavaArray* object)
 
 PyObject* read_array_type(Stream &stream, PyJavaArray* object, ReflectionType type, std::size_t dimensions)
 {
+    if (dimensions == 0)
+    {
+        std::size_t size = stream.read<std::size_t>();
+        if (size == 0)
+        {
+            (python->Py_INCREF)(python->Py_GetNone_Object());
+            return python->Py_GetNone_Object();
+        }
+
+        switch(type)
+        {
+            case ReflectionType::CHAR: return to_python_object(stream.read<char>());
+            case ReflectionType::BYTE: return to_python_object(stream.read<std::uint8_t>());
+            case ReflectionType::BOOL: return to_python_object(stream.read<bool>());
+            case ReflectionType::SHORT: return to_python_object(stream.read<std::int16_t>());
+            case ReflectionType::INT: return to_python_object(stream.read<std::int32_t>());
+            case ReflectionType::LONG: return to_python_object(stream.read<std::int64_t>());
+            case ReflectionType::FLOAT: return to_python_object(stream.read<float>());
+            case ReflectionType::DOUBLE: return to_python_object(stream.read<double>());
+            case ReflectionType::STRING: return to_python_object(stream.read<std::string>());
+            case ReflectionType::OBJECT: return python_create_object(object, stream.read<jobject>());
+            case ReflectionType::ARRAY: return python_create_array(object, stream.read<jarray>(), 0);
+            default: (python->Py_INCREF)(python->Py_GetNone_Object()); return python->Py_GetNone_Object();
+        }
+    }
+
     if (dimensions == 1)
     {
         switch(type)

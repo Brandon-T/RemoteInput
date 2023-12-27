@@ -4,6 +4,9 @@
 
 #include "PythonJavaObject.hxx"
 #include "NativePlugin.hxx"
+#include <sstream>
+#include <ios>
+#include <iomanip>
 
 int PyJavaObject_Clear(PyObject* object)
 {
@@ -11,9 +14,9 @@ int PyJavaObject_Clear(PyObject* object)
     if (py_java_object->eios)
     {
         (python->Py_CLEAR)(reinterpret_cast<PyObject*>(py_java_object->eios));
-        py_java_object->eios = nullptr;
-        py_java_object->object = nullptr;
     }
+    py_java_object->eios = nullptr;
+    py_java_object->object = nullptr;
     return 0;
 }
 
@@ -29,6 +32,29 @@ void PyJavaObject_Dealloc(PyObject* object)
     PyJavaObject_Clear(object);
     //PyObject_Del(object);  // NO GC!
     python->PyObject_Free(object);
+}
+
+PyObject* PyJavaObject_Str(PyObject* object)
+{
+    PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject*>(object);
+    std::ostringstream stream;
+
+    std::ios state(nullptr);
+    state.copyfmt(stream);
+
+    stream << std::setfill('0') << std::uppercase << std::hex;
+    stream << "JavaObject(";
+    stream << "0x" << reinterpret_cast<std::uintptr_t>(object);
+    stream << "): ";
+    stream.copyfmt(state);
+
+    stream << "{"<<"\n";
+    stream<< "    eios: " << py_java_object->eios << "\n";
+    stream<< "    object: " << py_java_object->object << "\n";
+    stream<< "}";
+
+    std::string result = stream.str();
+    return python->PyUnicode_FromStringAndSize(result.c_str(), result.size());
 }
 
 PyMemberDef PyJavaObject_Members[] = {
@@ -76,6 +102,7 @@ PyType_Slot PyJavaObject_Slots[] = {
         {Py_tp_getset, PyJavaObject_PropertyMembers},
         {Py_tp_dealloc, reinterpret_cast<void*>(&PyJavaObject_Dealloc)},
         {Py_tp_clear, reinterpret_cast<void*>(&PyJavaObject_Clear)},
+        {Py_tp_str, reinterpret_cast<void*>(&PyJavaObject_Str)},
         {Py_tp_doc, static_cast<void*>(const_cast<char*>(PyDoc_STR("JavaObject Structure")))},
         {Py_tp_setattr, nullptr},
         {0, NULL},
