@@ -1,5 +1,6 @@
 #include "NativeHooks.hxx"
 #include <cstdint>
+#include <cmath>
 
 #if defined(_WIN32) || defined(_WIN64)
 #if defined(_MSC_VER)
@@ -595,40 +596,47 @@ HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface
         return directx_xrgb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntArgbSurface)>(pSurface, pDstInfo, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
     }
 
-    auto offset_image = [](std::uint8_t* image_ptr, std::uint32_t x, std::uint32_t y, std::uint32_t width, std::uint16_t stride) {
-        return image_ptr ? image_ptr + ((y * width * stride) + (x * stride)) : nullptr;
+    auto ptr_coord = [](std::uint8_t* image_ptr, std::uint32_t x, std::uint32_t y, std::uint32_t pixel_stride, std::uint32_t scan_stride) -> std::uint8_t* {
+        return image_ptr ? image_ptr + ((y * scan_stride) + (x * pixel_stride)) : nullptr;
     };
 
     //Setup Data Bounds
     D3DLOCKED_RECT lockedRect = {0};
     RECT rect = {dstx, dsty, dstx + srcWidth, dsty + srcHeight};
-    RECT *pR = nullptr;
+    RECT *pR = &rect;
 
     //Prepare for rendering to the screen..
     HRESULT res = pSurface->LockRect(&lockedRect, pR, D3DLOCK_NOSYSLOCK);
     if (FAILED(res))
     {
-        //Original
-        return directx_xrgb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntArgbSurface)>(pSurface, pDstInfo, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
+        return res;
     }
+
+    D3DSURFACE_DESC desc;
+    pSurface->GetDesc(&desc);
 
     jint width = srcWidth;
     jint height = srcHeight;
-    jint scanStride = lockedRect.Pitch;
-    const jint pixelStride = 4;
 
     //Prepare for BackBuffer Rendering
     control_center->update_dimensions(width, height);
     ImageFormat format = control_center->get_image_format();
-    std::uint8_t* destImage = offset_image(control_center->get_image(), srcx, srcy, width, pixelStride);
-    std::uint8_t* debugImage = offset_image(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, width, pixelStride);
+    std::uint8_t* destImage = ptr_coord(control_center->get_image(), srcx, srcy, pDstInfo->pixelStride, pDstInfo->scanStride);
+    std::uint8_t* debugImage = ptr_coord(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, pDstInfo->pixelStride, pDstInfo->scanStride);
 
     //Begin Rendering
-    void *pDstBase = PtrCoord(lockedRect.pBits, dstx, pixelStride, dsty, scanStride);
-    std::uint8_t* dest = static_cast<std::uint8_t*>(pDstBase);
+    std::uint8_t* pSrcBase = ptr_coord(static_cast<std::uint8_t*>(pDstInfo->rasBase), srcx, srcy, pDstInfo->pixelStride, pDstInfo->scanStride);
+    std::uint8_t* pDstBase = ptr_coord(static_cast<std::uint8_t*>(lockedRect.pBits), dstx, dsty, pDstInfo->pixelStride, pDstInfo->scanStride);
+
+
+    std::uint8_t* texture = pSrcBase;
+    std::uint8_t* screen = pDstBase;
 
     for (jint i = 0; i < srcHeight; ++i)
     {
+        // Render to Screen
+        std::memcpy(screen, texture, srcWidth * 4);
+
         //NOTE: Do NOT call copy_image and draw_image here for performance reasons!
         //      For some odd reason, the function call is significantly slower than the inlined functions below
         //Render to Shared Memory
@@ -636,49 +644,53 @@ HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface
         switch (format)
         {
             case ImageFormat::BGR_BGRA:
-                convert_pixels(reinterpret_cast<bgr_bgra_t*>(dest), reinterpret_cast<bgr_bgra_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgr_bgra_t*>(texture), reinterpret_cast<bgr_bgra_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<bgr_bgra_t*>(debugImage), reinterpret_cast<bgr_bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<bgr_bgra_t*>(debugImage), reinterpret_cast<bgr_bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
                 }
                 break;
 
             case ImageFormat::BGRA:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<bgra_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<bgra_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<bgra_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<bgra_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
                 }
                 break;
 
             case ImageFormat::RGBA:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<rgba_t*>(destImage), srcWidth, 1, pixelStride);
-                alpha_blend_pixels(reinterpret_cast<rgba_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<rgba_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
+                if (debugImage)
+                {
+                    alpha_blend_pixels(reinterpret_cast<rgba_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
+                }
                 break;
 
             case ImageFormat::ARGB:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<argb_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<argb_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<argb_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<argb_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
                 }
                 break;
 
             case ImageFormat::ABGR:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<abgr_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<abgr_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<abgr_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<abgr_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
                 }
                 break;
         }
 
-        dest += scanStride;
-        destImage += (width * pixelStride);
+        screen += pDstInfo->scanStride;
+        texture += pDstInfo->scanStride;
+        destImage += pDstInfo->scanStride;
 
         if (debugImage)
         {
-            debugImage += (width * pixelStride);
+            debugImage += pDstInfo->scanStride;
         }
     }
 
@@ -686,24 +698,15 @@ HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface
     std::int32_t x = -1;
     std::int32_t y = -1;
     control_center->get_applet_mouse_position(&x, &y);
-    dest = static_cast<uint8_t*>(pDstBase);
+    screen = static_cast<uint8_t*>(pDstBase);
 
     if (x > -1 && y > -1 && x <= srcx + srcWidth && y <= srcy + srcHeight)
     {
         static const std::int32_t radius = 2;
-        draw_circle(x - srcx, y - srcy, radius, dest, scanStride / pixelStride, srcHeight, 4, true, 0xFF0000FF);
+        draw_circle(x - srcx, y - srcy, radius, screen, srcWidth, srcHeight, 4, true, 0xFF0000FF);
     }
 
-    pSurface->UnlockRect();
-
-    static bool did_show_warning = false;
-    if (!did_show_warning)
-    {
-        did_show_warning = true;
-        MessageBoxA(NULL, "Experimental Rendering", "Direct-X", 0);
-    }
-
-    return directx_argb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntArgbSurface)>(pSurface, pDstInfo, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
+    return pSurface->UnlockRect();
 }
 
 //Java_sun_java2d_d3d_D3DRenderQueue_flushBuffer -> D3DRQ_FlushBuffer -> sun_java2d_pipe_BufferedOpCodes_BLIT -> D3DBlitLoops_Blit -> D3DBlitSwToTexture -> D3DBL_CopyImageToIntXrgbSurface
@@ -718,9 +721,6 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     }
 
     //Hook
-    #define PtrAddBytes(p, b)               ((void *) (((intptr_t) (p)) + (b)))
-    #define PtrCoord(p, x, xinc, y, yinc)   PtrAddBytes(p, (y)*(yinc) + (x)*(xinc))
-
     static const int ST_INT_ARGB        = 0;
     static const int ST_INT_ARGB_PRE    = 1;
     static const int ST_INT_ARGB_BM     = 2;
@@ -751,6 +751,10 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
         return image_ptr ? image_ptr + ((y * width * stride) + (x * stride)) : nullptr;
     };
 
+    auto ptr_coord = [](std::uint8_t* image_ptr, std::uint32_t x, std::uint32_t y, std::uint32_t pixel_stride, std::uint32_t scan_stride) -> std::uint8_t* {
+        return image_ptr ? image_ptr + ((y * scan_stride) + (x * pixel_stride)) : nullptr;
+    };
+
     void* base_ptr = get_data_pointer(pDstSurfaceRes);
     //IDirect3DResource9* pResource = reinterpret_cast<IDirect3DResource9*>(get_offset(base_ptr, 0));
     //IDirect3DSwapChain9* pSwapChain = reinterpret_cast<IDirect3DSwapChain9*>(get_offset(base_ptr, 1));
@@ -761,42 +765,59 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     //Setup Data Bounds
     D3DLOCKED_RECT lockedRect = {0};
     RECT rect = {dstx, dsty, dstx + srcWidth, dsty + srcHeight};
-    RECT *pR = nullptr;
+    RECT *pR = &rect;
+    DWORD dwLockFlags = D3DLOCK_NOSYSLOCK;
 
-    if (pSurfaceDesc->Usage != D3DUSAGE_DYNAMIC)
+    if (pSurfaceDesc->Usage == D3DUSAGE_DYNAMIC)
     {
-        pR = &rect;
+        dwLockFlags |= D3DLOCK_DISCARD;
+        pR = nullptr;
+    }
+    else
+    {
         dstx = 0;
         dsty = 0;
     }
 
-    //Let the rendering be handled by the original function.. and we'll read from the destination surface instead of the source..
-    HRESULT result = directx_xrgb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
-
     //Prepare for rendering to the screen..
-    HRESULT res = pSurface->LockRect(&lockedRect, pR, D3DLOCK_NOSYSLOCK);
+    HRESULT res = pSurface->LockRect(&lockedRect, pR, dwLockFlags);
     if (FAILED(res))
     {
-        return result;
+        return res;
     }
+
+    D3DSURFACE_DESC desc;
+    pSurface->GetDesc(&desc);
+
+    SurfaceDataRasInfo dstInfo;
+    ZeroMemory(&dstInfo, sizeof(SurfaceDataRasInfo));
+    dstInfo.bounds.x2 = srcWidth;
+    dstInfo.bounds.y2 = srcHeight;
+    dstInfo.scanStride = lockedRect.Pitch;
+    dstInfo.pixelStride = 4;
 
     jint width = pSrcInfo->bounds.x2 - pSrcInfo->bounds.x1;
     jint height = pSrcInfo->bounds.y2 - pSrcInfo->bounds.y1;
-    jint scanStride = lockedRect.Pitch;
-    const jint pixelStride = 4;
 
     //Prepare for BackBuffer Rendering
     control_center->update_dimensions(width, height);
     ImageFormat format = control_center->get_image_format();
-    std::uint8_t* destImage = offset_image(control_center->get_image(), srcx, srcy, width, pixelStride);
-    std::uint8_t* debugImage = offset_image(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, width, pixelStride);
+    std::uint8_t* destImage = ptr_coord(control_center->get_image(), srcx, srcy, pSrcInfo->pixelStride, pSrcInfo->scanStride);
+    std::uint8_t* debugImage = ptr_coord(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, pSrcInfo->pixelStride, pSrcInfo->scanStride);
 
     //Begin Rendering
-    void *pDstBase = PtrCoord(lockedRect.pBits, dstx, pixelStride, dsty, scanStride);
-    std::uint8_t* dest = static_cast<std::uint8_t*>(pDstBase);
+    std::uint8_t* pSrcBase = ptr_coord(static_cast<std::uint8_t*>(pSrcInfo->rasBase), srcx, srcy, pSrcInfo->pixelStride, pSrcInfo->scanStride);
+    std::uint8_t* pDstBase = ptr_coord(static_cast<std::uint8_t*>(lockedRect.pBits), dstx, dsty, dstInfo.pixelStride, dstInfo.scanStride);
+
+
+    std::uint8_t* texture = pSrcBase;
+    std::uint8_t* screen = pDstBase;
 
     for (jint i = 0; i < srcHeight; ++i)
     {
+        // Render to Screen
+        std::memcpy(screen, texture, srcWidth * 4);
+
         //NOTE: Do NOT call copy_image and draw_image here for performance reasons!
         //      For some odd reason, the function call is significantly slower than the inlined functions below
         //Render to Shared Memory
@@ -804,49 +825,53 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
         switch (format)
         {
             case ImageFormat::BGR_BGRA:
-                convert_pixels(reinterpret_cast<bgr_bgra_t*>(dest), reinterpret_cast<bgr_bgra_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgr_bgra_t*>(texture), reinterpret_cast<bgr_bgra_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<bgr_bgra_t*>(debugImage), reinterpret_cast<bgr_bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<bgr_bgra_t*>(debugImage), reinterpret_cast<bgr_bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
                 }
                 break;
 
             case ImageFormat::BGRA:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<bgra_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<bgra_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<bgra_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<bgra_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
                 }
                 break;
 
             case ImageFormat::RGBA:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<rgba_t*>(destImage), srcWidth, 1, pixelStride);
-                alpha_blend_pixels(reinterpret_cast<rgba_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<rgba_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
+                if (debugImage)
+                {
+                    alpha_blend_pixels(reinterpret_cast<rgba_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
+                }
                 break;
 
             case ImageFormat::ARGB:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<argb_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<argb_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<argb_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<argb_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
                 }
                 break;
 
             case ImageFormat::ABGR:
-                convert_pixels(reinterpret_cast<bgra_t*>(dest), reinterpret_cast<abgr_t*>(destImage), srcWidth, 1, pixelStride);
+                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<abgr_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
                 if (debugImage)
                 {
-                    alpha_blend_pixels(reinterpret_cast<abgr_t*>(debugImage), reinterpret_cast<bgra_t*>(dest), srcWidth, 1, pixelStride);
+                    alpha_blend_pixels(reinterpret_cast<abgr_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
                 }
                 break;
         }
 
-        dest += scanStride;
-        destImage += (width * pixelStride);
+        screen += dstInfo.scanStride;
+        texture += pSrcInfo->scanStride;
+        destImage += pSrcInfo->scanStride;
 
         if (debugImage)
         {
-            debugImage += (width * pixelStride);
+            debugImage += pSrcInfo->scanStride;
         }
     }
 
@@ -854,12 +879,12 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     std::int32_t x = -1;
     std::int32_t y = -1;
     control_center->get_applet_mouse_position(&x, &y);
-    dest = static_cast<uint8_t*>(pDstBase);
+    screen = static_cast<uint8_t*>(pDstBase);
 
     if (x > -1 && y > -1 && x <= srcx + srcWidth && y <= srcy + srcHeight)
     {
         static const std::int32_t radius = 2;
-        draw_circle(x - srcx, y - srcy, radius, dest, scanStride / pixelStride, srcHeight, 4, true, 0xFF0000FF);
+        draw_circle(x - srcx, y - srcy, radius, screen, srcWidth, srcHeight, 4, true, 0xFF0000FF);
     }
 
     return pSurface->UnlockRect();

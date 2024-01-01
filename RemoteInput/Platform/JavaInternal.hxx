@@ -314,6 +314,30 @@ typedef void (BlitFunc)(void *pSrc, void *pDst,
                         struct _NativePrimitive *pPrim,
                         CompositeInfo *pCompInfo);
 
+typedef void (BlitBgFunc)(void *pSrc, void *pDst,
+                          juint width, juint height, jint bgpixel,
+                          SurfaceDataRasInfo *pSrcInfo,
+                          SurfaceDataRasInfo *pDstInfo,
+                          struct _NativePrimitive *pPrim,
+                          CompositeInfo *pCompInfo);
+
+typedef void (ScaleBlitFunc)(void *pSrc, void *pDst,
+                             juint dstwidth, juint dstheight,
+                             jint sxloc, jint syloc,
+                             jint sxinc, jint syinc, jint scale,
+                             SurfaceDataRasInfo *pSrcInfo,
+                             SurfaceDataRasInfo *pDstInfo,
+                             struct _NativePrimitive *pPrim,
+                             CompositeInfo *pCompInfo);
+
+typedef void (MaskBlitFunc)(void *pDst, void *pSrc,
+                            unsigned char *pMask, jint maskOff, jint maskScan,
+                            jint width, jint height,
+                            SurfaceDataRasInfo *pDstInfo,
+                            SurfaceDataRasInfo *pSrcInfo,
+                            struct _NativePrimitive *pPrim,
+                            CompositeInfo *pCompInfo);
+
 typedef struct _NativePrimitive {
     void                *pPrimType;
     void                *pSrcType;
@@ -322,15 +346,15 @@ typedef struct _NativePrimitive {
     union {
         AnyFunc                 *initializer;
         BlitFunc                *blit;
-        AnyFunc                 *blitbg;
-        AnyFunc                 *scaledblit;
+        BlitBgFunc              *blitbg;
+        ScaleBlitFunc           *scaledblit;
         AnyFunc                 *fillrect;
         AnyFunc                 *fillspans;
         AnyFunc                 *fillparallelogram;
         void                    *drawparallelogram;
         AnyFunc                 *drawline;
         AnyFunc                 *maskfill;
-        AnyFunc                 *maskblit;
+        MaskBlitFunc            *maskblit;
         AnyFunc                 *drawglyphlist;
         AnyFunc                 *drawglyphlistaa;
         AnyFunc                 *drawglyphlistlcd;
