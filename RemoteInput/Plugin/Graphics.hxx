@@ -70,7 +70,7 @@ void convert_pixels(S source, D dest, std::int32_t width, std::int32_t height, s
             dest->r = source->r;
             dest->g = source->g;
             dest->b = source->b;
-            dest->a = source->a;
+            dest->a = 0xFF; // source->a;
             ++source;
             ++dest;
         }
