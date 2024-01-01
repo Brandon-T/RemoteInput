@@ -587,6 +587,315 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
     }
 }
 
+void __stdcall Java_sun_java2d_loops_ScaledBlit_Scale(JNIEnv *env, jobject self, jobject srcData, jobject dstData, jobject comp, jobject clip, jint sx1, jint sy1, jint sx2, jint sy2, jdouble ddx1, jdouble ddy1, jdouble ddx2, jdouble ddy2)
+{
+    extern std::unique_ptr<ControlCenter> control_center;
+
+    auto GetProcAddress = [](HMODULE module, const char* stdcall_name, const char* cdecl_name) -> FARPROC {
+            FARPROC result = ::GetProcAddress(module, stdcall_name);
+            return result ? result : ::GetProcAddress(module, cdecl_name);
+    };
+
+    //Setup Function Pointers
+    static HMODULE module = GetModuleHandle("awt.dll");
+    static SurfaceDataOps* (__stdcall *SurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(SurfaceData_GetOps)>(GetProcAddress(module, "_SurfaceData_GetOps@8", "SurfaceData_GetOps"));
+    static GDIWinSDOps* (__stdcall *GDIWindowSurfaceData_GetOps)(JNIEnv *env, jobject sData) = reinterpret_cast<decltype(GDIWindowSurfaceData_GetOps)>(GetProcAddress(module, "_GDIWindowSurfaceData_GetOps@8", "GDIWindowSurfaceData_GetOps"));
+    static void (__stdcall *SurfaceData_IntersectBlitBounds)(SurfaceDataBounds *src, SurfaceDataBounds *dst, jint dx, jint dy) = reinterpret_cast<decltype(SurfaceData_IntersectBlitBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBlitBounds@16", "SurfaceData_IntersectBlitBounds"));
+    static void (__stdcall *SurfaceData_IntersectBounds)(SurfaceDataBounds *dst, SurfaceDataBounds *src) = reinterpret_cast<decltype(SurfaceData_IntersectBounds)>(GetProcAddress(module, "_SurfaceData_IntersectBounds@8", "SurfaceData_IntersectBounds"));
+    static NativePrimitive* (__stdcall *GetNativePrim)(JNIEnv *env, jobject gp) = reinterpret_cast<decltype(GetNativePrim)>(GetProcAddress(module, "_GetNativePrim@8", "GetNativePrim"));
+    static jint (__stdcall *Region_GetInfo)(JNIEnv *env, jobject region, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_GetInfo)>(GetProcAddress(module, "_Region_GetInfo@12", "Region_GetInfo"));
+    static void (__stdcall *Region_StartIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_StartIteration)>(GetProcAddress(module, "_Region_StartIteration@8", "Region_StartIteration"));
+    static jint (__stdcall *Region_NextIteration)(RegionData *pRgnInfo, SurfaceDataBounds *pSpan) = reinterpret_cast<decltype(Region_NextIteration)>(GetProcAddress(module, "_Region_NextIteration@8", "Region_NextIteration"));
+    static void (__stdcall *Region_EndIteration)(JNIEnv *env, RegionData *pRgnInfo) = reinterpret_cast<decltype(Region_EndIteration)>(GetProcAddress(module, "_Region_EndIteration@8", "Region_EndIteration"));
+
+    #define TILESTART(id, io, ts)   ((io) + (((id)-(io)) & (~((ts)-1))))
+    #define SRCLOC(id, fo, sf)   (std::ceil((((id) + 0.5) - (fo)) * (sf) - 0.5))
+
+    auto refine = [](jint intorigin, jdouble dblorigin, jint tilesize,
+           jdouble scale, jint srctarget, jint srcinc) -> jint {
+
+        jint dstloc = (jint)std::ceil(dblorigin + srctarget / scale - 0.5);
+        jboolean wasneg = JNI_FALSE;
+        jboolean waspos = JNI_FALSE;
+        jlong lsrcinc = srcinc;
+        jlong lsrctarget = srctarget;
+
+        while (JNI_TRUE)
+        {
+            jint tilestart = TILESTART(dstloc, intorigin, tilesize);
+            jlong lsrcloc = (jlong) SRCLOC(tilestart, dblorigin, scale);
+            if (dstloc > tilestart)
+            {
+                lsrcloc += lsrcinc * ((jlong) dstloc - tilestart);
+            }
+
+            if (lsrcloc >= lsrctarget)
+            {
+                if (wasneg) break;
+                dstloc--;
+                waspos = JNI_TRUE;
+            }
+            else
+            {
+                dstloc++;
+                if (waspos) break;
+                wasneg = JNI_TRUE;
+            }
+        }
+        return dstloc;
+    };
+
+    auto findpow2tilesize = [](jint shift, jint sxinc, jint syinc) -> jint {
+        if (sxinc > syinc)
+        {
+            sxinc = syinc;
+        }
+
+        if (sxinc == 0)
+        {
+            return 1;
+        }
+
+        while ((1 << shift) > sxinc)
+        {
+            shift--;
+        }
+
+        if (shift >= 16)
+        {
+            shift -= 8;
+        }
+        else
+        {
+            shift /= 2;
+        }
+        return (1 << shift);
+    };
+
+
+    NativePrimitive* pPrim = GetNativePrim(env, self);
+    if (!pPrim)
+    {
+        return;
+    }
+
+    CompositeInfo compInfo;
+    if (pPrim->pCompType->getCompInfo)
+    {
+        (*pPrim->pCompType->getCompInfo)(env, &compInfo, comp);
+    }
+
+    RegionData clipInfo;
+    if (Region_GetInfo(env, clip, &clipInfo))
+    {
+        return;
+    }
+
+    SurfaceDataOps* srcOps = SurfaceData_GetOps(env, srcData);
+    if (!srcOps)
+    {
+        return;
+    }
+
+    SurfaceDataOps* dstOps = SurfaceData_GetOps(env, dstData);
+    if (!dstOps)
+    {
+        return;
+    }
+
+    jint sxinc = (sx2 - sx1) | (sy2 - sy1);
+    jint shift = 0;
+    if (sxinc > 0)
+    {
+        while ((sxinc <<= 1) > 0)
+        {
+            ++shift;
+        }
+    }
+
+    jboolean yunderflow = (ddy2 - ddy1) < 1.0;
+    jdouble scaley = (((jdouble) (sy2 - sy1)) / (ddy2 - ddy1)) * (1 << shift);
+    jint syinc = (yunderflow ? ((sy2 - sy1) << shift) : (jint) scaley);
+    jboolean xunderflow = (ddx2 - ddx1) < 1.0;
+    jdouble scalex = (((jdouble) (sx2 - sx1)) / (ddx2 - ddx1)) * (1 << shift);
+    sxinc = (xunderflow ? ((sx2 - sx1) << shift) : (jint) scalex);
+    jint tilesize = findpow2tilesize(shift, sxinc, syinc);
+
+    SurfaceDataRasInfo srcInfo;
+    srcInfo.bounds.x1 = sx1;
+    srcInfo.bounds.y1 = sy1;
+    srcInfo.bounds.x2 = sx2;
+    srcInfo.bounds.y2 = sy2;
+
+    if (srcOps->Lock(env, srcOps, &srcInfo, pPrim->srcflags) != SD_SUCCESS)
+    {
+        return;
+    }
+    if (srcInfo.bounds.x2 <= srcInfo.bounds.x1 || srcInfo.bounds.y2 <= srcInfo.bounds.y1)
+    {
+        srcOps->Unlock(env, srcOps, &srcInfo);
+        return;
+    }
+
+    SurfaceDataRasInfo dstInfo;
+    jint idx1 = (jint) std::ceil(ddx1 - 0.5);
+    jint idy1 = (jint) std::ceil(ddy1 - 0.5);
+    if (xunderflow)
+    {
+        jdouble x = sx1 + (SRCLOC(idx1, ddx1, scalex) / (1 << shift));
+        dstInfo.bounds.x1 = dstInfo.bounds.x2 = idx1;
+        if (x >= srcInfo.bounds.x1 && x < srcInfo.bounds.x2)
+        {
+            dstInfo.bounds.x2++;
+        }
+    }
+    else
+    {
+        dstInfo.bounds.x1 = ((srcInfo.bounds.x1 <= sx1)
+                             ? idx1
+                             : refine(idx1, ddx1, tilesize, scalex,
+                                      (srcInfo.bounds.x1-sx1) << shift, sxinc));
+        dstInfo.bounds.x2 = refine(idx1, ddx1, tilesize, scalex,
+                                   (srcInfo.bounds.x2-sx1) << shift, sxinc);
+    }
+
+    if (yunderflow)
+    {
+        jdouble y = sy1 + (SRCLOC(idy1, ddy1, scaley) / (1 << shift));
+        dstInfo.bounds.y1 = dstInfo.bounds.y2 = idy1;
+        if (y >= srcInfo.bounds.y1 && y < srcInfo.bounds.y2)
+        {
+            dstInfo.bounds.y2++;
+        }
+    }
+    else
+    {
+        dstInfo.bounds.y1 = ((srcInfo.bounds.y1 <= sy1)
+                             ? idy1
+                             : refine(idy1, ddy1, tilesize, scaley,
+                                      (srcInfo.bounds.y1-sy1) << shift, syinc));
+        dstInfo.bounds.y2 = refine(idy1, ddy1, tilesize, scaley,
+                                   (srcInfo.bounds.y2-sy1) << shift, syinc);
+    }
+
+    SurfaceData_IntersectBounds(&dstInfo.bounds, &clipInfo.bounds);
+    jint dstFlags = pPrim->dstflags;
+    if (!Region_IsRectangular(&clipInfo))
+    {
+        dstFlags |= SD_LOCK_PARTIAL_WRITE;
+    }
+
+    if (dstOps->Lock(env, dstOps, &dstInfo, dstFlags) != SD_SUCCESS)
+    {
+        srcOps->Unlock(env, srcOps, &srcInfo);
+        return;
+    }
+
+    if (dstInfo.bounds.x2 > dstInfo.bounds.x1 && dstInfo.bounds.y2 > dstInfo.bounds.y1)
+    {
+        srcOps->GetRasInfo(env, srcOps, &srcInfo);
+        dstOps->GetRasInfo(env, dstOps, &dstInfo);
+        if (srcInfo.rasBase && dstInfo.rasBase)
+        {
+            SurfaceDataBounds span;
+            void *pSrc = PtrCoord(srcInfo.rasBase,
+                                  sx1, srcInfo.pixelStride,
+                                  sy1, srcInfo.scanStride);
+
+            Region_IntersectBounds(&clipInfo, &dstInfo.bounds);
+            Region_StartIteration(env, &clipInfo);
+            if (tilesize >= (ddx2 - ddx1) && tilesize >= (ddy2 - ddy1))
+            {
+                jint sxloc = (jint) SRCLOC(idx1, ddx1, scalex);
+                jint syloc = (jint) SRCLOC(idy1, ddy1, scaley);
+                while (Region_NextIteration(&clipInfo, &span))
+                {
+                    jint tsxloc = sxloc;
+                    jint tsyloc = syloc;
+                    void *pDst;
+
+                    if (span.y1 > idy1)
+                    {
+                        tsyloc += syinc * (span.y1 - idy1);
+                    }
+
+                    if (span.x1 > idx1)
+                    {
+                        tsxloc += sxinc * (span.x1 - idx1);
+                    }
+
+                    pDst = PtrCoord(dstInfo.rasBase,
+                                    span.x1, dstInfo.pixelStride,
+                                    span.y1, dstInfo.scanStride);
+                    (*pPrim->funcs.scaledblit)(pSrc, pDst,
+                                               span.x2-span.x1, span.y2-span.y1,
+                                               tsxloc, tsyloc,
+                                               sxinc, syinc, shift,
+                                               &srcInfo, &dstInfo,
+                                               pPrim, &compInfo);
+                }
+            }
+            else
+            {
+                while (Region_NextIteration(&clipInfo, &span))
+                {
+                    jint tilex, tiley;
+                    jint sxloc, syloc;
+                    jint x1, y1, x2, y2;
+                    void *pDst;
+
+                    for (tiley = TILESTART(span.y1, idy1, tilesize); tiley < span.y2; tiley += tilesize)
+                    {
+                        /* Clip span to Y range of current tile */
+                        y1 = tiley;
+                        y2 = tiley + tilesize;
+                        if (y1 < span.y1) y1 = span.y1;
+                        if (y2 > span.y2) y2 = span.y2;
+
+                        /* Find scaled source coordinate of first pixel */
+                        syloc = (jint) SRCLOC(tiley, ddy1, scaley);
+                        if (y1 > tiley)
+                        {
+                            syloc += syinc * (y1 - tiley);
+                        }
+
+                        for (tilex = TILESTART(span.x1, idx1, tilesize); tilex < span.x2; tilex += tilesize)
+                        {
+                            x1 = tilex;
+                            x2 = tilex + tilesize;
+                            if (x1 < span.x1) x1 = span.x1;
+                            if (x2 > span.x2) x2 = span.x2;
+
+                            sxloc = (jint) SRCLOC(tilex, ddx1, scalex);
+                            if (x1 > tilex)
+                            {
+                                sxloc += sxinc * (x1 - tilex);
+                            }
+
+                            pDst = PtrCoord(dstInfo.rasBase,
+                                            x1, dstInfo.pixelStride,
+                                            y1, dstInfo.scanStride);
+
+                            (*pPrim->funcs.scaledblit)(pSrc, pDst, x2-x1, y2-y1,
+                                                       sxloc, syloc,
+                                                       sxinc, syinc, shift,
+                                                       &srcInfo, &dstInfo,
+                                                       pPrim, &compInfo);
+                        }
+                    }
+                }
+            }
+            Region_EndIteration(env, &clipInfo);
+        }
+
+        srcOps->Release(env, dstOps, &dstInfo);
+        srcOps->Release(env, srcOps, &srcInfo);
+    }
+
+    srcOps->Release(env, dstOps, &dstInfo);
+    srcOps->Release(env, srcOps, &srcInfo);
+}
+
 HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface, SurfaceDataRasInfo *pDstInfo, jint srcx, jint srcy, jint srcWidth, jint srcHeight, jint dstx, jint dsty) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
