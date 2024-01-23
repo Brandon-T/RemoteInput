@@ -137,13 +137,20 @@ set(SRC_LIST
         ${SRC_LIST}
         ${EXTRA_INCLUDES}
         RemoteInput/RemoteInput.h
+        RemoteInput/Echo/Atomics.cxx
+        RemoteInput/Echo/Atomics.hxx
+        RemoteInput/Echo/Mutex.cxx
+        RemoteInput/Echo/Mutex.hxx
+        RemoteInput/Echo/Semaphore.cxx
+        RemoteInput/Echo/Semaphore.hxx
+        RemoteInput/Echo/Event.cxx
+        RemoteInput/Echo/Event.hxx
+        RemoteInput/Echo/Synchronization.hxx
+        RemoteInput/Echo/MemoryMap.cxx
         RemoteInput/Echo/MemoryMap.hxx
+        RemoteInput/Echo/MemoryMapStream.hxx
         RemoteInput/Echo/Module.cxx
         RemoteInput/Echo/Module.hxx
-        RemoteInput/Echo/SharedEvent.cxx
-        RemoteInput/Echo/SharedEvent.hxx
-        #RemoteInput/Echo/SpinLock.cxx
-        #RemoteInput/Echo/SpinLock.hxx
         RemoteInput/Echo/Stream.cxx
         RemoteInput/Echo/Stream.hxx
         RemoteInput/Echo/Time.cxx
@@ -213,7 +220,6 @@ set(SRC_LIST
         RemoteInput/Plugin/InputOutput.hxx
         RemoteInput/Plugin/NativePlugin.cxx
         RemoteInput/Plugin/NativePlugin.hxx
-        RemoteInput/Plugin/MemoryMapStream.hxx
         RemoteInput/Plugin/Plugin.cxx
         RemoteInput/Plugin/Plugin.hxx
         RemoteInput/Plugin/Signal.hxx

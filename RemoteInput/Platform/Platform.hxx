@@ -42,7 +42,7 @@ void yield_thread(std::chrono::duration<std::int64_t, T> time) noexcept
 template<typename T>
 std::int64_t elapsed_time(std::chrono::high_resolution_clock::time_point start) noexcept
 {
-    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<T>(end - start).count();
 }
 

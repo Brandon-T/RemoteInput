@@ -170,13 +170,13 @@ public:
     template<typename T, std::size_t Size>
     Stream& operator >> (std::array<T, Size> &value);
 
-#if __cplusplus >= 202002L
+    #if __cplusplus >= 202002L
     template<typename T, std::size_t Extent>
     Stream& operator << (const std::span<T, Extent> &value);
 
     template<typename T, std::size_t Extent>
     Stream& operator >> (std::span<T, Extent> &value) = delete;
-#endif
+    #endif
 };
 
 template<typename T, std::size_t size>

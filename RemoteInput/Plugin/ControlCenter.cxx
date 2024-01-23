@@ -933,7 +933,7 @@ bool ControlCenter::init_wait() noexcept
     snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
     #endif
 
-    sync_signal = std::make_unique<AtomicSignal>(signalName);
+    sync_signal = std::make_unique<Event>(signalName);
     return sync_signal != nullptr;
 }
 
@@ -1079,7 +1079,7 @@ void ControlCenter::signal_sync(std::int32_t pid) noexcept
     snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
     #endif
 
-    std::unique_ptr<AtomicSignal> sync_signal = std::make_unique<AtomicSignal>(signalName);
+    auto sync_signal = std::make_unique<Event>(signalName);
 
     if (!sync_signal->is_signalled())
     {
@@ -1100,7 +1100,7 @@ void ControlCenter::wait_for_sync(std::int32_t pid) noexcept
     snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
     #endif
 
-    std::unique_ptr<AtomicSignal> sync_signal = std::make_unique<AtomicSignal>(signalName);
+    auto sync_signal = std::make_unique<Event>(signalName);
 
     if (!sync_signal->is_signalled())
     {

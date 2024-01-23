@@ -3,6 +3,7 @@
 //
 
 #include "ImageData.hxx"
+#include <bit>
 
 ImageData::ImageData(void* buffer, std::size_t size) : stream(), image_data(static_cast<EIOSData*>(buffer), [](EIOSData* data) { }) //data(std::construct_at(static_cast<EIOSData*>(buffer)), [](EIOSData* data) { std::destroy_at(data); })
 {

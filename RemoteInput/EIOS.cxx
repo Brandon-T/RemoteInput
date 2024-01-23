@@ -10,12 +10,8 @@
 #include <cstdio>
 #include <unordered_map>
 #include <memory>
-#include <atomic>
-#include <cstring>
 #include "SimbaPlugin.hxx"
 #include "MemoryMap.hxx"
-#include "SharedEvent.hxx"
-#include "Reflection.hxx"
 #include "Platform.hxx"
 
 std::unordered_map<std::int32_t, EIOS*> clients;
