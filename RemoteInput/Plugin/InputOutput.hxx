@@ -79,7 +79,8 @@ public:
     bool is_key_held(std::int32_t code) const noexcept;
     void send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait) const noexcept;
     void send_key(char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) const noexcept;
-
+    void key_send(std::string string, std::vector<std::int32_t> sleeptimes) const noexcept;
+    
     void get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept;
     void get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept;
     void move_mouse(std::int32_t x, std::int32_t y) noexcept;

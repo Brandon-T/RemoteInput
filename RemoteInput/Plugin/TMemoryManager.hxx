@@ -103,6 +103,7 @@ STRUCT_PACK(typedef struct
     void(*RaiseException)(const char* message);
 
     void* (*GetTypeInfo)(void* Compiler, const char* Type);
+    void* (*GetTypeInfoSize)(void* TypeInfo);
     std::size_t (*GetTypeInfoFieldOffset)(void* TypeInfo, const char* FieldName);
 
     void* (*AllocateRawArray)(std::size_t element_size, std::size_t length);
@@ -111,17 +112,15 @@ STRUCT_PACK(typedef struct
     void* (*AllocateArray)(void* TypeInfo, std::size_t length);
     void* (*AllocateString)(const char* data);
     void* (*AllocateUnicodeString)(const wchar_t* data);
+    
     void (*SetArrayLength)(void* TypeInfo, void** var, std::size_t new_len);
     std::size_t (*GetArrayLength)(void* array);
 
-    void* (*ExternalImage_Create)(bool FreeOnTerminate);
+    void* (*ExternalImage_Create)(bool AutoResize);
     void (*ExternalImage_SetMemory)(void* img, void* bgra_data, std::int32_t width, std::int32_t height);
-    bool (*ExternalImage_TryLock)(void* image);
-    void (*ExternalImage_Lock)(void* image);
-    void (*ExternalImage_UnLock)(void* image);
-
-    void (*ExternalImage_AddCallbackOnUnlock)(void* img, void (*callback)());
-    void (*ExternalImage_RemoveCallbackOnUnlock)(void* img, void (*callback)());
+    void (*ExternalImage_Resize)(void* img, std::int32_t new_width, std::int32_t new_height);
+    void (*ExternalImage_SetUserData)(void* img, void* userdata);
+    void* (*ExternalImage_GetUserData)(void* img);
 }) TSimbaMethodsExtended;
 
 #endif // TMEMORYMANAGER_HXX_INCLUDED

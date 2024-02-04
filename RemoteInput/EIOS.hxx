@@ -78,41 +78,21 @@ EXPORT void STD_CALL EIOS_KillZombieClients() noexcept;
 EXPORT std::size_t STD_CALL EIOS_GetClients(bool unpaired_only) noexcept;
 EXPORT std::int32_t STD_CALL EIOS_GetClientPID(std::size_t index) noexcept;
 
-#ifdef __cplusplus
-}
-#endif
-
-typedef struct
-{
-    std::int32_t x;
-    std::int32_t y;
-} __attribute__((__packed__)) TPoint;
-
-class TSimbaExternalImage
-{
-public:
-    TSimbaExternalImage() {}
-    ~TSimbaExternalImage() {}
-};
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+// New in Simba 2.0 https://villavu.github.io/Simba/tutorials/plugins/plugin-target.html
 EXPORT EIOS* SimbaPluginTarget_Request(const char* initargs) noexcept;
 EXPORT EIOS* SimbaPluginTarget_RequestWithDebugImage(const char* initargs, void** image) noexcept;
 EXPORT void SimbaPluginTarget_Release(EIOS* eios) noexcept;
 EXPORT void SimbaPluginTarget_GetDimensions(EIOS* eios, std::int32_t* width, std::int32_t* height) noexcept;
-EXPORT void SimbaPluginTarget_GetImageData(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t width, std::int32_t height, void** pColorBGRA, std::int32_t* data_width) noexcept;
+EXPORT bool SimbaPluginTarget_GetImageData(EIOS* eios, std::int32_t x, std::int32_t y, std::int32_t width, std::int32_t height, void** bgra, std::int32_t* data_width) noexcept;
 EXPORT bool SimbaPluginTarget_MousePressed(EIOS* eios, int mouse_button) noexcept;
-EXPORT TPoint SimbaPluginTarget_MousePosition(EIOS* eios) noexcept;
-EXPORT void SimbaPluginTarget_Teleport(EIOS* eios, const TPoint &p) noexcept;
+EXPORT void SimbaPluginTarget_MousePosition(EIOS* eios, std::int32_t* x, std::int32_t* y) noexcept;
+EXPORT void SimbaPluginTarget_MouseTeleport(EIOS* eios, std::int32_t x, std::int32_t y) noexcept;
 EXPORT void SimbaPluginTarget_MouseUp(EIOS* eios, int mouse_button) noexcept;
 EXPORT void SimbaPluginTarget_MouseDown(EIOS* eios, int mouse_button) noexcept;
 EXPORT void SimbaPluginTarget_MouseScroll(EIOS* eios, int scrolls) noexcept;
 EXPORT void SimbaPluginTarget_KeyDown(EIOS* eios, std::int32_t key) noexcept;
 EXPORT void SimbaPluginTarget_KeyUp(EIOS* eios, std::int32_t key) noexcept;
-EXPORT void SimbaPluginTarget_KeySend(EIOS* eios, char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) noexcept;
+EXPORT void SimbaPluginTarget_KeySend(EIOS* eios, char* text, std::int32_t len, std::int32_t* sleeptimes) noexcept;
 EXPORT bool SimbaPluginTarget_KeyPressed(EIOS* eios, std::int32_t key) noexcept;
 
 #ifdef __cplusplus

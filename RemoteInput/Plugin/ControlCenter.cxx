@@ -333,6 +333,19 @@ void ControlCenter::process_command() noexcept
         }
             break;
 
+        case EIOSCommand::KEY_SEND:
+        {
+            std::string string = stream.read<std::string>();
+            std::vector<std::int32_t> sleeps;
+            
+            // Simba sends string.length*4 of sleep times to control the speed of typing
+            sleeps.resize(string.length() * 4);
+            stream.read(sleeps.data(), (string.length() * 4) * sizeof(int32_t));
+
+            io_controller->key_send(string, sleeps);
+        }
+            break;
+
         case EIOSCommand::HOLD_KEY:
         {
             std::int32_t keycode = stream.read<std::int32_t>();
@@ -1472,6 +1485,15 @@ void ControlCenter::send_key(char key, std::int32_t key_down_time, std::int32_t 
         stream.write<std::int32_t>(modifier_down_time);
         stream.write<std::int32_t>(modifier_up_time);
     });
+}
+
+void ControlCenter::key_send(const char* string, std::int32_t len, std::int32_t* sleeptimes) const noexcept
+{
+    send_command([string, len, sleeptimes](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::KEY_SEND);
+        image_data->data_stream() << std::string(string, len);
+        stream.write(sleeptimes, (len * 4) * sizeof(int32_t));
+    });    
 }
 
 void ControlCenter::hold_key(std::int32_t key) const noexcept

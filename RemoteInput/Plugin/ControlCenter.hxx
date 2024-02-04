@@ -106,6 +106,7 @@ public:
     bool is_mouse_held(std::int32_t button) const noexcept;
     void send_string(const char* string, std::int32_t keywait, std::int32_t keymodwait) const noexcept;
     void send_key(char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) const noexcept;
+    void key_send(const char* string, std::int32_t len, std::int32_t* sleeptimes) const noexcept;
     void hold_key(std::int32_t key) const noexcept;
     void release_key(std::int32_t key) const noexcept;
     bool is_key_held(std::int32_t key) const noexcept;
