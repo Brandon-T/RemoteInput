@@ -38,14 +38,24 @@ std::int32_t ImageData::parent_thread_id() const
     return image_data->parent_thread_id;
 }
 
-std::int32_t ImageData::width() const
+std::int32_t ImageData::image_width() const
 {
-    return image_data->width;
+    return image_data->image_width;
 }
 
-std::int32_t ImageData::height() const
+std::int32_t ImageData::image_height() const
 {
-    return image_data->height;
+    return image_data->image_height;
+}
+
+std::int32_t ImageData::target_width() const
+{
+    return image_data->target_width;
+}
+
+std::int32_t ImageData::target_height() const
+{
+    return image_data->target_height;
 }
 
 bool ImageData::debug_graphics() const
@@ -78,14 +88,24 @@ void ImageData::set_parent_thread_id(std::int32_t tid)
     image_data->parent_thread_id = tid;
 }
 
-void ImageData::set_width(std::int32_t width)
+void ImageData::set_image_width(std::int32_t width)
 {
-    image_data->width = width;
+    image_data->image_width = width;
 }
 
-void ImageData::set_height(std::int32_t height)
+void ImageData::set_image_height(std::int32_t height)
 {
-    image_data->height = height;
+    image_data->image_height = height;
+}
+
+void ImageData::set_target_width(std::int32_t width)
+{
+    image_data->target_width = width;
+}
+
+void ImageData::set_target_height(std::int32_t height)
+{
+    image_data->target_height = height;
 }
 
 void ImageData::set_debug_graphics(bool debug_graphics)
@@ -127,6 +147,11 @@ void* ImageData::data_buffer(std::ios_base::openmode mode) const noexcept
 std::uint8_t* ImageData::image_buffer() const noexcept
 {
     return reinterpret_cast<std::uint8_t*>(image_data.get()) + sizeof(EIOSData);
+}
+
+std::uint8_t* ImageData::debug_image_buffer() const noexcept
+{
+    return image_buffer() + image_width() * image_height() * 4;
 }
 
 Stream& ImageData::data_stream() const noexcept

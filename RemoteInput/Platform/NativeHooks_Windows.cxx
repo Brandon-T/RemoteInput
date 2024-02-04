@@ -173,7 +173,7 @@ void __stdcall JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobjec
 
                     void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
 
-                    control_center->update_dimensions(width, height);
+                    control_center->set_target_dimensions(width, height);
                     std::uint8_t* dest = control_center->get_image();
                     ImageFormat format = control_center->get_image_format();
 
@@ -274,7 +274,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
                 void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
                 bool isRasterAligned = srcInfo.scanStride % srcInfo.pixelStride == 0; //!(srcInfo.scanStride & 0x03);
 
-                control_center->update_dimensions(width, height);
+                control_center->set_target_dimensions(width, height);
                 std::uint8_t* dest = control_center->get_image();
                 ImageFormat format = control_center->get_image_format();
 
@@ -464,7 +464,7 @@ void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, j
                 void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
                 bool isRasterAligned = !(srcInfo.scanStride & 0x03);
 
-                control_center->update_dimensions(width, height);
+                control_center->set_target_dimensions(width, height);
                 std::uint8_t* dest = control_center->get_image();
                 ImageFormat format = control_center->get_image_format();
 
@@ -619,7 +619,7 @@ HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface
     jint height = srcHeight;
 
     //Prepare for BackBuffer Rendering
-    control_center->update_dimensions(width, height);
+    control_center->set_target_dimensions(width, height);
     ImageFormat format = control_center->get_image_format();
     std::uint8_t* destImage = ptr_coord(control_center->get_image(), srcx, srcy, pDstInfo->pixelStride, pDstInfo->scanStride);
     std::uint8_t* debugImage = ptr_coord(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, pDstInfo->pixelStride, pDstInfo->scanStride);
@@ -800,7 +800,7 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     jint height = pSrcInfo->bounds.y2 - pSrcInfo->bounds.y1;
 
     //Prepare for BackBuffer Rendering
-    control_center->update_dimensions(width, height);
+    control_center->set_target_dimensions(width, height);
     ImageFormat format = control_center->get_image_format();
     std::uint8_t* destImage = ptr_coord(control_center->get_image(), srcx, srcy, pSrcInfo->pixelStride, pSrcInfo->scanStride);
     std::uint8_t* debugImage = ptr_coord(control_center->get_debug_graphics() ? control_center->get_debug_image() : nullptr, srcx, srcy, pSrcInfo->pixelStride, pSrcInfo->scanStride);
@@ -1076,7 +1076,7 @@ void __stdcall mglDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
         int stride = width * bytes_per_pixel;
         void *rasBase = static_cast<std::uint8_t*>(const_cast<void*>(data)) + (stride * src_y) + (bytes_per_pixel * src_x);
 
-        control_center->update_dimensions(width, height);
+        control_center->set_target_dimensions(width, height);
 
         //Render to Shared Memory
         std::uint8_t* dest = control_center->get_image();
@@ -1128,7 +1128,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
 
         if (can_render(-1, width, height))
         {
-            control_center->update_dimensions(width, height);
+            control_center->set_target_dimensions(width, height);
 
             //Check if extensions are supported
             //This check is needed for renderers that do not support pixel buffer objects or vertex buffer objects

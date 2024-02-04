@@ -27,8 +27,10 @@ public:
 
     std::int32_t parent_process_id() const;
     std::int32_t parent_thread_id() const;
-    std::int32_t width() const;
-    std::int32_t height() const;
+    std::int32_t image_width() const;
+    std::int32_t image_height() const;
+    std::int32_t target_width() const;
+    std::int32_t target_height() const;
     bool debug_graphics() const;
     bool ui_scaling() const;
     ImageFormat image_format() const;
@@ -36,8 +38,10 @@ public:
 
     void set_parent_process_id(std::int32_t pid);
     void set_parent_thread_id(std::int32_t tid);
-    void set_width(std::int32_t width);
-    void set_height(std::int32_t height);
+    void set_image_width(std::int32_t width);
+    void set_image_height(std::int32_t height);
+    void set_target_width(std::int32_t width);
+    void set_target_height(std::int32_t height);
     void set_debug_graphics(bool debug_graphics);
     void set_ui_scaling(bool ui_scaling);
     void set_image_format(ImageFormat format);
@@ -46,6 +50,7 @@ public:
     void* data_buffer(std::ios_base::openmode mode) const noexcept;
 
     std::uint8_t* image_buffer() const noexcept;
+    std::uint8_t* debug_image_buffer() const noexcept;
     Stream& data_stream() const noexcept;
 };
 

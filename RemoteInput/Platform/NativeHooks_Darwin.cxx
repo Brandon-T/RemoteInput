@@ -161,7 +161,7 @@ void JavaNativeBlit(JNIEnv *env, jobject self, jobject srcData, jobject dstData,
 
                     void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * srcy) + (srcInfo.pixelStride * srcx);
 
-                    control_center->update_dimensions(width, height);
+                    control_center->set_target_dimensions(width, height);
                     std::uint8_t* dest = control_center->get_image();
                     ImageFormat format = control_center->get_image_format();
 
@@ -250,7 +250,7 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
                 void* rasBase = reinterpret_cast<std::uint8_t*>(srcInfo.rasBase) + (srcInfo.scanStride * sy1) + (srcInfo.pixelStride * sx1);
                 bool isRasterAligned = srcInfo.scanStride % srcInfo.pixelStride == 0; //!(srcInfo.scanStride & 0x03);
 
-                control_center->update_dimensions(width, height);
+                control_center->set_target_dimensions(width, height);
                 std::uint8_t* dest = control_center->get_image();
                 ImageFormat format = control_center->get_image_format();
 
@@ -481,7 +481,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 
         if (can_render(-1, width, height))
         {
-            control_center->update_dimensions(width, height);
+            control_center->set_target_dimensions(width, height);
 
             //Render to Shared Memory
             std::uint8_t* dest = control_center->get_image();
@@ -535,7 +535,7 @@ CGLError mCGLFlushDrawable(CGLContextObj ctx) noexcept
 
         if (can_render(-1, width, height))
         {
-            control_center->update_dimensions(width, height);
+            control_center->set_target_dimensions(width, height);
 
             //Render to Shared Memory
             std::uint8_t* dest = control_center->get_image();

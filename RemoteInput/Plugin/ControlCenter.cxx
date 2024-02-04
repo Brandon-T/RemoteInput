@@ -193,10 +193,17 @@ void ControlCenter::process_command() noexcept
         }
             break;
 
+        case EIOSCommand::GET_IMAGE_DIMENSIONS:
+        {
+            image_data.set_image_width(get_image_width());
+            image_data.set_image_height(get_image_height());
+        }
+            break;
+
         case EIOSCommand::GET_TARGET_DIMENSIONS:
         {
-            image_data.set_width(get_width());
-            image_data.set_height(get_height());
+            image_data.set_target_width(get_target_width());
+            image_data.set_target_height(get_target_height());
         }
             break;
 
@@ -891,15 +898,15 @@ bool ControlCenter::init_maps() noexcept
         memory_map = std::make_unique<MemoryMapStream<ImageData>>(mapName, sizeof(ImageData), MemoryMapStream<ImageData>::open_mode::read);
         if (memory_map && memory_map->is_mapped())
         {
-            int width = memory_map->data().width();
-            int height = memory_map->data().height();
+            int image_width = memory_map->data().image_width();
+            int image_height = memory_map->data().image_height();
 
-            if (width && height)
+            if (image_width && image_height)
             {
-                std::size_t image_size = width * height * 4 * sizeof(std::uint8_t);
-                std::size_t debug_size = width * height * 4 * sizeof(std::uint8_t);
+                std::size_t image_size = image_width * image_height * 4 * sizeof(std::uint8_t);
+                std::size_t debug_size = image_width * image_height * 4 * sizeof(std::uint8_t);
                 std::size_t extra_size = (1024 * sizeof(std::int32_t));
-                std::int32_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
+                std::size_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
 
                 //Open only..
                 memory_map = std::make_unique<MemoryMapStream<ImageData>>(mapName, map_size, MemoryMapStream<ImageData>::open_mode::read | MemoryMapStream<ImageData>::open_mode::write);
@@ -909,21 +916,22 @@ bool ControlCenter::init_maps() noexcept
         return false;
     }
 
-    int width = 0;
-    int height = 0;
-    GetDesktopResolution(width, height); //TODO: Change to Target Window size..
+    int image_width = 0;
+    int image_height = 0;
+    GetDesktopResolution(image_width, image_height);
 
-    std::size_t image_size = width * height * 4 * sizeof(std::uint8_t);
-    std::size_t debug_size = width * height * 4 * sizeof(std::uint8_t);
+    std::size_t image_size = image_width * image_height * 4 * sizeof(std::uint8_t);
+    std::size_t debug_size = image_width * image_height * 4 * sizeof(std::uint8_t);
     std::size_t extra_size = (1024 * sizeof(std::int32_t));
-    std::int32_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
+    std::size_t map_size = sizeof(EIOSData) + image_size + debug_size + extra_size;
 
     //Create only..
     memory_map = std::make_unique<MemoryMapStream<ImageData>>(mapName, map_size, MemoryMapStream<ImageData>::open_mode::read | MemoryMapStream<ImageData>::open_mode::write | MemoryMapStream<ImageData>::open_mode::create);
     bool result = memory_map && memory_map->is_mapped();
     if (result)
     {
-        update_dimensions(width, height);
+        set_image_dimensions(image_width, image_height);
+        set_target_dimensions(image_width, image_height);
     }
     return result;
 }
@@ -1030,14 +1038,24 @@ std::int32_t ControlCenter::parent_thread_id() const noexcept
     return memory_map && memory_map->is_mapped() ? get_image_data()->parent_thread_id() : -1;
 }
 
-std::int32_t ControlCenter::get_width() const noexcept
+std::int32_t ControlCenter::get_image_width() const noexcept
 {
-    return memory_map && memory_map->is_mapped() ? get_image_data()->width() : -1;
+    return memory_map && memory_map->is_mapped() ? get_image_data()->image_width() : -1;
 }
 
-std::int32_t ControlCenter::get_height() const noexcept
+std::int32_t ControlCenter::get_image_height() const noexcept
 {
-    return memory_map && memory_map->is_mapped() ? get_image_data()->height() : -1;
+    return memory_map && memory_map->is_mapped() ? get_image_data()->image_height() : -1;
+}
+
+std::int32_t ControlCenter::get_target_width() const noexcept
+{
+    return memory_map && memory_map->is_mapped() ? get_image_data()->target_width() : -1;
+}
+
+std::int32_t ControlCenter::get_target_height() const noexcept
+{
+    return memory_map && memory_map->is_mapped() ? get_image_data()->target_height() : -1;
 }
 
 std::uint8_t* ControlCenter::get_image() const noexcept
@@ -1048,8 +1066,8 @@ std::uint8_t* ControlCenter::get_image() const noexcept
 
 std::uint8_t* ControlCenter::get_debug_image() const noexcept
 {
-    std::uint8_t* image = get_image();
-    return image ? image + (get_width() * get_height() * 4) : nullptr;
+    ImageData* image_data = get_image_data();
+    return image_data ? image_data->debug_image_buffer() : nullptr;
 }
 
 bool ControlCenter::get_debug_graphics() const noexcept
@@ -1204,7 +1222,17 @@ void ControlCenter::kill_process(std::int32_t pid) const noexcept
     });
 }
 
-void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height) const noexcept
+void ControlCenter::set_image_dimensions(std::int32_t width, std::int32_t height) const noexcept
+{
+    if (memory_map && memory_map->is_mapped())
+    {
+        ImageData* image_data = get_image_data();
+        image_data->set_image_width(width);
+        image_data->set_image_height(height);
+    }
+}
+
+void ControlCenter::set_target_dimensions(std::int32_t width, std::int32_t height) const noexcept
 {
     if (memory_map && memory_map->is_mapped())
     {
@@ -1220,20 +1248,34 @@ void ControlCenter::update_dimensions(std::int32_t width, std::int32_t height) c
 
             if (w > 0 && h > 0)
             {
-                image_data->set_width(w);
-                image_data->set_height(h);
+                image_data->set_target_width(w);
+                image_data->set_target_height(h);
             }
             else
             {
-                image_data->set_width(width);
-                image_data->set_height(height);
+                image_data->set_target_width(width);
+                image_data->set_target_height(height);
             }
         }
         else
         {
-            image_data->set_width(width);
-            image_data->set_height(height);
+            image_data->set_target_width(width);
+            image_data->set_target_height(height);
         }
+    }
+}
+
+void ControlCenter::get_image_dimensions(std::int32_t* width, std::int32_t* height) const noexcept
+{
+    if (memory_map && memory_map->is_mapped())
+    {
+        *width = get_image_width();
+        *height = get_image_height();
+    }
+    else
+    {
+        *width = -1;
+        *height = -1;
     }
 }
 
@@ -1241,8 +1283,8 @@ void ControlCenter::get_target_dimensions(std::int32_t* width, std::int32_t* hei
 {
     if (memory_map && memory_map->is_mapped())
     {
-        *width = get_width();
-        *height = get_height();
+        *width = get_target_width();
+        *height = get_target_height();
     }
     else
     {

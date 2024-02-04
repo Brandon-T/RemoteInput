@@ -21,6 +21,7 @@ enum class EIOSCommand: std::uint32_t
     COMMAND_NONE,
     KILL_APPLICATION,
 
+    GET_IMAGE_DIMENSIONS,
     GET_TARGET_DIMENSIONS,
     HAS_FOCUS,
     GAIN_FOCUS,
@@ -80,8 +81,10 @@ typedef struct EIOSData
 {
     std::int32_t parent_process_id;
     std::int32_t parent_thread_id;
-    std::int32_t width;
-    std::int32_t height;
+    std::int32_t image_width;
+    std::int32_t image_height;
+    std::int32_t target_width;
+    std::int32_t target_height;
     bool debug_graphics;
     bool ui_scaling;
     ImageFormat image_format;

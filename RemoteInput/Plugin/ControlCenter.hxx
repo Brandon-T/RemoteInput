@@ -63,7 +63,8 @@ public:
     bool hasReflector() const noexcept;
     void set_parent_process_id(std::int32_t pid) const noexcept;
     void set_parent_thread_id(std::int32_t tid) const noexcept;
-    void update_dimensions(std::int32_t width, std::int32_t height) const noexcept;
+    void set_image_dimensions(std::int32_t width, std::int32_t height) const noexcept;
+    void set_target_dimensions(std::int32_t width, std::int32_t height) const noexcept;
 
     static void signal_sync(std::int32_t pid) noexcept;
     static void wait_for_sync(std::int32_t pid) noexcept;
@@ -74,8 +75,10 @@ public:
 
     std::int32_t parent_process_id() const noexcept;
     std::int32_t parent_thread_id() const noexcept;
-    std::int32_t get_width() const noexcept;
-    std::int32_t get_height() const noexcept;
+    std::int32_t get_image_width() const noexcept;
+    std::int32_t get_image_height() const noexcept;
+    std::int32_t get_target_width() const noexcept;
+    std::int32_t get_target_height() const noexcept;
     std::uint8_t* get_image() const noexcept;
     std::uint8_t* get_debug_image() const noexcept;
     bool get_debug_graphics() const noexcept;
@@ -90,6 +93,7 @@ public:
     void set_keyboard_input_enabled(bool enabled) const noexcept;
     bool is_mouse_input_enabled() const noexcept;
     void set_mouse_input_enabled(bool enabled) const noexcept;
+    void get_image_dimensions(std::int32_t* width, std::int32_t* height) const noexcept;
     void get_target_dimensions(std::int32_t* width, std::int32_t* height) const noexcept;
     ImageFormat get_image_format() const noexcept;
     void set_image_format(ImageFormat format) noexcept;
