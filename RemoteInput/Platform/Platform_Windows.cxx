@@ -39,6 +39,7 @@ void GetDesktopResolution(int &width, int &height) noexcept
     width = desktop.right;
     height = desktop.bottom;
 
+    /*
     // DPI Scaling
     HMODULE user32 = GetModuleHandleA("User32.dll");
     HMODULE shcore = GetModuleHandleA("Shcore.dll");
@@ -66,7 +67,7 @@ void GetDesktopResolution(int &width, int &height) noexcept
             }
         }
     }
-
+     */
 }
 
 std::int32_t GetCurrentThreadID() noexcept
