@@ -36,24 +36,12 @@ private:
         fprintf(stderr, "No Such Class %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
         jvm->ExceptionClear();\
         return RESULT;\
-    }\
-    else if (jvm->ExceptionCheck())\
-    {\
-        jvm->ExceptionDescribe();\
-        jvm->ExceptionClear();\
-        return RESULT;\
     }
 
     #define HANDLE_JAVA_FIELD_NOT_FOUND(RESULT) \
     if (!field)\
     {\
         fprintf(stderr, "No Such %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
-        jvm->ExceptionClear();\
-        return RESULT;\
-    }\
-    else if (jvm->ExceptionCheck())\
-    {\
-        jvm->ExceptionDescribe();\
         jvm->ExceptionClear();\
         return RESULT;\
     }
@@ -192,7 +180,6 @@ Reflection::getField(jobject object, const ReflectionHook &hook) noexcept
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(std::string());
     auto string = make_safe_local<jstring>(object ? jvm->GetObjectField(object, field) : jvm->GetStaticObjectField(cls, field));
-    HANDLE_JAVA_FIELD_NOT_FOUND(std::string());
     return getField<T>(string.get());
 }
 
@@ -256,9 +243,9 @@ template<typename T>
 typename std::enable_if<std::is_same<jchar, typename std::remove_cv<T>::type>::value, T>::type
 Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
 {
-    jclass cls = LoadClass(hook.cls.c_str());
+    jclass cls = LoadClass(hook.cls);
     HANDLE_JAVA_CLASS_NOT_FOUND('\0');
-    jfieldID field = GetFieldID(cls, hook.field.c_str(), hook.desc.c_str(), !object);
+    jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND('\0');
     return object ? jvm->GetCharField(object, field) : jvm->GetStaticCharField(cls, field);
 }

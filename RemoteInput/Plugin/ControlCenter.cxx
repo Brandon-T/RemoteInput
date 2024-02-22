@@ -79,8 +79,11 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
                             break;
                         }
 
+                        JNIEnv* env = this->reflector->getEnv();
+                        env->PushLocalFrame(150'000);
                         process_command();
                         response_signal->signal();
+                        env->PopLocalFrame(nullptr);
                     }
 
                     if (this->remote_vm)
@@ -650,15 +653,28 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
             break;
 
         case ReflectionType::OBJECT:
-        case ReflectionType::ARRAY:
         {
+            std::vector<jobject> objects(length);
             JNIEnv* env = reflector->getEnv();
             for (std::size_t i = 0; i < length; ++i)
             {
                 jobject result = env->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
-                stream.write(result ? env->NewGlobalRef(result) : nullptr);
-                env->DeleteLocalRef(result);
+                objects[i] = result ? env->NewGlobalRef(result) : nullptr;
             }
+            stream.write(&objects[0], objects.size() * sizeof(jobject));
+        }
+            break;
+
+        case ReflectionType::ARRAY:
+        {
+            std::vector<jobject> objects(length);
+            JNIEnv* env = reflector->getEnv();
+            for (std::size_t i = 0; i < length; ++i)
+            {
+                jobject result = env->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
+                objects[i] = result ? env->NewGlobalRef(result) : nullptr;
+            }
+            stream.write(&objects[0], objects.size() * sizeof(jobject));
         }
             break;
     }
@@ -718,7 +734,6 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
             {
                 jobject element = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
                 stream.write(reflector->getField<std::string>(static_cast<jstring>(element)));
-                reflector->getEnv()->DeleteLocalRef(element);
             }
         }
             break;
@@ -726,12 +741,13 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
         case ReflectionType::OBJECT:
         case ReflectionType::ARRAY:
         {
+            std::vector<jobject> objects(length);
             for (std::size_t i = 0; i < length; ++i)
             {
                 jobject result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
-                stream.write(result ? reflector->getEnv()->NewGlobalRef(result) : nullptr);
-                reflector->getEnv()->DeleteLocalRef(result);
+                objects[i] = result ? reflector->getEnv()->NewGlobalRef(result) : nullptr;
             }
+            stream.write(&objects[0], objects.size() * sizeof(jobject));
         }
             break;
     }
@@ -773,7 +789,6 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
     }
 
     JNIEnv* env = reflector->getEnv();
-    array = static_cast<jarray>(env->NewLocalRef(array));
 
     for (std::size_t i = 0; i < dimensions - 1; ++i)
     {
@@ -789,7 +804,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
                 return;
             }
 
-            env->DeleteLocalRef(std::exchange(array, static_cast<jarray>(env->GetObjectArrayElement(static_cast<jobjectArray>(array), index))));
+            array = static_cast<jarray>(env->GetObjectArrayElement(static_cast<jobjectArray>(array), index));
         }
     }
 
@@ -812,7 +827,6 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
     stream.write(ideal_length);
     send_array_response_index_length(stream, array, type, index, ideal_length);
-    env->DeleteLocalRef(array);
 }
 
 void ControlCenter::process_reflect_array_all(Stream &stream, jarray array, ReflectionType type, std::size_t dimensions) const noexcept
@@ -840,7 +854,6 @@ void ControlCenter::process_reflect_array_all(Stream &stream, jarray array, Refl
     {
         jarray result = static_cast<jarray>(env->GetObjectArrayElement(static_cast<jobjectArray>(array), i));
         process_reflect_array_all(stream, result, type, dimensions - 1);
-        env->DeleteLocalRef(result);
     }
 }
 
