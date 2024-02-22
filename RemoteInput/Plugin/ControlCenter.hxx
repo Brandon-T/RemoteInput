@@ -31,7 +31,7 @@ private:
     std::unique_ptr<Signal> command_signal;
     std::unique_ptr<Signal> response_signal;
     std::unique_ptr<Event> sync_signal;
-    std::unique_ptr<Reflection> reflector;
+    std::unique_ptr<Reflection> main_reflector;
     std::unique_ptr<MemoryMapStream<ImageData>> memory_map;
     std::unique_ptr<InputOutput> io_controller;
     std::unique_ptr<RemoteVM> remote_vm;
@@ -46,6 +46,9 @@ private:
     template<typename Func>
     bool send_command(Func &&sender) const noexcept;
 
+    template<typename Func>
+    bool send_command_now(Func &&sender) const noexcept;
+
     void send_array_response_index_length(Stream &stream, jarray array, ReflectionType type, std::size_t index, std::size_t length) const noexcept;
     void send_array_response_indices(Stream &stream, jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept;
     void process_reflect_array_indices(Stream &stream, jarray array) const noexcept;
@@ -53,7 +56,7 @@ private:
     void process_reflect_array_all(Stream &stream, jarray array, ReflectionType type, std::size_t dimensions) const noexcept;
 
 public:
-    ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector);
+    ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> reflector);
     ~ControlCenter();
 
     void terminate() noexcept;

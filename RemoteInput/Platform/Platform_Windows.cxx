@@ -337,7 +337,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) noexcept
     return TRUE;
 }
 
-Reflection* GetNativeReflector() noexcept
+std::unique_ptr<Reflection> GetNativeReflector() noexcept
 {
     auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
         auto start = std::chrono::high_resolution_clock::now();
@@ -353,8 +353,11 @@ Reflection* GetNativeReflector() noexcept
         return true;
     };
 
-    auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-        return reflection->IsDecendentOf(object, "java/awt/Frame");
+    auto IsValidFrame = [](JNIEnv* env, jobject object) -> bool {
+        jclass cls = env->FindClass("java/awt/Frame");
+        bool result = env->IsInstanceOf(object, cls);
+        env->DeleteLocalRef(cls);
+        return result;
     };
 
     auto GetMainWindow = [&] {
@@ -374,12 +377,17 @@ Reflection* GetNativeReflector() noexcept
         return nullptr;
     }
 
-    Reflection* reflection = new Reflection();
-
-    if (reflection->Attach())
+    JVM vm = JVM();
+    if (!vm)
     {
+        return nullptr;
+    }
+
+    JNIEnv* env = nullptr;
+    if (vm.AttachCurrentThread(&env) == JNI_OK)
+    {
+        std::unique_ptr<Reflection> reflection;
         auto hasReflection = TimeOut(20, [&]{
-            JNIEnv* env = reflection->getEnv();
             jclass cls = env->FindClass("java/awt/Frame");
             if (!cls)
             {
@@ -393,6 +401,7 @@ Reflection* GetNativeReflector() noexcept
             }
 
             jobjectArray frames = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, method));
+            env->DeleteLocalRef(cls);
             if (!frames)
             {
                 return false;
@@ -402,12 +411,23 @@ Reflection* GetNativeReflector() noexcept
             for (jsize i = 0; i < size; ++i)
             {
                 jobject frame = env->GetObjectArrayElement(frames, i);
-                if (IsValidFrame(reflection, frame) && reflection->Initialize(frame))
+                if (frame)
                 {
-                    return true;
+                    if (IsValidFrame(env, frame))
+                    {
+                        reflection = Reflection::Create(frame);
+                        if (reflection)
+                        {
+                            env->DeleteLocalRef(frames);
+                            return true;
+                        }
+                    }
+
+                    env->DeleteLocalRef(frame);
                 }
             }
 
+            env->DeleteLocalRef(frames);
             return false;
         });
 
@@ -434,8 +454,18 @@ Reflection* GetNativeReflector() noexcept
                 HWND windowFrame = GetMainWindow();
                 if (windowFrame)
                 {
-                    jobject object = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
-                    return IsValidFrame(reflection, object) && reflection->Initialize(object);
+                    jobject frame = DSGetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+                    if (frame)
+                    {
+                        if (IsValidFrame(env, frame))
+                        {
+                            reflection = Reflection::Create(frame);
+                            if (reflection)
+                            {
+                                return true;
+                            }
+                        }
+                    }
                 }
                 return false;
             });
@@ -443,14 +473,11 @@ Reflection* GetNativeReflector() noexcept
 
         if (hasReflection || hasReflection2)
         {
-            reflection->Detach();
             return reflection;
         }
-
-        reflection->Detach();
     }
 
-    delete reflection;
+    vm.DetachCurrentThread();
     return nullptr;
 }
 #endif // defined

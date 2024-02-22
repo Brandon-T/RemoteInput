@@ -17,7 +17,7 @@
 class JVMCache
 {
 public:
-    JVMCache(JVM* jvm, jobject class_loader);
+    JVMCache(JNIEnv* env, jobject class_loader);
     JVMCache(const JVMCache&) = delete;
     JVMCache(JVMCache&&);
     ~JVMCache();
@@ -25,39 +25,18 @@ public:
     JVMCache& operator = (const JVMCache&) = delete;
     JVMCache& operator = (JVMCache&&);
 
-    jclass GetClass(std::string_view name) noexcept;
-    jfieldID GetFieldID(jclass clazz, std::string_view name, std::string_view sig, bool is_static) noexcept;
+    jclass GetClass(JNIEnv* env, std::string_view name) noexcept;
+    jfieldID GetFieldID(JNIEnv* env, jclass clazz, std::string_view name, std::string_view sig, bool is_static) noexcept;
 
     void clear();
 
 private:
-    JVM* jvm;
     jobject class_loader;
     jmethodID load_class_method;
 
     std::unordered_map<std::string, std::unique_ptr<typename std::remove_pointer<jclass>::type, std::function<void(jclass)>>, string_hash, std::equal_to<>> class_cache;
     std::unordered_map<std::size_t, jfieldID> field_cache;
 
-    template<typename T>
-    inline auto make_safe_local(auto object) const noexcept
-    {
-        auto deleter = [&](T object) noexcept {
-            jvm->DeleteLocalRef(static_cast<jobject>(object));
-        };
-
-        return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
-    }
-
-    template<typename T>
-    inline auto make_safe_global(auto object) const noexcept
-    {
-        auto deleter = [&](T object) noexcept {
-            jvm->DeleteGlobalRef(static_cast<jobject>(object));
-        };
-
-        jvm->DeleteLocalRef(std::exchange(object, jvm->NewGlobalRef(static_cast<jobject>(object))));
-        return std::unique_ptr<typename std::remove_pointer<T>::type, decltype(deleter)>{static_cast<T>(object), deleter};
-    }
 
     static std::size_t field_hash(jclass clazz, std::string_view field_name, std::string_view signature) noexcept;
 };

@@ -9,7 +9,7 @@
 #include "Reflection.hxx"
 
 void GetDesktopResolution(int &width, int &height) noexcept;
-Reflection* GetNativeReflector() noexcept;
+std::unique_ptr<Reflection> GetNativeReflector() noexcept;
 
 std::int32_t GetCurrentThreadID() noexcept;
 

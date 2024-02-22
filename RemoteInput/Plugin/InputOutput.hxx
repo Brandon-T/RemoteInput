@@ -23,7 +23,7 @@
 class InputOutput final
 {
 private:
-    JVM* vm;
+    JavaVM* vm;
     jobject applet;
     std::mutex mutex;
     DetachedThreadPool input_thread;
@@ -58,7 +58,7 @@ private:
     void handle_resize(java::Component* component) noexcept;
 
 public:
-    InputOutput(Reflection* reflector) noexcept;
+    InputOutput(Reflection* reflection) noexcept;
     ~InputOutput() noexcept;
 
     bool has_focus() const noexcept;

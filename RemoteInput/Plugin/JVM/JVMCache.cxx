@@ -4,22 +4,29 @@
 
 #include "JVMCache.hxx"
 
-JVMCache::JVMCache(JVM* jvm, jobject class_loader) : jvm(jvm), class_loader(class_loader), load_class_method(nullptr)
+JVMCache::JVMCache(JNIEnv* env, jobject class_loader) : class_loader(class_loader), load_class_method(nullptr), class_cache(), field_cache()
 {
     if (class_loader)
     {
-        auto class_loader_class = make_safe_local<jclass>(jvm->GetObjectClass(class_loader));
-        load_class_method = jvm->GetMethodID(class_loader_class.get(), "loadClass", "(Ljava/lang/String;Z)Ljava/lang/Class;");
+        jclass class_loader_class = env->GetObjectClass(class_loader);
+        if (class_loader_class)
+        {
+            load_class_method = env->GetMethodID(class_loader_class, "loadClass", "(Ljava/lang/String;Z)Ljava/lang/Class;");
+            env->DeleteLocalRef(class_loader_class);
+        }
     }
 }
 
 JVMCache::~JVMCache()
 {
+    /*for (auto&& it : class_cache)
+    {
+        env->DeleteGlobalRef(it.second);
+    }*/
 }
 
-JVMCache::JVMCache(JVMCache&& other) : jvm(other.jvm), class_loader(other.class_loader), load_class_method(other.load_class_method), field_cache(std::move(other.field_cache)), class_cache(std::move(other.class_cache))
+JVMCache::JVMCache(JVMCache&& other) : class_loader(other.class_loader), load_class_method(other.load_class_method), class_cache(std::move(other.class_cache)), field_cache(std::move(other.field_cache))
 {
-    other.jvm = nullptr;
     other.class_loader = nullptr;
     other.load_class_method = nullptr;
     other.class_cache.clear();
@@ -28,13 +35,11 @@ JVMCache::JVMCache(JVMCache&& other) : jvm(other.jvm), class_loader(other.class_
 
 JVMCache& JVMCache::operator = (JVMCache&& other)
 {
-    jvm = other.jvm;
     class_loader = other.class_loader;
     load_class_method = other.load_class_method;
     class_cache = std::move(other.class_cache);
     field_cache = std::move(other.field_cache);
 
-    other.jvm = nullptr;
     other.class_loader = nullptr;
     other.load_class_method = nullptr;
     other.class_cache.clear();
@@ -42,7 +47,7 @@ JVMCache& JVMCache::operator = (JVMCache&& other)
     return *this;
 }
 
-jclass JVMCache::GetClass(std::string_view name) noexcept
+jclass JVMCache::GetClass(JNIEnv* env, std::string_view name) noexcept
 {
     if (auto it = class_cache.find(name); it != class_cache.end())
     {
@@ -50,15 +55,15 @@ jclass JVMCache::GetClass(std::string_view name) noexcept
     }
     else
     {
-        jstring class_name = jvm->NewStringUTF(name.data());
+        jstring class_name = env->NewStringUTF(name.data());
         if (class_name)
         {
-            jclass clazz = static_cast<jclass>(jvm->CallObjectMethod(class_loader, load_class_method, class_name, true));
-            jvm->DeleteLocalRef(class_name);
+            jclass clazz = static_cast<jclass>(env->CallObjectMethod(class_loader, load_class_method, class_name, true));
+            env->DeleteLocalRef(class_name);
 
             if (clazz)
             {
-                jvm->DeleteLocalRef(std::exchange(clazz, static_cast<jclass>(jvm->NewGlobalRef(clazz))));
+                env->DeleteLocalRef(std::exchange(clazz, static_cast<jclass>(env->NewGlobalRef(clazz))));
                 class_cache.emplace(name, clazz);
                 return clazz;
             }
@@ -68,7 +73,7 @@ jclass JVMCache::GetClass(std::string_view name) noexcept
     }
 }
 
-jfieldID JVMCache::GetFieldID(jclass clazz, std::string_view name, std::string_view sig, bool is_static) noexcept
+jfieldID JVMCache::GetFieldID(JNIEnv* env, jclass clazz, std::string_view name, std::string_view sig, bool is_static) noexcept
 {
     std::size_t key = field_hash(clazz, name, sig);
     if (auto it = field_cache.find(key); it != field_cache.end())
@@ -76,7 +81,7 @@ jfieldID JVMCache::GetFieldID(jclass clazz, std::string_view name, std::string_v
         return it->second;
     }
 
-    jfieldID field = is_static ? jvm->GetStaticFieldID(clazz, name.data(), sig.data()) : jvm->GetFieldID(clazz, name.data(), sig.data());
+    jfieldID field = is_static ? env->GetStaticFieldID(clazz, name.data(), sig.data()) : env->GetFieldID(clazz, name.data(), sig.data());
     if (field)
     {
         field_cache[key] = field;
@@ -89,10 +94,6 @@ void JVMCache::clear()
 {
     class_cache.clear();
     field_cache.clear();
-    for (auto &item: class_cache)
-    {
-        item.second.release();
-    }
 }
 
 std::size_t JVMCache::field_hash(jclass clazz, std::string_view field_name, std::string_view signature) noexcept

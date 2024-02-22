@@ -40,14 +40,14 @@ std::unique_ptr<DebugConsole> console;
     GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(module), &this_module);
 
     std::thread([](HMODULE module){
-        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-        if (reflector)
+        auto main_reflector = GetNativeReflector();
+        if (main_reflector)
         {
             #if defined(DEBUG)
             console = std::make_unique<DebugConsole>();
             #endif
 
-            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(main_reflector));
             StartHook();
         }
 
@@ -79,7 +79,7 @@ std::unique_ptr<DebugConsole> console;
 
         disable_app_nap();
 
-        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
+        auto reflector = GetNativeReflector();
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
@@ -115,10 +115,10 @@ std::unique_ptr<DebugConsole> console;
         console = std::make_unique<DebugConsole>();
         #endif
 
-        auto reflector = std::unique_ptr<Reflection>(GetNativeReflector());
-        if (reflector)
+        auto main_reflector = GetNativeReflector();
+        if (main_reflector)
         {
-            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(main_reflector));
             StartHook();
         }
 

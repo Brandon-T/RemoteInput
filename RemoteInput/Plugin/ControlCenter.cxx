@@ -8,7 +8,31 @@
 #include "ReflectionHook.hxx"
 #include "RemoteVM.hxx"
 
-ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> &&reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), command_signal(), response_signal(), sync_signal(), reflector(std::move(reflector)), io_controller(), remote_vm()
+auto create_command_processor = [](auto processor) {
+    std::thread thread = std::thread([processor]{
+        #if defined(_WIN32) || defined(_WIN64)
+        HANDLE this_process = GetCurrentProcess();
+        SetPriorityClass(this_process, NORMAL_PRIORITY_CLASS);
+
+        HANDLE this_thread = GetCurrentThread();
+        SetThreadPriority(this_thread, THREAD_PRIORITY_HIGHEST);
+        #else
+        pthread_t this_thread = pthread_self();
+        if (this_thread)
+        {
+            struct sched_param params = {0};
+            params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+            pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+        }
+        #endif // defined
+
+        processor();
+    });
+
+    thread.detach();
+};
+
+ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), command_signal(), response_signal(), sync_signal(), main_reflector(std::move(reflector)), io_controller(), remote_vm()
 {
     if (pid <= 0)
     {
@@ -35,7 +59,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
         this->set_parent_process_id(-1);
         this->set_parent_thread_id(-1);
 
-        if (this->reflector)
+        if (this->main_reflector)
         {
             std::thread thread = std::thread([this]{
                 #if defined(_WIN32) || defined(_WIN64)
@@ -54,11 +78,10 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
                 }
                 #endif // defined
 
-                if (this->reflector->Attach())
+                if (this->main_reflector->Attach())
                 {
-                    this->io_controller = std::make_unique<InputOutput>(this->reflector.get());
-                    this->remote_vm = std::make_unique<RemoteVM>(this->reflector->getEnv(),
-                                                                 this);
+                    this->io_controller = std::make_unique<InputOutput>(this->main_reflector.get());
+                    this->remote_vm = std::make_unique<RemoteVM>(this->main_reflector->getEnv(), this);
 
                     while(!stopped)
                     {
@@ -79,7 +102,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
                             break;
                         }
 
-                        JNIEnv* env = this->reflector->getEnv();
+                        JNIEnv* env = this->main_reflector->getEnv();
                         env->PushLocalFrame(150'000);
                         process_command();
                         response_signal->signal();
@@ -96,10 +119,9 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
                         this->io_controller.reset();
                     }
 
-                    if (this->reflector)
+                    if (this->main_reflector)
                     {
-                        this->reflector->Detach();
-                        this->reflector.reset();
+                        this->main_reflector.reset();
                     }
                 }
             });
@@ -112,7 +134,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 ControlCenter::~ControlCenter()
 {
     terminate();
-    //reflector.reset();
+    //main_reflector.reset();
 
     if (memory_map)
     {
@@ -162,11 +184,9 @@ void ControlCenter::process_command() noexcept
                 this->io_controller.reset();
             }
 
-
-            if (this->reflector)
+            if (this->main_reflector)
             {
-                this->reflector->Detach();
-                this->reflector.reset();
+                this->main_reflector.reset();
             }
 
             std::exit(0);
@@ -381,7 +401,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            jobject result = reflector->getField<jobject>(hook.object, hook);
+            jobject result = main_reflector->getField<jobject>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -390,7 +410,7 @@ void ControlCenter::process_command() noexcept
         {
             jobject first = stream.read<jobject>();
             jobject second = stream.read<jobject>();
-            bool result = reflector->getVM()->IsSameObject(first, second);
+            bool result = main_reflector->getEnv()->IsSameObject(first, second);
             stream.write(result);
         }
             break;
@@ -401,14 +421,14 @@ void ControlCenter::process_command() noexcept
             jobject object = stream.read<jobject>();
             std::string className = stream.read<std::string>();
 
-            jclass cls = reflector->LoadClass(className.c_str());
+            jclass cls = main_reflector->LoadClass(className.c_str());
             if (!cls)
             {
-                result = reflector->IsDecendentOf(object, className.c_str());
+                result = main_reflector->IsDecendentOf(object, className.c_str());
             }
             else
             {
-                result = reflector->getEnv()->IsInstanceOf(object, cls);
+                result = main_reflector->getEnv()->IsInstanceOf(object, cls);
             }
 
             stream.write(result);
@@ -420,7 +440,7 @@ void ControlCenter::process_command() noexcept
             jobject object = stream.read<jobject>();
             if (object)
             {
-                reflector->getEnv()->DeleteGlobalRef(object);
+                main_reflector->getEnv()->DeleteGlobalRef(object);
             }
         }
             break;
@@ -433,7 +453,7 @@ void ControlCenter::process_command() noexcept
                 jobject object = stream.read<jobject>();
                 if (objects[i])
                 {
-                    reflector->getEnv()->DeleteGlobalRef(objects[i]);
+                    main_reflector->getEnv()->DeleteGlobalRef(objects[i]);
                 }
             }
         }
@@ -444,7 +464,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            jchar utf16_char = reflector->getPrimitive<jchar>(hook.object, hook);
+            jchar utf16_char = main_reflector->getPrimitive<jchar>(hook.object, hook);
             char result = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>().to_bytes(utf16_char)[0];
             stream.write(result);
         }
@@ -455,7 +475,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            std::uint8_t result = reflector->getPrimitive<jbyte>(hook.object, hook);
+            std::uint8_t result = main_reflector->getPrimitive<jbyte>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -465,7 +485,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            bool result = reflector->getPrimitive<jboolean>(hook.object, hook);
+            bool result = main_reflector->getPrimitive<jboolean>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -475,7 +495,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            std::int16_t result = reflector->getPrimitive<jshort>(hook.object, hook);
+            std::int16_t result = main_reflector->getPrimitive<jshort>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -485,7 +505,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            std::int32_t result = reflector->getPrimitive<jint>(hook.object, hook);
+            std::int32_t result = main_reflector->getPrimitive<jint>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -495,7 +515,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            std::int64_t result = reflector->getPrimitive<jlong>(hook.object, hook);
+            std::int64_t result = main_reflector->getPrimitive<jlong>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -505,7 +525,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            float result = reflector->getPrimitive<jfloat>(hook.object, hook);
+            float result = main_reflector->getPrimitive<jfloat>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -515,7 +535,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            double result = reflector->getPrimitive<jdouble>(hook.object, hook);
+            double result = main_reflector->getPrimitive<jdouble>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -524,7 +544,7 @@ void ControlCenter::process_command() noexcept
         {
             ReflectionHook hook;
             stream >> hook;
-            stream.write(reflector->getField<std::string>(hook.object, hook));
+            stream.write(main_reflector->getField<std::string>(hook.object, hook));
         }
             break;
 
@@ -533,7 +553,7 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            jarray result = reflector->getField<jarray>(hook.object, hook);
+            jarray result = main_reflector->getField<jarray>(hook.object, hook);
             stream.write(result);
         }
             break;
@@ -541,7 +561,7 @@ void ControlCenter::process_command() noexcept
         case EIOSCommand::REFLECT_ARRAY_SIZE:
         {
             jobjectArray array = stream.read<jobjectArray>();
-            std::size_t length = reflector->getEnv()->GetArrayLength(array);
+            std::size_t length = main_reflector->getEnv()->GetArrayLength(array);
             stream.write(length);
         }
             break;
@@ -551,10 +571,10 @@ void ControlCenter::process_command() noexcept
             ReflectionHook hook;
             stream >> hook;
 
-            jarray array = reflector->getField<jarray>(hook.object, hook);
+            jarray array = main_reflector->getField<jarray>(hook.object, hook);
             if (array)
             {
-                std::size_t length = reflector->getEnv()->GetArrayLength(array);
+                std::size_t length = main_reflector->getEnv()->GetArrayLength(array);
                 stream.write(length);
                 stream.write(array);
             }
@@ -616,7 +636,7 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
     {
         case ReflectionType::CHAR:
         {
-            JNIEnv* env = reflector->getEnv();
+            JNIEnv* env = main_reflector->getEnv();
             char16_t* result = static_cast<char16_t*>(env->GetPrimitiveArrayCritical(array, nullptr));
             std::string utf8_result = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>().to_bytes(result);
             env->ReleasePrimitiveArrayCritical(array, result, JNI_ABORT);
@@ -632,7 +652,7 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
         case ReflectionType::FLOAT:
         case ReflectionType::DOUBLE:
         {
-            JNIEnv* env = reflector->getEnv();
+            JNIEnv* env = main_reflector->getEnv();
             std::size_t element_size = reflect_size_for_type(type);
             char* result = static_cast<char*>(env->GetPrimitiveArrayCritical(array, nullptr));
             stream.write(result + (index * element_size), length * element_size);
@@ -642,12 +662,11 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
 
         case ReflectionType::STRING:
         {
-            JNIEnv* env = reflector->getEnv();
+            JNIEnv* env = main_reflector->getEnv();
             for (std::size_t i = 0; i < length; ++i)
             {
                 jobject element = env->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
-                stream.write(reflector->getField<std::string>(static_cast<jstring>(element)));
-                env->DeleteLocalRef(element);
+                stream.write(main_reflector->getField<std::string>(static_cast<jstring>(element)));
             }
         }
             break;
@@ -655,7 +674,7 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
         case ReflectionType::OBJECT:
         {
             std::vector<jobject> objects(length);
-            JNIEnv* env = reflector->getEnv();
+            JNIEnv* env = this->main_reflector->getEnv();
             for (std::size_t i = 0; i < length; ++i)
             {
                 jobject result = env->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
@@ -668,7 +687,7 @@ void ControlCenter::send_array_response_index_length(Stream &stream, jarray arra
         case ReflectionType::ARRAY:
         {
             std::vector<jobject> objects(length);
-            JNIEnv* env = reflector->getEnv();
+            JNIEnv* env = this->main_reflector->getEnv();
             for (std::size_t i = 0; i < length; ++i)
             {
                 jobject result = env->GetObjectArrayElement(static_cast<jobjectArray>(array), index + i);
@@ -696,7 +715,7 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
     {
         case ReflectionType::CHAR:
         {
-            JNIEnv* env = reflector->getEnv();
+            JNIEnv* env = main_reflector->getEnv();
             char16_t* result = static_cast<char16_t*>(env->GetPrimitiveArrayCritical(array, nullptr));
             std::string utf8_result = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>().to_bytes(result);
             env->ReleasePrimitiveArrayCritical(array, result, JNI_ABORT);
@@ -716,7 +735,7 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
         case ReflectionType::FLOAT:
         case ReflectionType::DOUBLE:
         {
-            JNIEnv* env = reflector->getEnv();
+            JNIEnv* env = main_reflector->getEnv();
             std::size_t element_size = reflect_size_for_type(type);
 
             char* result = static_cast<char*>(env->GetPrimitiveArrayCritical(array, nullptr));
@@ -732,8 +751,8 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
         {
             for (std::size_t i = 0; i < length; ++i)
             {
-                jobject element = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
-                stream.write(reflector->getField<std::string>(static_cast<jstring>(element)));
+                jobject element = this->main_reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
+                stream.write(this->main_reflector->getField<std::string>(static_cast<jstring>(element)));
             }
         }
             break;
@@ -744,8 +763,8 @@ void ControlCenter::send_array_response_indices(Stream &stream, jarray array, Re
             std::vector<jobject> objects(length);
             for (std::size_t i = 0; i < length; ++i)
             {
-                jobject result = reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
-                objects[i] = result ? reflector->getEnv()->NewGlobalRef(result) : nullptr;
+                jobject result = this->main_reflector->getEnv()->GetObjectArrayElement(static_cast<jobjectArray>(array), indices[i]);
+                objects[i] = result ? this->main_reflector->getEnv()->NewGlobalRef(result) : nullptr;
             }
             stream.write(&objects[0], objects.size() * sizeof(jobject));
         }
@@ -771,7 +790,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
 
     if (dimensions == 1)
     {
-        JNIEnv* env = reflector->getEnv();
+        JNIEnv* env = this->main_reflector->getEnv();
         std::size_t index = stream.read<jsize>();
         std::size_t real_length = env->GetArrayLength(array);
         std::size_t ideal_length = std::min(length, real_length);
@@ -788,7 +807,7 @@ void ControlCenter::process_reflect_array_index_length(Stream &stream, jarray ar
         return;
     }
 
-    JNIEnv* env = reflector->getEnv();
+    JNIEnv* env = this->main_reflector->getEnv();
 
     for (std::size_t i = 0; i < dimensions - 1; ++i)
     {
@@ -839,14 +858,14 @@ void ControlCenter::process_reflect_array_all(Stream &stream, jarray array, Refl
 
     if (dimensions == 1)
     {
-        JNIEnv* env = reflector->getEnv();
+        JNIEnv* env = main_reflector->getEnv();
         std::size_t length = env->GetArrayLength(array);
         stream.write(length);
         this->send_array_response_index_length(stream, array, type, 0, length);
         return;
     }
 
-    JNIEnv* env = reflector->getEnv();
+    JNIEnv* env = main_reflector->getEnv();
     std::size_t length = env->GetArrayLength(array);
     stream.write(length);
 
@@ -993,7 +1012,7 @@ void ControlCenter::kill_zombie_process(std::int32_t pid) noexcept
 
 bool ControlCenter::hasReflector() const noexcept
 {
-    return reflector != nullptr;
+    return main_reflector != nullptr;
 }
 
 ImageData* ControlCenter::get_image_data() const noexcept
@@ -1789,12 +1808,12 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept
 
 java::Applet ControlCenter::reflect_applet() const noexcept
 {
-    return {reflector->getEnv(), reflector->getApplet(), false};
+    return {main_reflector->getEnv(), main_reflector->getApplet(), false};
 }
 
 java::Component ControlCenter::reflect_canvas() const noexcept
 {
-    java::Applet applet{reflector->getEnv(), reflector->getApplet(), false};
+    java::Applet applet{main_reflector->getEnv(), main_reflector->getApplet(), false};
     return applet.getComponent(0);
 }
 

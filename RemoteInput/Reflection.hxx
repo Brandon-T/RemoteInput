@@ -30,29 +30,29 @@ enum class ReflectionType: std::uint8_t
 class Reflection final
 {
 private:
-    #define HANDLE_JAVA_CLASS_NOT_FOUND(RESULT) \
+#define HANDLE_JAVA_CLASS_NOT_FOUND(RESULT) \
     if (!cls)\
     {\
         fprintf(stderr, "No Such Class %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
-        jvm->ExceptionClear();\
+        env->ExceptionClear();\
         return RESULT;\
     }
 
-    #define HANDLE_JAVA_FIELD_NOT_FOUND(RESULT) \
+#define HANDLE_JAVA_FIELD_NOT_FOUND(RESULT) \
     if (!field)\
     {\
         fprintf(stderr, "No Such %s Field: %s.%s -> %s\n", object ? "Instance" : "Static", hook.cls.c_str(), hook.field.c_str(), hook.desc.c_str());\
-        jvm->ExceptionClear();\
+        env->ExceptionClear();\
         return RESULT;\
     }
 
     template<typename T, typename U>
-    auto make_safe_local(U object) const noexcept
+    static auto make_safe_local(JNIEnv* env, U object) noexcept
     {
-        auto deleter = [&](T ptr) {
-            if (jvm && ptr)
+        auto deleter = [env](T ptr) {
+            if (env && ptr)
             {
-                jvm->DeleteLocalRef(static_cast<jobject>(ptr));
+                env->DeleteLocalRef(static_cast<jobject>(ptr));
             }
         };
 
@@ -62,11 +62,11 @@ private:
     template<typename T, typename U>
     T promote_to_global(U object) const noexcept
     {
-        jvm->DeleteLocalRef(std::exchange(object, jvm->NewGlobalRef(static_cast<jobject>(object))));
+        env->DeleteLocalRef(std::exchange(object, env->NewGlobalRef(static_cast<jobject>(object))));
         return static_cast<T>(object);
     }
 
-    JVM* jvm;
+    JNIEnv* env;
     jobject frame;
     jobject applet;
     jobject classLoader;
@@ -75,21 +75,21 @@ private:
     void PrintClasses() const noexcept;
     jfieldID GetFieldID(jclass cls, std::string_view name, std::string_view desc, bool is_static) noexcept;
 
-public:
     Reflection() noexcept;
-    Reflection(JNIEnv* env) noexcept;
-    Reflection(Reflection&& other) noexcept;
     Reflection(const Reflection& other) = delete;
+
+    bool Detach() noexcept;
+
+public:
+    Reflection(Reflection&& other) noexcept;
     ~Reflection() noexcept;
 
     Reflection& operator = (const Reflection& other) = delete;
     Reflection& operator = (Reflection&& other) noexcept;
 
-    bool Initialize(jobject awtFrame) noexcept;
-
-    bool Attach() const noexcept;
-    bool AttachAsDaemon() const noexcept;
-    bool Detach() const noexcept;
+    static std::unique_ptr<Reflection> Create(jobject awtFrame) noexcept;
+    std::unique_ptr<Reflection> Clone() noexcept;
+    bool Attach() noexcept;
 
     std::string GetClassName(jobject object) const noexcept;
     std::string GetClassType(jobject object) const noexcept;
@@ -100,8 +100,6 @@ public:
 
 
     jobject getApplet() const noexcept;
-
-    JVM* getVM() const noexcept;
     JNIEnv* getEnv() const noexcept;
 
     template<typename T>
@@ -156,14 +154,14 @@ Reflection::getField(jstring string) noexcept
 {
     if (string)
     {
-        jsize length = jvm->GetStringUTFLength(string);
+        jsize length = env->GetStringUTFLength(string);
         if (length > 0)
         {
-            const char* chars = jvm->GetStringUTFChars(string, nullptr);
+            const char* chars = env->GetStringUTFChars(string, nullptr);
             if (chars)
             {
                 std::string result = std::string(chars, length);
-                jvm->ReleaseStringUTFChars(string, chars);
+                env->ReleaseStringUTFChars(string, chars);
                 return result;
             }
         }
@@ -179,7 +177,7 @@ Reflection::getField(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(std::string());
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(std::string());
-    auto string = make_safe_local<jstring>(object ? jvm->GetObjectField(object, field) : jvm->GetStaticObjectField(cls, field));
+    auto string = make_safe_local<jstring>(env, object ? env->GetObjectField(object, field) : env->GetStaticObjectField(cls, field));
     return getField<T>(string.get());
 }
 
@@ -192,7 +190,7 @@ Reflection::getField(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(nullptr);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(nullptr);
-    return promote_to_global<T>(object ? jvm->GetObjectField(object, field) : jvm->GetStaticObjectField(cls, field));
+    return promote_to_global<T>(object ? env->GetObjectField(object, field) : env->GetStaticObjectField(cls, field));
 }
 
 template<typename T>
@@ -203,7 +201,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(-1);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(-1);
-    return object ? jvm->GetIntField(object, field) : jvm->GetStaticIntField(cls, field);
+    return object ? env->GetIntField(object, field) : env->GetStaticIntField(cls, field);
 }
 
 template<typename T>
@@ -214,7 +212,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(-1);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(-1);
-    return object ? jvm->GetLongField(object, field) : jvm->GetStaticLongField(cls, field);
+    return object ? env->GetLongField(object, field) : env->GetStaticLongField(cls, field);
 }
 
 template<typename T>
@@ -225,7 +223,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(false);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(false);
-    return object ? jvm->GetBooleanField(object, field) : jvm->GetStaticBooleanField(cls, field);
+    return object ? env->GetBooleanField(object, field) : env->GetStaticBooleanField(cls, field);
 }
 
 template<typename T>
@@ -236,7 +234,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(0);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(0);
-    return object ? jvm->GetByteField(object, field) : jvm->GetStaticByteField(cls, field);
+    return object ? env->GetByteField(object, field) : env->GetStaticByteField(cls, field);
 }
 
 template<typename T>
@@ -247,7 +245,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND('\0');
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND('\0');
-    return object ? jvm->GetCharField(object, field) : jvm->GetStaticCharField(cls, field);
+    return object ? env->GetCharField(object, field) : env->GetStaticCharField(cls, field);
 }
 
 template<typename T>
@@ -258,7 +256,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(-1);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(-1);
-    return object ? jvm->GetShortField(object, field) : jvm->GetStaticShortField(cls, field);
+    return object ? env->GetShortField(object, field) : env->GetStaticShortField(cls, field);
 }
 
 template<typename T>
@@ -269,7 +267,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(-1.0);
-    return object ? jvm->GetFloatField(object, field) : jvm->GetStaticFloatField(cls, field);
+    return object ? env->GetFloatField(object, field) : env->GetStaticFloatField(cls, field);
 }
 
 template<typename T>
@@ -280,7 +278,7 @@ Reflection::getPrimitive(jobject object, const ReflectionHook &hook) noexcept
     HANDLE_JAVA_CLASS_NOT_FOUND(-1.0);
     jfieldID field = GetFieldID(cls, hook.field, hook.desc, !object);
     HANDLE_JAVA_FIELD_NOT_FOUND(-1.0);
-    return object ? jvm->GetDoubleField(object, field) : jvm->GetStaticDoubleField(cls, field);
+    return object ? env->GetDoubleField(object, field) : env->GetStaticDoubleField(cls, field);
 }
 
 #endif // REFLECTION_HXX_INCLUDED

@@ -130,6 +130,7 @@ std::vector<std::int32_t> InjectProcesses(const char* process_name) noexcept
 {
     std::vector<std::int32_t> result;
     std::vector<std::int32_t> pids = get_pids(process_name);
+
     for (std::int32_t pid : pids)
     {
         if (InjectProcess(pid) != -1)
@@ -226,7 +227,7 @@ void* GetModuleHandle(const char* module_name) noexcept
 - (jobject)awtComponent:(JNIEnv*)env;
 @end
 
-Reflection* GetNativeReflector() noexcept
+std::unique_ptr<Reflection> GetNativeReflector() noexcept
 {
 //	auto ModuleLoaded = [](std::string name) -> bool {
 //		void* lib = dlopen(name.c_str(), RTLD_GLOBAL | RTLD_NOLOAD);
@@ -256,8 +257,11 @@ Reflection* GetNativeReflector() noexcept
 //		return nullptr;
 //	}
 
-    auto IsValidFrame = [&](Reflection* reflection, jobject object) -> bool {
-        return reflection->IsDecendentOf(object, "java/awt/Frame");
+    auto IsValidFrame = [](JNIEnv* env, jobject object) -> bool {
+        jclass cls = env->FindClass("java/awt/Frame");
+        bool result = env->IsInstanceOf(object, cls);
+        env->DeleteLocalRef(cls);
+        return result;
     };
 
     auto GetWindowViews = [&]() -> std::vector<NSView*> {
@@ -281,12 +285,12 @@ Reflection* GetNativeReflector() noexcept
         return nullptr;
     }
 
-    Reflection* reflection = new Reflection();
-
-    if (reflection->Attach())
+    JVM vm = JVM();
+    JNIEnv* env = nullptr;
+    if (vm.AttachCurrentThread(&env) == JNI_OK)
     {
+        std::unique_ptr<Reflection> reflection;
         auto hasReflection = TimeOut(20, [&]{
-            JNIEnv* env = reflection->getEnv();
             jclass cls = env->FindClass("java/awt/Frame");
             if (!cls)
             {
@@ -300,6 +304,8 @@ Reflection* GetNativeReflector() noexcept
             }
 
             jobjectArray frames = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, method));
+            env->DeleteLocalRef(cls);
+
             if (!frames)
             {
                 return false;
@@ -309,12 +315,23 @@ Reflection* GetNativeReflector() noexcept
             for (jsize i = 0; i < size; ++i)
             {
                 jobject frame = env->GetObjectArrayElement(frames, i);
-                if (IsValidFrame(reflection, frame) && reflection->Initialize(frame))
+                if (frame)
                 {
-                    return true;
+                    if (IsValidFrame(env, frame))
+                    {
+                        reflection = Reflection::Create(frame);
+                        if (reflection)
+                        {
+                            env->DeleteLocalRef(frames);
+                            return true;
+                        }
+                    }
+
+                    env->DeleteLocalRef(frame);
                 }
             }
 
+            env->DeleteLocalRef(frames);
             return false;
         });
 
@@ -322,10 +339,17 @@ Reflection* GetNativeReflector() noexcept
             for (auto&& view : GetWindowViews())
             {
                 //TODO: Check if we can call "awt_GetComponent" from the JDK like on Linux
-                jobject object = [view awtComponent:reflection->getEnv()];  //java.awt.Frame
-                if (IsValidFrame(reflection, object) && reflection->Initialize(object))
+                jobject frame = [view awtComponent:env];  //java.awt.Frame
+                if (frame)
                 {
-                    return true;
+                    if (IsValidFrame(env, frame))
+                    {
+                        reflection = Reflection::Create(frame);
+                        if (reflection)
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
             return false;
@@ -333,14 +357,11 @@ Reflection* GetNativeReflector() noexcept
 
         if (hasReflection || hasReflection2)
         {
-            reflection->Detach();
             return reflection;
         }
-
-        reflection->Detach();
     }
 
-    delete reflection;
+    vm.DetachCurrentThread();
     return nullptr;
 }
 
