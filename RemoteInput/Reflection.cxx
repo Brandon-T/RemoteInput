@@ -1,17 +1,17 @@
 #include "Reflection.hxx"
 #include <utility>
 
-Reflection::Reflection() noexcept : env(nullptr), frame(nullptr), applet(nullptr), classLoader(nullptr), cache(env, classLoader)
+Reflection::Reflection() noexcept : env(nullptr), frame(nullptr), applet(nullptr), classLoader(nullptr), cache(nullptr)
 {
 }
 
-Reflection::Reflection(Reflection&& other) noexcept : env(other.env), frame(other.frame), applet(other.applet), classLoader(other.classLoader), cache(std::move(other.cache))
+Reflection::Reflection(Reflection&& other) noexcept : env(other.env), frame(other.frame), applet(other.applet), classLoader(other.classLoader), cache(other.cache)
 {
     other.env = nullptr;
     other.frame = nullptr;
     other.applet = nullptr;
     other.classLoader = nullptr;
-    other.cache = {nullptr, nullptr};
+    other.cache = nullptr;
 }
 
 Reflection::~Reflection() noexcept
@@ -32,7 +32,6 @@ Reflection& Reflection::operator = (Reflection&& other) noexcept
     std::swap(frame, other.frame);
     std::swap(applet, other.applet);
     std::swap(classLoader, other.classLoader);
-    std::swap(cache, other.cache);
     return *this;
 }
 
@@ -159,7 +158,7 @@ std::unique_ptr<Reflection> Reflection::Create(jobject awtFrame) noexcept
         //Get Canvas's ClassLoader.
         mid = env->GetMethodID(cls.get(), "getClassLoader", "()Ljava/lang/ClassLoader;");
         reflection->classLoader = env->NewGlobalRef(make_safe_local<jobject>(env, env->CallObjectMethod(clsObj.get(), mid)).get());
-        reflection->cache = {env, reflection->classLoader};
+        reflection->cache = std::make_shared<JVMCache>(env, reflection->classLoader);
         return reflection;
     }
     return nullptr;
@@ -175,7 +174,7 @@ std::unique_ptr<Reflection> Reflection::Clone() noexcept
         reflection->frame = new_env->NewGlobalRef(frame);
         reflection->applet = new_env->NewGlobalRef(applet);
         reflection->classLoader = new_env->NewGlobalRef(classLoader);
-        reflection->cache = {env, classLoader};
+        reflection->cache = cache;
         return reflection;
     }
     return {};
@@ -265,17 +264,20 @@ bool Reflection::IsDecendentOf(jobject object, const char* className) const noex
 
 jclass Reflection::LoadClass(std::string_view name) noexcept
 {
-    return cache.GetClass(env, name);
+    return cache->GetClass(env, name);
 }
 
 void Reflection::ClearCache() noexcept
 {
-    cache.clear();
+    if (cache.use_count() == 1)
+    {
+        cache->clear();
+    }
 }
 
 jfieldID Reflection::GetFieldID(jclass cls, std::string_view name, std::string_view desc, bool is_static) noexcept
 {
-    return cache.GetFieldID(env, cls, name, desc, is_static);
+    return cache->GetFieldID(env, cls, name, desc, is_static);
 }
 
 jobject Reflection::getApplet() const noexcept

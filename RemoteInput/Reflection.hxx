@@ -70,7 +70,7 @@ private:
     jobject frame;
     jobject applet;
     jobject classLoader;
-    JVMCache cache;
+    std::shared_ptr<JVMCache> cache;
 
     void PrintClasses() const noexcept;
     jfieldID GetFieldID(jclass cls, std::string_view name, std::string_view desc, bool is_static) noexcept;
