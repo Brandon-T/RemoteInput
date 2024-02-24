@@ -679,6 +679,120 @@ void InputOutput::send_key(char key, std::int32_t key_down_time, std::int32_t ke
     }
 }
 
+void InputOutput::key_send(std::string string, std::vector<std::int32_t> sleeptimes) const noexcept
+{
+    extern std::unique_ptr<ControlCenter> control_center;
+    if (!control_center)
+    {
+        return;
+    }
+
+    java::Component receiver = control_center->reflect_canvas();
+    JNIEnv* env = receiver.getEnv();
+
+    if (!this->has_focus(&receiver))
+    {
+        this->gain_focus(&receiver);
+    }
+
+    bool isShiftDown = false;
+    std::int32_t sleepindex = 0;
+
+    for (std::size_t i = 0; i < string.length(); ++i)
+    {
+        char c = string[i];
+        char n = i == string.length() - 1 ? '\0' : string[i + 1];
+        std::int32_t modifiers = this->ModifiersForChar(c);
+
+        //Modifier Key
+        if (modifiers & java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK)
+        {
+            if (!isShiftDown)
+            {
+                isShiftDown = true;
+
+                std::int32_t code = VK_LSHIFT;
+                std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                std::int32_t modifiers = java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+                std::int32_t keycode = GetJavaKeyCode(code);
+                std::int32_t location = GetKeyLocation(code);
+
+                java::KeyEvent::Post(env,
+                                     &receiver,
+                                     java::KeyEvent::KeyCodes::KEY_PRESSED,
+                                     when,
+                                     modifiers,
+                                     keycode,
+                                     static_cast<jchar>(java::KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                                     location);
+
+                yield_thread(std::chrono::milliseconds(sleeptimes[sleepindex++]));
+            }
+        }
+
+        //Character Key
+        std::int32_t code = static_cast<std::int32_t>(c);
+        std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        std::int32_t keycode = CharToJavaKeyCode(code);
+        std::int32_t location = GetKeyLocation(code);
+
+        java::KeyEvent::Post(env,
+                             &receiver,
+                             java::KeyEvent::KeyCodes::KEY_PRESSED,
+                             when,
+                             modifiers,
+                             keycode,
+                             static_cast<jchar>(c),
+                             location);
+
+        java::KeyEvent::Post(env,
+                             &receiver,
+                             java::KeyEvent::KeyCodes::KEY_TYPED,
+                             when,
+                             modifiers,
+                             0,
+                             static_cast<jchar>(c),
+                             java::KeyEvent::KeyCodes::KEY_LOCATION_UNKNOWN);
+
+        yield_thread(std::chrono::milliseconds(sleeptimes[sleepindex++]));
+        when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+        java::KeyEvent::Post(env,
+                             &receiver,
+                             java::KeyEvent::KeyCodes::KEY_RELEASED,
+                             when,
+                             modifiers,
+                             keycode,
+                             static_cast<jchar>(c),
+                             location);
+
+        yield_thread(std::chrono::milliseconds(sleeptimes[sleepindex++]));
+
+        //Modifier Key
+        if ((isShiftDown && i == string.length() - 1) || (n != '\0' && !(this->ModifiersForChar(n) & java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK)))
+        {
+            isShiftDown = false;
+
+            std::int32_t code = VK_LSHIFT;
+            std::int64_t when = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            std::int32_t modifiers = java::InputEvent::InputEventMasks::SHIFT_DOWN_MASK;
+            std::int32_t keycode = GetJavaKeyCode(code);
+            std::int32_t location = GetKeyLocation(code);
+
+            java::KeyEvent::Post(env,
+                                 &receiver,
+                                 java::KeyEvent::KeyCodes::KEY_RELEASED,
+                                 when,
+                                 modifiers,
+                                 keycode,
+                                 static_cast<jchar>(java::KeyEvent::KeyCodes::CHAR_UNDEFINED),
+                                 location);
+
+            yield_thread(std::chrono::milliseconds(sleeptimes[sleepindex++]));
+        }
+    }
+}
+
 bool InputOutput::has_focus() const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
