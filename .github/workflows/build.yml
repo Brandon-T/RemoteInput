@@ -34,7 +34,7 @@ jobs:
             release: libRemoteInput-x86_64.so
 
             #MacOS-64
-          - os: macos-latest
+          - os: macos-13 #macos-latest
             name: MacOS-64
             other_linker_flags: '-m64'
             arch: x86_64
