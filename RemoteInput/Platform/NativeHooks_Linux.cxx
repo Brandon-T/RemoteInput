@@ -492,7 +492,7 @@ void ReadPixelBuffers(GLXDrawable ctx, GLubyte* dest, GLuint (&pbo)[2], GLint wi
     index = (index + 1) % 2;
     nextIndex = (index + 1) % 2;
 
-    //read back-buffer.
+    //Read back-buffer.
     glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
     glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, nullptr);
@@ -511,7 +511,9 @@ void ReadPixelBuffers(GLXDrawable ctx, GLubyte* dest, GLuint (&pbo)[2], GLint wi
         glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, dest);
     }
 
+    //Restore state
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
 #if defined(USE_DETOURS)

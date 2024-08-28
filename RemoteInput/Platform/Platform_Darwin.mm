@@ -290,7 +290,7 @@ std::unique_ptr<Reflection> GetNativeReflector() noexcept
     if (vm.AttachCurrentThread(&env) == JNI_OK)
     {
         std::unique_ptr<Reflection> reflection;
-        auto hasReflection = TimeOut(20, [&]{
+        bool hasReflection = TimeOut(20, [&]{
             jclass cls = env->FindClass("java/awt/Frame");
             if (!cls)
             {
@@ -335,7 +335,7 @@ std::unique_ptr<Reflection> GetNativeReflector() noexcept
             return false;
         });
 
-        auto hasReflection2 = TimeOut(20, [&]{
+        bool hasReflection2 = !hasReflection && TimeOut(20, [&]{
             for (auto&& view : GetWindowViews())
             {
                 //TODO: Check if we can call "awt_GetComponent" from the JDK like on Linux

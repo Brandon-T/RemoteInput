@@ -936,17 +936,19 @@ bool IsGLExtensionsSupported(HDC hdc, std::string extension) noexcept
     return std::binary_search(extensions.begin(), extensions.end(), extension);
 }
 
-void LoadOpenGLExtensions() noexcept
+bool LoadOpenGLExtensions() noexcept
 {
-    static std::once_flag token = {};
-    std::call_once(token, [&]{
+    if (!glGenBuffers)
+    {
         glGenBuffers = reinterpret_cast<decltype(glGenBuffers)>(wglGetProcAddress("glGenBuffers"));
         glDeleteBuffers = reinterpret_cast<decltype(glDeleteBuffers)>(wglGetProcAddress("glDeleteBuffers"));
         glBindBuffer = reinterpret_cast<decltype(glBindBuffer)>(wglGetProcAddress("glBindBuffer"));
         glBufferData = reinterpret_cast<decltype(glBufferData)>(wglGetProcAddress("glBufferData"));
         glMapBuffer = reinterpret_cast<decltype(glMapBuffer)>(wglGetProcAddress("glMapBuffer"));
         glUnmapBuffer = reinterpret_cast<decltype(glUnmapBuffer)>(wglGetProcAddress("glUnmapBuffer"));
-    });
+    }
+
+    return glGenBuffers && glDeleteBuffers && glBindBuffer && glBufferData && glMapBuffer && glUnmapBuffer;
 }
 
 void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height, GLint stride) noexcept
@@ -975,11 +977,11 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
         //Generate buffers
         glGenBuffers(2, pbo);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
-        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
+        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, nullptr, GL_STREAM_READ);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
         glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[1]);
-        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, 0, GL_STREAM_READ);
+        glBufferData(GL_PIXEL_PACK_BUFFER, width * height * stride, nullptr, GL_STREAM_READ);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
     }
 }
@@ -1009,7 +1011,7 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
     index = (index + 1) % 2;
     nextIndex = (index + 1) % 2;
 
-    //read back-buffer.
+    //Read back-buffer.
     glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[index]);
     glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, nullptr);
@@ -1028,7 +1030,9 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
         glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, dest);
     }
 
+    //Restore state
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
 void PushGLContext(HDC hdc, GLint width, GLint height) noexcept
@@ -1132,7 +1136,11 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
 
             //Check if extensions are supported
             //This check is needed for renderers that do not support pixel buffer objects or vertex buffer objects
-            bool hasGLExtension = IsGLExtensionsSupported(hdc, "GL_ARB_vertex_buffer_object") || IsGLExtensionsSupported(hdc, "GL_ARB_pixel_buffer_object");
+            //static bool hasGLExtension = IsGLExtensionsSupported(hdc, "GL_ARB_vertex_buffer_object") || IsGLExtensionsSupported(hdc, "GL_ARB_pixel_buffer_object");
+
+            // The above extension check is unreliable!
+            // It's best to attempt to load the extensions and see if they exist.
+            static bool hasGLExtension = LoadOpenGLExtensions();
 
             //Render to Shared Memory
             std::uint8_t* dest = control_center->get_image();
@@ -1142,7 +1150,6 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
                 if (hasGLExtension)
                 {
                     //Performance Boost! :D
-                    LoadOpenGLExtensions();
                     GeneratePixelBuffers(hdc, pbo, width, height, 4);
                     ReadPixelBuffers(hdc, dest, pbo, width, height, 4, format);
                 }

@@ -162,7 +162,7 @@ void RGBA(std::uint32_t colour, std::uint8_t& r, std::uint8_t& g, std::uint8_t& 
     a = (colour & 0xFF);
 }
 
-void FlipImageBytes(void* In, void* &Out, std::int32_t width, std::int32_t height, std::uint32_t Bpp) noexcept
+void FlipImageBytes(void* In, void* Out, std::int32_t width, std::int32_t height, std::uint32_t Bpp) noexcept
 {
     std::size_t Chunk = (Bpp > 24 ? width * 4 : width * 3 + width % 4);
    std::uint8_t* Destination = static_cast<std::uint8_t*>(Out);

@@ -110,7 +110,7 @@ void alpha_blend_pixels(S source, D dest, std::int32_t width, std::int32_t heigh
     }
 }
 
-void FlipImageBytes(void* In, void* &Out, std::int32_t width, std::int32_t height, std::uint32_t Bpp) noexcept;
+void FlipImageBytes(void* In, void* Out, std::int32_t width, std::int32_t height, std::uint32_t Bpp) noexcept;
 void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept;
 void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept;
 
