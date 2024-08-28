@@ -704,6 +704,46 @@ void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept
     PascalWrite(Result, read_array(image_data->data_stream(), type));
 }
 
+void Pascal_Reflect_Class_Name(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+    if (eios)
+    {
+        jobject object = PascalRead<jobject>(Params[1]);
+        std::string result = eios->control_center->reflect_class_name(object);
+
+        if (!result.empty())
+        {
+            char *output = AllocateString<char>(result.length());
+            std::memcpy(output, &result[0], result.length());
+            output[result.length()] = '\0';
+
+            PascalWrite(Result, output);
+        }
+    }
+}
+
+void Pascal_Reflect_Class_Type(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+
+    if (eios)
+    {
+        jobject object = PascalRead<jobject>(Params[1]);
+        std::string result = eios->control_center->reflect_class_type(object);
+
+        if (!result.empty())
+        {
+            char *output = AllocateString<char>(result.length());
+            std::memcpy(output, &result[0], result.length());
+            output[result.length()] = '\0';
+
+            PascalWrite(Result, output);
+        }
+    }
+}
+
 void Pascal_GetImageFormat(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);

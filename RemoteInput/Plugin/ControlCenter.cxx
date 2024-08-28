@@ -632,6 +632,22 @@ void ControlCenter::process_command() noexcept
         }
             break;
 
+        case EIOSCommand::REFLECT_CLASS_NAME:
+        {
+            jobject object = stream.read<jobject>();
+            std::string result = main_reflector->GetClassName(object);
+            stream.write(result);
+        }
+        break;
+
+        case EIOSCommand::REFLECT_CLASS_TYPE:
+        {
+            jobject object = stream.read<jobject>();
+            std::string result = main_reflector->GetClassType(object);
+            stream.write(result);
+        }
+        break;
+
         case EIOSCommand::REMOTE_VM_INSTRUCTION:
         {
             this->remote_vm->process_command(&image_data);
@@ -1837,6 +1853,36 @@ ImageData* ControlCenter::reflect_array_indices(const jarray array, ReflectionTy
         return get_image_data();
     }
     return nullptr;
+}
+
+std::string ControlCenter::reflect_class_name(const jobject object) const noexcept
+{
+    bool result = send_command([&](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::REFLECT_CLASS_NAME);
+        stream.write(object);
+    });
+
+    if (result)
+    {
+        Stream& stream = get_image_data()->data_stream();
+        return stream.read<std::string>();
+    }
+    return std::string();
+}
+
+std::string ControlCenter::reflect_class_type(const jobject object) const noexcept
+{
+    bool result = send_command([&](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::REFLECT_CLASS_TYPE);
+        stream.write(object);
+    });
+
+    if (result)
+    {
+        Stream& stream = get_image_data()->data_stream();
+        return stream.read<std::string>();
+    }
+    return std::string();
 }
 
 std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept

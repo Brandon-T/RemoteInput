@@ -47,6 +47,10 @@ static const char* PascalExports[] =
     "Pascal_Reflect_Array_SingleIndex4D", "Function RIGetArraySingleElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; x, y, z, w: Int32): Pointer; overload; native;",
     "Pascal_Reflect_Array_Index4D", "Function RIGetArrayElement(eios: Pointer; arr: Pointer; elementType: ReflectionType; length: SizeUInt; x, y, z, w: Int32): Pointer; overload; native;",
 
+    //Type Info
+    "Pascal_Reflect_Class_Name", "Function RIGetClassName(eios: Pointer; instance: Pointer): String native;",
+    "Pascal_Reflect_Class_Type", "Function RIGetClassType(eios: Pointer; instance: Pointer): String native;",
+
     //Graphics
     "Pascal_GetImageFormat", "Function EIOS_GetImageFormat(eios: Pointer): RIImageFormat; native;",
     "Pascal_SetImageFormat", "Procedure EIOS_SetImageFormat(eios: Pointer; format: RIImageFormat); native;",
@@ -332,6 +336,9 @@ EXPORT void Pascal_Reflect_Array_Index(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Index2D(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Index3D(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Array_Index4D(void** Params, void** Result) noexcept;
+
+EXPORT void Pascal_Reflect_Class_Name(void** Params, void** Result) noexcept;
+EXPORT void Pascal_Reflect_Class_Type(void** Params, void** Result) noexcept;
 
 EXPORT void Pascal_GetImageFormat(void** Params, void** Result) noexcept;
 EXPORT void Pascal_SetImageFormat(void** Params, void** Result) noexcept;

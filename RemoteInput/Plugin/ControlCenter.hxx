@@ -145,6 +145,9 @@ public:
 
     ImageData* reflect_array_indices(const jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept;
 
+    std::string reflect_class_name(const jobject object) const noexcept;
+    std::string reflect_class_type(const jobject object) const noexcept;
+
     static std::size_t reflect_size_for_type(ReflectionType type) noexcept;
 
     java::Applet reflect_applet() const noexcept;

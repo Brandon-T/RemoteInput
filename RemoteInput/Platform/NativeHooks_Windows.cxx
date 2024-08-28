@@ -1274,8 +1274,104 @@ void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLen
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
+std::unique_ptr<Hook> cp_hook;
+BOOL WINAPI CreateProcessWHook(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation) {
+
+    std::wcout<<L"CREATE PROCESS CALLED\n";
+    std::wcout<<L"Application Name: "<<(lpApplicationName ? lpApplicationName : L"")
+              <<L"\nCommand Line: "<<(lpCommandLine ? lpCommandLine : L"")
+              <<L"\nProcess Attributes: "<<lpProcessAttributes
+              <<L"\nThread Attributes: "<<lpThreadAttributes
+              <<L"\nInherit Handle: "<<std::boolalpha<<bInheritHandles
+              <<L"\nCreation Flags: "<<dwCreationFlags
+              <<L"\nEnvironment: "<<lpEnvironment
+              <<L"\nCurrent Directory: "<<(lpCurrentDirectory ? lpCurrentDirectory : L"")
+              <<L"\nStartup Info: "<<lpStartupInfo
+              <<L"\nProcess Info: "<<lpProcessInformation<<L"\n\n";
+
+
+    HANDLE read = nullptr;
+    HANDLE write = nullptr;
+    HANDLE originalHandle = nullptr;
+
+    if (lpCommandLine && !wcscmp(lpCommandLine, L"wmic csproduct get UUID"))
+    {
+        if (lpStartupInfo && lpStartupInfo->hStdOutput && GetFileType(lpStartupInfo->hStdOutput) == FILE_TYPE_PIPE)
+        {
+            SECURITY_ATTRIBUTES attributes = {0};
+            attributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+            attributes.bInheritHandle = true;
+            attributes.lpSecurityDescriptor = nullptr;
+
+            if (CreatePipe(&read, &write, &attributes, 0))
+            {
+                SetHandleInformation(read, HANDLE_FLAG_INHERIT, 0);
+
+                originalHandle = lpStartupInfo->hStdOutput;
+                lpStartupInfo->hStdOutput = write;
+            }
+        }
+    }
+
+    BOOL res = cp_hook->call<BOOL, decltype(CreateProcessW)>(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+
+    if (originalHandle)
+    {
+        WaitForSingleObject(lpProcessInformation->hProcess, INFINITE);
+        CloseHandle(write);
+
+        #ifdef USE_REAL_HARDWARE_ID
+        char buffer[256] = {0};
+        DWORD dwRead = 0;
+        DWORD dwWritten = 0;
+
+        std::string result;
+
+        while (true)
+        {
+            bool success = ReadFile(read, buffer, 256, &dwRead, nullptr);
+            if (!success || dwRead == 0)
+            {
+                break;
+            }
+
+            result += std::string(buffer, dwRead);
+        }
+        #else
+
+        // Return Fake UUID-v4
+        DWORD dwWritten = 0;
+        std::string result = "UUID";  // Header
+
+        // Padding
+        for (int i = 0; i < 34; ++i)
+        {
+            result += '\x20';
+        }
+
+        result += "\xd\xd\n";
+        result += "4DDF2995-1CC6-4E70-9463-D17914D9A13F"; // The UUID-v4
+        result +="\x20\x20\xd\xd\n\xd\xd\n";
+        #endif
+
+        bool success = WriteFile(originalHandle, &result[0], result.size(), &dwWritten, nullptr);
+        if (!success)
+        {
+            std::cout<<"FAILED TO WRITE: "<<result<<"\n";
+        }
+
+        CloseHandle(read);
+    }
+
+    return res;
+}
+
 void InitialiseHooks() noexcept
 {
+//    HMODULE mm = GetModuleHandleA("kernel32.dll");
+//    cp_hook = std::make_unique<Hook>((void *) GetProcAddress(mm, "CreateProcessW"), (void *) CreateProcessWHook);
+//    cp_hook->apply();
+
     #if defined(USE_DETOURS)
         HMODULE module = GetModuleHandle("awt.dll");
 
