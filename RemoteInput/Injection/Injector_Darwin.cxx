@@ -314,24 +314,28 @@ auto remote_load_library = [](std::size_t* instructions_size) -> std::uint8_t* {
 auto find_library = [](mach_port_t task, const char* library) -> std::intptr_t {
     task_dyld_info_data_t info;
     mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
-    task_info(task, TASK_DYLD_INFO, reinterpret_cast<task_info_t>(&info), &count);
+
+    kern_return_t err = task_info(task, TASK_DYLD_INFO, reinterpret_cast<task_info_t>(&info), &count);
+    if (err != KERN_SUCCESS)
+    {
+        //print mach_error_string(err);
+        return NULL;
+    }
 
     //Get the loaded dylibs/images
     dyld_all_image_infos infos = {0};
-    mach_vm_size_t size = info.all_image_info_size;
-    kern_return_t err = mach_vm_read_overwrite(task, info.all_image_info_addr, info.all_image_info_size, reinterpret_cast<mach_vm_address_t>(&infos), &size);
-
-    if (size <= 0 || err != KERN_SUCCESS)
+    mach_vm_size_t size = info.all_image_info_size; // or sizeof(infos)
+    err = mach_vm_read_overwrite(task, info.all_image_info_addr, info.all_image_info_size, reinterpret_cast<mach_vm_address_t>(&infos), &size);
+    if (err != KERN_SUCCESS || size != info.all_image_info_size) 
     {
         return NULL;
     }
 
     //Get the info for each dylib/image
-    size = sizeof(dyld_all_image_infos) * infos.infoArrayCount;
-    std::unique_ptr<dyld_image_info[]> image_infos = std::make_unique<dyld_image_info[]>(size);
+    size = sizeof(dyld_image_info) * infos.infoArrayCount;
+    std::unique_ptr<dyld_image_info[]> image_infos = std::make_unique<dyld_image_info[]>(infos.infoArrayCount);
     err = mach_vm_read_overwrite(task, reinterpret_cast<mach_vm_address_t>(infos.infoArray), size, reinterpret_cast<mach_vm_address_t>(image_infos.get()), &size);
-
-    if (size <= 0 || err != KERN_SUCCESS)
+    if (err != KERN_SUCCESS || size != sizeof(dyld_image_info) * infos.infoArrayCount)
     {
         return NULL;
     }
@@ -342,11 +346,11 @@ auto find_library = [](mach_port_t task, const char* library) -> std::intptr_t {
         char buffer[512] = {0};
         mach_vm_size_t size = sizeof(buffer);
 
-        kern_return_t err = mach_vm_read_overwrite(task, reinterpret_cast<mach_vm_address_t>(image_infos[i].imageFilePath), size, reinterpret_cast<mach_vm_address_t>(&buffer[0]), &size);
-        if (err == KERN_SUCCESS && size > 0)
+        mach_vm_size_t err = mach_vm_read_overwrite(task, reinterpret_cast<mach_vm_address_t>(image_infos[i].imageFilePath), size, reinterpret_cast<mach_vm_address_t>(&buffer[0]), &size);
+        if (err == KERN_SUCCESS && size > 0) 
         {
             std::string path = strip_path(buffer);
-            if (!strcasecmp(path.c_str(), library))
+            if (!strcasecmp(path.c_str(), library)) 
             {
                 return reinterpret_cast<std::uintptr_t>(image_infos[i].imageLoadAddress);
             }
