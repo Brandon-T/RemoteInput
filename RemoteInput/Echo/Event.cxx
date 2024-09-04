@@ -111,11 +111,6 @@ Event::~Event()
         flag = nullptr;
     }
 
-    if (flag)
-    {
-        delete flag;
-    }
-
     flag = nullptr;
     ref = nullptr;
     #endif

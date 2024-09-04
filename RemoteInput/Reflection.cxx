@@ -16,14 +16,15 @@ Reflection::Reflection(Reflection&& other) noexcept : env(other.env), frame(othe
 
 Reflection::~Reflection() noexcept
 {
-    if (env)
-    {
-//        env->DeleteGlobalRef(classLoader);
-//        env->DeleteGlobalRef(applet);
-//        env->DeleteGlobalRef(frame);
-    }
-
     ClearCache();
+
+    /*if (env)
+    {
+         env->DeleteGlobalRef(classLoader);
+         env->DeleteGlobalRef(applet);
+         env->DeleteGlobalRef(frame);
+         this->Detach();
+    }*/
 }
 
 Reflection& Reflection::operator = (Reflection&& other) noexcept

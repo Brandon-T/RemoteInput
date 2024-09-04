@@ -77,32 +77,32 @@ JVM::JVM(int argc, const char* argv[]) noexcept : vm(nullptr), createdVM(false),
 
 JVM::~JVM() noexcept
 {
-//    if (this->vm)
-//    {
-//        if (this->createdVM)
-//        {
-//            jint (JNICALL *pDestroyJavaVM)() = nullptr;
-//            #if defined(_WIN32) || defined(_WIN64)
-//            pDestroyJavaVM = reinterpret_cast<decltype(pDestroyJavaVM)>(GetProcAddress(this->module, "DestroyJavaVM"));
-//            #else
-//            pDestroyJavaVM = reinterpret_cast<decltype(pDestroyJavaVM)>(dlsym(this->module, "DestroyJavaVM"));
-//            #endif // defined
-//
-//            pDestroyJavaVM();
-//        }
-//
-//        this->vm = nullptr;
-//
-//        if (loadedJNI)
-//        {
-//            #if defined(_WIN32) || defined(_WIN64)
-//            CloseHandle(this->module);
-//            #else
-//            dlclose(this->module);
-//            #endif // defined
-//        }
-//        this->module = nullptr;
-//    }
+    if (this->vm)
+    {
+        if (this->createdVM)
+        {
+            jint (JNICALL *pDestroyJavaVM)() = nullptr;
+            #if defined(_WIN32) || defined(_WIN64)
+            pDestroyJavaVM = reinterpret_cast<decltype(pDestroyJavaVM)>(GetProcAddress(this->module, "DestroyJavaVM"));
+            #else
+            pDestroyJavaVM = reinterpret_cast<decltype(pDestroyJavaVM)>(dlsym(this->module, "DestroyJavaVM"));
+            #endif // defined
+
+            pDestroyJavaVM();
+        }
+
+        this->vm = nullptr;
+
+        if (loadedJNI)
+        {
+            #if defined(_WIN32) || defined(_WIN64)
+            CloseHandle(this->module);
+            #else
+            dlclose(this->module);
+            #endif // defined
+        }
+        this->module = nullptr;
+    }
 }
 
 bool JVM::Init(int argc, const char* argv[]) noexcept

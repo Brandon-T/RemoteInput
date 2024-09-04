@@ -8,14 +8,14 @@
 
 #include "Plugin.hxx"
 #include <memory>
-#include <atomic>
 
-#include "MemoryMap.hxx"
+#include "Atomics.hxx"
 #include "Platform.hxx"
 #include "NativeHooks.hxx"
 #include "ControlCenter.hxx"
 #include "EIOS.hxx"
 #include "DebugConsole.hxx"
+#include "Thirdparty/Hook.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 HMODULE module = nullptr;
@@ -24,9 +24,22 @@ HMODULE module = nullptr;
 std::unique_ptr<ControlCenter> control_center;
 std::unique_ptr<DebugConsole> console;
 
+#if defined(_WIN32) || defined(_WIN64)
+std::unique_ptr<Hook> exit_process;
+#endif
+
 // MARK: - MAIN
 
 #if defined(_WIN32) || defined(_WIN64)
+[[gnu::stdcall]] void __exit_process(unsigned int exit_code)
+{
+    #ifdef DEBUG
+    console.reset();
+    #endif
+    control_center.reset();
+    exit_process->call<void, decltype(ExitProcess)>(exit_code);
+}
+
 [[gnu::stdcall]] void __load()
 {
     #if defined(DEBUG)
@@ -51,6 +64,9 @@ std::unique_ptr<DebugConsole> console;
             StartHook();
         }
 
+        exit_process = std::make_unique<Hook>((void *) GetProcAddress(GetModuleHandleA("kernel32.dll"), "ExitProcess"), (void *) __exit_process);
+        exit_process->apply();
+
         //Decrease our reference count by 1..
         //So if `FreeLibrary` was called previous, our count reaches 0 and we'll be freed.
         FreeLibraryAndExitThread(module, 0);
@@ -59,12 +75,19 @@ std::unique_ptr<DebugConsole> console;
 
 [[gnu::stdcall]] void __unload()
 {
+    #if defined(DEBUG)
+    printf("DETACHED FROM: %d\n", getpid());
+    #endif
+}
+#elif defined(__APPLE__)
+void __exit_process(int exit_code)
+{
     #ifdef DEBUG
     console.reset();
     #endif
     control_center.reset();
 }
-#elif defined(__APPLE__)
+
 [[gnu::constructor]] void __load()
 {
     #if defined(DEBUG)
@@ -72,6 +95,7 @@ std::unique_ptr<DebugConsole> console;
     #endif
 
     extern void disable_app_nap();
+
     std::thread([&] {
         #if defined(DEBUG)
         console = std::make_unique<DebugConsole>();
@@ -85,32 +109,37 @@ std::unique_ptr<DebugConsole> console;
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
             StartHook();
         }
+
+        std::atexit([]{ __exit_process(0); });
     }).detach();
 }
 
 [[gnu::destructor]] void __unload()
+{
+    #if defined(DEBUG)
+    printf("DETACHED FROM: %d\n", getpid());
+    #endif
+}
+#else
+void __exit_process(int exit_code)
 {
     #ifdef DEBUG
     console.reset();
     #endif
     control_center.reset();
 }
-#else
+
 [[gnu::constructor]] void __load()
 {
     #if defined(DEBUG)
     printf("ATTACHED TO: %d\n", getpid());
     #endif
 
-    //Increase our reference count by 1..
-    //So that if someone calls `dlclose` before the thread exists, we won't get a crash.
-    //Later on we will call `dlclose` on a detached thread.
-
-    Dl_info this_info = {0};
+    /*Dl_info this_info = {0};
     dladdr(reinterpret_cast<void*>(&__load), &this_info);
-    void* this_module = dlopen(this_info.dli_fname, RTLD_LAZY);
+    void* this_module = dlopen(this_info.dli_fname, RTLD_LAZY);*/
 
-    std::thread([&](void* this_module) {
+    std::thread([&] {
         #if defined(DEBUG)
         console = std::make_unique<DebugConsole>();
         #endif
@@ -122,17 +151,15 @@ std::unique_ptr<DebugConsole> console;
             StartHook();
         }
 
-        //std::thread([this_module]{ if (this_module) { dlclose(this_module); } }).detach();
-        dlclose(this_module);
-    }, this_module).detach();
+        std::atexit([]{ __exit_process(0); });
+    }).detach();
 }
 
 [[gnu::destructor]] void __unload()
 {
-    #ifdef DEBUG
-    console.reset();
+    #if defined(DEBUG)
+    printf("DETACHED FROM: %d\n", getpid());
     #endif
-    control_center.reset();
 }
 #endif // defined
 

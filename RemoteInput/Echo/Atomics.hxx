@@ -112,6 +112,9 @@ private:
     static bool wait_polling(atomic_lock* self, bool (*test)(atomic_lock*), std::chrono::nanoseconds max_elapsed = std::chrono::nanoseconds::zero());
 
 public:
+    atomic_lock();
+    ~atomic_lock() = default;
+
     void lock();
     void unlock();
 

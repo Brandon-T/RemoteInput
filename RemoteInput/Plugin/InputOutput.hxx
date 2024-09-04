@@ -15,6 +15,7 @@
 #include <mutex>
 #include <array>
 #include "DetachedThreadPool.hxx"
+#include "ThreadPool.hxx"
 #include "Reflection.hxx"
 #include "Component.hxx"
 #include "RIEventQueue.hxx"
@@ -26,7 +27,7 @@ private:
     JavaVM* vm;
     jobject applet;
     std::mutex mutex;
-    DetachedThreadPool input_thread;
+    ThreadPool input_thread;
     std::unique_ptr<java::RIEventQueue> event_queue;
 
     // MARK: - Input Variables
@@ -58,7 +59,7 @@ private:
     void handle_resize(java::Component* component) noexcept;
 
 public:
-    InputOutput(Reflection* reflection) noexcept;
+    explicit InputOutput(Reflection* reflection) noexcept;
     ~InputOutput() noexcept;
 
     bool has_focus() const noexcept;

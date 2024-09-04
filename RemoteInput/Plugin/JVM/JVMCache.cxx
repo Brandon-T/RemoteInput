@@ -19,10 +19,7 @@ JVMCache::JVMCache(JNIEnv* env, jobject class_loader) : class_loader(class_loade
 
 JVMCache::~JVMCache()
 {
-    /*for (auto&& it : class_cache)
-    {
-        env->DeleteGlobalRef(it.second);
-    }*/
+    class_cache.clear();
 }
 
 JVMCache::JVMCache(JVMCache&& other) : class_loader(other.class_loader), load_class_method(other.load_class_method), class_cache(std::move(other.class_cache)), field_cache(std::move(other.field_cache))
@@ -53,24 +50,26 @@ jclass JVMCache::GetClass(JNIEnv* env, std::string_view name) noexcept
     {
         return it->second.get();
     }
-    else
+
+    jstring class_name = env->NewStringUTF(name.data());
+    if (class_name)
     {
-        jstring class_name = env->NewStringUTF(name.data());
-        if (class_name)
+        jclass clazz = static_cast<jclass>(env->CallObjectMethod(class_loader, load_class_method, class_name, true));
+        env->DeleteLocalRef(class_name);
+
+        if (clazz)
         {
-            jclass clazz = static_cast<jclass>(env->CallObjectMethod(class_loader, load_class_method, class_name, true));
-            env->DeleteLocalRef(class_name);
+            using value_type = decltype(class_cache)::value_type::second_type;
 
-            if (clazz)
-            {
-                env->DeleteLocalRef(std::exchange(clazz, static_cast<jclass>(env->NewGlobalRef(clazz))));
-                class_cache.emplace(name, clazz);
-                return clazz;
-            }
+            env->DeleteLocalRef(std::exchange(clazz, static_cast<jclass>(env->NewGlobalRef(clazz))));
+            class_cache.emplace(name, value_type(clazz, [env](jclass cls) {
+                //env->DeleteGlobalRef(cls);
+            }));
+            return clazz;
         }
-
-        return nullptr;
     }
+
+    return nullptr;
 }
 
 jfieldID JVMCache::GetFieldID(JNIEnv* env, jclass clazz, std::string_view name, std::string_view sig, bool is_static) noexcept

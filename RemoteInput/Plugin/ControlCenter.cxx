@@ -8,7 +8,7 @@
 #include "ReflectionHook.hxx"
 #include "RemoteVM.hxx"
 
-auto create_command_processor = [](auto processor) {
+auto create_command_processor = [](auto processor) -> std::thread {
     std::thread thread = std::thread([processor]{
         #if defined(_WIN32) || defined(_WIN64)
         HANDLE this_process = GetCurrentProcess();
@@ -30,6 +30,7 @@ auto create_command_processor = [](auto processor) {
     });
 
     thread.detach();
+    return thread;
 };
 
 ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> reflector) : pid(pid), is_controller(is_controller), stopped(is_controller), command_signal(), response_signal(), sync_signal(), main_reflector(std::move(reflector)), io_controller(), remote_vm()
@@ -61,23 +62,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 
         if (this->main_reflector)
         {
-            std::thread thread = std::thread([this]{
-                #if defined(_WIN32) || defined(_WIN64)
-                HANDLE this_process = GetCurrentProcess();
-                SetPriorityClass(this_process, NORMAL_PRIORITY_CLASS);
-
-                HANDLE this_thread = GetCurrentThread();
-                SetThreadPriority(this_thread, THREAD_PRIORITY_HIGHEST);
-                #else
-                pthread_t this_thread = pthread_self();
-                if (this_thread)
-                {
-                    struct sched_param params = {0};
-                    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-                    pthread_setschedparam(this_thread, SCHED_FIFO, &params);
-                }
-                #endif // defined
-
+            create_command_processor([this]{
                 if (this->main_reflector->Attach())
                 {
                     this->io_controller = std::make_unique<InputOutput>(this->main_reflector.get());
@@ -123,10 +108,10 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
                     {
                         this->main_reflector.reset();
                     }
+
+                    response_signal->signal();
                 }
             });
-
-            thread.detach();
         }
     }
 }
@@ -134,7 +119,21 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 ControlCenter::~ControlCenter()
 {
     terminate();
-    //main_reflector.reset();
+
+    if (sync_signal)
+    {
+        sync_signal.reset();
+    }
+
+    if (command_signal)
+    {
+        command_signal.reset();
+    }
+
+    if (response_signal)
+    {
+        response_signal.reset();
+    }
 
     if (memory_map)
     {
@@ -157,6 +156,11 @@ void ControlCenter::terminate() noexcept
             if (command_signal)
             {
                 command_signal->signal();
+            }
+
+            if (response_signal)
+            {
+                response_signal->wait();
             }
         }
     }

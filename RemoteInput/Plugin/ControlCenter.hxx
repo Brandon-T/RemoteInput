@@ -15,7 +15,7 @@
 #include "EIOSTypes.hxx"
 #include "ImageData.hxx"
 #include "Platform.hxx"
-
+#include "Synchronization.hxx"
 #include "Atomics.hxx"
 
 class RemoteVM;
@@ -45,9 +45,6 @@ private:
 
     template<typename Func>
     bool send_command(Func &&sender) const noexcept;
-
-    template<typename Func>
-    bool send_command_now(Func &&sender) const noexcept;
 
     void send_array_response_index_length(Stream &stream, jarray array, ReflectionType type, std::size_t index, std::size_t length) const noexcept;
     void send_array_response_indices(Stream &stream, jarray array, ReflectionType type, std::int32_t* indices, std::size_t length) const noexcept;

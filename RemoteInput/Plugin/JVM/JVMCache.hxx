@@ -34,7 +34,7 @@ private:
     jobject class_loader;
     jmethodID load_class_method;
 
-    std::unordered_map<std::string, std::unique_ptr<typename std::remove_pointer<jclass>::type, std::function<void(jclass)>>, string_hash, std::equal_to<>> class_cache;
+    std::unordered_map<std::string, std::unique_ptr<std::remove_pointer<jclass>::type, std::function<void(jclass)>>, string_hash, std::equal_to<>> class_cache;
     std::unordered_map<std::size_t, jfieldID> field_cache;
 
 

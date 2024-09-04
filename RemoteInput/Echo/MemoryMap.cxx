@@ -55,7 +55,7 @@ bool MemoryMap::open(open_mode mode) noexcept
         return hMap != nullptr;
     }
 
-    hMap = CreateFileMappingA(hFile, nullptr, dwAccess, 0, pSize, path.c_str());
+    hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr, dwAccess, 0, pSize, path.c_str());
     return hMap != nullptr;
     #else
     bool created = false;
@@ -275,7 +275,7 @@ bool MemoryMap::close() noexcept
 bool MemoryMap::is_open() const noexcept
 {
     #if defined(_WIN32) || defined(_WIN64)
-    return (hMap != nullptr) && (hMap != INVALID_HANDLE_VALUE) && (hFile != nullptr) && (hFile != INVALID_HANDLE_VALUE);
+    return ((hMap != nullptr) && (hMap != INVALID_HANDLE_VALUE)) || ((hFile != nullptr) && (hFile != INVALID_HANDLE_VALUE));
     #else
     return hFile != -1;
     #endif

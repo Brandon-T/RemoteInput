@@ -18,23 +18,30 @@ private:
     T primitive;
 
 public:
+    Signal() noexcept requires synchronization::lockable<T> || synchronization::acquirable<T>;
     Signal(std::string name) noexcept requires synchronization::lockable<T> || synchronization::acquirable<T>;
     ~Signal() = default;
 
     Signal(const Signal &other) = delete;
     Signal& operator = (const Signal &other) = delete;
 
-    void signal() const noexcept;
-    void wait() const noexcept;
+    void signal() noexcept;
+    void wait() noexcept;
 
-    bool try_wait() const noexcept;
+    bool try_wait() noexcept;
 
     template<typename Rep, typename Period>
-    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept;
+    bool try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) noexcept;
 
     template<typename Clock, typename Duration>
-    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept;
+    bool try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) noexcept;
 };
+
+template<typename T>
+Signal<T>::Signal() noexcept requires synchronization::lockable<T> || synchronization::acquirable<T>
+        : primitive()
+{
+}
 
 template<typename T>
 Signal<T>::Signal(std::string name) noexcept requires synchronization::lockable<T> || synchronization::acquirable<T>
@@ -43,7 +50,7 @@ Signal<T>::Signal(std::string name) noexcept requires synchronization::lockable<
 }
 
 template<typename T>
-void Signal<T>::signal() const noexcept
+void Signal<T>::signal() noexcept
 {
     if constexpr(synchronization::lockable<T>)
     {
@@ -56,7 +63,7 @@ void Signal<T>::signal() const noexcept
 }
 
 template<typename T>
-void Signal<T>::wait() const noexcept
+void Signal<T>::wait() noexcept
 {
     if constexpr(synchronization::lockable<T>)
     {
@@ -69,7 +76,7 @@ void Signal<T>::wait() const noexcept
 }
 
 template<typename T>
-bool Signal<T>::try_wait() const noexcept
+bool Signal<T>::try_wait() noexcept
 {
     if constexpr(synchronization::lockable<T>)
     {
@@ -84,7 +91,7 @@ bool Signal<T>::try_wait() const noexcept
 
 template<typename T>
 template<typename Rep, typename Period>
-bool Signal<T>::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) const noexcept
+bool Signal<T>::try_wait_for(const std::chrono::duration<Rep, Period>& relative_time) noexcept
 {
     if constexpr(synchronization::lockable<T>)
     {
@@ -98,7 +105,7 @@ bool Signal<T>::try_wait_for(const std::chrono::duration<Rep, Period>& relative_
 
 template<typename T>
 template<typename Clock, typename Duration>
-bool Signal<T>::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) const noexcept
+bool Signal<T>::try_wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time) noexcept
 {
     if constexpr(synchronization::lockable<T>)
     {
