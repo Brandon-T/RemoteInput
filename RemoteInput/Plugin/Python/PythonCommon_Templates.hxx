@@ -282,6 +282,7 @@ T from_python_object(PyObject* object)
             Py_ssize_t size = 0;
             char* buffer = nullptr;
             python->PyBytes_AsStringAndSize(utf8_string, &buffer, &size);
+            (python->Py_XDECREF)(utf8_string);
             return *buffer;
         }
         return -1;
@@ -329,6 +330,7 @@ T from_python_object(PyObject* object)
             Py_ssize_t size = 0;
             char* buffer = nullptr;
             python->PyBytes_AsStringAndSize(utf8_string, &buffer, &size);
+            (python->Py_XDECREF)(utf8_string);
             return std::string(buffer, size);
         }
         return std::string();
@@ -345,6 +347,7 @@ T from_python_object(PyObject* object)
             Py_ssize_t size = 0;
             char* buffer = nullptr;
             python->PyBytes_AsStringAndSize(utf8_string, &buffer, &size);
+            (python->Py_XDECREF)(utf8_string);
             return buffer;
         }
         return nullptr;
@@ -425,6 +428,8 @@ std::vector<T> from_python_array(PyObject* object)
                 result.push_back(from_python_object<T>(next));
             }
         }
+
+        (python->Py_DECREF)(iter);
     }
     return result;
 }

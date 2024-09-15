@@ -507,7 +507,7 @@ bool Injector::Inject(std::string module_path, std::int32_t pid, void* bootstrap
     //Retrieve a task port for the remote process..
     mach_port_t  remote_task = 0;
     mach_error_t err = task_for_pid(mach_task_self(), pid, &remote_task);
-    if (err == 5)
+    if (err == KERN_FAILURE)
     {
         fprintf(stderr, "Could not access task for pid %d. You probably need to add user to procmod group\n", pid);
         return false;
