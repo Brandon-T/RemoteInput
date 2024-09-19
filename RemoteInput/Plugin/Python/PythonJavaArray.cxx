@@ -36,7 +36,7 @@ pybind11::object Python_JavaArray_Get1D(const std::shared_ptr<PyJavaArray>& self
     std::size_t index = 0;
     std::size_t length = 0;
 
-    if (!indices_object.is_none() && !index_object.is_none() && !length_object.is_none())
+    if (indices_object.is_none() && index_object.is_none() && length_object.is_none())
     {
         // Read entire array
         Stream &stream = eios->control_center->reflect_array_all(array, type, 1)->data_stream();
@@ -242,7 +242,7 @@ pybind11::object read_array_type(Stream &stream, const std::shared_ptr<PyJavaArr
         pybind11::list list = pybind11::list(length);
         for (std::size_t i = 0; i < length; ++i)
         {
-            list.append(python_create_object(array, stream.read<jobject>()));
+            list[i] = python_create_object(array, stream.read<jobject>());
         }
         return list;
     }
@@ -252,7 +252,7 @@ pybind11::object read_array_type(Stream &stream, const std::shared_ptr<PyJavaArr
         pybind11::list list = pybind11::list(length);
         for (std::size_t i = 0; i < length; ++i)
         {
-            list.append(python_create_array(array, stream.read<jarray>(), length));
+            list[i] = python_create_array(array, stream.read<jarray>(), length);
         }
         return list;
     }
@@ -313,7 +313,7 @@ pybind11::object read_array_type(Stream &stream, const std::shared_ptr<PyJavaArr
 
     for (std::size_t i = 0; i < length; ++i)
     {
-        list.append(read_array_type(stream, object, type, dimensions - 1));
+        list[i] = read_array_type(stream, object, type, dimensions - 1);
     }
 
     return list;

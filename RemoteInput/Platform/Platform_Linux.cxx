@@ -191,7 +191,7 @@ std::int32_t InjectProcess(std::int32_t pid) noexcept
         std::string path = std::string(PATH_MAX, '\0');
         if (realpath(info.dli_fname, &path[0]))
         {
-            if (Injector::Inject(info.dli_fname, pid, nullptr))
+            if (Injector::Inject(path.c_str(), pid, nullptr))
             {
                 return pid;
             }

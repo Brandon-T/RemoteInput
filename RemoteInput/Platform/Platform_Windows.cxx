@@ -1,6 +1,7 @@
 #include "Platform.hxx"
 #include <string>
 #include <chrono>
+#include <cerrno>
 #include "Thirdparty/Hook.hxx"
 #include "Injection/Injector.hxx"
 
@@ -264,6 +265,59 @@ void PrintProcessInfo(std::int32_t pid) noexcept
         printf("  Parent Process ID:       %lu\n\n", Proc32.th32ParentProcessID);
         printf("  =======================================================\n");
     }
+}
+
+char* realpath(const char* path, char* resolved_path)
+{
+    auto MapWindowsErrorToErrno = [](DWORD error) -> std::int32_t {
+        switch (error)
+        {
+            case ERROR_FILE_NOT_FOUND:
+            case ERROR_PATH_NOT_FOUND:
+                return ENOENT;
+            case ERROR_ACCESS_DENIED:
+                return EACCES;
+            case ERROR_INVALID_PARAMETER:
+                return EINVAL;
+            case ERROR_ALREADY_EXISTS:
+                return EEXIST;
+            default:
+                return EIO;
+        }
+    };
+
+    if (!path || !resolved_path)
+    {
+        errno = EINVAL;
+        return nullptr;
+    }
+
+    HANDLE hFile = CreateFile(
+        path,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        nullptr
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        errno = MapWindowsErrorToErrno(GetLastError());
+        return nullptr;
+    }
+
+    DWORD result = GetFinalPathNameByHandle(hFile, resolved_path, MAX_PATH, FILE_NAME_NORMALIZED);
+    CloseHandle(hFile);
+
+    if (result == 0)
+    {
+        errno = MapWindowsErrorToErrno(GetLastError());
+        return nullptr;
+    }
+
+    return resolved_path;
 }
 
 bool InjectSelf(std::int32_t pid) noexcept

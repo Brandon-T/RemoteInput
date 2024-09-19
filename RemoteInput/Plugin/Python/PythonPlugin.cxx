@@ -14,6 +14,13 @@
 #include "PythonJavaArray.hxx"
 
 #if defined(USE_PYBIND11)
+void PrintPythonVersionInfo()
+{
+    fprintf(stdout, "RUNNING WITH: %zu.%zu.%zu\n", Py_Version >> 24 & 0xFF, Py_Version >> 16 & 0xFF, Py_Version >> 8 & 0xFF);
+    fprintf(stdout, "COMPILED WITH: %d.%d.%d\n", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
+    fflush(stdout);
+}
+
 PYBIND11_MODULE(remote_input, module) {
     #if defined(DEBUG)
     PrintPythonVersionInfo();
@@ -43,8 +50,6 @@ PYBIND11_MODULE(remote_input, module) {
     declare_python_eios(module);
     declare_python_java_object(module);
     declare_python_java_array(module);
-
-    fprintf(stderr, "LOADED!\n");
 }
 #else
 #include "Python.hxx"
@@ -107,14 +112,14 @@ void PrintPythonVersionInfo()
 
     if (Py_Version > 0)
     {
-        fprintf(stdout, "Running with Python: %lu.%lu.%lu\n", Py_Version >> 24 & 0xFF, Py_Version >> 16 & 0xFF, Py_Version >> 8 & 0xFF);
+        fprintf(stdout, "RUNNING WITH: %lu.%lu.%lu\n", Py_Version >> 24 & 0xFF, Py_Version >> 16 & 0xFF, Py_Version >> 8 & 0xFF);
     }
     else
     {
         fprintf(stdout, "RUNNING WITH: %s\n", python->Py_GetVersion());
     }
 
-    fprintf(stdout, "Compiled with Python: %d.%d.%d\n", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
+    fprintf(stdout, "COMPILED WITH: %d.%d.%d\n", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
     #endif
 
     fflush(stdout);
@@ -215,7 +220,6 @@ PyObject* PyInit_remote_input()
         {"ARRAY", static_cast<std::int32_t>(ReflectionType::ARRAY)},
     });
 
-    fprintf(stderr, "LOADED!\n");
     return module;
 }
 #endif

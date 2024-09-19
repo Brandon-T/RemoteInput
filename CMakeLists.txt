@@ -9,6 +9,7 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 set(USE_PYBIND11 ON)
+set(USE_SYSTEM_PYBIND11 OFF)
 set(PYTHON_BINDINGS ON)
 set(PYTHON_LIMITED_VERSION 0x03080000)
 
@@ -34,8 +35,13 @@ find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
 
 IF(PYTHON_BINDINGS)
+    cmake_policy(SET CMP0148 NEW)
+
     IF(USE_PYBIND11)
         find_package(Python REQUIRED COMPONENTS Interpreter Development)
+        IF(USE_SYSTEM_PYBIND11)
+            find_package(pybind11 REQUIRED)
+        ENDIF()
     ELSE()
         find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
     ENDIF()
@@ -43,7 +49,6 @@ IF(PYTHON_BINDINGS)
     MESSAGE(STATUS, "${Python_LIBRARY_DIRS}")
     MESSAGE(STATUS, "${PYTHON_DYNAMIC_LINKER_FLAGS}")
 ENDIF()
-
 
 # ----------------------- INCLUDE_DIRECTORIES -----------------------
 set(INCLUDE_DIRECTORIES
@@ -258,9 +263,16 @@ ENDIF()
 
 IF(PYTHON_BINDINGS AND USE_PYBIND11)
     add_subdirectory(RemoteInput/Thirdparty)
-    add_subdirectory(RemoteInput/Thirdparty/pybind11)
+
+    IF(NOT USE_SYSTEM_PYBIND11)
+        add_subdirectory(RemoteInput/Thirdparty/pybind11)
+    ENDIF()
+
     pybind11_add_module(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
-    target_include_directories(RemoteInput PRIVATE ${CMAKE_SOURCE_DIR}/RemoteInput/Thirdparty/pybind11/include)
+
+    IF(NOT USE_SYSTEM_PYBIND11)
+        target_include_directories(RemoteInput PRIVATE ${CMAKE_SOURCE_DIR}/RemoteInput/Thirdparty/pybind11/include)
+    ENDIF()
 ELSE()
     add_subdirectory(RemoteInput/Thirdparty)
     add_library(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
@@ -333,7 +345,11 @@ ELSE()
             $<$<CONFIG:RELEASE>:-s ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
 ENDIF()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})
+IF(PYTHON_BINDINGS AND (USE_PYBIND11 OR (NOT PYTHON_LIMITED_VERSION)))
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES} ${Python_LIBRARIES})
+ELSE()
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})
+ENDIF()
 
 
 # ---------------------------- RENAME ----------------------------
