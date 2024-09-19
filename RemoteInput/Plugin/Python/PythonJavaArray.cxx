@@ -3,10 +3,323 @@
 //
 
 #include "PythonJavaArray.hxx"
-#include "NativePlugin.hxx"
+
 #include <sstream>
 #include <ios>
 #include <iomanip>
+
+#if defined(USE_PYBIND11)
+#include <pybind11/stl.h>
+#endif
+
+#if defined(USE_PYBIND11)
+pybind11::object read_array_type(Stream &stream, const std::shared_ptr<PyJavaArray>& self, ReflectionType type, std::size_t dimensions);
+
+pybind11::object Python_JavaArray_GetLength(const std::shared_ptr<PyJavaArray>& self) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jarray array = self->array;
+    std::size_t length = eios->control_center->reflect_array_size(array);
+    return pybind11::int_(length);
+}
+
+pybind11::object Python_JavaArray_Get1D(const std::shared_ptr<PyJavaArray>& self, pybind11::object type_object, pybind11::object indices_object, pybind11::object index_object, pybind11::object length_object) noexcept
+{
+    ReflectionType type = ReflectionType::OBJECT;
+    if (!type_object.is_none())
+    {
+        type = pybind11::cast<ReflectionType>(type_object);
+    }
+
+    EIOS* eios = self->eios->native_eios;
+    jarray array = self->array;
+    std::size_t index = 0;
+    std::size_t length = 0;
+
+    if (!indices_object.is_none() && !index_object.is_none() && !length_object.is_none())
+    {
+        // Read entire array
+        Stream &stream = eios->control_center->reflect_array_all(array, type, 1)->data_stream();
+        return read_array_type(stream, self, type, 1);
+    }
+
+    if (!indices_object.is_none())
+    {
+        // Read array indexed by indices
+        auto indices = pybind11::cast<std::vector<std::int32_t>>(indices_object);
+        Stream &stream = eios->control_center->reflect_array_indices(array, type, &indices[0], indices.size())->data_stream();
+        return read_array_type(stream, self, type, 1);
+    }
+
+    if (!index_object.is_none())
+    {
+        index = pybind11::cast<std::size_t>(index_object);
+    }
+
+    if (length_object)
+    {
+        length = pybind11::cast<std::size_t>(length_object);
+    }
+
+    if (!index_object.is_none() && length_object.is_none())
+    {
+        // Read array[index]
+        Stream &stream = eios->control_center->reflect_array(array, type, 1, index)->data_stream();
+        return read_array_type(stream, self, type, 0);
+    }
+
+    length = std::min(std::max<std::size_t>(length, 1), self->size);
+
+    // Read array of [index..<length]
+    Stream &stream = eios->control_center->reflect_array(array, type, length, index)->data_stream();
+    return read_array_type(stream, self, type, 1);
+}
+
+pybind11::object Python_JavaArray_Get2D(const std::shared_ptr<PyJavaArray>& self, pybind11::object type_object, pybind11::object x_object, pybind11::object y_object) noexcept
+{
+    ReflectionType type = ReflectionType::OBJECT;
+    if (!type_object.is_none())
+    {
+        type = pybind11::cast<ReflectionType>(type_object);
+    }
+
+    EIOS* eios = self->eios->native_eios;
+    jarray array = self->array;
+
+    // Array[x][y]
+    if (!x_object.is_none() && !y_object.is_none())
+    {
+        std::size_t x = pybind11::cast<std::size_t>(x_object);
+        std::size_t y = pybind11::cast<std::size_t>(y_object);
+
+        Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y)->data_stream();
+        return read_array_type(stream, self, type, 0);
+    }
+
+    // Array[][]
+    Stream &stream = eios->control_center->reflect_array_all(array, type, 2)->data_stream();
+    return read_array_type(stream, self, type, 2);
+}
+
+pybind11::object Python_JavaArray_Get3D(const std::shared_ptr<PyJavaArray>& self, pybind11::object type_object, pybind11::object x_object, pybind11::object y_object, pybind11::object z_object) noexcept
+{
+    ReflectionType type = ReflectionType::OBJECT;
+    if (!type_object.is_none())
+    {
+        type = pybind11::cast<ReflectionType>(type_object);
+    }
+
+    EIOS* eios = self->eios->native_eios;
+    jarray array = self->array;
+
+    // Array[x][y][z]
+    if (!x_object.is_none() && !y_object.is_none() && !z_object.is_none())
+    {
+        std::size_t x = pybind11::cast<std::size_t>(x_object);
+        std::size_t y = pybind11::cast<std::size_t>(y_object);
+        std::size_t z = pybind11::cast<std::size_t>(z_object);
+
+        Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y, z)->data_stream();
+        return read_array_type(stream, self, type, 0);
+    }
+
+    // Array[][][]
+    Stream &stream = eios->control_center->reflect_array_all(array, type, 3)->data_stream();
+    return read_array_type(stream, self, type, 3);
+}
+
+pybind11::object Python_JavaArray_Get4D(const std::shared_ptr<PyJavaArray>& self, pybind11::object type_object, pybind11::object x_object, pybind11::object y_object, pybind11::object z_object, pybind11::object w_object) noexcept
+{
+    ReflectionType type = ReflectionType::OBJECT;
+    if (!type_object.is_none())
+    {
+        type = pybind11::cast<ReflectionType>(type_object);
+    }
+
+    EIOS* eios = self->eios->native_eios;
+    jarray array = self->array;
+
+    // Array[x][y][z][w]
+    if (!x_object.is_none() && !y_object.is_none() && !z_object.is_none() && !w_object.is_none())
+    {
+        std::size_t x = pybind11::cast<std::size_t>(x_object);
+        std::size_t y = pybind11::cast<std::size_t>(y_object);
+        std::size_t z = pybind11::cast<std::size_t>(z_object);
+        std::size_t w = pybind11::cast<std::size_t>(z_object);
+
+        Stream &stream = eios->control_center->reflect_array(array, type, 1, x, y, z, w)->data_stream();
+        return read_array_type(stream, self, type, 0);
+    }
+
+    // Array[][][][]
+    Stream &stream = eios->control_center->reflect_array_all(array, type, 4)->data_stream();
+    return read_array_type(stream, self, type, 4);
+}
+
+void Python_JavaArray_Release_Object(const std::shared_ptr<PyJavaArray>& self) noexcept
+{
+    if (self->eios && self->array)
+    {
+        EIOS* eios = self->eios->native_eios;
+        jarray object = self->array;
+
+        eios->control_center->reflect_release_object(object);
+
+        self->eios = nullptr;
+        self->array = nullptr;
+        self->size = 0;
+    }
+}
+
+pybind11::object PyJavaArray_Str(const std::shared_ptr<PyJavaArray>& self)
+{
+    std::ostringstream stream;
+
+    std::ios state(nullptr);
+    state.copyfmt(stream);
+
+    stream << std::setfill('0') << std::uppercase << std::hex;
+    stream << "JavaArray(";
+    stream << "0x" << reinterpret_cast<std::uintptr_t>(self.get());
+    stream << "): ";
+    stream.copyfmt(state);
+
+    stream << "{"<<"\n";
+    stream<< "    eios: " << self->eios << "\n";
+    stream<< "    array: " << self->array << "\n";
+    stream<< "    size:  " << self->size << "\n";
+    stream<< "}";
+
+    return pybind11::str(stream.str());
+}
+
+void declare_python_java_array(pybind11::module_ &module)
+{
+    pybind11::class_<PyJavaArray, std::shared_ptr<PyJavaArray>>(module, "JavaArray")
+        // .def(pybind11::init<>()) // Cannot instantiate from Python
+        .def_readonly("eios", &PyJavaArray::eios)
+        .def_readonly("array", &PyJavaArray::array)
+        .def_readonly("size", &PyJavaArray::size)
+        .def("get_length", &Python_JavaArray_GetLength)
+        .def("get_1d", &Python_JavaArray_Get1D,
+             pybind11::arg("type") = pybind11::none(),
+             pybind11::arg("indices") = pybind11::none(),
+             pybind11::arg("index") = pybind11::none(),
+             pybind11::arg("length") = pybind11::none())
+        .def("get_2d", &Python_JavaArray_Get2D,
+             pybind11::arg("type") = pybind11::none(),
+             pybind11::arg("x") = pybind11::none(),
+             pybind11::arg("y") = pybind11::none())
+        .def("get_3d", &Python_JavaArray_Get3D,
+             pybind11::arg("type") = pybind11::none(),
+             pybind11::arg("x") = pybind11::none(),
+             pybind11::arg("y") = pybind11::none(),
+             pybind11::arg("z") = pybind11::none())
+        .def("get_4d", &Python_JavaArray_Get4D,
+             pybind11::arg("type") = pybind11::none(),
+             pybind11::arg("x") = pybind11::none(),
+             pybind11::arg("y") = pybind11::none(),
+             pybind11::arg("z") = pybind11::none(),
+             pybind11::arg("w") = pybind11::none())
+        .def("release_object", &Python_JavaArray_Release_Object)
+        .def("__str__", &PyJavaArray_Str);
+}
+
+template<typename T>
+pybind11::object read_array_type(Stream &stream, const std::shared_ptr<PyJavaArray>& array)
+{
+    if constexpr(std::is_same<T, std::string>::value)
+    {
+        return pybind11::cast(stream.read<std::vector<std::string>>());
+    }
+    else if constexpr(std::is_same<T, bool>::value)
+    {
+        return pybind11::cast(stream.read<std::vector<bool>>());
+    }
+    else if constexpr(std::is_same<T, jobject>::value)
+    {
+        std::size_t length = stream.read<std::size_t>();
+        pybind11::list list = pybind11::list(length);
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            list.append(python_create_object(array, stream.read<jobject>()));
+        }
+        return list;
+    }
+    else if constexpr(std::is_same<T, jarray>::value)
+    {
+        std::size_t length = stream.read<std::size_t>();
+        pybind11::list list = pybind11::list(length);
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            list.append(python_create_array(array, stream.read<jarray>(), length));
+        }
+        return list;
+    }
+    else
+    {
+        return pybind11::cast(stream.read<std::vector<T>>());
+    }
+}
+
+pybind11::object read_array_type(Stream &stream, const std::shared_ptr<PyJavaArray>& object, ReflectionType type, std::size_t dimensions)
+{
+    if (dimensions == 0)
+    {
+        std::size_t size = stream.read<std::size_t>();
+        if (size == 0)
+        {
+            return pybind11::none();
+        }
+
+        switch(type)
+        {
+            case ReflectionType::CHAR: return pybind11::str(std::string(1, stream.read<char>()));
+            case ReflectionType::BYTE: return pybind11::int_(stream.read<std::uint8_t>());
+            case ReflectionType::BOOL: return pybind11::bool_(stream.read<bool>());
+            case ReflectionType::SHORT: return pybind11::int_(stream.read<std::int16_t>());
+            case ReflectionType::INT: return pybind11::int_(stream.read<std::int32_t>());
+            case ReflectionType::LONG: return pybind11::int_(stream.read<std::int64_t>());
+            case ReflectionType::FLOAT: return pybind11::float_(stream.read<float>());
+            case ReflectionType::DOUBLE: return pybind11::float_(stream.read<double>());
+            case ReflectionType::STRING: return pybind11::str(stream.read<std::string>());
+            case ReflectionType::OBJECT: return python_create_object(object, stream.read<jobject>());
+            case ReflectionType::ARRAY: return python_create_array(object, stream.read<jarray>(), 0);
+            default: return pybind11::none();
+        }
+    }
+
+    if (dimensions == 1)
+    {
+        switch(type)
+        {
+            case ReflectionType::CHAR: return read_array_type<char>(stream, object);
+            case ReflectionType::BYTE: return read_array_type<std::uint8_t>(stream, object);
+            case ReflectionType::BOOL: return read_array_type<bool>(stream, object);
+            case ReflectionType::SHORT: return read_array_type<std::int16_t>(stream, object);
+            case ReflectionType::INT: return read_array_type<std::int32_t>(stream, object);
+            case ReflectionType::LONG: return read_array_type<std::int64_t>(stream, object);
+            case ReflectionType::FLOAT: return read_array_type<float>(stream, object);
+            case ReflectionType::DOUBLE: return read_array_type<double>(stream, object);
+            case ReflectionType::STRING: return read_array_type<std::string>(stream, object);
+            case ReflectionType::OBJECT: return read_array_type<jobject>(stream, object);
+            case ReflectionType::ARRAY: return read_array_type<jarray>(stream, object);
+            default: return pybind11::none();
+        }
+    }
+
+    std::size_t length = stream.read<std::size_t>();
+    pybind11::list list = pybind11::list(length);
+
+    for (std::size_t i = 0; i < length; ++i)
+    {
+        list.append(read_array_type(stream, object, type, dimensions - 1));
+    }
+
+    return list;
+}
+#else
+
 
 int PyJavaArray_Clear(PyObject* object)
 {
@@ -22,15 +335,15 @@ int PyJavaArray_Clear(PyObject* object)
 
 void PyJavaArray_Dealloc(PyObject* object)
 {
-    PyJavaArray* py_java_object = reinterpret_cast<PyJavaArray *>(object);
-    if (py_java_object->eios && py_java_object->array)
+    EIOS* eios = PythonUnwrapEIOS(reinterpret_cast<PyJavaArray *>(object)->eios);
+    jarray array = reinterpret_cast<PyJavaArray *>(object)->array;
+
+    if (eios && array)
     {
-        Reflect_Release_Object(PythonUnwrapEIOS(py_java_object->eios), py_java_object->array);
+        eios->control_center->reflect_release_object(array);
     }
 
-    // PyObject_GC_UnTrack(object);
     PyJavaArray_Clear(object);
-    //PyObject_Del(object);  // NO GC!
     python->PyObject_Free(object);
 }
 
@@ -478,3 +791,4 @@ PyObject* read_array_type(Stream &stream, PyJavaArray* object, ReflectionType ty
 
     return result;
 }
+#endif

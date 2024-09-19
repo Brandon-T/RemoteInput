@@ -6,13 +6,10 @@
 #define REMOTEINPUT_PYTHONEIOS_HXX
 
 #include "PythonCommon.hxx"
-#include "EIOS.hxx"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
+#if defined(USE_PYBIND11)
+void declare_python_eios(pybind11::module_ &module);
+#else
 PyObject* Python_EIOS_Inject(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_Inject_PID(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_From_PID(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
@@ -51,9 +48,6 @@ PyObject* Python_EIOS_PairClient_PID(PyEIOS* self, PyObject* args[], Py_ssize_t 
 PyObject* Python_EIOS_KillClientPID(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_EIOS_KillClient(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_Reflect_Release_Objects(PyEIOS* self, PyObject* args[], Py_ssize_t args_length) noexcept;
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif //REMOTEINPUT_PYTHONEIOS_HXX

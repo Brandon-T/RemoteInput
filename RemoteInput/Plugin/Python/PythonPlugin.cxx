@@ -7,9 +7,46 @@
 //
 
 #include "PythonPlugin.hxx"
+
+#include "PythonCommon.hxx"
 #include "PythonEIOS.hxx"
 #include "PythonJavaObject.hxx"
-#include "PythonJavaList.hxx"
+#include "PythonJavaArray.hxx"
+
+#if defined(USE_PYBIND11)
+PYBIND11_MODULE(remote_input, module) {
+    #if defined(DEBUG)
+    PrintPythonVersionInfo();
+    #endif
+
+    // Register enums
+    pybind11::enum_<ImageFormat>(module, "ImageFormat")
+        .value("BGR_BGRA", ImageFormat::BGR_BGRA)
+        .value("BGRA", ImageFormat::BGRA)
+        .value("RGBA", ImageFormat::RGBA)
+        .value("ARGB", ImageFormat::ARGB)
+        .value("ABGR", ImageFormat::ABGR);
+
+    pybind11::enum_<ReflectionType>(module, "ReflectType")
+        .value("BOOLEAN", ReflectionType::BOOL)
+        .value("CHAR", ReflectionType::CHAR)
+        .value("BYTE", ReflectionType::BYTE)
+        .value("SHORT", ReflectionType::SHORT)
+        .value("INT", ReflectionType::INT)
+        .value("LONG", ReflectionType::LONG)
+        .value("FLOAT", ReflectionType::FLOAT)
+        .value("DOUBLE", ReflectionType::DOUBLE)
+        .value("STRING", ReflectionType::STRING)
+        .value("OBJECT", ReflectionType::OBJECT)
+        .value("ARRAY", ReflectionType::ARRAY);
+
+    declare_python_eios(module);
+    declare_python_java_object(module);
+    declare_python_java_array(module);
+
+    fprintf(stderr, "LOADED!\n");
+}
+#else
 #include "Python.hxx"
 
 #include <unordered_map>
@@ -25,7 +62,6 @@ static struct PyMethodDef RemoteInputMethods[] =
         {nullptr} /* SENTINEL */
 };
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef RemoteInputModule =
 {
         PyModuleDef_HEAD_INIT,
@@ -182,43 +218,4 @@ PyObject* PyInit_remote_input()
     fprintf(stderr, "LOADED!\n");
     return module;
 }
-#else
-PyMODINIT_FUNC MODINIT(remote_input)()
-{
-    fprintf(stderr, "LOADED!\n");
-
-    PyObject* PyEIOS_Type = PyType_FromSpec(&PyEIOS_Spec);
-    if (PyType_Ready(reinterpret_cast<PyTypeObject*>(PyEIOS_Type)) < 0)
-    {
-        return nullptr;
-    }
-
-    PyObject* PyJavaObject_Type = PyType_FromSpec(&PyJavaObject_Spec);
-    if (PyType_Ready(reinterpret_cast<PyTypeObject*>(PyJavaObject_Type)) < 0)
-    {
-        return nullptr;
-    }
-
-    PyObject* module = PyModule_Create(&RemoteInputModule);
-
-    Py_INCREF(PyEIOS_Type);
-    if (PyModule_AddObject(module, "EIOS", PyEIOS_Type))
-    {
-        Py_DECREF(PyEIOS_Type);
-        return nullptr;
-    }
-
-    Py_INCREF(PyJavaObject_Type);
-    if (PyModule_AddObject(module, "JavaObject", PyJavaObject_Type))
-    {
-        Py_DECREF(PyJavaObject_Type);
-        return nullptr;
-    }
-
-    return module;
-
-    //PyModule_New("remote_input");
-    PyObject* module = Py_InitModule("remote_input", RemoteInputMethods);
-}
 #endif
-

@@ -6,13 +6,10 @@
 #define REMOTEINPUT_PYTHONJAVAOBJECT_HXX
 
 #include "PythonCommon.hxx"
-#include "JNI_Common.hxx"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
+#if defined(USE_PYBIND11)
+void declare_python_java_object(pybind11::module_ &module);
+#else
 PyObject* Python_Reflect_Object(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_Reflect_IsSame_Object(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_Reflect_InstanceOf(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept;
@@ -27,9 +24,6 @@ PyObject* Python_Reflect_Double(PyJavaObject* self, PyObject* args[], Py_ssize_t
 PyObject* Python_Reflect_String(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_Reflect_Array(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept;
 PyObject* Python_JavaObject_Release_Object(PyJavaObject* self, PyObject* args[], Py_ssize_t args_length) noexcept;
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif //REMOTEINPUT_PYTHONJAVAOBJECT_HXX

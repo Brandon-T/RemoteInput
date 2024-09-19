@@ -3,6 +3,8 @@
 //
 
 #include "PythonJavaList.hxx"
+
+#if !defined(USE_PYBIND11)
 #include "Python.hxx"
 #include "PythonCommon.hxx"
 #include <memory>
@@ -93,7 +95,8 @@ PyObject* create_java_list(PyEIOS* eios, Py_ssize_t length)
     PyList_tp_dealloc = original_des;
     if (PyList_tp_dealloc)
     {
-        reinterpret_cast<PyTypeObject*>(type)->tp_dealloc = PyList_Dealloc;
+        type->tp_dealloc = PyList_Dealloc;
     }
     return list;
 }
+#endif

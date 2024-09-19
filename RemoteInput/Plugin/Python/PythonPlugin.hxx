@@ -11,6 +11,8 @@
 
 #include "Plugin.hxx"
 
+#ifndef USE_PYBIND11
+
 //On Windows, Python is really badly implemented, so we must include `math.h` and not `cmath` to get the _hpyot symbol
 #include <math.h>
 #include <Python.h>
@@ -32,5 +34,7 @@ extern "C"
     //PyMODINIT_FUNC MODINIT(remote_input)();
     EXPORT PyObject* PyInit_remote_input();
 }
+
+#endif
 
 #endif //REMOTEINPUT_PYTHONPLUGIN_HXX
