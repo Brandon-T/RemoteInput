@@ -41,7 +41,11 @@ set(Python_ADDITIONAL_VERSIONS
     CACHE INTERNAL "")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
-find_package(PythonLibsNew ${PYBIND11_PYTHON_VERSION} MODULE REQUIRED ${_pybind11_quiet})
+IF(WIN32)
+  find_package(Python3 ${PYBIND11_PYTHON_VERSION} MODULE REQUIRED ${_pybind11_quiet})
+ELSE()
+  find_package(PythonLibsNew ${PYBIND11_PYTHON_VERSION} MODULE REQUIRED ${_pybind11_quiet})
+ENDIF()
 list(REMOVE_AT CMAKE_MODULE_PATH -1)
 
 # Makes a normal variable a cached variable
