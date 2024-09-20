@@ -1619,7 +1619,7 @@ std::vector<jboolean> RemoteVM::GetBooleanArrayRegion(jbooleanArray array, jsize
         env->GetBooleanArrayRegion(array, start, len, &elements[0]);
         return elements;
     }
-    return {};
+    return elements;
 }
 
 std::vector<jbyte> RemoteVM::GetByteArrayRegion(jbyteArray array, jsize start, jsize len) const noexcept
@@ -1636,7 +1636,7 @@ std::vector<jbyte> RemoteVM::GetByteArrayRegion(jbyteArray array, jsize start, j
         env->GetByteArrayRegion(array, start, len, &elements[0]);
         return elements;
     }
-    return {};
+    return elements;
 }
 
 std::vector<jchar> RemoteVM::GetCharArrayRegion(jcharArray array, jsize start, jsize len) const noexcept
