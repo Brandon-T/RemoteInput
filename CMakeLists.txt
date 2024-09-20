@@ -10,6 +10,7 @@ ENDIF()
 
 set(PYTHON_BINDINGS ON)
 set(USE_PYBIND11 ON)
+set(USE_PYTHON3 OFF)
 set(USE_SYSTEM_PYBIND11 OFF)
 set(PYTHON_LIMITED_VERSION 0x03080000)
 
@@ -40,7 +41,19 @@ IF(PYTHON_BINDINGS)
 #        set(Python3_LIBRARY /msys64/mingw32/lib/libpython3.12.dll.a)
 #        set(Python3_INCLUDE_DIR /msys64/mingw32/include/python3.12)
 
-        find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+        IF(USE_PYTHON3)
+            find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+            set(PY_LIBRARIES, ${Python3_LIBRARIES})
+            set(PY_LIBRARIES, ${Python3_LIBRARY_DIRS})
+            set(PY_LINK_OPTIONS,  ${Python3_LINK_OPTIONS})
+            set(PY_DYNAMIC_LINKER_FLAGS, ${PYTHON3_DYNAMIC_LINKER_FLAGS})
+        ELSE()
+            find_package(Python REQUIRED COMPONENTS Interpreter Development)
+            set(PY_LIBRARIES, ${Python_LIBRARIES})
+            set(PY_LIBRARY_DIRS, ${Python_LIBRARY_DIRS})
+            set(PY_LINK_OPTIONS,  ${Python_LINK_OPTIONS})
+            set(PY_DYNAMIC_LINKER_FLAGS, ${PYTHON_DYNAMIC_LINKER_FLAGS})
+        ENDIF()
 
         IF(USE_SYSTEM_PYBIND11)
             find_package(pybind11 REQUIRED)
@@ -48,9 +61,9 @@ IF(PYTHON_BINDINGS)
     ELSE()
         find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter Development)
     ENDIF()
-    MESSAGE(STATUS, "${Python3_LIBRARIES}")
-    MESSAGE(STATUS, "${Python3_LIBRARY_DIRS}")
-    MESSAGE(STATUS, "${PYTHON3_DYNAMIC_LINKER_FLAGS}")
+    MESSAGE(STATUS, "${PY_LIBRARIES}")
+    MESSAGE(STATUS, "${PY_LIBRARY_DIRS}")
+    MESSAGE(STATUS, "${PY_DYNAMIC_LINKER_FLAGS}")
 ENDIF()
 
 # ----------------------- INCLUDE_DIRECTORIES -----------------------
@@ -306,15 +319,15 @@ IF(WIN32)
                 $<$<CONFIG:DEBUG>:-DDEBUG>
                 $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
         target_link_options(${PROJECT_NAME} PRIVATE
-                $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python3_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
-                $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python3_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+                $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>
+                $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
     ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(${PROJECT_NAME} PRIVATE
                 $<$<CONFIG:DEBUG>:-DDEBUG -Wl,--input-def=RemoteInput/RemoteInput.def>
                 $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden -Wl,--input-def=RemoteInput/RemoteInput.def>)
         target_link_options(${PROJECT_NAME} PRIVATE
-                $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python3_LINK_OPTIONS} ${PYTHON3_DYNAMIC_LINKER_FLAGS}>
-                $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python3_LINK_OPTIONS} ${PYTHON3_DYNAMIC_LINKER_FLAGS}>)
+                $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>
+                $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
     ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
         set_property(TARGET ${PROJECT_NAME} PROPERTY
@@ -329,7 +342,7 @@ IF(WIN32)
         IF(PYTHON_BINDINGS)
             target_link_options(${PROJECT_NAME} PRIVATE
                     $<$<CONFIG:DEBUG>:>
-                    $<$<CONFIG:RELEASE>:/LIBPATH:${Python_LIBRARY_DIRS} ${Python3_LINK_OPTIONS} ${PYTHON3_DYNAMIC_LINKER_FLAGS}>)
+                    $<$<CONFIG:RELEASE>:/LIBPATH:${Python_LIBRARY_DIRS} ${Py_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
         ELSE()
             target_link_options(${PROJECT_NAME} PRIVATE
                     $<$<CONFIG:DEBUG>:>
@@ -341,22 +354,28 @@ ELSEIF(APPLE)
             $<$<CONFIG:DEBUG>:-DDEBUG -g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python3_LINK_OPTIONS} ${PYTHON3_DYNAMIC_LINKER_FLAGS}>
-            $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python3_LINK_OPTIONS} ${PYTHON3_DYNAMIC_LINKER_FLAGS}>)
+            $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>
+            $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
 ELSE()
     target_compile_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-DDEBUG -g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g ${Python_LINK_OPTIONS} ${PYTHON3_DYNAMIC_LINKER_FLAGS}> #-static-libgcc -static-libstdc++
-            $<$<CONFIG:RELEASE>:-s ${Python_LINK_OPTIONS} ${PYTHON3_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
+            $<$<CONFIG:DEBUG>:-g ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}> #-static-libgcc -static-libstdc++
+            $<$<CONFIG:RELEASE>:-s ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
 ENDIF()
 
 IF(PYTHON_BINDINGS)
-    IF(USE_PYBIND11)
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES} ${Python3_LIBRARIES} pybind11::module Python3::Python)
+    IF(USE_PYTHON3)
+        set(PY_MODULE Python3::Python)
     ELSE()
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES} ${Python3_LIBRARIES})
+        set(PY_MODULE Python::Python)
+    ENDIF()
+
+    IF(USE_PYBIND11)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES} ${PY_LIBRARIES} pybind11::module ${PY_MODULE})
+    ELSE()
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES} ${PY_LIBRARIES})
     ENDIF()
 ELSE()
     target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})
