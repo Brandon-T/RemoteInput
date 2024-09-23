@@ -12,7 +12,7 @@ pybind11::object python_create_eios(EIOS* eios) noexcept
         auto py_eios_object = std::make_shared<PyEIOS>();
         py_eios_object->pid = eios->pid;
         py_eios_object->native_eios = eios;
-        py_eios_object->gc_queue = std::make_shared<PyGCQueue>(eios);
+        py_eios_object->gc_queue = std::make_unique<PyGCQueue>(eios);
 
         return pybind11::cast(py_eios_object);
     }
@@ -127,7 +127,7 @@ PyObject* PythonWrapEIOS(EIOS* eios) noexcept
         PyEIOS* py_eios = (python->PyObject_New<PyEIOS>)(PyEIOS_Type());
         py_eios->pid = eios->pid;
         py_eios->native_eios = eios;
-        py_eios->gc_queue = std::make_shared<PyGCQueue>(eios);
+        py_eios->gc_queue = std::make_unique<PyGCQueue>(eios);
         return reinterpret_cast<PyObject*>(py_eios);
     }
 
