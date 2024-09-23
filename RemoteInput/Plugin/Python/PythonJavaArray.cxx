@@ -335,12 +335,12 @@ int PyJavaArray_Clear(PyObject* object)
 
 void PyJavaArray_Dealloc(PyObject* object)
 {
-    EIOS* eios = PythonUnwrapEIOS(reinterpret_cast<PyJavaArray *>(object)->eios);
-    jarray array = reinterpret_cast<PyJavaArray *>(object)->array;
+    PyJavaArray* py_java_array = reinterpret_cast<PyJavaArray*>(object);
+    jarray array = py_java_array->array;
 
     if (eios && array)
     {
-        eios->control_center->reflect_release_object(array);
+        py_java_array->eios->gc_queue->add(java_object);
     }
 
     PyJavaArray_Clear(object);

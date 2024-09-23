@@ -203,12 +203,12 @@ int PyJavaObject_Clear(PyObject* object)
 
 void PyJavaObject_Dealloc(PyObject* object)
 {
-    EIOS* eios = PythonUnwrapEIOS(reinterpret_cast<PyJavaObject *>(object)->eios);
+    PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject*>(object);
     jobject java_object = reinterpret_cast<PyJavaObject *>(object)->object;
 
     if (eios && java_object)
     {
-        eios->control_center->reflect_release_object(java_object);
+        py_java_object->eios->gc_queue->add(java_object);
     }
 
     PyJavaObject_Clear(object);

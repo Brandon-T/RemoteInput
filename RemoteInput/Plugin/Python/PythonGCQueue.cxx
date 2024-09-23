@@ -45,7 +45,7 @@ PyGCQueue::flush()
         results.reserve(objects.size());
         for (auto& it : objects)
         {
-            results.push_back(std::move(objects.extract(it++).value()));
+            results.push_back(std::move(objects.extract(it).value()));
         }
         Reflect_Release_Objects(eios, &result[0], result.size());
         objects.clear();
