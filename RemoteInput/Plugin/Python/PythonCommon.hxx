@@ -19,6 +19,7 @@
 
 #include "JNI_Common.hxx"
 #include "EIOS.hxx"
+#include "PythonGCQueue.hxx"
 
 // STRUCTURES
 enum class PyRemoteInputType
@@ -37,6 +38,7 @@ struct PyEIOS
 
     std::int32_t pid;
     EIOS* native_eios;
+    std::shared_ptr<PyGCQueue> gc_queue;
 };
 
 struct PyJavaObject

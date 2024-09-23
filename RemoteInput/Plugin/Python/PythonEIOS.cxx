@@ -296,7 +296,7 @@ pybind11::object Python_EIOS_Reflect_Array(const std::shared_ptr<PyEIOS>& self, 
     return python_create_array(self, array, array_size);
 }
 
-void Python_Reflect_Objects(const std::shared_ptr<PyEIOS>& self, pybind11::object object) noexcept
+void Python_Reflect_Release_Objects(const std::shared_ptr<PyEIOS>& self, pybind11::object object) noexcept
 {
     // Flatten the List
     std::stack<pybind11::handle> stack;
@@ -438,7 +438,7 @@ void declare_python_eios(pybind11::module_ &module)
         .def("reflect_double", &Python_EIOS_Reflect_Double, pybind11::arg("cls"), pybind11::arg("field"))
         .def("reflect_string", &Python_EIOS_Reflect_String, pybind11::arg("cls"), pybind11::arg("field"))
         .def("reflect_array", &Python_EIOS_Reflect_Array, pybind11::arg("cls"), pybind11::arg("field"), pybind11::arg("desc"))
-        .def("release_objects", &Python_Reflect_Objects)
+        .def("release_objects", &Python_Reflect_Release_Objects)
         .def("__str__", &PyEIOS_Str);
 }
 #else
@@ -613,7 +613,7 @@ PyObject* Python_EIOS_Inject(PyEIOS* self, PyObject* args[], Py_ssize_t args_len
 
     std::string process_name = from_python_object<std::string>(args[0]);
     EIOS_Inject(process_name.c_str());
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -637,7 +637,7 @@ PyObject* Python_EIOS_Inject_PID(PyEIOS* self, PyObject* args[], Py_ssize_t args
 
     std::int32_t pid = from_python_object<std::int32_t>(args[0]);
     EIOS_Inject_PID(pid);
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -766,7 +766,7 @@ PyObject* Python_EIOS_SetGraphicsDebugging(PyEIOS* self, PyObject* args[], Py_ss
 
     bool enabled = from_python_object<bool>(args[0]);
     EIOS_SetGraphicsDebugging(python_get_eios(self), enabled);
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -795,7 +795,7 @@ PyObject* Python_EIOS_GainFocus(PyEIOS* self, PyObject* args[], Py_ssize_t args_
     #endif
 
     EIOS_GainFocus(python_get_eios(self));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -811,7 +811,7 @@ PyObject* Python_EIOS_LoseFocus(PyEIOS* self, PyObject* args[], Py_ssize_t args_
     #endif
 
     EIOS_LoseFocus(python_get_eios(self));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -848,7 +848,7 @@ PyObject* Python_EIOS_SetKeyboardInputEnabled(PyEIOS* self, PyObject* args[], Py
 
     bool enabled = from_python_object<bool>(args[0]);
     EIOS_SetKeyboardInputEnabled(python_get_eios(self), enabled);
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -885,7 +885,7 @@ PyObject* Python_EIOS_SetMouseInputEnabled(PyEIOS* self, PyObject* args[], Py_ss
 
     bool enabled = from_python_object<bool>(args[0]);
     EIOS_SetMouseInputEnabled(python_get_eios(self), enabled);
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -946,7 +946,7 @@ PyObject* Python_EIOS_MoveMouse(PyEIOS* self, PyObject* args[], Py_ssize_t args_
     #endif
 
     EIOS_MoveMouse(python_get_eios(self), from_python_object<std::int32_t>(args[0]), from_python_object<std::int32_t>(args[1]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -970,7 +970,7 @@ PyObject* Python_EIOS_HoldMouse(PyEIOS* self, PyObject* args[], Py_ssize_t args_
     #endif
 
     EIOS_HoldMouse(python_get_eios(self), 0, 0, from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -994,7 +994,7 @@ PyObject* Python_EIOS_ReleaseMouse(PyEIOS* self, PyObject* args[], Py_ssize_t ar
     #endif
 
     EIOS_ReleaseMouse(python_get_eios(self), 0, 0, from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1017,7 +1017,7 @@ PyObject* Python_EIOS_ScrollMouse(PyEIOS* self, PyObject* args[], Py_ssize_t arg
     #endif
 
     EIOS_ScrollMouse(python_get_eios(self), 0, 0, from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1073,7 +1073,7 @@ PyObject* Python_EIOS_SendString(PyEIOS* self, PyObject* args[], Py_ssize_t args
 
     std::string text = from_python_object<std::string>(args[0]);
     EIOS_SendString(python_get_eios(self), text.c_str(), from_python_object<std::int32_t>(args[1]), from_python_object<std::int32_t>(args[2]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1096,7 +1096,7 @@ PyObject* Python_EIOS_HoldKey(PyEIOS* self, PyObject* args[], Py_ssize_t args_le
     #endif
 
     EIOS_HoldKey(python_get_eios(self), from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1119,7 +1119,7 @@ PyObject* Python_EIOS_ReleaseKey(PyEIOS* self, PyObject* args[], Py_ssize_t args
     #endif
 
     EIOS_ReleaseKey(python_get_eios(self), from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1175,7 +1175,7 @@ PyObject* Python_EIOS_SetKeyboardSpeed(PyEIOS* self, PyObject* args[], Py_ssize_
     #endif
 
     EIOS_SetKeyboardSpeed(python_get_eios(self), from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1211,7 +1211,7 @@ PyObject* Python_EIOS_SetKeyboardRepeatDelay(PyEIOS* self, PyObject* args[], Py_
     #endif
 
     EIOS_SetKeyboardRepeatDelay(python_get_eios(self), from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1281,7 +1281,7 @@ PyObject* Python_EIOS_KillClientPID(PyEIOS* self, PyObject* args[], Py_ssize_t a
     #endif
 
     EIOS_KillClientPID(from_python_object<std::int32_t>(args[0]));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
@@ -1297,7 +1297,7 @@ PyObject* Python_EIOS_KillClient(PyEIOS* self, PyObject* args[], Py_ssize_t args
     #endif
 
     EIOS_KillClient(python_get_eios(self));
-    
+
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
