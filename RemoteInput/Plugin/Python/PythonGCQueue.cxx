@@ -1,32 +1,16 @@
-#include "PyGCQueue.hxx"
+#include "PythonGCQueue.hxx"
 
 PyGCQueue::PyGCQueue(EIOS* eios, size_t max_size) : eios(eios), max_size(max_size) {}
 
 PyGCQueue::PyGCQueue(EIOS* eios) : eios(eios), max_size(PyGCQueue::DEFAULT_MAX_SIZE) {}
 
-PyGCQueue::PyGCQueue(PyGCQueue&& other): eios(other.eios), max_size(other.max_size), objects(std::move(objects))
-{
-    other.eios = nullptr;
-    other.flush();
-}
-
-PyGCQueue& PyGCQueue::operator = (PyGCQueue&& other)
-{
-    eios = other.eios;
-    max_size = other.max_size;
-    objects = std::move(other.objects);
-
-    other.eios = nullptr;
-    other.flush();
-    return *this;
-}
 
 PyGCQueue::~PyGCQueue()
 {
     flush();
 }
 
-PyGCQueue::add(jobject object)
+void PyGCQueue::add(jobject object)
 {
     if (object != nullptr)
     {
@@ -38,7 +22,7 @@ PyGCQueue::add(jobject object)
     }
 }
 
-PyGCQueue::flush()
+void PyGCQueue::flush()
 {
     if (objects.size() > 0) {
         std::vector<jobject> results;
@@ -47,7 +31,7 @@ PyGCQueue::flush()
         {
             results.push_back(std::move(objects.extract(it).value()));
         }
-        Reflect_Release_Objects(eios, &result[0], result.size());
+        Reflect_Release_Objects(eios.get(), &results[0], results.size());
         objects.clear();
     }
 }

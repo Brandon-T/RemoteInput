@@ -1,6 +1,9 @@
 #ifndef REMOTEINPUT_PYTHONGCQUEUE_HXX
 #define REMOTEINPUT_PYTHONGCQUEUE_HXX
 
+#include <EIOS.hxx>
+#include <NativePlugin.hxx>
+
 #include <unordered_set>
 
 class PyGCQueue
@@ -8,8 +11,6 @@ class PyGCQueue
 public:
     PyGCQueue(EIOS* eios, size_t max_size);
     PyGCQueue(EIOS* eios);
-    PyGCQueue(PyGCQueue&&);
-    PyGCQueue(const PyGCQueue&) = delete;
     ~PyGCQueue();
 
     void add(jobject object);
