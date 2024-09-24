@@ -4,6 +4,7 @@
 #include <EIOS.hxx>
 #include <NativePlugin.hxx>
 
+#include <iostream>
 #include <unordered_set>
 
 class PyGCQueue
@@ -21,7 +22,7 @@ private:
     size_t max_size;
     std::unordered_set<jobject> objects;
 
-    static const std::size_t DEFAULT_MAX_SIZE = 50;
+    static const std::size_t DEFAULT_MAX_SIZE = 5000;
 };
 
 #endif //REMOTEINPUT_PYTHONGCQUEUE_HXX

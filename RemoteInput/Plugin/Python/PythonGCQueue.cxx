@@ -23,7 +23,9 @@ void PyGCQueue::add(jobject object)
 
 void PyGCQueue::flush()
 {
+    std::cout << "flush" << std::endl;
     if (objects.size() > 0) {
+        std::cout << "size: " << objects.size() << std::endl;
         std::vector<jobject> results;
         results.reserve(objects.size());
         for (auto& it : objects)
