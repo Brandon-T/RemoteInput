@@ -4,7 +4,6 @@ PyGCQueue::PyGCQueue(EIOS* eios, size_t max_size) : eios(eios), max_size(max_siz
 
 PyGCQueue::PyGCQueue(EIOS* eios) : eios(eios), max_size(PyGCQueue::DEFAULT_MAX_SIZE) {}
 
-
 PyGCQueue::~PyGCQueue()
 {
     flush();
