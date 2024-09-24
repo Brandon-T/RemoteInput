@@ -1,8 +1,8 @@
 #include "PyGCQueue.hxx"
 
-PyGCQueue::PyGCQueue(EIOS* eios, size_t max_size) : eios(eios), max_size(max_size) {};
+PyGCQueue::PyGCQueue(EIOS* eios, size_t max_size) : eios(eios), max_size(max_size) {}
 
-PyGCQueue::PyGCQueue(EIOS* eios) : eios(eios), max_size(PyGCQueue::DEFAULT_MAX_SIZE) {};
+PyGCQueue::PyGCQueue(EIOS* eios) : eios(eios), max_size(PyGCQueue::DEFAULT_MAX_SIZE) {}
 
 PyGCQueue::PyGCQueue(PyGCQueue&& other): eios(other.eios), max_size(other.max_size), objects(std::move(objects))
 {
