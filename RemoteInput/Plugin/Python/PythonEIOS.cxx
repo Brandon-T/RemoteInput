@@ -57,7 +57,7 @@ nanobind::object Python_EIOS_GetImageBuffer(PyEIOS* self) noexcept
     std::int32_t height = 0;
     EIOS_GetTargetDimensions(self->native_eios, &width, &height);
     std::uint8_t* buffer = EIOS_GetImageBuffer(self->native_eios);
-    return nanobind::steal(PyMemoryView_FromMemory(reinterpret_cast<char*>(buffer), width * height * 4 * sizeof(std::uint8_t), PyBUF_READ | PyBUF_WRITE));
+    return nanobind::steal(PyMemoryView_FromMemory(reinterpret_cast<char*>(buffer), width * height * 4 * sizeof(std::uint8_t), PyBUF_READ));
 }
 
 nanobind::object Python_EIOS_GetDebugImageBuffer(PyEIOS* self) noexcept
@@ -66,7 +66,7 @@ nanobind::object Python_EIOS_GetDebugImageBuffer(PyEIOS* self) noexcept
     std::int32_t height = 0;
     EIOS_GetTargetDimensions(self->native_eios, &width, &height);
     std::uint8_t* buffer = EIOS_GetDebugImageBuffer(self->native_eios);
-    return nanobind::steal(PyMemoryView_FromMemory(reinterpret_cast<char*>(buffer), width * height * 4 * sizeof(std::uint8_t), PyBUF_READ | PyBUF_WRITE));
+    return nanobind::steal(PyMemoryView_FromMemory(reinterpret_cast<char*>(buffer), width * height * 4 * sizeof(std::uint8_t), PyBUF_WRITE));
 }
 
 void Python_EIOS_SetGraphicsDebugging(PyEIOS* self, bool enabled) noexcept
