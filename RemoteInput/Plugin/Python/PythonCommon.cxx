@@ -99,26 +99,6 @@ nanobind::object python_create_array(PyJavaArray* self, jarray array, std::size_
     return nanobind::none();
 }
 
-PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept
-{
-    if (nanobind::isinstance<PyEIOS>(object))
-    {
-        return PyRemoteInputType::EIOS;
-    }
-
-    if (nanobind::isinstance<PyJavaObject>(object))
-    {
-        return PyRemoteInputType::JAVA_OBJECT;
-    }
-
-    if (nanobind::isinstance<PyJavaArray>(object))
-    {
-        return PyRemoteInputType::JAVA_ARRAY;
-    }
-
-    return PyRemoteInputType::OTHER;
-}
-
 PyEIOS::~PyEIOS()
 {
     if (native_eios)
@@ -126,8 +106,6 @@ PyEIOS::~PyEIOS()
         EIOS_ReleaseTarget(this->native_eios);
         this->native_eios = nullptr;
     }
-
-    delete this;
 }
 
 PyJavaObject::~PyJavaObject()
@@ -139,8 +117,6 @@ PyJavaObject::~PyJavaObject()
         this->eios = nullptr;
         this->object = nullptr;
     }
-
-    delete this;
 }
 
 PyJavaArray::~PyJavaArray()
@@ -152,9 +128,59 @@ PyJavaArray::~PyJavaArray()
         this->array = nullptr;
         this->size = 0;
     }
-
-    delete this;
 }
+
+template<typename T>
+PyTypeObject* PyTypeFromType() noexcept
+{
+    static PyTypeObject* type = nullptr;
+    if (!type)
+    {
+        type = Py_TYPE(nanobind::cast(T()).ptr());
+        return type;
+    }
+    return nullptr;
+}
+
+PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept
+{
+    if (Py_IS_TYPE(object, PyTypeFromType<PyEIOS>()))
+    {
+        return PyRemoteInputType::EIOS;
+    }
+
+    if (Py_IS_TYPE(object, PyTypeFromType<PyJavaObject>()))
+    {
+        return PyRemoteInputType::JAVA_OBJECT;
+    }
+
+    if (Py_IS_TYPE(object, PyTypeFromType<PyJavaArray>()))
+    {
+        return PyRemoteInputType::JAVA_ARRAY;
+    }
+
+    return PyRemoteInputType::OTHER;
+}
+
+//PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept
+//{
+//    if (nanobind::isinstance<PyEIOS>(object))
+//    {
+//        return PyRemoteInputType::EIOS;
+//    }
+//
+//    if (nanobind::isinstance<PyJavaObject>(object))
+//    {
+//        return PyRemoteInputType::JAVA_OBJECT;
+//    }
+//
+//    if (nanobind::isinstance<PyJavaArray>(object))
+//    {
+//        return PyRemoteInputType::JAVA_ARRAY;
+//    }
+//
+//    return PyRemoteInputType::OTHER;
+//}
 #else
 PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept
 {

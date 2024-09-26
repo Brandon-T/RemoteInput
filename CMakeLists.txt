@@ -288,11 +288,7 @@ IF(PYTHON_BINDINGS AND USE_PYBIND11)
         add_subdirectory(RemoteInput/Thirdparty/nanobind)
     ENDIF()
 
-    IF(WIN32)
-        add_library(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
-    ELSE()
-        nanobind_add_module(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
-    ENDIF()
+    nanobind_add_module(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
 
     IF(NOT USE_SYSTEM_PYBIND11)
         target_include_directories(RemoteInput PRIVATE ${CMAKE_SOURCE_DIR}/RemoteInput/Thirdparty/nanobind/include)
