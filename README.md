@@ -1,15 +1,14 @@
 # RemoteInput
-Remote Input/Output
 
-**Build Status:** <br />
-[![Windows-x86_64](https://github.com/Brandon-T/RemoteInput/workflows/Windows-x86_64/badge.svg)](https://github.com/Brandon-T/Reflection/releases/latest)
-<br />
-[![Windows-i686](https://github.com/Brandon-T/RemoteInput/workflows/Windows-i686/badge.svg)](https://github.com/Brandon-T/Reflection/releases/latest)
-<br />
-[![MacOS-x86_64](https://github.com/Brandon-T/RemoteInput/workflows/MacOS-x86_64/badge.svg)](https://github.com/Brandon-T/Reflection/releases/latest)
-<br />
-[![Linux-x86_64](https://github.com/Brandon-T/RemoteInput/workflows/Linux-x86_64/badge.svg)](https://github.com/Brandon-T/Reflection/releases/latest)
-<br />
-[![Linux-armhf](https://github.com/Brandon-T/RemoteInput/workflows/Linux-armhf/badge.svg)](https://github.com/Brandon-T/Reflection/releases/latest)
-<br />
-[![Linux-aarch64](https://github.com/Brandon-T/RemoteInput/workflows/Linux-aarch64/badge.svg)](https://github.com/Brandon-T/Reflection/releases/latest)
+![example workflow](https://github.com/Brandon-T/RemoteInput/actions/workflows/build.yml/badge.svg)
+
+Remote input injects into a Java process to allow io operations such as keyboard and mouse input, reading canvas data and drawing on the canvas.
+
+Binaries are available here:
+https://github.com/Brandon-T/Reflection/releases/tag/autobuild
+
+---
+
+> [!NOTE]  
+> Linux has protection against dll injection, `setcap` can be used on the executable injecting remoteinput.  
+> `sudo setcap cap_sys_ptrace=eip /path/to/executable`
