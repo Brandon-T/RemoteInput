@@ -13,14 +13,24 @@ extern "C" {
 #endif
 
 #include <Thirdparty/Hook.hxx>
-#include <Injection/Injector.hxx>
+#if defined(CUSTOM_INJECTOR)
+#include "Injection/Injector.hxx"
+#else
+#include "Thirdparty/Injector.hxx"
+#endif
 #include <signal.h>
 #include <libproc.h>
 #include <sys/syscall.h>
 #include <mach-o/dyld.h>
+#include <filesystem>
 #endif // defined
 
 #if defined(__APPLE__)
+std::string StripPath(const std::string& path_to_strip)
+{
+    return std::filesystem::path(path_to_strip).filename().string();
+}
+
 void GetDesktopResolution(int &width, int &height) noexcept
 {
     auto get_screen_resolution = [&]{
@@ -117,10 +127,35 @@ std::int32_t InjectProcess(std::int32_t pid) noexcept
         std::string path = std::string(PATH_MAX, '\0');
         if (realpath(info.dli_fname, &path[0]))
         {
-            if (Injector::Inject(info.dli_fname, pid, nullptr))
+            #if defined(CUSTOM_INJECTOR)
+            if (Injector::Inject(path.c_str(), pid, nullptr))
             {
                 return pid;
             }
+            #else
+            extern std::vector<std::unique_ptr<Injector>> injectors;
+
+            for (auto& injector : injectors)
+            {
+                if (injector && injector->get_pid() == pid)
+                {
+                    if (injector->is_injected())
+                    {
+                        return pid;
+                    }
+
+                    return injector->Inject(path.c_str()) ? pid : -1;
+                }
+            }
+
+            std::unique_ptr<Injector> injector = std::make_unique<Injector>(pid);
+            if (injector)
+            {
+                bool result = injector->Inject(path.c_str());
+                injectors.push_back(std::move(injector));
+                return result ? pid : -1;
+            }
+            #endif
         }
     }
     return -1;
@@ -163,9 +198,13 @@ std::vector<std::string> GetLoadedModuleNames(const char* partial_module_name) n
     for (std::uint32_t i = 0; i < count; ++i)
     {
         const char* name = _dyld_get_image_name(i);
-        if (!strcasestr(name, partial_module_name))
+        if (name)
         {
-            result.push_back(name);
+            std::string module_name = StripPath(name);
+            if (!strcasestr(module_name.c_str(), partial_module_name))
+            {
+                result.push_back(name);
+            }
         }
     }
 
@@ -178,43 +217,47 @@ void* GetModuleHandle(const char* module_name) noexcept
     for (std::uint32_t i = 0; i < count; ++i)
     {
         const char* name = _dyld_get_image_name(i);
-        if (strcasestr(name, module_name))
+        if (name)
         {
-            return dlopen(name, RTLD_NOLOAD);
-
-            /*const struct mach_header* header = _dyld_get_image_header(i);
-            //std::intptr_t offset = _dyld_get_image_vmaddr_slide(i);
-
-            const struct load_command* cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char *>(header) + sizeof(struct mach_header));
-            if (header->magic == MH_MAGIC_64)
+            std::string stripped_name = StripPath(name);
+            if (strcasestr(stripped_name.c_str(), module_name))
             {
-                cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char *>(header) + sizeof(struct mach_header_64));
+                return dlopen(name, RTLD_NOLOAD);
+
+                /*const struct mach_header* header = _dyld_get_image_header(i);
+                //std::intptr_t offset = _dyld_get_image_vmaddr_slide(i);
+
+                const struct load_command* cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char *>(header) + sizeof(struct mach_header));
+                if (header->magic == MH_MAGIC_64)
+                {
+                    cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char *>(header) + sizeof(struct mach_header_64));
+                }
+
+                for (std::uint32_t j = 0; j < header->ncmds; ++j)
+                {
+                    if (cmd->cmd == LC_SEGMENT)
+                    {
+                        const struct segment_command* seg = reinterpret_cast<const struct segment_command*>(cmd);
+                        void* base_addr = reinterpret_cast<void*>(seg->vmaddr); //seg->vmaddr + offset;
+
+                        Dl_info info = {0};
+                        dladdr(base_addr, &info);
+                        return dlopen(info.dli_fname, RTLD_NOLOAD);
+                    }
+
+                    if (cmd->cmd == LC_SEGMENT_64)
+                    {
+                        const struct segment_command_64* seg = reinterpret_cast<const struct segment_command_64*>(cmd);
+                        void* base_addr = reinterpret_cast<void*>(seg->vmaddr); //seg->vmaddr + offset;
+
+                        Dl_info info = {0};
+                        dladdr(base_addr, &info);
+                        return dlopen(info.dli_fname, RTLD_NOLOAD);
+                    }
+
+                    cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char*>(cmd) + cmd->cmdsize);
+                }*/
             }
-
-            for (std::uint32_t j = 0; j < header->ncmds; ++j)
-            {
-                if (cmd->cmd == LC_SEGMENT)
-                {
-                    const struct segment_command* seg = reinterpret_cast<const struct segment_command*>(cmd);
-                    void* base_addr = reinterpret_cast<void*>(seg->vmaddr); //seg->vmaddr + offset;
-
-                    Dl_info info = {0};
-                    dladdr(base_addr, &info);
-                    return dlopen(info.dli_fname, RTLD_NOLOAD);
-                }
-
-                if (cmd->cmd == LC_SEGMENT_64)
-                {
-                    const struct segment_command_64* seg = reinterpret_cast<const struct segment_command_64*>(cmd);
-                    void* base_addr = reinterpret_cast<void*>(seg->vmaddr); //seg->vmaddr + offset;
-
-                    Dl_info info = {0};
-                    dladdr(base_addr, &info);
-                    return dlopen(info.dli_fname, RTLD_NOLOAD);
-                }
-
-                cmd = reinterpret_cast<const struct load_command*>(reinterpret_cast<const char*>(cmd) + cmd->cmdsize);
-            }*/
         }
     }
     return dlopen(module_name, RTLD_NOLOAD);

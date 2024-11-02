@@ -1,7 +1,12 @@
 #include "Platform.hxx"
 
 #if defined(__linux__)
+#if defined(CUSTOM_INJECTOR)
 #include "Injection/Injector.hxx"
+#else
+#include "Thirdparty/Injector.hxx"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -23,9 +28,15 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <filesystem>
 #endif // defined
 
 #if defined(__linux__)
+std::string StripPath(const std::string& path_to_strip)
+{
+    return std::filesystem::path(path_to_strip).filename().string();
+}
+
 void GetDesktopResolution(int &width, int &height) noexcept
 {
     Display* display = XOpenDisplay(nullptr);
@@ -191,10 +202,35 @@ std::int32_t InjectProcess(std::int32_t pid) noexcept
         std::string path = std::string(PATH_MAX, '\0');
         if (realpath(info.dli_fname, &path[0]))
         {
-            if (Injector::Inject(info.dli_fname, pid, nullptr))
+            #if defined(CUSTOM_INJECTOR)
+            if (Injector::Inject(path.c_str(), pid, nullptr))
             {
                 return pid;
             }
+            #else
+            extern std::vector<std::unique_ptr<Injector>> injectors;
+
+            for (auto& injector : injectors)
+            {
+                if (injector && injector->get_pid() == pid)
+                {
+                    if (injector->is_injected())
+                    {
+                        return pid;
+                    }
+
+                    return injector->Inject(path.c_str()) ? pid : -1;
+                }
+            }
+
+            std::unique_ptr<Injector> injector = std::make_unique<Injector>(pid);
+            if (injector)
+            {
+                bool result = injector->Inject(path.c_str());
+                injectors.push_back(std::move(injector));
+                return result ? pid : -1;
+            }
+            #endif
         }
     }
     return -1;
@@ -419,10 +455,10 @@ std::vector<std::string> GetLoadedModuleNames(const char* partial_module_name) n
         if (info && info->dlpi_name)
         {
             Module* module_info = static_cast<Module*>(data);
-            if (strcasestr(info->dlpi_name, module_info->module_name))
+            std::string module_name = StripPath(info->dlpi_name);
+            if (strcasestr(module_name.c_str(), module_info->module_name))
             {
                 module_info->result.push_back(info->dlpi_name);
-                return 1;
             }
         }
         return 0;
@@ -441,15 +477,16 @@ void* GetModuleHandle(const char* module_name) noexcept
         if (info && info->dlpi_name)
         {
             Module* module_info = static_cast<Module*>(data);
-            if (strcasestr(info->dlpi_name, module_info->module_name))
+            std::string module_name = StripPath(info->dlpi_name);
+            if (strcasestr(module_name.c_str(), module_info->module_name))
             {
                 module_info->result = dlopen(module_info->module_name, RTLD_NOLOAD);
-                return 1;
+                return module_info->result ? 1 : 0;
             }
         }
         return 0;
-    }, reinterpret_cast<void*>(&module_info));
-    return module_info.result ?: dlopen(module_name, RTLD_NOLOAD);
+    }, &module_info);
+    return module_info.result ? module_info.result : dlopen(module_name, RTLD_NOLOAD);
 }
 #endif
 
@@ -551,50 +588,6 @@ std::unique_ptr<Reflection> GetNativeReflector() noexcept
     {
         std::unique_ptr<Reflection> reflection;
         bool hasReflection = TimeOut(20, [&]{
-            jclass cls = env->FindClass("java/awt/Frame");
-            if (!cls)
-            {
-                return false;
-            }
-
-            jmethodID method = env->GetStaticMethodID(cls, "getFrames", "()[Ljava/awt/Frame;");
-            if (!method)
-            {
-                return false;
-            }
-
-            jobjectArray frames = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, method));
-            env->DeleteLocalRef(cls);
-            if (!frames)
-            {
-                return false;
-            }
-
-            jsize size = env->GetArrayLength(frames);
-            for (jsize i = 0; i < size; ++i)
-            {
-                jobject frame = env->GetObjectArrayElement(frames, i);
-                if (frame)
-                {
-                    if (IsValidFrame(env, frame))
-                    {
-                        reflection = Reflection::Create(frame);
-                        if (reflection)
-                        {
-                            env->DeleteLocalRef(frames);
-                            return true;
-                        }
-                    }
-
-                    env->DeleteLocalRef(frame);
-                }
-            }
-
-            env->DeleteLocalRef(frames);
-            return false;
-        });
-
-        bool hasReflection2 = !hasReflection && TimeOut(20, [&]{
             if (!ModuleLoaded("libawt_xawt.so"))
             {
                 return false;
@@ -610,7 +603,7 @@ std::unique_ptr<Reflection> GetNativeReflector() noexcept
                 void* windowFrame = reinterpret_cast<void*>(GetMainWindow());
                 if (windowFrame)
                 {
-                    jobject frame = awt_GetComponent(reflection->getEnv(), windowFrame);  //java.awt.Frame
+                    jobject frame = awt_GetComponent(env, windowFrame);  //java.awt.Frame
                     if (frame)
                     {
                         if (IsValidFrame(env, frame))
@@ -627,7 +620,7 @@ std::unique_ptr<Reflection> GetNativeReflector() noexcept
             });
         });
 
-        if (hasReflection || hasReflection2)
+        if (hasReflection)
         {
             return reflection;
         }

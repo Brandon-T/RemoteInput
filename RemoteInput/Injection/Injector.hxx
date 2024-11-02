@@ -5,10 +5,8 @@
 #ifndef REMOTEINPUT_INJECTOR_HXX
 #define REMOTEINPUT_INJECTOR_HXX
 
-#include <utility>
 #include <cstdint>
 #include <string>
-#include <sys/types.h>
 
 class Injector
 {

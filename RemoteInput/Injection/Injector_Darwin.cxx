@@ -7,6 +7,7 @@
 #if defined(__APPLE__)
 #include <dlfcn.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
 #include <mach/mach.h>
 #include <mach/mach_vm.h>
 #include <mach-o/loader.h>

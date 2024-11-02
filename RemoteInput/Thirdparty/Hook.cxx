@@ -29,16 +29,18 @@ Hook::Hook(void* original, void* detour) : original(original), detour(detour), t
     MH_CreateHook(original, detour, &trampoline);
 }
 
-Hook::Hook(Hook&& other) : original(nullptr), detour(nullptr), trampoline(nullptr), data()
+Hook::Hook(Hook&& other) noexcept : original(other.original), detour(other.detour), trampoline(other.trampoline), data()
 {
     other.original = nullptr;
     other.detour = nullptr;
     other.trampoline = nullptr;
+    std::memcpy(&data[0], &other.data[0], sizeof(data));
     std::memset(&other.data[0], 0, sizeof(data));
 }
 
 Hook::~Hook()
 {
+    remove();
     MH_Uninitialize();
 }
 
@@ -71,16 +73,18 @@ Hook::Hook(void* original, void* detour) : original(original), detour(detour), t
 	}
 }
 
-Hook::Hook(Hook&& other) : original(nullptr), detour(nullptr), trampoline(nullptr), data()
+Hook::Hook(Hook&& other) noexcept : original(other.original), detour(other.detour), trampoline(other.trampoline), data()
 {
     other.original = nullptr;
     other.detour = nullptr;
     other.trampoline = nullptr;
+    std::memcpy(&data[0], &other.data[0], sizeof(data));
     std::memset(&other.data[0], 0, sizeof(data));
 }
 
 Hook::~Hook()
 {
+    remove();
     trampoline = nullptr;
 }
 
@@ -113,16 +117,19 @@ Hook::Hook(void *original, void *detour) : original(original), detour(detour), t
     std::memset(&data[0], 0, sizeof(data));
 }
 
-Hook::Hook(Hook&& other) : original(other.original), detour(other.detour), trampoline(other.trampoline), data()
+Hook::Hook(Hook&& other)  noexcept : original(other.original), detour(other.detour), trampoline(other.trampoline), data()
 {
     other.original = nullptr;
     other.detour = nullptr;
     other.trampoline = nullptr;
+    std::memcpy(&data[0], &other.data[0], sizeof(data));
     std::memset(&other.data[0], 0, sizeof(data));
 }
 
 Hook::~Hook()
 {
+    remove();
+    delete static_cast<HOOK_TRACE_INFO*>(trampoline);
     trampoline = nullptr;
 }
 
@@ -136,6 +143,6 @@ void Hook::apply()
 
 void Hook::remove()
 {
-    DetourUninstallHook(reinterpret_cast<HOOK_TRACE_INFO*>(&data[0]));
+    DetourUninstallHook(reinterpret_cast<HOOK_TRACE_INFO*>(trampoline));
 }
 #endif

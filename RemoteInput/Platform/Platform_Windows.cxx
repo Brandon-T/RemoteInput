@@ -1,10 +1,15 @@
 #include "Platform.hxx"
+
+#if defined(_WIN32) || defined(_WIN64)
 #include <string>
 #include <chrono>
 #include "Thirdparty/Hook.hxx"
+#if defined(CUSTOM_INJECTOR)
 #include "Injection/Injector.hxx"
+#else
+#include "Thirdparty/Injector.hxx"
+#endif
 
-#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #include <tlhelp32.h>
 #include <shellscalingapi.h>
@@ -270,16 +275,41 @@ bool InjectSelf(std::int32_t pid) noexcept
 {
     if (IsProcessAlive(pid))
     {
-        std::string File;
-        File.resize(MAX_PATH);
+        std::string file;
+        file.resize(MAX_PATH);
         extern HMODULE module;
 
-        if (GetModuleFileName(module, &File[0], MAX_PATH) == 0)
+        if (GetModuleFileName(module, &file[0], MAX_PATH) == 0)
         {
             return false;
         }
 
-        return Injector::Inject(File, pid, nullptr);
+        #if defined(CUSTOM_INJECTOR)
+        return Injector::Inject(file, pid, nullptr);
+        #else
+        extern std::vector<std::unique_ptr<Injector>> injectors;
+
+        for (auto& injector : injectors)
+        {
+            if (injector && injector->get_pid() == pid)
+            {
+                if (injector->is_injected())
+                {
+                    return true;
+                }
+
+                return injector->Inject(file);;
+            }
+        }
+
+        std::unique_ptr<Injector> injector = std::make_unique<Injector>(pid);
+        if (injector)
+        {
+            bool result = injector->Inject(file);
+            injectors.push_back(std::move(injector));
+            return true;
+        }
+        #endif
     }
     return false;
 }

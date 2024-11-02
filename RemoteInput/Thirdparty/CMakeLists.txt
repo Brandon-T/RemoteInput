@@ -4,6 +4,9 @@ project(THIRD_PARTY_LIBRARIES VERSION 1.0.0 DESCRIPTION "Third Party")
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+# ----------------------- ENABLE ASSEMBLY CODE -----------------------
+enable_language(ASM)
+
 
 
 # ----------------------- INCLUDE_DIRECTORIES -----------------------
@@ -11,21 +14,28 @@ IF(WIN32)
     set(INCLUDE_DIRECTORIES
             min_hook/include
             min_hook/src
-            min_hook/src/hde)
+            min_hook/src/hde
+            kubo_injector/include
+            kubo_injector/src/windows)
 ELSEIF(APPLE)
     set(INCLUDE_DIRECTORIES
             rd_route/include
-            mach_inject/include)
+            mach_inject/include
+            kubo_injector/include
+            kubo_injector/src/macos)
 ELSE()
     set(INCLUDE_DIRECTORIES
-            linux_detours/include)
+            linux_detours/include
+            kubo_injector/include
+            kubo_injector/src/linux)
 ENDIF()
 
 
 # ----------------------------- LINKER -----------------------------
 IF(WIN32)
     set(LIBRARIES_LIST
-            kernel32)
+            kernel32
+            dbghelp)
 ELSEIF(APPLE)
     set(LIBRARIES_LIST
             dl
@@ -52,11 +62,23 @@ IF(WIN32)
             min_hook/src/buffer.h
             min_hook/src/hook.c
             min_hook/src/trampoline.c
-            min_hook/src/trampoline.h)
+            min_hook/src/trampoline.h
+            kubo_injector/include/injector.h
+            kubo_injector/src/windows/injector.c)
 ELSEIF(APPLE)
     set(LIB_SRC_LIST
             rd_route/include/rd_route.h
-            rd_route/src/rd_route.c)
+            rd_route/src/rd_route.c
+            kubo_injector/include/injector.h
+            kubo_injector/src/macos/exc_handler.c
+            kubo_injector/src/macos/injector.c
+            kubo_injector/src/macos/injector_internal.h
+            kubo_injector/src/macos/mach.c
+            kubo_injector/src/macos/mach_exc.h
+            kubo_injector/src/macos/mach_excServer.c
+            kubo_injector/src/macos/ptrace.c
+            kubo_injector/src/macos/remote_call.c
+            kubo_injector/src/macos/util.c)
 ELSE()
     set(LIB_SRC_LIST
             linux_detours/include/detours.h
@@ -68,13 +90,22 @@ ELSE()
             linux_detours/src/disasm.cpp
             linux_detours/src/plthook_elf.cpp
             linux_detours/src/trampoline_x86.cpp
-            linux_detours/src/trampoline_arm.cpp)
+            linux_detours/src/trampoline_arm.cpp
+            kubo_injector/src/linux/shellcode.S
+            kubo_injector/src/linux/elf.c
+            kubo_injector/src/linux/injector.c
+            kubo_injector/src/linux/injector_internal.h
+            kubo_injector/src/linux/ptrace.c
+            kubo_injector/src/linux/remote_call.c
+            kubo_injector/src/linux/util.c)
 ENDIF()
 
 set(SRC_LIST
         ${LIB_SRC_LIST}
         Hook.hxx
-        Hook.cxx)
+        Hook.cxx
+        Injector.cxx
+        Injector.hxx)
 
 
 # ---------------------------- COMPILE ----------------------------

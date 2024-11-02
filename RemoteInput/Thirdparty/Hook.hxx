@@ -20,7 +20,7 @@ private:
 public:
     Hook(void* original, void* detour);
     Hook(const Hook& other) = delete;
-    Hook(Hook&& other);
+    Hook(Hook&& other) noexcept;
     ~Hook();
 
     Hook& operator = (const Hook& other) = delete;

@@ -67,7 +67,8 @@ IF(WIN32)
     set(EXTRA_LIBRARIES
             user32
             opengl32
-            gdi32)
+            gdi32
+            dbghelp)  # Needed for ThirdParty/kubo/injector
 ELSEIF(APPLE)
     find_library(FOUNDATION Foundation)
     find_library(COCOA Cocoa)

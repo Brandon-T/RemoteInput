@@ -16,11 +16,13 @@
 #include "EIOS.hxx"
 #include "DebugConsole.hxx"
 #include "Thirdparty/Hook.hxx"
+#include "Thirdparty/Injector.hxx"
 
 #if defined(_WIN32) || defined(_WIN64)
 HMODULE module = nullptr;
 #endif
 
+std::vector<std::unique_ptr<Injector>> injectors;
 std::unique_ptr<ControlCenter> control_center;
 std::unique_ptr<DebugConsole> console;
 
@@ -140,10 +142,6 @@ void __exit_process(int exit_code)
     void* this_module = dlopen(this_info.dli_fname, RTLD_LAZY);*/
 
     std::thread([&] {
-        #if defined(DEBUG)
-        console = std::make_unique<DebugConsole>();
-        #endif
-
         auto main_reflector = GetNativeReflector();
         if (main_reflector)
         {

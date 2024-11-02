@@ -40,7 +40,6 @@ JVM::JVM() noexcept : vm(nullptr), createdVM(false), loadedJNI(false), module(nu
     }
     #endif
 
-    this->createdVM = false;
     jint num_vms = 0;
     const jint max_vms = 1;
     JavaVM* vms[max_vms] = {0};
@@ -48,7 +47,7 @@ JVM::JVM() noexcept : vm(nullptr), createdVM(false), loadedJNI(false), module(nu
     {
         for (int i = 0; i < num_vms; ++i)
         {
-            if (vms[i] != NULL)
+            if (vms[i] != nullptr)
             {
                 this->vm = vms[i];
                 break;

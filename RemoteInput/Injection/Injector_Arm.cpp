@@ -419,6 +419,9 @@ bool Injector::Inject(std::string module_path, std::int32_t pid, void* bootstrap
             ptrace(PTRACE_DETACH, pid, nullptr, nullptr);
             return false;
         }
+
+        ptrace(PTRACE_DETACH, pid, nullptr, nullptr);
+        return true;
     }
 
     ptrace(PTRACE_DETACH, pid, nullptr, nullptr);
