@@ -5,9 +5,8 @@
 #ifndef REMOTEINPUT_PYTHONJAVALIST_HXX
 #define REMOTEINPUT_PYTHONJAVALIST_HXX
 
-#include "Python.hxx"
+#include "PythonCommon.hxx"
 
-struct PyEIOS;
-PyObject* create_java_list(PyEIOS* eios, Py_ssize_t length);
+PyObject* create_java_list(Py_ssize_t length);
 
 #endif //REMOTEINPUT_PYTHONJAVALIST_HXX

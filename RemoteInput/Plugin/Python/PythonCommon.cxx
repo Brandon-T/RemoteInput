@@ -4,7 +4,185 @@
 
 #include "PythonCommon.hxx"
 
-PyRemoteInputType GetObjectType(PyObject* object) noexcept
+#if defined(USE_PYBIND11)
+nanobind::object python_create_eios(EIOS* eios) noexcept
+{
+    if (eios)
+    {
+        auto py_eios_object = new PyEIOS();
+        py_eios_object->pid = eios->pid;
+        py_eios_object->native_eios = eios;
+
+        return nanobind::cast(py_eios_object);
+    }
+    return nanobind::none();
+}
+
+nanobind::object python_create_object(PyEIOS* self, jobject object) noexcept
+{
+    if (object)
+    {
+        auto py_java_object = new PyJavaObject();
+        py_java_object->eios = self;
+        py_java_object->object = object;
+
+        return nanobind::cast(py_java_object);
+    }
+    return nanobind::none();
+}
+
+nanobind::object python_create_object(PyJavaObject* self, jobject object) noexcept
+{
+    if (object)
+    {
+        auto py_java_object = new PyJavaObject();
+        py_java_object->eios = self->eios;
+        py_java_object->object = object;
+
+        return nanobind::cast(py_java_object);
+    }
+    return nanobind::none();
+}
+
+nanobind::object python_create_object(PyJavaArray* self, jobject object) noexcept
+{
+    if (object)
+    {
+        auto py_java_object = new PyJavaObject();
+        py_java_object->eios = self->eios;
+        py_java_object->object = object;
+
+        return nanobind::cast(py_java_object);
+    }
+    return nanobind::none();
+}
+
+nanobind::object python_create_array(PyEIOS* self, jarray array, std::size_t array_size) noexcept
+{
+    if (array)
+    {
+        auto py_java_array = new PyJavaArray();
+        py_java_array->eios = self;
+        py_java_array->array = array;
+        py_java_array->size = array_size;
+
+        return nanobind::cast(py_java_array);
+    }
+    return nanobind::none();
+}
+
+nanobind::object python_create_array(PyJavaObject* self, jarray array, std::size_t array_size) noexcept
+{
+    if (array)
+    {
+        auto py_java_array = new PyJavaArray();
+        py_java_array->eios = self->eios;
+        py_java_array->array = array;
+        py_java_array->size = array_size;
+
+        return nanobind::cast(py_java_array);
+    }
+    return nanobind::none();
+}
+
+nanobind::object python_create_array(PyJavaArray* self, jarray array, std::size_t array_size) noexcept
+{
+    if (array)
+    {
+        auto py_java_array = new PyJavaArray();
+        py_java_array->eios = self->eios;
+        py_java_array->array = array;
+        py_java_array->size = array_size;
+
+        return nanobind::cast(py_java_array);
+    }
+    return nanobind::none();
+}
+
+PyEIOS::~PyEIOS()
+{
+    if (native_eios)
+    {
+        EIOS_ReleaseTarget(this->native_eios);
+        this->native_eios = nullptr;
+    }
+}
+
+PyJavaObject::~PyJavaObject()
+{
+    if (this->eios && this->object)
+    {
+        this->eios->native_eios->control_center->reflect_release_object(this->object);
+        this->object = nullptr;
+        this->eios = nullptr;
+        this->object = nullptr;
+    }
+}
+
+PyJavaArray::~PyJavaArray()
+{
+    if (this->eios && this->array)
+    {
+        this->eios->native_eios->control_center->reflect_release_object(this->array);
+        this->eios = nullptr;
+        this->array = nullptr;
+        this->size = 0;
+    }
+}
+
+template<typename T>
+PyTypeObject* PyTypeFromType() noexcept
+{
+    static PyTypeObject* type = nullptr;
+    if (!type)
+    {
+        type = Py_TYPE(nanobind::cast(T()).ptr());
+        return type;
+    }
+    return nullptr;
+}
+
+PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept
+{
+    if (Py_IS_TYPE(object, PyTypeFromType<PyEIOS>()))
+    {
+        return PyRemoteInputType::EIOS;
+    }
+
+    if (Py_IS_TYPE(object, PyTypeFromType<PyJavaObject>()))
+    {
+        return PyRemoteInputType::JAVA_OBJECT;
+    }
+
+    if (Py_IS_TYPE(object, PyTypeFromType<PyJavaArray>()))
+    {
+        return PyRemoteInputType::JAVA_ARRAY;
+    }
+
+    return PyRemoteInputType::OTHER;
+}
+
+//PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept
+//{
+//    if (nanobind::isinstance<PyEIOS>(object))
+//    {
+//        return PyRemoteInputType::EIOS;
+//    }
+//
+//    if (nanobind::isinstance<PyJavaObject>(object))
+//    {
+//        return PyRemoteInputType::JAVA_OBJECT;
+//    }
+//
+//    if (nanobind::isinstance<PyJavaArray>(object))
+//    {
+//        return PyRemoteInputType::JAVA_ARRAY;
+//    }
+//
+//    return PyRemoteInputType::OTHER;
+//}
+#else
+PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept
 {
     if ((python->Py_IS_TYPE)(object, PyEIOS_Type()))
     {
@@ -49,7 +227,7 @@ EIOS* PythonUnwrapEIOS(PyEIOS* eios) noexcept
 
 PyEIOS* PythonGetEIOS(PyObject* object)
 {
-    PyRemoteInputType type = GetObjectType(object);
+    PyRemoteInputType type = GetPythonObjectType(object);
     switch (type)
     {
         case PyRemoteInputType::EIOS:
@@ -89,7 +267,7 @@ jobject PythonUnwrapJavaObject(PyJavaObject* object) noexcept
         return nullptr;
     }
 
-    if (GetObjectType(reinterpret_cast<PyObject*>(object)) != PyRemoteInputType::JAVA_OBJECT)
+    if (GetPythonObjectType(reinterpret_cast<PyObject*>(object)) != PyRemoteInputType::JAVA_OBJECT)
     {
         return nullptr;
     }
@@ -121,10 +299,11 @@ jarray PythonUnwrapJavaArray(PyJavaArray* array) noexcept
         return nullptr;
     }
 
-    if (GetObjectType(reinterpret_cast<PyObject*>(array)) != PyRemoteInputType::JAVA_ARRAY)
+    if (GetPythonObjectType(reinterpret_cast<PyObject*>(array)) != PyRemoteInputType::JAVA_ARRAY)
     {
         return nullptr;
     }
 
     return array->array;
 }
+#endif

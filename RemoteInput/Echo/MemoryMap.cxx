@@ -63,16 +63,16 @@ bool MemoryMap::open(open_mode mode) noexcept
 
     if (open_only)
     {
-        hFile = shm_open(path.c_str(), dwFlags, S_IRWXU);
+        hFile = shm_open(path.c_str(), dwFlags, S_IRWXU | S_IRWXO);
     }
     else
     {
         created = true;
-        hFile = shm_open(path.c_str(), dwFlags | O_CREAT | O_EXCL, S_IRWXU);
+        hFile = shm_open(path.c_str(), dwFlags | O_CREAT | O_EXCL, S_IRWXU | S_IRWXO);
         if (hFile == -1 && errno == EEXIST)
         {
             created = false;
-            hFile = shm_open(path.c_str(), dwFlags, S_IRWXU);
+            hFile = shm_open(path.c_str(), dwFlags, S_IRWXU | S_IRWXO);
         }
     }
 
@@ -164,14 +164,14 @@ bool MemoryMap::open_file(open_mode mode) noexcept
 
     if (open_only)
     {
-        hFile = ::open(path.c_str(), dwFlags, S_IRWXU);
+        hFile = ::open(path.c_str(), dwFlags, S_IRWXU | S_IRWXO);
     }
     else
     {
-        hFile = ::open(path.c_str(), dwFlags | (!open_only ? O_CREAT | O_EXCL | O_TRUNC : 0), S_IRWXU);
+        hFile = ::open(path.c_str(), dwFlags | O_CREAT | O_EXCL | O_TRUNC, S_IRWXU | S_IRWXO);
         if (hFile == -1 && errno == EEXIST)
         {
-            hFile = ::open(path.c_str(), dwFlags, S_IRWXU);
+            hFile = ::open(path.c_str(), dwFlags, S_IRWXU | S_IRWXO);
         }
     }
 

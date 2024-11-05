@@ -3,11 +3,192 @@
 //
 
 #include "PythonJavaObject.hxx"
-#include "NativePlugin.hxx"
+
 #include <sstream>
 #include <ios>
 #include <iomanip>
 
+#if defined(USE_PYBIND11)
+nanobind::object Python_Reflect_Object(PyJavaObject* self, const std::string& cls, const std::string& field, const std::string& desc) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    jobject result = eios->control_center->reflect_object({object, cls, field, desc});
+    return python_create_object(self, result);
+}
+
+nanobind::object Python_Reflect_IsSame_Object(PyJavaObject* self, const std::shared_ptr<PyJavaObject>& other) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jboolean result = eios->control_center->reflect_is_objects_equal(self->object, other->object);
+    return nanobind::bool_(result);
+}
+
+nanobind::object Python_Reflect_InstanceOf(PyJavaObject* self, const std::string& cls) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    jboolean result = eios->control_center->reflect_instance_of(object, cls);
+    return nanobind::bool_(result);
+}
+
+nanobind::object Python_Reflect_Bool(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    jboolean result = eios->control_center->reflect_boolean({object, cls, field, "Z"});
+    return nanobind::bool_(result);
+}
+
+nanobind::object Python_Reflect_Char(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    char result = eios->control_center->reflect_char({object, cls, field, "C"});
+    return nanobind::cast(std::string(1, result));
+}
+
+nanobind::object Python_Reflect_Byte(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    std::uint8_t result = eios->control_center->reflect_byte({object, cls, field, "B"});
+    return nanobind::int_(result);
+}
+
+nanobind::object Python_Reflect_Short(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    std::int16_t result = eios->control_center->reflect_short({object, cls, field, "S"});
+    return nanobind::int_(result);
+}
+
+nanobind::object Python_Reflect_Int(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    std::int32_t result = eios->control_center->reflect_int({object, cls, field, "I"});
+    return nanobind::int_(result);
+}
+
+nanobind::object Python_Reflect_Long(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    std::int64_t result = eios->control_center->reflect_long({object, cls, field, "J"});
+    return nanobind::int_(result);
+}
+
+nanobind::object Python_Reflect_Float(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    float result = eios->control_center->reflect_float({object, cls, field, "F"});
+    return nanobind::float_(result);
+}
+
+nanobind::object Python_Reflect_Double(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    double result = eios->control_center->reflect_double({object, cls, field, "D"});
+    return nanobind::float_(result);
+}
+
+nanobind::object Python_Reflect_String(PyJavaObject* self, const std::string& cls, const std::string& field) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+    std::string result = eios->control_center->reflect_string({object, cls, field, "Ljava/lang/String;"});
+    return nanobind::cast(result);
+}
+
+// MARK: - Array Functions
+
+nanobind::object Python_Reflect_Array(PyJavaObject* self, const std::string& cls, const std::string& field, const std::string& desc) noexcept
+{
+    EIOS* eios = self->eios->native_eios;
+    jobject object = self->object;
+
+    std::size_t array_size = 0;
+    jarray array = eios->control_center->reflect_array({object, cls, field, desc}, &array_size);
+    return python_create_array(self, array, array_size);
+}
+
+void Python_JavaObject_Release_Object(PyJavaObject* self) noexcept
+{
+    if (self->eios && self->object)
+    {
+        EIOS* eios = self->eios->native_eios;
+        jobject object = self->object;
+
+        eios->control_center->reflect_release_object(object);
+
+        self->eios = nullptr;
+        self->object = nullptr;
+    }
+}
+
+nanobind::object PyJavaObject_Str(PyJavaObject* self)
+{
+    auto eios = self->eios;
+    jobject object = self->object;
+    std::ostringstream stream;
+
+    std::ios state(nullptr);
+    state.copyfmt(stream);
+
+    stream << std::setfill('0') << std::uppercase << std::hex;
+    stream << "JavaObject(";
+    stream << "0x" << reinterpret_cast<std::uintptr_t>(object);
+    stream << "): ";
+    stream.copyfmt(state);
+
+    stream << "{"<<"\n";
+    stream<< "    eios: " << eios << "\n";
+    stream<< "    object: " << object << "\n";
+    stream<< "}";
+
+    return nanobind::cast(stream.str());
+}
+
+void declare_python_java_object(nanobind::module_ &module)
+{
+    nanobind::class_<PyJavaObject>(module, "JavaObject")
+        // .def(pybind11::init<>()) // Cannot instantiate from Python
+        .def_ro("eios", &PyJavaObject::eios)
+        .def_ro("object", &PyJavaObject::object)
+        .def("reflect_object", &Python_Reflect_Object,
+             nanobind::arg("cls"), nanobind::arg("field"), nanobind::arg("desc"))
+        .def("is_same_object", &Python_Reflect_IsSame_Object,
+             nanobind::arg("other"))
+        .def("instance_of", &Python_Reflect_InstanceOf,
+             nanobind::arg("cls"))
+        .def("reflect_bool", &Python_Reflect_Bool,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_char", &Python_Reflect_Char,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_byte", &Python_Reflect_Byte,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_short", &Python_Reflect_Short,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_int", &Python_Reflect_Int,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_long", &Python_Reflect_Long,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_float", &Python_Reflect_Float,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_double", &Python_Reflect_Double,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_string", &Python_Reflect_String,
+             nanobind::arg("cls"), nanobind::arg("field"))
+        .def("reflect_array", &Python_Reflect_Array,
+             nanobind::arg("cls"), nanobind::arg("field"), nanobind::arg("desc"))
+        .def("__del__", &Python_JavaObject_Release_Object)
+        .def("__str__", &PyJavaObject_Str);
+}
+#else
 int PyJavaObject_Clear(PyObject* object)
 {
     PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject*>(object);
@@ -22,15 +203,15 @@ int PyJavaObject_Clear(PyObject* object)
 
 void PyJavaObject_Dealloc(PyObject* object)
 {
-    PyJavaObject* py_java_object = reinterpret_cast<PyJavaObject *>(object);
-    if (py_java_object->eios && py_java_object->object)
+    EIOS* eios = PythonUnwrapEIOS(reinterpret_cast<PyJavaObject *>(object)->eios);
+    jobject java_object = reinterpret_cast<PyJavaObject *>(object)->object;
+
+    if (eios && java_object)
     {
-        Reflect_Release_Object(PythonUnwrapEIOS(py_java_object->eios), py_java_object->object);
+        eios->control_center->reflect_release_object(java_object);
     }
 
-    // PyObject_GC_UnTrack(object);
     PyJavaObject_Clear(object);
-    //PyObject_Del(object);  // NO GC!
     python->PyObject_Free(object);
 }
 
@@ -294,3 +475,4 @@ PyObject* Python_JavaObject_Release_Object(PyJavaObject* self, PyObject* args[],
     (python->Py_INCREF)(python->Py_GetNone_Object());
     return python->Py_GetNone_Object();
 }
+#endif

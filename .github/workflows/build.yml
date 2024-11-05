@@ -22,7 +22,7 @@ jobs:
             name: Linux-aarch64
             other_linker_flags: '-L/usr/aarch64-linux-gnu/local/lib'
             arch: aarch64
-            output: libRemoteInput.so.1.0.0
+            output: libRemoteInput.so
             release: libRemoteInput-aarch64.so
 
             #Linux-64
@@ -30,7 +30,7 @@ jobs:
             name: Linux-64
             other_linker_flags: '-m64'
             arch: x86_64
-            output: libRemoteInput.so.1.0.0
+            output: libRemoteInput.so
             release: libRemoteInput-x86_64.so
 
             #MacOS-64
@@ -38,7 +38,7 @@ jobs:
             name: MacOS-64
             other_linker_flags: '-m64'
             arch: x86_64
-            output: libRemoteInput.1.0.0.dylib
+            output: libRemoteInput.dylib
             release: libRemoteInput-x86_64.dylib
 
             #Windows-32
@@ -63,6 +63,7 @@ jobs:
         submodules: true
         
     - name: Set up Python
+      if: matrix.config.name != 'Linux-aarch64'
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'

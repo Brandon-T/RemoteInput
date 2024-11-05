@@ -7,9 +7,51 @@
 //
 
 #include "PythonPlugin.hxx"
+
+#include "PythonCommon.hxx"
 #include "PythonEIOS.hxx"
 #include "PythonJavaObject.hxx"
-#include "PythonJavaList.hxx"
+#include "PythonJavaArray.hxx"
+
+#if defined(USE_PYBIND11)
+void PrintPythonVersionInfo()
+{
+    fprintf(stdout, "RUNNING WITH: %s\n", PY_VERSION);
+    fprintf(stdout, "COMPILED WITH: %d.%d.%d\n", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
+    fflush(stdout);
+}
+
+NB_MODULE(remote_input, module) {
+    #if defined(DEBUG)
+    PrintPythonVersionInfo();
+    #endif
+
+    // Register enums
+    nanobind::enum_<ImageFormat>(module, "ImageFormat")
+        .value("BGR_BGRA", ImageFormat::BGR_BGRA)
+        .value("BGRA", ImageFormat::BGRA)
+        .value("RGBA", ImageFormat::RGBA)
+        .value("ARGB", ImageFormat::ARGB)
+        .value("ABGR", ImageFormat::ABGR);
+
+    nanobind::enum_<ReflectionType>(module, "ReflectType")
+        .value("BOOLEAN", ReflectionType::BOOL)
+        .value("CHAR", ReflectionType::CHAR)
+        .value("BYTE", ReflectionType::BYTE)
+        .value("SHORT", ReflectionType::SHORT)
+        .value("INT", ReflectionType::INT)
+        .value("LONG", ReflectionType::LONG)
+        .value("FLOAT", ReflectionType::FLOAT)
+        .value("DOUBLE", ReflectionType::DOUBLE)
+        .value("STRING", ReflectionType::STRING)
+        .value("OBJECT", ReflectionType::OBJECT)
+        .value("ARRAY", ReflectionType::ARRAY);
+
+    declare_python_eios(module);
+    declare_python_java_object(module);
+    declare_python_java_array(module);
+}
+#else
 #include "Python.hxx"
 
 #include <unordered_map>
@@ -25,7 +67,6 @@ static struct PyMethodDef RemoteInputMethods[] =
         {nullptr} /* SENTINEL */
 };
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef RemoteInputModule =
 {
         PyModuleDef_HEAD_INIT,
@@ -71,14 +112,14 @@ void PrintPythonVersionInfo()
 
     if (Py_Version > 0)
     {
-        fprintf(stdout, "Running with Python: %lu.%lu.%lu\n", Py_Version >> 24 & 0xFF, Py_Version >> 16 & 0xFF, Py_Version >> 8 & 0xFF);
+        fprintf(stdout, "RUNNING WITH: %lu.%lu.%lu\n", Py_Version >> 24 & 0xFF, Py_Version >> 16 & 0xFF, Py_Version >> 8 & 0xFF);
     }
     else
     {
         fprintf(stdout, "RUNNING WITH: %s\n", python->Py_GetVersion());
     }
 
-    fprintf(stdout, "Compiled with Python: %d.%d.%d\n", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
+    fprintf(stdout, "COMPILED WITH: %d.%d.%d\n", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
     #endif
 
     fflush(stdout);
@@ -179,46 +220,6 @@ PyObject* PyInit_remote_input()
         {"ARRAY", static_cast<std::int32_t>(ReflectionType::ARRAY)},
     });
 
-    fprintf(stderr, "LOADED!\n");
     return module;
-}
-#else
-PyMODINIT_FUNC MODINIT(remote_input)()
-{
-    fprintf(stderr, "LOADED!\n");
-
-    PyObject* PyEIOS_Type = PyType_FromSpec(&PyEIOS_Spec);
-    if (PyType_Ready(reinterpret_cast<PyTypeObject*>(PyEIOS_Type)) < 0)
-    {
-        return nullptr;
-    }
-
-    PyObject* PyJavaObject_Type = PyType_FromSpec(&PyJavaObject_Spec);
-    if (PyType_Ready(reinterpret_cast<PyTypeObject*>(PyJavaObject_Type)) < 0)
-    {
-        return nullptr;
-    }
-
-    PyObject* module = PyModule_Create(&RemoteInputModule);
-
-    Py_INCREF(PyEIOS_Type);
-    if (PyModule_AddObject(module, "EIOS", PyEIOS_Type))
-    {
-        Py_DECREF(PyEIOS_Type);
-        return nullptr;
-    }
-
-    Py_INCREF(PyJavaObject_Type);
-    if (PyModule_AddObject(module, "JavaObject", PyJavaObject_Type))
-    {
-        Py_DECREF(PyJavaObject_Type);
-        return nullptr;
-    }
-
-    return module;
-
-    //PyModule_New("remote_input");
-    PyObject* module = Py_InitModule("remote_input", RemoteInputMethods);
 }
 #endif
-

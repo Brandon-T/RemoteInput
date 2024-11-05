@@ -5,33 +5,21 @@
 #ifndef REMOTEINPUT_PYTHONCOMMON_HXX
 #define REMOTEINPUT_PYTHONCOMMON_HXX
 
-// On Windows, Python is really badly implemented,
-// so we must include `math.h` and not `cmath` to get the _hpyot symbol
-#include <math.h>
-#include <Python.h>
-#include "object.h"
-
-#if defined(_WIN32) || defined(_WIN64)
-#include "structmember.h"
-#elif defined(__linux__) && (defined(__x86_64__) || defined(__i386__))
-#include "structmember.h"
-#elif defined(__APPLE__)
-#if __has_include(<Python/structmember.h>)
-#include <Python/structmember.h>  /* Python.framework */
+#if defined(USE_PYBIND11)
+    #include <memory>
+    #include <nanobind/nanobind.h>
+    #include <nanobind/stl/string.h>
+    #include <nanobind/stl/string_view.h>
+    #include <nanobind/stl/vector.h>
 #else
-#include "structmember.h"
-#endif
-#elif defined(__aarch64__) || defined(__arm__)
-#include "structmember.h"
-#endif
+    #include <tuple>
+    #include <functional>
 
-#include <tuple>
-#include <functional>
-#include <string>
+    #include "PythonMacros.hxx"
+    #include "TypeTraits.hxx"
+#endif
 
 #include "JNI_Common.hxx"
-#include "TypeTraits.hxx"
-#include "TypeTraits_Functional.hxx"
 #include "EIOS.hxx"
 
 // STRUCTURES
@@ -45,31 +33,67 @@ enum class PyRemoteInputType
 
 struct PyEIOS
 {
+    #if !defined(USE_PYBIND11)
     PyObject_HEAD
+    #endif
+
     std::int32_t pid;
     EIOS* native_eios;
+
+    #if defined(USE_PYBIND11)
+    ~PyEIOS();
+    #endif
 };
 
 struct PyJavaObject
 {
+    #if defined(USE_PYBIND11)
+    PyEIOS* eios;
+    jobject object;
+    #else
     PyObject_HEAD
     PyEIOS* eios;
     jobject object;
+    #endif
+
+    #if defined(USE_PYBIND11)
+    ~PyJavaObject();
+    #endif
 };
 
 struct PyJavaArray
 {
+    #if defined(USE_PYBIND11)
+    PyEIOS* eios;
+    jarray array;
+    std::size_t size;
+    #else
     PyObject_HEAD
     PyEIOS* eios;
     jarray array;
     std::size_t size;
+    #endif
+
+    #if defined(USE_PYBIND11)
+    ~PyJavaArray();
+    #endif
 };
 
+#if defined(USE_PYBIND11)
+nanobind::object python_create_eios(EIOS* eios) noexcept;
+nanobind::object python_create_object(PyEIOS* self, jobject object) noexcept;
+nanobind::object python_create_object(PyJavaObject* self, jobject object) noexcept;
+nanobind::object python_create_object(PyJavaArray* self, jobject object) noexcept;
+nanobind::object python_create_array(PyEIOS* self, jarray array, std::size_t array_size) noexcept;
+nanobind::object python_create_array(PyJavaObject* self, jarray array, std::size_t array_size) noexcept;
+nanobind::object python_create_array(PyJavaArray* self, jarray array, std::size_t array_size) noexcept;
+PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept;
+#else
 extern PyTypeObject* PyEIOS_Type() noexcept;
 extern PyTypeObject* PyJavaObject_Type() noexcept;
 extern PyTypeObject* PyJavaArray_Type() noexcept;
 
-PyRemoteInputType GetObjectType(PyObject* object) noexcept;
+PyRemoteInputType GetPythonObjectType(PyObject* object) noexcept;
 
 PyObject* PythonWrapEIOS(EIOS* eios) noexcept;
 EIOS* PythonUnwrapEIOS(PyEIOS* eios) noexcept;
@@ -94,5 +118,6 @@ template<typename T>
 PyObject* to_python_array(const std::vector<T>& value);
 
 #include "PythonCommon_Templates.hxx"
+#endif
 
 #endif //REMOTEINPUT_PYTHONCOMMON_HXX

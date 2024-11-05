@@ -3,6 +3,8 @@
 //
 
 #include "Python.hxx"
+
+#if !defined(USE_PYBIND11)
 #include "Platform.hxx"
 
 void Python::steal(Python& a, Python& b)
@@ -5377,4 +5379,6 @@ PyObject* (Python::Py_XNewRef)(PyObject* obj)
 {
     return (*Py_XNewRef_Ptr)(obj);
 }
+#endif
+
 #endif

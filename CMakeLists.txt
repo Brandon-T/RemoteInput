@@ -9,7 +9,23 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 set(PYTHON_BINDINGS ON)
+set(USE_PYBIND11 OFF)
+set(USE_PYTHON3 OFF)
+set(USE_SYSTEM_PYBIND11 OFF)
+set(PYTHON_LIMITED_VERSION 0x03080000)
 
+IF (USE_PYBIND11)
+    unset(Py_LIMITED_API)
+    MESSAGE(STATUS, "PyBind11 being used -- Ignoring Py_LIMITED_API")
+ENDIF()
+
+IF (NOT USE_PYBIND11)
+    set(Py_LIMITED_API ${PYTHON_LIMITED_VERSION})
+ENDIF()
+
+IF(PYTHON_BINDINGS AND USE_PYBIND11 AND Py_LIMITED_API)
+    MESSAGE(FATAL_ERROR, "PyBind11 cannot be used with Py_LIMITED_API")
+ENDIF()
 
 # ----------------------------- PACKAGES -----------------------------
 set(JAVA_AWT_LIBRARY NotNeeded)
@@ -20,14 +36,48 @@ find_package(Java 1.8 REQUIRED)
 find_package(JNI 1.8 REQUIRED)
 
 IF(PYTHON_BINDINGS)
-    find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
-    MESSAGE(STATUS, "${Python_LIBRARIES}")
-    MESSAGE(STATUS, "${Python_LIBRARY_DIRS}")
-    MESSAGE(STATUS, "${PYTHON_DYNAMIC_LINKER_FLAGS}")
+    IF(USE_PYBIND11)
+        IF(USE_PYTHON3)
+            find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+            set(PY_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
+            set(PY_LIBRARIES ${Python3_LIBRARIES})
+            set(PY_LIBRARIES ${Python3_LIBRARY_DIRS})
+            set(PY_LINK_OPTIONS ${Python3_LINK_OPTIONS})
+            set(PY_DYNAMIC_LINKER_FLAGS ${Python3_DYNAMIC_LINKER_FLAGS})
+        ELSE()
+            find_package(Python REQUIRED COMPONENTS Interpreter Development)
+            set(PY_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
+            set(PY_LIBRARIES ${Python_LIBRARIES})
+            set(PY_LIBRARY_DIRS ${Python_LIBRARY_DIRS})
+            set(PY_LINK_OPTIONS ${Python_LINK_OPTIONS})
+            set(PY_DYNAMIC_LINKER_FLAGS ${Python_DYNAMIC_LINKER_FLAGS})
+        ENDIF()
+
+        IF(USE_SYSTEM_PYBIND11)
+            find_package(nanobind REQUIRED)
+        ENDIF()
+    ELSE()
+        IF(USE_PYTHON3)
+            find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter Development)
+            set(PY_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
+            # set(PY_LIBRARIES ${Python3_LIBRARIES})
+            set(PY_LIBRARY_DIRS ${Python3_LIBRARY_DIRS})
+            set(PY_LINK_OPTIONS ${Python3_LINK_OPTIONS})
+            set(PY_DYNAMIC_LINKER_FLAGS ${Python3_DYNAMIC_LINKER_FLAGS})
+        ELSE()
+            find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
+            set(PY_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
+            # set(PY_LIBRARIES ${Python_LIBRARIES})
+            set(PY_LIBRARY_DIRS ${Python_LIBRARY_DIRS})
+            set(PY_LINK_OPTIONS ${Python_LINK_OPTIONS})
+            set(PY_DYNAMIC_LINKER_FLAGS ${Python_DYNAMIC_LINKER_FLAGS})
+        ENDIF()
+    ENDIF()
+    MESSAGE(STATUS, "${PY_INCLUDE_DIRS}")
+    MESSAGE(STATUS, "${PY_LIBRARIES}")
+    MESSAGE(STATUS, "${PY_LIBRARY_DIRS}")
+    MESSAGE(STATUS, "${PY_DYNAMIC_LINKER_FLAGS}")
 ENDIF()
-
-set(Py_LIMITED_API 0x03080000)
-
 
 # ----------------------- INCLUDE_DIRECTORIES -----------------------
 set(INCLUDE_DIRECTORIES
@@ -39,7 +89,7 @@ set(INCLUDE_DIRECTORIES
         RemoteInput/Plugin
         RemoteInput/Plugin/JVM
         ${JNI_INCLUDE_DIRS}
-        ${Python_INCLUDE_DIRS})
+        ${PY_INCLUDE_DIRS})
 
 
 # ----------------------------- PLATFORM -----------------------------
@@ -90,52 +140,9 @@ ELSE()
 ENDIF()
 
 
-
-# ------------------------- JAVA LINKER -------------------------
-IF(WIN32)
-#    set(LIBRARIES_LIST
-#            ${JAVA_AWT_LIBRARY})
-ELSEIF(APPLE)
-#    set(JAVA_JNI_LIBRARY_PATH
-#            /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib)
-#
-#    set(JAVA_JNI_LIBRARY_RPATH
-#            "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib")
-
-#    find_library(Java_JAWT_LIBRARY
-#            NAMES libawt.dylib
-#            HIMES ${_JAVA_HINTS}
-#            PATHS ${JAVA_JNI_LIBRARY_PATH})
-#
-#    find_library(Java_JAWT_EXTENDED_LIBRARY
-#            NAMES libawt_lwawt.dylib
-#            HIMES ${_JAVA_HINTS}
-#            PATHS ${JAVA_JNI_LIBRARY_PATH})
-#
-#    set(LIBRARIES_LIST
-#            ${Java_JAWT_LIBRARY}
-#            ${Java_JAWT_EXTENDED_LIBRARY}
-#            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}\""
-#            "-rpath \"${JAVA_JNI_LIBRARY_RPATH}/server\"")
-ELSE()
-#    set(Java_JAWT_LIBRARY
-#            ${JAVA_AWT_LIBRARY})
-#
-#    find_library(Java_JAWT_EXTENDED_LIBRARY
-#            NAMES libawt_xawt.so
-#            HIMES ${_JAVA_HINTS}
-#            PATHS ${JAVA_AWT_LIBRARY}/..)
-#
-#    set(LIBRARIES_LIST
-#            ${Java_JAWT_LIBRARY}
-#            ${Java_JAWT_EXTENDED_LIBRARY})
-ENDIF()
-
-
-
 # ----------------------------- SOURCES -----------------------------
+
 set(SRC_LIST
-        ${SRC_LIST}
         ${EXTRA_INCLUDES}
         RemoteInput/RemoteInput.h
         RemoteInput/Echo/Atomics.cxx
@@ -159,8 +166,6 @@ set(SRC_LIST
         RemoteInput/Echo/TypeTraits.hxx
         RemoteInput/Echo/TypeTraits_Functional.hxx
         RemoteInput/Echo/TypeTraits_Functional_Attributes.hxx
-        #RemoteInput/Hooks/ModelRendering.cpp
-        #RemoteInput/Hooks/ModelRendering.hpp
         RemoteInput/Java/JNI_Common.hxx
         RemoteInput/Java/Applet.cxx
         RemoteInput/Java/Applet.hxx
@@ -208,7 +213,6 @@ set(SRC_LIST
         RemoteInput/Platform/NativeHooks_Linux.cxx
         RemoteInput/Platform/NativeHooks_Windows.cxx
         RemoteInput/Platform/Platform.hxx
-        #RemoteInput/Platform/Platform_Darwin.mm
         RemoteInput/Platform/Platform_Linux.cxx
         RemoteInput/Platform/Platform_Windows.cxx
         RemoteInput/Plugin/ControlCenter.cxx
@@ -252,17 +256,14 @@ set(SRC_LIST
         RemoteInput/Injection/Injector_Linux.cpp
         RemoteInput/Injection/Injector_Arm.cpp)
 
-IF(WIN32)
-
-ELSEIF(APPLE)
-    set(SRC_LIST
-            ${SRC_LIST}
+IF(APPLE)
+    list(APPEND SRC_LIST
             RemoteInput/Platform/Platform_Darwin.mm)
 ENDIF()
 
 IF(PYTHON_BINDINGS)
-    set(SRC_LIST
-            ${SRC_LIST}
+    list(APPEND SRC_LIST
+            RemoteInput/Plugin/Python/PythonMacros.hxx
             RemoteInput/Plugin/Python/PythonCommon.cxx
             RemoteInput/Plugin/Python/PythonCommon.hxx
             RemoteInput/Plugin/Python/PythonPlugin.cxx
@@ -281,22 +282,43 @@ IF(PYTHON_BINDINGS)
 ENDIF()
 
 IF(PYTHON_BINDINGS AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
-#    set(EXTRA_LIBRARIES
-#            ${EXTRA_LIBRARIES}
-#            ${Python_LIBRARIES})
-#    set(PYTHON_DYNAMIC_LINKER_FLAGS
-#            -undefined dynamic_lookup)
+    #    set(EXTRA_LIBRARIES
+    #            ${EXTRA_LIBRARIES}
+    #            ${Python_LIBRARIES})
+    #    set(PYTHON_DYNAMIC_LINKER_FLAGS
+    #            -undefined dynamic_lookup)
 ENDIF()
 
 # ---------------------------- COMPILE ----------------------------
 
-add_subdirectory(RemoteInput/Thirdparty)
-add_library(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
+IF(PYTHON_BINDINGS AND USE_PYBIND11)
+    add_subdirectory(RemoteInput/Thirdparty)
+
+    IF(NOT USE_SYSTEM_PYBIND11)
+        add_subdirectory(RemoteInput/Thirdparty/nanobind)
+    ENDIF()
+
+    nanobind_add_module(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
+
+    IF(NOT USE_SYSTEM_PYBIND11)
+        target_include_directories(RemoteInput PRIVATE ${CMAKE_SOURCE_DIR}/RemoteInput/Thirdparty/nanobind/include)
+    ENDIF()
+ELSE()
+    add_subdirectory(RemoteInput/Thirdparty)
+    add_library(${PROJECT_NAME} SHARED ${SRC_LIST} $<TARGET_OBJECTS:THIRD_PARTY_LIBRARIES>)
+ENDIF()
+
+#set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORIES})
 
-IF(Py_LIMITED_API)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 Py_LIMITED_API=${Py_LIMITED_API} Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+IF(PYTHON_BINDINGS)
+    IF (USE_PYBIND11)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 USE_PYBIND11=1 Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+    ELSEIF(Py_LIMITED_API)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 Py_LIMITED_API=${Py_LIMITED_API} Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+    ELSE()
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+    ENDIF()
 ELSE()
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1)
 ENDIF()
@@ -307,15 +329,15 @@ IF(WIN32)
                 $<$<CONFIG:DEBUG>:-DDEBUG>
                 $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
         target_link_options(${PROJECT_NAME} PRIVATE
-                $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
-                $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+                $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>
+                $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -fuse-ld=lld -Wl,--enable-stdcall-fixup -Wl,--kill-at -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
     ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(${PROJECT_NAME} PRIVATE
                 $<$<CONFIG:DEBUG>:-DDEBUG -Wl,--input-def=RemoteInput/RemoteInput.def>
                 $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden -Wl,--input-def=RemoteInput/RemoteInput.def>)
         target_link_options(${PROJECT_NAME} PRIVATE
-                $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
-                $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+                $<$<CONFIG:DEBUG>:-static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>
+                $<$<CONFIG:RELEASE>:-s -static -static-libgcc -static-libstdc++ -Wl,--enable-stdcall-fixup -Wl,--kill-at ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
     ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
         set_property(TARGET ${PROJECT_NAME} PROPERTY
@@ -330,7 +352,7 @@ IF(WIN32)
         IF(PYTHON_BINDINGS)
             target_link_options(${PROJECT_NAME} PRIVATE
                     $<$<CONFIG:DEBUG>:>
-                    $<$<CONFIG:RELEASE>:/LIBPATH:${Python_LIBRARY_DIRS} ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+                    $<$<CONFIG:RELEASE>:/LIBPATH:${Python_LIBRARY_DIRS} ${Py_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
         ELSE()
             target_link_options(${PROJECT_NAME} PRIVATE
                     $<$<CONFIG:DEBUG>:>
@@ -342,15 +364,55 @@ ELSEIF(APPLE)
             $<$<CONFIG:DEBUG>:-DDEBUG -g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>
-            $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>)
+            $<$<CONFIG:DEBUG>:-static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>
+            $<$<CONFIG:RELEASE>:-s -static -stdlib=libc++ -Wl"/DEF:RemoteInput/RemoteInput.def" ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>)
 ELSE()
     target_compile_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:DEBUG>:-DDEBUG -g -fvisibility=hidden>
             $<$<CONFIG:RELEASE>:-O3 -fvisibility=hidden>)
     target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:DEBUG>:-g ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}> #-static-libgcc -static-libstdc++
-            $<$<CONFIG:RELEASE>:-s ${Python_LINK_OPTIONS} ${PYTHON_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
+            $<$<CONFIG:DEBUG>:-g ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}> #-static-libgcc -static-libstdc++
+            $<$<CONFIG:RELEASE>:-s ${PY_LINK_OPTIONS} ${PY_DYNAMIC_LINKER_FLAGS}>) #-static-libgcc -static-libstdc++
 ENDIF()
 
-target_link_libraries(${PROJECT_NAME} ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})
+IF(PYTHON_BINDINGS)
+    IF(USE_PYTHON3)
+        set(PY_MODULE Python3::Python)
+    ELSE()
+        set(PY_MODULE Python::Python)
+    ENDIF()
+
+    IF(USE_PYBIND11)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES} ${PY_LIBRARIES} ${PY_MODULE})  #nanobind::module
+    ELSE()
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES} ${PY_LIBRARIES})
+    ENDIF()
+ELSE()
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRARIES_LIST} ${EXTRA_LIBRARIES})
+ENDIF()
+
+
+# ---------------------------- RENAME ----------------------------
+
+IF(WIN32)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rename
+            $<TARGET_FILE:${PROJECT_NAME}>
+            ${CMAKE_BINARY_DIR}/libRemoteInput.dll
+            COMMENT "Renaming module to RemoteInput.dll"
+    )
+ELSEIF(APPLE)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rename
+            $<TARGET_FILE:${PROJECT_NAME}>
+            ${CMAKE_BINARY_DIR}/libRemoteInput.dylib
+            COMMENT "Renaming module to RemoteInput.dylib"
+    )
+ELSE()
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rename
+            $<TARGET_FILE:${PROJECT_NAME}>
+            ${CMAKE_BINARY_DIR}/libRemoteInput.so
+            COMMENT "Renaming module to RemoteInput.so"
+    )
+ENDIF()

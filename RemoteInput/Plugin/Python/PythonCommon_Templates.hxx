@@ -2,6 +2,9 @@
 // Created by Brandon on 2022-09-21.
 //
 
+#ifndef REMOTEINPUT_PYTHONCOMMON_TEMPLATES_HXX
+#define REMOTEINPUT_PYTHONCOMMON_TEMPLATES_HXX
+
 #include "Python.hxx"
 
 extern std::unique_ptr<Python> python;
@@ -508,3 +511,5 @@ PyObject* to_python_array(const std::vector<T>& values)
     }
     return result;
 }
+
+#endif //REMOTEINPUT_PYTHONCOMMON_TEMPLATES_HXX

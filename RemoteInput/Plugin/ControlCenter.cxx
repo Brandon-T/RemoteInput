@@ -984,8 +984,8 @@ bool ControlCenter::init_signals() noexcept
     #else
     char readName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
     char writeName[31] = {0};
-    snprintf(readName, sizeof(readName) - 1, "/RI_CC_EventRead_%d", pid);
-    snprintf(writeName, sizeof(writeName) - 1, "/RI_CC_EventWrite_%d", pid);
+    snprintf(readName, sizeof(readName) - 1, "/RI_EventRead_%d", pid);
+    snprintf(writeName, sizeof(writeName) - 1, "/RI_EventWrite_%d", pid);
     #endif
 
     command_signal = std::make_unique<Signal>(readName);
@@ -1003,7 +1003,7 @@ bool ControlCenter::init_wait() noexcept
     snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
     #else
     char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-    snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
+    snprintf(signalName, sizeof(signalName) - 1, "/RI_SyncSignal_%d", pid);
     #endif
 
     sync_signal = std::make_unique<Event>(signalName);
@@ -1021,10 +1021,6 @@ void ControlCenter::kill_zombie_process(std::int32_t pid) noexcept
     snprintf(buffer, sizeof(buffer) - 1, "RemoteInput_%d", pid);
     shm_unlink(buffer);
 
-    //Kill Locks
-    snprintf(buffer, sizeof(buffer) - 1, "/RemoteInput_Lock_%d", pid);
-    shm_unlink(buffer);
-
     //Kill Signals
     snprintf(buffer, sizeof(buffer) - 1, "/RemoteInput_ControlCenter_EventRead_%d", pid);
     sem_unlink(buffer);
@@ -1038,15 +1034,11 @@ void ControlCenter::kill_zombie_process(std::int32_t pid) noexcept
     snprintf(buffer, sizeof(buffer) - 1, "RemoteInput_%d", pid);
     shm_unlink(buffer);
 
-    //Kill Locks
-    snprintf(buffer, sizeof(buffer) - 1, "/RemoteInput_Lock_%d", pid);
-    shm_unlink(buffer);
-
     //Kill Signals
-    snprintf(buffer, sizeof(buffer) - 1, "/RI_CC_EventRead_%d", pid);
+    snprintf(buffer, sizeof(buffer) - 1, "/RI_EventRead_%d", pid);
     sem_unlink(buffer);
 
-    snprintf(buffer, sizeof(buffer) - 1, "/RI_CC_EventWrite_%d", pid);
+    snprintf(buffer, sizeof(buffer) - 1, "/RI_EventWrite_%d", pid);
     sem_unlink(buffer);
     #endif
 }
@@ -1159,7 +1151,7 @@ void ControlCenter::signal_sync(std::int32_t pid) noexcept
     snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
     #else
     char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-    snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
+    snprintf(signalName, sizeof(signalName) - 1, "/RI_SyncSignal_%d", pid);
     #endif
 
     auto sync_signal = std::make_unique<Event>(signalName);
@@ -1180,7 +1172,7 @@ void ControlCenter::wait_for_sync(std::int32_t pid) noexcept
     snprintf(signalName, sizeof(signalName) - 1, "/RemoteInput_ControlCenter_SyncSignal_%d", pid);
     #else
     char signalName[31] = {0};  //PSHMNAMELEN from <sys/posix_shm.h>
-    snprintf(signalName, sizeof(signalName) - 1, "/RI_CC_SyncSignal_%d", pid);
+    snprintf(signalName, sizeof(signalName) - 1, "/RI_SyncSignal_%d", pid);
     #endif
 
     auto sync_signal = std::make_unique<Event>(signalName);

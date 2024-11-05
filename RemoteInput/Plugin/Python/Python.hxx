@@ -5,44 +5,8 @@
 #ifndef REMOTEINPUT_PYTHON_HXX
 #define REMOTEINPUT_PYTHON_HXX
 
-// On Windows, Python is really badly implemented,
-// so we must include `math.h` and not `cmath` to get the _hpyot symbol
-#include <math.h>
-#include <cstddef>
-#include <Python.h>
-#include "object.h"
-
-#if defined(_WIN32) || defined(_WIN64)
-#include "structmember.h"
-#elif defined(__linux__) && (defined(__x86_64__) || defined(__i386__))
-#include "structmember.h"
-#elif defined(__APPLE__)
-#if __has_include(<Python/structmember.h>)
-#include <Python/structmember.h>  /* Python.framework */
-#else
-#include "structmember.h"
-#endif
-#elif defined(__aarch64__) || defined(__arm__)
-#include "structmember.h"
-#endif
-
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif // defined
-
-#if defined(Py_LIMITED_API)
-#define HAS_PYTHON_VERSION(MIN_VERSION) ((Py_LIMITED_API >= MIN_VERSION) && (PY_VERSION_HEX >= MIN_VERSION))
-#else
-#define HAS_PYTHON_VERSION(MIN_VERSION) (PY_VERSION_HEX >= MIN_VERSION)
-#endif
-
-#if HAS_PYTHON_VERSION(0x03070000)
-    #ifndef METH_FASTCALL
-        #define METH_FASTCALL  0x0080  // Python 3.7 incorrectly labels this as Py_LIMITED_API
-    #endif
-#endif
+#if !defined(USE_PYBIND11)
+#include "PythonMacros.hxx"
 
 class Python
 {
@@ -1662,5 +1626,6 @@ public:
         return static_cast<PyTypeObject*>(Py_ListType_Ptr);
     }
 };
+#endif
 
 #endif //REMOTEINPUT_PYTHON_HXX
