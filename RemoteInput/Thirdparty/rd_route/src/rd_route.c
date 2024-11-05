@@ -11,7 +11,7 @@
 #include <dlfcn.h>          // dladdr()
 
 #include "TargetConditionals.h"
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm64__)
 	#if !(TARGET_IPHONE_SIMULATOR)
 		#include <mach/mach_vm.h> // mach_vm_*
 	#else
@@ -38,7 +38,7 @@
 #define RDErrorLog(format, ...) fprintf(stderr, "%s:%d:\n\terror: "format"\n", \
 	__FILE__, __LINE__, ##__VA_ARGS__)
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__arm64__)
 	typedef struct mach_header_64     mach_header_t;
 	typedef struct segment_command_64 segment_command_t;
 	#define LC_SEGMENT_ARCH_INDEPENDENT   LC_SEGMENT_64
@@ -288,7 +288,7 @@ static mach_vm_size_t _image_size(void *image, mach_vm_size_t image_slide, mach_
 	return (image_end - image_addr);
 }
 
-
+#if defined(__x86_64__) || defined(__i386__)
 static kern_return_t _insert_jmp(void* where, void* to)
 {
 	assert(where);
@@ -320,6 +320,75 @@ static kern_return_t _insert_jmp(void* where, void* to)
 
 	return (err);
 }
+#elif defined(__arm64__)
+#include <sys/mman.h>
+
+// Function to create an executable trampoline pointing to the target address
+static void* create_trampoline(void* to) {
+    assert(to);
+
+    // Allocate an executable memory page
+    void* trampoline = mmap(NULL, 4096, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE | MAP_JIT, -1, 0);
+    if (trampoline == MAP_FAILED) {
+        perror("mmap");
+        return NULL;
+    }
+
+    // ARM64 absolute jump sequence:
+    // - Load 64-bit address into x16
+    // - Branch to x16
+    uint32_t trampoline_code[] = {
+            0x58000050,                // LDR x16, #8      (load address of target function into x16)
+            0xD61F0200,                // BR x16           (branch to address in x16)
+            (uint32_t)((uintptr_t)to), // Address of the target function (low 32 bits)
+            (uint32_t)((uintptr_t)to >> 32) // Address of the target function (high 32 bits)
+    };
+
+    // Copy the code into the trampoline
+    memcpy(trampoline, trampoline_code, sizeof(trampoline_code));
+
+    // Make the trampoline read-execute only
+    if (mprotect(trampoline, 4096, PROT_READ | PROT_EXEC) != 0) {
+        perror("mprotect");
+        munmap(trampoline, 4096);
+        return NULL;
+    }
+
+    return trampoline;
+}
+
+static kern_return_t _insert_jmp(void* where, void* to)
+{
+    // ARM64 branch (B) instruction format: 4 bytes with a 26-bit signed offset
+    uint32_t* patch_location = (uint32_t*)where;
+    int64_t offset = (int64_t)to - (int64_t)where;
+
+    // Check if the offset is within ARM64 branch limits (+/-128MB)
+    /*if (offset < -33554432 || offset > 33554428) {
+        // Target address is out of range, create a trampoline
+        void* trampoline = create_trampoline(to);
+        if (!trampoline) {
+            fprintf(stderr, "Failed to create trampoline\n");
+            return KERN_FAILURE;
+        }
+
+        // Update `to` to point to the trampoline
+        to = trampoline;
+        offset = (int64_t)to - (int64_t)where;
+    }*/
+
+    // Calculate the signed 26-bit offset (in words) and encode in a branch instruction
+    uint32_t branch_instruction = 0x14000000 | ((offset >> 2) & 0x03FFFFFF);
+
+    kern_return_t err = _patch_memory(patch_location, sizeof(branch_instruction), (uint8_t*)&branch_instruction);
+    if (err != KERN_SUCCESS) {
+        fprintf(stderr, "_patch_memory failed with error 0x%x\n", err);
+    }
+    return err;
+}
+#else
+    #error rd_route doesn't work on iOS
+#endif
 
 
 static kern_return_t _patch_memory(void *address, mach_msg_type_number_t count, uint8_t *new_bytes)

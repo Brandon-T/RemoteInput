@@ -41,6 +41,14 @@ jobs:
             output: libRemoteInput.dylib
             release: libRemoteInput-x86_64.dylib
 
+            #MacOS-aarch64
+          - os: macos-latest
+            name: MacOS-aarch64
+            other_linker_flags: '-m64'
+            arch: aarch64
+            output: libRemoteInput.dylib
+            release: libRemoteInput-aarch64.dylib
+
             #Windows-32
           - os: windows-latest
             name: Windows-32
@@ -136,6 +144,17 @@ jobs:
       if: matrix.config.name == 'MacOS-64'
       run: |
         cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
+
+      #MacOS-aarch64
+    - name: CMake Generate Build Files - MacOS-aarch64
+      if: matrix.config.name == 'MacOS-aarch64'
+      run: |
+        cmake -S '${{ github.workspace }}' -B '${{ github.workspace }}/cmake-build-release' -DCMAKE_BUILD_TYPE=Release -DOTHER_LINKER_FLAGS:STRING=${{ matrix.config.other_linker_flags }} -G "CodeBlocks - Unix Makefiles"
+
+    - name: Build - MacOS-aarch64
+      if: matrix.config.name == 'MacOS-aarch64'
+      run: |
+        cmake --build '${{ github.workspace }}/cmake-build-release' --target all -- -j 4
         
       #Windows-32
     - name: Dependencies - Windows-32
@@ -216,9 +235,9 @@ jobs:
       uses: Brandon-T/wait-for-check-action@v1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        check_names: '["Linux-aarch64", "Linux-64", "MacOS-64", "Windows-32", "Windows-64"]'
-        statuses: '["completed", "completed", "completed", "completed", "completed"]'
-        conclusions: '["success", "success", "success", "success", "success"]'
+        check_names: '["Linux-aarch64", "Linux-64", "MacOS-64", "MacOS-aarch64", "Windows-32", "Windows-64"]'
+        statuses: '["completed", "completed", "completed", "completed", "completed", "completed"]'
+        conclusions: '["success", "success", "success", "success", "success", "success"]'
         timeout: 600
         poll_interval: 10
         

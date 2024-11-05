@@ -1,6 +1,8 @@
 #include "Platform.hxx"
 
 #if defined(__APPLE__)
+#define CUSTOM_INJECTOR
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

@@ -58,7 +58,7 @@ Hook::Hook(void* original, void* detour) : original(original), detour(detour), t
 {
     std::memset(&data[0], 0, sizeof(data));
 
-    #if defined (__x86_64__)
+    #if defined (__x86_64__) || defined(__arm64__)
 	mach_vm_size_t size_of_jump = (sizeof(uintptr_t) * 2);
     #else
 	mach_vm_size_t size_of_jump = (sizeof(int) + 1);
