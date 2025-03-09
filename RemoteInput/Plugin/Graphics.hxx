@@ -4,7 +4,14 @@
 #include "EIOSTypes.hxx"
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <type_traits>
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <d3d9.h>
+#include <d3d11.h>
+#include <d3dx9shader.h>
+#endif
 
 //[[gnu::optimize(0)]]
 //[[clang::optimize(0)]] //optnone
@@ -56,60 +63,6 @@ typedef struct bgra_t
     std::uint8_t a;
 } bgra;
 
-template<typename S, typename D>
-void convert_pixels(S source, D dest, std::int32_t width, std::int32_t height, std::int32_t stride)
-{
-    if constexpr(std::is_same<S, D>::value)
-    {
-        std::memcpy(dest, source, width * height * stride);
-    }
-    else
-    {
-        for (std::int32_t i = 0; i < width * height * stride; i += stride)
-        {
-            dest->r = source->r;
-            dest->g = source->g;
-            dest->b = source->b;
-            dest->a = 0xFF; // source->a;
-            ++source;
-            ++dest;
-        }
-    }
-};
-
-template<typename S, typename D>
-void alpha_blend_pixels(S source, D dest, std::int32_t width, std::int32_t height, std::int32_t stride)
-{
-    auto blend_alpha = [](std::uint8_t back, std::uint8_t front, std::uint8_t alpha) -> std::uint8_t {
-        return ((front * alpha) + (back * (0xFF - alpha))) / 0xFF;
-    };
-
-    for (std::int32_t i = 0; i < width * height * stride; i += stride)
-    {
-        if constexpr(std::is_same<S, D>::value && std::is_same<S, bgr_bgra_t*>::value)
-        {
-            dest->a = *reinterpret_cast<std::uint32_t*>(source) == 0x00 ? 0x00 : 0xFF;
-            if (dest->a != 0x00)
-            {
-                dest->r = source->r;
-                dest->g = source->g;
-                dest->b = source->b;
-            }
-        }
-        else
-        {
-            // Pre-Multiplied Alpha
-            dest->r = blend_alpha(dest->r, source->r, source->a);
-            dest->g = blend_alpha(dest->g, source->g, source->a);
-            dest->b = blend_alpha(dest->b, source->b, source->a);
-            dest->a = 0xFF;
-        }
-
-        ++source;
-        ++dest;
-    }
-}
-
 void FlipImageBytes(void* In, void* Out, std::int32_t width, std::int32_t height, std::uint32_t Bpp) noexcept;
 void FlipImageVertically(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept;
 void FlipImageVertically2(std::int32_t width, std::int32_t height, std::uint8_t* data) noexcept;
@@ -124,8 +77,15 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius) noexcept;
 void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept;
 
 //DirectX
-void dx_draw_point(std::int32_t x, std::int32_t y, std::int32_t radius, void* buffer, std::int32_t width, std::int32_t height, std::int32_t stride, bool filled, std::int32_t argb_colour) noexcept;
-void dx_draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept;
+
+#if defined(_WIN32) || defined(_WIN64)
+IDirect3DPixelShader9* dx_compile_shader(IDirect3DDevice9* device, ID3DXConstantTable* &constant_table, const std::string &shader_string) noexcept;
+void dx_apply_shader(IDirect3DDevice9* device, IDirect3DPixelShader9* shader, ID3DXConstantTable* constant_table, ImageFormat format) noexcept;
+void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, ImageFormat image_format, std::uint8_t* buffer, std::int32_t width, std::int32_t height) noexcept;
+void dx_draw_texture(IDirect3DDevice9* device, IDirect3DTexture9* texture, ImageFormat image_format, float X1, float Y1, float X2, float Y2) noexcept;
+void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t &width, std::int32_t &height, bool& minimized, ImageFormat image_format) noexcept;
+void dx_draw_point(IDirect3DDevice9* device, float cx, float cy, float radius, D3DCOLOR colour);
+#endif
 
 #if defined(_MSC_VER)
 #pragma optimize("", on)

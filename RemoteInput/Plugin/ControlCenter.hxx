@@ -147,6 +147,7 @@ public:
 
     static std::size_t reflect_size_for_type(ReflectionType type) noexcept;
 
+    jlong reflect_frame_native_handle() const noexcept;
     java::Applet reflect_applet() const noexcept;
     java::Component reflect_canvas() const noexcept;
     std::unique_ptr<RemoteVM> create_remote_vm() noexcept;

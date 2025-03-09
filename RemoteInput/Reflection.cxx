@@ -281,6 +281,79 @@ jfieldID Reflection::GetFieldID(jclass cls, std::string_view name, std::string_v
     return cache->GetFieldID(env, cls, name, desc, is_static);
 }
 
+jlong Reflection::getFrameHandle() const noexcept
+{
+    auto get_peer = [](JNIEnv* env, jclass frame_cls, jobject frame) -> jobject {
+        jmethodID getPeerMethodID = env->GetMethodID(frame_cls, "getPeer", "()Ljava/awt/peer/ComponentPeer;");
+        if (getPeerMethodID)
+        {
+            // Java 8
+            return env->CallObjectMethod(frame, getPeerMethodID);
+        }
+        else
+        {
+            // Java 9+
+            auto component_cls = make_safe_local<jclass>(env, env->FindClass("java/awt/Component"));
+            if (!component_cls)
+            {
+                return nullptr;
+            }
+
+            jfieldID peer_field = env->GetFieldID(component_cls.get(), "peer", "Ljava/awt/peer/ComponentPeer;");
+            if (!peer_field)
+            {
+                return nullptr;
+            }
+
+            return env->GetObjectField(frame, peer_field);
+        }
+    };
+
+    auto frame_cls = make_safe_local<jclass>(env, env->GetObjectClass(frame));
+    if (!frame_cls)
+    {
+        return 0;
+    }
+
+    auto peer = make_safe_local<jobject>(env, get_peer(env, frame_cls.get(), frame));
+    if (!peer)
+    {
+        return 0;
+    }
+
+    auto frame_peer_cls = make_safe_local<jclass>(env, env->GetObjectClass(peer.get()));
+    if (!frame_peer_cls)
+    {
+        return 0;
+    }
+
+    #if defined(_WIN32) || defined(_WIN64)
+    jmethodID methodID = env->GetMethodID(frame_peer_cls.get(), "getHWnd", "()J");
+    if (!methodID)
+    {
+        return 0;
+    }
+    return env->CallLongMethod(peer.get(), methodID);
+    #elif defined(__linux__)
+    jmethodID methodID = env->GetMethodID(frame_peer_cls.get(), "getWindow", "()J");
+    if (!methodID)
+    {
+        return 0;
+    }
+    return env->CallLongMethod(peer.get(), methodID);
+    #elif defined(__APPLE__)
+    jmethodID methodID = env->GetMethodID(frame_peer_cls.get(), "getAWTHandle", "()J");
+    if (!methodID)
+    {
+        return 0;
+    }
+    return env->CallLongMethod(peer.get(), methodID);
+    #else
+    #error "Unsupported platform: Cannot retrieve native window handle"
+    return 0;
+    #endif
+}
+
 jobject Reflection::getApplet() const noexcept
 {
     return this->applet;

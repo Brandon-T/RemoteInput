@@ -18,8 +18,8 @@
 
 #if defined(__linux__)
 std::unique_ptr<Hook> native_hook{nullptr};
-std::unique_ptr<Hook> opengl_hook{nullptr};
-std::unique_ptr<Hook> flush_buffer_hook{nullptr};
+std::unique_ptr<Hook> opengl_blit_hook{nullptr};
+std::unique_ptr<Hook> opengl_flush_buffer_hook{nullptr};
 
 bool can_render(jint srctype, jint width, jint height)
 {
@@ -220,9 +220,9 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
 
         if (!srcOps || width <= 0 || height <= 0 || !can_render(srctype, width, height))
         {
-            if (opengl_hook)
+            if (opengl_blit_hook)
             {
-                return opengl_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
+                return opengl_blit_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
             }
             return;
         }
@@ -298,9 +298,9 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
         }
     }
 
-    if (opengl_hook)
+    if (opengl_blit_hook)
     {
-        return opengl_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
+        return opengl_blit_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
     }
 }
 
@@ -372,7 +372,7 @@ void JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, jlong buf, 
         }
     }
 
-    return flush_buffer_hook->call<void, decltype(JavaNativeOGLRenderQueueFlushBuffer)>(env, oglrq, original_buffer, limit);
+    return opengl_flush_buffer_hook->call<void, decltype(JavaNativeOGLRenderQueueFlushBuffer)>(env, oglrq, original_buffer, limit);
 }
 #endif
 
@@ -571,7 +571,7 @@ extern "C" [[gnu::visibility("default")]] void glXSwapBuffers(Display* dpy, GLXD
     }
 
     #if defined(USE_DETOURS)
-    return opengl_hook->call<void, decltype(glXSwapBuffers)>(dpy, drawable);
+    return opengl_blit_hook->call<void, decltype(glXSwapBuffers)>(dpy, drawable);
     #else
     static decltype(glXSwapBuffers)* o_glXSwapBuffers = reinterpret_cast<decltype(glXSwapBuffers)*>(dlsym(RTLD_NEXT, "glXSwapBuffers"));
     return o_glXSwapBuffers(dpy, drawable);
@@ -596,16 +596,16 @@ void InitialiseHooks() noexcept
         blit = dlsym(RTLD_DEFAULT, "OGLBlitLoops_Blit");
         if (blit)
         {
-            opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
-            opengl_hook->apply();
+            opengl_blit_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
+            opengl_blit_hook->apply();
         }
         else
         {
             blit = dlsym(RTLD_DEFAULT, "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer");
             if (blit)
             {
-                flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
-                flush_buffer_hook->apply();
+                opengl_flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
+                opengl_flush_buffer_hook->apply();
             }
         }
 
@@ -614,16 +614,16 @@ void InitialiseHooks() noexcept
             blit = dlsym(RTLD_DEFAULT, "glXSwapBuffers");
             if (blit)
             {
-                opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(glXSwapBuffersHook));
-                opengl_hook->apply();
+                opengl_blit_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(glXSwapBuffersHook));
+                opengl_blit_hook->apply();
             }
         }
         #else
         blit = dlsym(RTLD_NEXT, "glXSwapBuffers");
         if (blit)
         {
-            opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(glXSwapBuffersHook));
-            opengl_hook->apply();
+            opengl_blit_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(glXSwapBuffersHook));
+            opengl_blit_hook->apply();
         }
         #endif
     #endif

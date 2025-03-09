@@ -18,7 +18,7 @@ jobs:
       matrix:
         config:
             #Linux-aarch64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             name: Linux-aarch64
             other_linker_flags: '-L/usr/aarch64-linux-gnu/local/lib'
             arch: aarch64
@@ -82,16 +82,6 @@ jobs:
       run: |
         #source_version=$(cat /etc/apt/sources.list | grep "main restricted" | head -1 | sed -e 's/.*com\/ //' -e 's/ main.*//')
         #echo "Found: ${ source_version }"
-        sudo sed -Ei 's/^deb /deb \[arch=amd64\,i386\] /' /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy main restricted" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-updates main restricted" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-updates universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-updates multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-        
-        sudo dpkg --add-architecture arm64
         sudo apt-get update
         
     - name: Dependencies - Linux-aarch64
@@ -99,7 +89,7 @@ jobs:
       run: |
         sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         #sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
-        sudo apt-get install libprocps-dev:arm64 mesa-common-dev:arm64 libglu1-mesa:arm64 libglu1-mesa-dev:arm64 libgl1-mesa-glx:arm64 libgl1-mesa-dev:arm64 libglfw3-dev:arm64 cmake
+        sudo apt-get install procps:arm64 mesa-common-dev:arm64 libglu1-mesa:arm64 libglu1-mesa-dev:arm64 libgl1:arm64 libgl1-mesa-dev:arm64 libglfw3-dev:arm64 cmake
         sudo apt-get install openjdk-11-jdk
         sudo apt-get install libpython3-dev:arm64
 
@@ -122,7 +112,7 @@ jobs:
       if: matrix.config.name == 'Linux-64'
       run: |
         sudo apt-get update
-        sudo apt-get install libprocps-dev mesa-common-dev libglu1-mesa libglu1-mesa-dev libgl1-mesa-glx libgl1-mesa-dev libpython3-dev clang cmake g++
+        sudo apt-get install procps mesa-common-dev libglu1-mesa libglu1-mesa-dev libgl1 libgl1-mesa-dev libpython3-dev clang cmake g++
         
     - name: CMake Generate Build Files - Linux-64
       if: matrix.config.name == 'Linux-64'

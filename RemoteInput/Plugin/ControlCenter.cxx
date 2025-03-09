@@ -1912,6 +1912,11 @@ std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept
     return mapping[static_cast<std::underlying_type<ReflectionType>::type>(type)];
 }
 
+jlong ControlCenter::reflect_frame_native_handle() const noexcept
+{
+    return main_reflector->getFrameHandle();
+}
+
 java::Applet ControlCenter::reflect_applet() const noexcept
 {
     return {main_reflector->getEnv(), main_reflector->getApplet(), false};

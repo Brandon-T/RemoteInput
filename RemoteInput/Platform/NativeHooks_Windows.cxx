@@ -6,6 +6,8 @@
 #if defined(_MSC_VER)
 #include <windows.h>
 #include <gl/GL.h>
+#include <d3d9.h>
+#include <d3d11.h>
 
 typedef std::uintptr_t GLsizeiptr;
 #define GL_PIXEL_PACK_BUFFER              0x88EB
@@ -17,6 +19,8 @@ typedef std::uintptr_t GLsizeiptr;
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glext.h>
+#include <d3d9.h>
+#include <d3d11.h>
 #endif
 
 #include <memory>
@@ -30,11 +34,17 @@ typedef std::uintptr_t GLsizeiptr;
 
 #if defined(_WIN32) || defined(_WIN64)
 std::unique_ptr<Hook> native_hook{nullptr};
-std::unique_ptr<Hook> opengl_hook{nullptr};
+
+std::unique_ptr<Hook> opengl_blit_hook{nullptr};
+std::unique_ptr<Hook> opengl_flush_buffer_hook{nullptr};
 std::unique_ptr<Hook> opengl_swap_hook{nullptr};
+
 std::unique_ptr<Hook> directx_xrgb_hook{nullptr};
 std::unique_ptr<Hook> directx_argb_hook{nullptr};
-std::unique_ptr<Hook> flush_buffer_hook{nullptr};
+std::unique_ptr<Hook> directx_device9_endscene_hook{nullptr};
+std::unique_ptr<Hook> directx_device9_present_hook{nullptr};
+std::unique_ptr<Hook> directx_device9_swapchain_present_hook{nullptr};
+std::unique_ptr<Hook> directx_device11_swapchain_present_hook{nullptr};
 
 bool can_render(jint srctype, jint width, jint height)
 {
@@ -237,9 +247,9 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
     // It might be that for Windows it renders OpenGL using BGRA and not RGBA!
     if (srctype != 2)
     {
-        if (opengl_hook)
+        if (opengl_blit_hook)
         {
-            return opengl_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
+            return opengl_blit_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
         }
         return;
     }
@@ -253,9 +263,9 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
 
         if (!srcOps || width <= 0 || height <= 0)
         {
-            if (opengl_hook)
+            if (opengl_blit_hook)
             {
-                return opengl_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
+                return opengl_blit_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
             }
             return;
         }
@@ -331,9 +341,9 @@ void JavaNativeOGLBlit(JNIEnv *env, void *oglc, jlong pSrcOps, jlong pDstOps, jb
         }
     }
 
-    if (opengl_hook)
+    if (opengl_blit_hook)
     {
-        return opengl_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
+        return opengl_blit_hook->call<void, decltype(JavaNativeOGLBlit)>(env, oglc, pSrcOps, pDstOps, xform, hint, srctype, texture, sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
     }
 }
 
@@ -406,7 +416,7 @@ void __stdcall JavaNativeOGLRenderQueueFlushBuffer(JNIEnv *env, jobject oglrq, j
         }
     }
 
-    return flush_buffer_hook->call<void, decltype(JavaNativeOGLRenderQueueFlushBuffer)>(env, oglrq, original_buffer, limit);
+    return opengl_flush_buffer_hook->call<void, decltype(JavaNativeOGLRenderQueueFlushBuffer)>(env, oglrq, original_buffer, limit);
 }
 
 void __stdcall JavaNativeGDIBlit(JNIEnv *env, jobject joSelf, jobject srcData, jobject dstData, jobject clip, jint srcx, jint srcy, jint dstx, jint dsty, jint width, jint height, jint rmask, jint gmask, jint bmask, jboolean needLut) noexcept
@@ -632,66 +642,16 @@ HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface
     std::uint8_t* texture = pSrcBase;
     std::uint8_t* screen = pDstBase;
 
-    for (jint i = 0; i < srcHeight; ++i)
+    // Render to Screen
+    std::memcpy(screen, texture, srcWidth * srcHeight * pDstInfo->pixelStride);
+
+    // Render to Destination
+    copy_image(destImage, texture, srcWidth, srcHeight, pDstInfo->pixelStride, format);
+
+    // Render Debug Image
+    if (debugImage)
     {
-        // Render to Screen
-        std::memcpy(screen, texture, srcWidth * 4);
-
-        //NOTE: Do NOT call copy_image and draw_image here for performance reasons!
-        //      For some odd reason, the function call is significantly slower than the inlined functions below
-        //Render to Shared Memory
-        //Render Debug Graphics
-        switch (format)
-        {
-            case ImageFormat::BGR_BGRA:
-                convert_pixels(reinterpret_cast<bgr_bgra_t*>(texture), reinterpret_cast<bgr_bgra_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<bgr_bgra_t*>(debugImage), reinterpret_cast<bgr_bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
-                }
-                break;
-
-            case ImageFormat::BGRA:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<bgra_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<bgra_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
-                }
-                break;
-
-            case ImageFormat::RGBA:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<rgba_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<rgba_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
-                }
-                break;
-
-            case ImageFormat::ARGB:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<argb_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<argb_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
-                }
-                break;
-
-            case ImageFormat::ABGR:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<abgr_t*>(destImage), srcWidth, 1, pDstInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<abgr_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, pDstInfo->pixelStride);
-                }
-                break;
-        }
-
-        screen += pDstInfo->scanStride;
-        texture += pDstInfo->scanStride;
-        destImage += pDstInfo->scanStride;
-
-        if (debugImage)
-        {
-            debugImage += pDstInfo->scanStride;
-        }
+        draw_image(screen, debugImage, srcWidth, srcHeight, pDstInfo->pixelStride, format);
     }
 
     //Render Cursor
@@ -816,53 +776,15 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
     for (jint i = 0; i < srcHeight; ++i)
     {
         // Render to Screen
-        std::memcpy(screen, texture, srcWidth * 4);
+        std::memcpy(screen, texture, srcWidth * pSrcInfo->pixelStride);
 
-        //NOTE: Do NOT call copy_image and draw_image here for performance reasons!
-        //      For some odd reason, the function call is significantly slower than the inlined functions below
-        //Render to Shared Memory
-        //Render Debug Graphics
-        switch (format)
+        // Render to Destination
+        copy_image(destImage, texture, srcWidth, 1, pSrcInfo->pixelStride, format);
+
+        // Draw Debug Image
+        if (debugImage)
         {
-            case ImageFormat::BGR_BGRA:
-                convert_pixels(reinterpret_cast<bgr_bgra_t*>(texture), reinterpret_cast<bgr_bgra_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<bgr_bgra_t*>(debugImage), reinterpret_cast<bgr_bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
-                }
-                break;
-
-            case ImageFormat::BGRA:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<bgra_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<bgra_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
-                }
-                break;
-
-            case ImageFormat::RGBA:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<rgba_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<rgba_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
-                }
-                break;
-
-            case ImageFormat::ARGB:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<argb_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<argb_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
-                }
-                break;
-
-            case ImageFormat::ABGR:
-                convert_pixels(reinterpret_cast<bgra_t*>(texture), reinterpret_cast<abgr_t*>(destImage), srcWidth, 1, pSrcInfo->pixelStride);
-                if (debugImage)
-                {
-                    alpha_blend_pixels(reinterpret_cast<abgr_t*>(debugImage), reinterpret_cast<bgra_t*>(screen), srcWidth, 1, dstInfo.pixelStride);
-                }
-                break;
+            draw_image(screen, debugImage, srcWidth, 1, pSrcInfo->pixelStride, format);
         }
 
         screen += dstInfo.scanStride;
@@ -1220,63 +1142,115 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
-#include <d3d9.h>
-
-typedef HRESULT (__stdcall *Device_Present_t)(IDirect3DDevice9* device, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion);
-Device_Present_t o_DevicePresent;
-
-HRESULT __stdcall Device_Present(IDirect3DDevice9* device, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion) noexcept
+HRESULT __stdcall D3D11Device_Present(IDXGISwapChain* pThis, UINT SyncInterval, UINT Flags)
 {
-    return o_DevicePresent(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+    if (directx_device11_swapchain_present_hook)
+    {
+        return directx_device11_swapchain_present_hook->call<HRESULT, decltype(D3D11Device_Present)>(pThis, SyncInterval, Flags);
+    }
+    return E_FAIL;
 }
 
-/*HRESULT __stdcall SwapChain_Present(IDirect3DSwapChain9* swapChain, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion, DWORD dwFlags) noexcept
+HRESULT __stdcall D3D9Device_EndScene(IDirect3DDevice9* device) noexcept
 {
+    extern std::unique_ptr<ControlCenter> control_center;
 
-}*/
-#endif // defined
-
-
-#if defined(_WIN32) || defined(_WIN64)
-DWORD FindPattern(DWORD dwAddress, DWORD dwLen, BYTE *bMask, const char* szMask) noexcept
-{
-    auto bCompare = [](const BYTE* pData, const BYTE* bMask, const char* szMask) -> bool {
-        for(; *szMask; ++szMask, ++pData, ++bMask)
+    if (directx_device9_endscene_hook)
+    {
+        if (control_center)
         {
-            if(*szMask == 'x' && *pData != *bMask)
+            D3DVIEWPORT9 viewport;
+            if (SUCCEEDED(device->GetViewport(&viewport)))
             {
-                return 0;
+                std::int32_t width = static_cast<std::int32_t>(viewport.Width);
+                std::int32_t height = static_cast<std::int32_t>(viewport.Height);
+
+                std::int32_t x = 0;
+                std::int32_t y = 0;
+                std::size_t applet_width = 0;
+                std::size_t applet_height = 0;
+
+                control_center->get_applet_dimensions(&x, &y, &applet_width, &applet_height);
+                control_center->set_target_dimensions(static_cast<std::int32_t>(applet_width), static_cast<std::int32_t>(applet_height));
+
+                if (width != applet_width || height != applet_height)
+                {
+                    // Possibly menu open, render normally
+                    return directx_device9_endscene_hook->call<HRESULT, decltype(D3D9Device_EndScene)>(device);
+                }
+
+                bool minimized = false;
+                ImageFormat image_format = control_center->get_image_format();
+                dx_read_pixels(device, control_center->get_image(), width, height, minimized, image_format);
+
+                IDirect3DStateBlock9* block;
+                device->CreateStateBlock(D3DSBT_ALL, &block);
+                block->Capture();
+
+                device->SetRenderState(D3DRS_LIGHTING, FALSE);
+                device->SetRenderState(D3DRS_FOGENABLE, FALSE);
+                device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+                device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+                device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE); //DISABLED
+                device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+                device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+                device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+
+                if (control_center->get_debug_graphics() && !minimized)
+                {
+                    static IDirect3DTexture9* texture = nullptr;
+                    dx_load_texture(device, texture, image_format, control_center->get_debug_image(), width, height);
+
+                    if (texture)
+                    {
+                        dx_draw_texture(device, texture, image_format, 0.0, 0.0, static_cast<float>(width), static_cast<float>(height));
+                    }
+                }
+
+                //Render Cursor
+                if (!minimized)
+                {
+                    x = -1;
+                    y = -1;
+                    control_center->get_applet_mouse_position(&x, &y);
+
+                    if (x > -1 && y > -1 && x <= width && y <= height)
+                    {
+                        device->SetTexture(0, nullptr);
+                        dx_draw_point(device, static_cast<float>(x), static_cast<float>(y), 2.5f, D3DCOLOR_RGBA(0xFF, 0x00, 0x00, 0xFF));
+                    }
+                }
+
+                device->SetRenderState(D3DRS_ZFUNC,D3DCMP_NEVER);
+                device->SetTexture(0, nullptr);
+                device->SetPixelShader(nullptr);
+                device->SetVertexShader(nullptr);
+                block->Apply();
+                block->Release();
             }
         }
-        return (*szMask) == 0;
-    };
 
-    for(DWORD i = 0; i < dwLen; ++i)
-    {
-        if (bCompare(reinterpret_cast<std::uint8_t*>(dwAddress + i), bMask, szMask))
-        {
-            return static_cast<DWORD>(dwAddress + i);
-        }
+        return directx_device9_endscene_hook->call<HRESULT, decltype(D3D9Device_EndScene)>(device);
     }
-    return 0;
+    return E_FAIL;
 }
 
-void* DetourFunction(std::uint8_t* OrigFunc, std::uint8_t* HookFunc, int JumpLength) noexcept
+HRESULT __stdcall D3D9Device_Present(IDirect3DDevice9* device, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion) noexcept
 {
-    DWORD dwProt = 0;
-    std::uint8_t* jmp = new std::uint8_t[JumpLength + 5];
-    VirtualProtect(OrigFunc, JumpLength, PAGE_READWRITE, &dwProt);
-    memcpy(jmp, OrigFunc, JumpLength);
+    if (directx_device9_present_hook)
+    {
+        return directx_device9_present_hook->call<HRESULT, decltype(D3D9Device_Present)>(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+    }
+    return E_FAIL;
+}
 
-    jmp += JumpLength;
-    jmp[0] = 0xE9;
-    *reinterpret_cast<DWORD*>(jmp + 1) = static_cast<DWORD>(OrigFunc + JumpLength - jmp) - 5;
-    memset(OrigFunc, 0x90, JumpLength);
-
-    OrigFunc[0] = 0xE9;
-    *reinterpret_cast<DWORD*>(OrigFunc + 1) = static_cast<DWORD>(HookFunc - OrigFunc) - 5;
-    VirtualProtect(OrigFunc, JumpLength, dwProt, &dwProt);
-    return (jmp - JumpLength);
+HRESULT __stdcall D3D9SwapChain_Present(IDirect3DSwapChain9* swapChain, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion, DWORD dwFlags) noexcept
+{
+    if (directx_device9_swapchain_present_hook)
+    {
+        return directx_device9_swapchain_present_hook->call<HRESULT, decltype(D3D9SwapChain_Present)>(swapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+    }
+    return E_FAIL;
 }
 #endif // defined
 
@@ -1405,7 +1379,55 @@ void InitialiseHooks() noexcept
             }
         }
 
-        //Hook DirectX Surface Blit
+        // Some time between Java 20 and 23+, the following functions are no longer exported
+        // OGLBlitLoops_Blit
+        // Only Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer is exported now
+
+        // Hook OpenGL Blit
+        #if defined(HOOK_OPENGL_BLIT)
+        blit = reinterpret_cast<void*>(::GetProcAddress(module, "OGLBlitLoops_Blit"));
+        if (blit)
+        {
+            opengl_blit_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
+            opengl_blit_hook->apply();
+        }
+        else
+        {
+            blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer@20", "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer"));
+            if (blit)
+            {
+                opengl_flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
+                opengl_flush_buffer_hook->apply();
+            }
+        }
+        #else
+        if (blit)
+        {
+            HMODULE module = GetModuleHandle("opengl32.dll");
+            if (module)
+            {
+                #if defined(HOOK_OPENGL_SWAP)
+                blit = reinterpret_cast<void*>(::GetProcAddress(module, "wglSwapBuffers"));
+                opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mSwapBuffers));
+                opengl_swap_hook->apply();
+                #else
+                blit = reinterpret_cast<void*>(::GetProcAddress(module, "glDrawPixels"));
+                opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mglDrawPixels));
+                opengl_swap_hook->apply();
+                #endif
+            }
+        }
+        #endif
+
+        // Some time between Java 20 and 23+, the following functions are no longer exported
+        // D3DBL_CopyImageToIntXrgbSurface
+        // D3DBL_CopySurfaceToIntArgbImage
+        // D3DBlitLoops_IsoBlit
+        // D3DBlitToSurfaceViaTexture
+        // Only Java_sun_java2d_d3d_D3DRenderQueue_flushBuffer is exported now
+
+        #if defined(HOOK_DIRECTX_BLIT)
+        // Hook DirectX Surface Blit
         blit = reinterpret_cast<void*>(GetProcAddress(module, "?D3DBL_CopyImageToIntXrgbSurface@@YAJPAUSurfaceDataRasInfo@@HPAVD3DResource@@JJJJJJ@Z", "?D3DBL_CopyImageToIntXrgbSurface@@YAJPEAUSurfaceDataRasInfo@@HPEAVD3DResource@@JJJJJJ@Z"));
         if (blit)
         {
@@ -1419,65 +1441,139 @@ void InitialiseHooks() noexcept
             directx_argb_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaDirectXCopyImageToIntArgbSurface));
             directx_argb_hook->apply();
         }
+        #else
 
-        //Hook OpenGL Blit
-        #if defined(HOOK_OPENGL_BLIT)
-        blit = reinterpret_cast<void*>(::GetProcAddress(module, "OGLBlitLoops_Blit"));
-        if (blit)
+        // Direct-X Hooks
+
+        #if defined(HOOK_D3D11)
+        bool hook_d3d11 = true;
+        #else
+        bool hook_d3d11 = false;
+        #endif
+
+        if (!GetModuleHandle(hook_d3d11 ? "d3d11.dll" : "d3d9.dll"))
         {
-            opengl_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLBlit));
-            opengl_hook->apply();
+            return;
+        }
+
+        extern std::unique_ptr<ControlCenter> control_center;
+        HWND main_window = reinterpret_cast<HWND>(control_center->reflect_frame_native_handle());
+        if (!main_window)
+        {
+            return;
+        }
+
+        if (hook_d3d11)
+        {
+            #define SAFE_RELEASE(ptr) if (ptr) ptr->Release()
+            HMODULE d3d11_module = GetModuleHandle("d3d11.dll");
+            auto pD3D11CreateDeviceAndSwapChain = reinterpret_cast<decltype(D3D11CreateDeviceAndSwapChain)*>(::GetProcAddress(d3d11_module, "D3D11CreateDeviceAndSwapChain"));
+
+            DXGI_SWAP_CHAIN_DESC sd {0};
+            sd.BufferCount = 1;
+            sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            sd.OutputWindow = main_window;
+            sd.Windowed = true;
+            sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+            sd.SampleDesc.Count = 1;
+
+            ID3D11Device* pDevice = nullptr;
+            IDXGISwapChain* pSwapChain = nullptr;
+
+            HRESULT hr = pD3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &sd, &pSwapChain, &pDevice, nullptr, nullptr);
+            if (FAILED(hr))
+            {
+                SAFE_RELEASE(pSwapChain);
+                SAFE_RELEASE(pDevice);
+                return;
+            }
+
+            auto* vTable = *reinterpret_cast<DWORD_PTR**>(pSwapChain);
+
+            // Hook Present
+            decltype(D3D11Device_Present)* present = reinterpret_cast<decltype(D3D11Device_Present)*>(vTable[8]);
+            directx_device11_swapchain_present_hook = std::make_unique<Hook>(reinterpret_cast<void*>(present), reinterpret_cast<void*>(D3D11Device_Present));
+            directx_device11_swapchain_present_hook->apply();
+
+            SAFE_RELEASE(pSwapChain);
+            SAFE_RELEASE(pDevice);
         }
         else
         {
-            blit = reinterpret_cast<void*>(GetProcAddress(module, "_Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer@20", "Java_sun_java2d_opengl_OGLRenderQueue_flushBuffer"));
-            if (blit)
-            {
-                flush_buffer_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(JavaNativeOGLRenderQueueFlushBuffer));
-                flush_buffer_hook->apply();
-            }
-        }
+            #define SAFE_RELEASE(ptr) if (ptr) ptr->Release()
+            HMODULE d3d9_module = GetModuleHandle("d3d9.dll");
+            auto pDirect3DCreate9 = reinterpret_cast<decltype(Direct3DCreate9)*>(::GetProcAddress(d3d9_module, "Direct3DCreate9"));
 
-        if (blit)
-        {
-            HMODULE module = GetModuleHandle("opengl32.dll");
-            if (module)
-            {
-                #if !defined(HOOK_OPENGL_SWAP)
-                blit = reinterpret_cast<void*>(::GetProcAddress(module, "wglSwapBuffers"));
-                opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mSwapBuffers));
-                opengl_swap_hook->apply();
-                #else
-                blit = reinterpret_cast<void*>(::GetProcAddress(module, "glDrawPixels"));
-                opengl_swap_hook = std::make_unique<Hook>(reinterpret_cast<void*>(blit), reinterpret_cast<void*>(mglDrawPixels));
-                opengl_swap_hook->apply();
-                #endif
-            }
-        }
-        #endif
-    #endif
-
-    /*std::thread([]{
-        auto start = std::chrono::high_resolution_clock::now();
-        while(!GetModuleHandle("d3d9.dll"))
-        {
-            if (elapsed_time<std::chrono::milliseconds>(start) >= 10)
+            IDirect3D9* pD3D = pDirect3DCreate9(D3D_SDK_VERSION);
+            if (!pD3D)
             {
                 return;
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            D3DDISPLAYMODE display_mode;
+            HRESULT hr = pD3D->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &display_mode);
+            if (FAILED(hr))
+            {
+                SAFE_RELEASE(pD3D);
+                return;
+            }
+
+            D3DPRESENT_PARAMETERS d3dpp = {0};
+            d3dpp.Windowed = true;
+            d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+            d3dpp.BackBufferCount = 1;
+            d3dpp.BackBufferFormat = display_mode.Format;
+            d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE;
+            d3dpp.hDeviceWindow = main_window;
+
+            IDirect3DDevice9* pDevice = nullptr;
+            IDirect3DSwapChain9* pSwapChain = nullptr;
+            hr = pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, main_window, D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_MULTITHREADED, &d3dpp, &pDevice);
+
+            if (FAILED(hr) || !pDevice)
+            {
+                SAFE_RELEASE(pDevice);
+                SAFE_RELEASE(pD3D);
+                return;
+            }
+
+            auto* vTable = *reinterpret_cast<DWORD_PTR**>(pDevice);
+
+            // Hook EndScene
+            decltype(D3D9Device_EndScene)* present = reinterpret_cast<decltype(D3D9Device_EndScene)*>(vTable[42]);
+            directx_device9_endscene_hook = std::make_unique<Hook>(reinterpret_cast<void*>(present), reinterpret_cast<void*>(D3D9Device_EndScene));
+            directx_device9_endscene_hook->apply();
+
+            #if defined(HOOK_D3D9_DEVICE_PRESENT)
+            decltype(D3D9Device_Present)* present = reinterpret_cast<decltype(D3D9Device_Present)*>(vTable[17]);
+            directx_device9_present_hook = std::make_unique<Hook>(reinterpret_cast<void*>(present), reinterpret_cast<void*>(D3D9Device_Present));
+            directx_device9_present_hook->apply();
+            #endif
+
+            #if defined(HOOK_D3D9_SWAPCHAIN_PRESENT)
+            hr = pDevice->GetSwapChain(0, &pSwapChain);
+            if (FAILED(hr) || !pSwapChain)
+            {
+                SAFE_RELEASE(pSwapChain);
+                SAFE_RELEASE(pDevice);
+                SAFE_RELEASE(pD3D);
+                return;
+            }
+
+            vTable = *reinterpret_cast<DWORD_PTR**>(pSwapChain);
+
+            decltype(D3D9SwapChain_Present)* present = reinterpret_cast<decltype(D3D9SwapChain_Present)*>(pVTable[6]);
+            directx_device9_swapchain_present_hook = std::make_unique<Hook>(reinterpret_cast<void*>(present), reinterpret_cast<void*>(D3D9SwapChain_Present));
+            directx_device9_swapchain_present_hook->apply();
+            #endif
+
+            SAFE_RELEASE(pSwapChain);
+            SAFE_RELEASE(pDevice);
+            SAFE_RELEASE(pD3D);
         }
-
-        DWORD* VTable = nullptr;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        static std::uint8_t bMask[] = {0xC7, 0x06, 0x00, 0x00, 0x00, 0x00, 0x89, 0x86, 0x00, 0x00, 0x00, 0x00, 0x89, 0x86};
-        DWORD Address = FindPattern(reinterpret_cast<DWORD>(GetModuleHandle("d3d9.dll")), 0x128000, bMask, "xx????xx????xx");
-        memcpy(&VTable, reinterpret_cast<void*>(Address + 2), 4);
-
-        o_DevicePresent = reinterpret_cast<Device_Present_t>(VTable[17]);  //42 is ENDSCENE
-        DetourFunction(reinterpret_cast<std::uint8_t*>(o_DevicePresent), reinterpret_cast<std::uint8_t*>(&Device_Present), 5);
-    }).detach();*/
+        #endif
+    #endif
 }
 
 void StartHook() noexcept

@@ -99,6 +99,7 @@ public:
     void ClearCache() noexcept;
 
 
+    jlong getFrameHandle() const noexcept;
     jobject getApplet() const noexcept;
     JNIEnv* getEnv() const noexcept;
 
