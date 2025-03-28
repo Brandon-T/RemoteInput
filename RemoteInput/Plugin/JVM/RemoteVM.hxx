@@ -30,10 +30,7 @@ private:
     T local_to_global(T object) const noexcept;
 
     template<typename R, typename... Args>
-    typename std::enable_if<!is_vector<R>::value, R>::type SendCommand(RemoteVMCommand command, Args&&... args) const noexcept;
-
-    template<typename R, typename... Args>
-    typename std::enable_if<is_vector<R>::value, R>::type SendCommand(RemoteVMCommand command, Args&&... args) const noexcept;
+    R SendCommand(RemoteVMCommand command, Args&&... args) const noexcept;
 
     template<typename R, typename... Args>
     R ExecuteCommand(ImageData* image_data, R (RemoteVM::*func)(Args...) const noexcept) const noexcept;
@@ -50,10 +47,10 @@ public:
     ~RemoteVM();
 
     RemoteVM(const RemoteVM& other) = delete;
-    RemoteVM(RemoteVM&& other);
+    RemoteVM(RemoteVM&& other) noexcept ;
 
     RemoteVM& operator = (const RemoteVM& other) = delete;
-    RemoteVM& operator = (RemoteVM&& other);
+    RemoteVM& operator = (RemoteVM&& other) noexcept;
 
     std::size_t MaxMemoryChunkSize() const noexcept;
     void* AllocateMemory(std::size_t size) const noexcept;

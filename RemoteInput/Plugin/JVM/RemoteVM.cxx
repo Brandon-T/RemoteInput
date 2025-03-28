@@ -152,60 +152,42 @@ enum class RemoteVMCommand: std::uint32_t
     GET_OBJECT_REF_TYPE
 };
 
+// Overloads for Stream to support jvalue
+
 Stream& operator << (Stream& stream, const jvalue &value) noexcept
 {
     stream.write(&value, sizeof(jvalue));
     return stream;
 }
 
-template<class T>
-struct is_string
+Stream& operator >> (Stream& stream, jvalue &value) noexcept
 {
-    static bool const value = false;
-};
-
-template<typename T>
-struct is_string<std::basic_string<T>>
-{
-    static bool const value = true;
-};
-
-template<typename T>
-typename std::enable_if<!is_string<std::decay_t<T>>::value && !is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(ImageData* image_data) noexcept
-{
-    return image_data->data_stream().read<std::decay_t<T>>();
+    stream.read(&value, sizeof(jvalue));
+    return stream;
 }
 
-template<typename T>
-typename std::enable_if<is_string<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(ImageData* image_data) noexcept
+// Helpers for reading
+
+template<typename... Args>
+auto Remote_VM_Read(ImageData* image_data)
 {
-    return image_data->data_stream().read<std::decay_t<T>>();
+    if constexpr (sizeof...(Args) == 1)
+    {
+        return image_data->data_stream().read<std::tuple_element_t<0, std::tuple<std::decay_t<Args>...>>>();
+    }
+    else
+    {
+        return std::tuple<std::decay_t<Args>...>{image_data->data_stream().read<std::decay_t<Args>>()...};
+    }
 }
 
-template<typename T>
-typename std::enable_if<is_vector<std::decay_t<T>>::value, std::decay_t<T>>::type Remote_VM_Read(ImageData* image_data) noexcept
-{
-    std::decay_t<T> result;
-    image_data->data_stream().read(&result, sizeof(result));
-    return result;
-}
+// Helpers for writing
 
-template<typename T>
-void Remote_VM_Write(ImageData* image_data, const T& result) noexcept
+template<typename... Args>
+void Remote_VM_Write(Stream& stream, RemoteVMCommand command, Args&&... args)
 {
-    image_data->data_stream().write(result);
-}
-
-template<typename T>
-void Remote_VM_Write(ImageData* image_data, const std::basic_string<T> &result) noexcept
-{
-    image_data->data_stream().write(result);
-}
-
-template<typename T>
-void Remote_VM_Write(ImageData* image_data, const std::vector<T> &result) noexcept
-{
-    image_data->data_stream().write(result);
+    stream << command;
+    (stream.write(std::forward<Args>(args)), ...);
 }
 
 template<typename T>
@@ -221,76 +203,37 @@ T RemoteVM::local_to_global(T object) const noexcept
 }
 
 template<typename R, typename... Args>
-typename std::enable_if<!is_vector<R>::value, R>::type RemoteVM::SendCommand(RemoteVMCommand command, Args&&... args) const noexcept
+R RemoteVM::SendCommand(RemoteVMCommand command, Args&&... args) const noexcept
 {
     auto result = send_command([&](Stream &stream, ImageData* image_data) {
         image_data->set_command(EIOSCommand::REMOTE_VM_INSTRUCTION);
-        Remote_VM_Write(image_data, command);
-        (Remote_VM_Write(image_data, args), ...);
-
-        /*([](auto& arguments, auto& arg) {
-            Remote_VM_Write(arguments, arg);
-        } (arguments, args), ...); //std::forward<void*&>(arguments);*/
+        Remote_VM_Write(stream, command, std::forward<Args>(args)...);
     });
 
-    if constexpr(std::is_same<R, void>::value)
+    if constexpr (!std::is_void_v<R>)
     {
-        return;
+        if (result)
+        {
+            ImageData* image_data = (control_center->*get_image_data)();
+            return Remote_VM_Read<R>(image_data);
+        }
     }
-    else if (result)
-    {
-        ImageData* image_data = (control_center->*get_image_data)();
-        return Remote_VM_Read<R>(image_data);
-    }
-    else if constexpr(std::is_same<R, jboolean>::value)
-    {
-        return false;
-    }
-    else if constexpr(is_same_of<R, jfloat, jdouble>::value)
-    {
-        return 0.0;
-    }
-    else if constexpr(is_same_of<R, jchar, jbyte, jshort, jint, jlong, jsize>::value)
-    {
-        return -1;
-    }
-    else if constexpr (std::is_same<R, jobjectRefType>::value)
-    {
-        ImageData* image_data = (control_center->*get_image_data)();
-        return Remote_VM_Read<R>(image_data);
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-template<typename R, typename... Args>
-typename std::enable_if<is_vector<R>::value, R>::type RemoteVM::SendCommand(RemoteVMCommand command, Args&&... args) const noexcept
-{
-    auto result = send_command([&](Stream &stream, ImageData* image_data) {
-        image_data->set_command(EIOSCommand::REMOTE_VM_INSTRUCTION);
-        Remote_VM_Write(image_data, command);
-        (Remote_VM_Write(image_data, args), ...);
-
-        /*([](auto& arguments, auto& arg) {
-            Remote_VM_Write(arguments, arg);
-        } (arguments, args), ...); //std::forward<void*&>(arguments);*/
-    });
-
-    if (result)
-    {
-        ImageData* image_data = (control_center->*get_image_data)();
-        return Remote_VM_Read<R>(image_data);
-    }
-    return {};
+    return R();
 }
 
 template<typename R, typename... Args>
 R RemoteVM::ExecuteCommand(ImageData* image_data, R (RemoteVM::*func)(Args...) const noexcept) const noexcept
 {
-    auto args = std::tuple<std::decay_t<Args>...>{Remote_VM_Read<std::decay_t<Args>>(image_data)...};
-    return std::apply(func, std::tuple_cat(std::forward_as_tuple(this), std::forward<std::tuple<std::decay_t<Args>...>>(args)));
+    auto args = Remote_VM_Read<Args...>(image_data);
+
+    if constexpr (sizeof...(Args) == 1)
+    {
+        return std::invoke(func, this, std::move(args));
+    }
+    else
+    {
+        return std::apply(func, std::tuple_cat(std::make_tuple(this), std::move(args)));
+    }
 }
 
 RemoteVM::RemoteVM(JNIEnv* env,
@@ -300,9 +243,9 @@ RemoteVM::RemoteVM(JNIEnv* env,
                    ControlCenter* control_center,
                    std::function<bool(std::function<void(Stream&, ImageData*)>)>&& send_command,
                    ImageData* (ControlCenter::*get_image_data)() const) noexcept : env(env), control_center(control_center), send_command(send_command), get_image_data(get_image_data) {}
-RemoteVM::~RemoteVM() {}
+RemoteVM::~RemoteVM() = default;
 
-RemoteVM::RemoteVM(RemoteVM&& other) : env(other.env), control_center(other.control_center), send_command(other.send_command), get_image_data(other.get_image_data)
+RemoteVM::RemoteVM(RemoteVM&& other) noexcept : env(other.env), control_center(other.control_center), send_command(other.send_command), get_image_data(other.get_image_data)
 {
     other.env = nullptr;
     other.control_center = nullptr;
@@ -310,7 +253,7 @@ RemoteVM::RemoteVM(RemoteVM&& other) : env(other.env), control_center(other.cont
     other.get_image_data = nullptr;
 }
 
-RemoteVM& RemoteVM::operator = (RemoteVM&& other)
+RemoteVM& RemoteVM::operator = (RemoteVM&& other) noexcept
 {
     env = other.env;
     control_center = other.control_center;
@@ -1060,6 +1003,7 @@ jfieldID RemoteVM::GetStaticFieldID(jclass clazz, const std::string &name, const
     {
         return SendCommand<jfieldID>(RemoteVMCommand::GET_STATIC_FIELD_ID, clazz, name, sig);
     }
+
     return env->GetStaticFieldID(clazz, name.c_str(), sig.c_str());
 }
 
@@ -1263,7 +1207,7 @@ std::wstring RemoteVM::GetStringChars(jstring str) const noexcept
 
         env->ReleaseStringChars(str, chars);
     }
-    return std::wstring();
+    return {};
 }
 
 jstring RemoteVM::NewStringUTF(const std::string &utf) const noexcept
@@ -1304,7 +1248,7 @@ std::string RemoteVM::GetStringUTFChars(jstring str) const noexcept
 
         env->ReleaseStringUTFChars(str, chars);
     }
-    return std::string();
+    return {};
 }
 
 jsize RemoteVM::GetArrayLength(jarray array) const noexcept
@@ -1425,7 +1369,7 @@ void RemoteVM::SetObjectArrayElements(jobjectArray array, jsize index, const std
 
     for (std::size_t i = 0; i < elements.size(); ++i)
     {
-        env->SetObjectArrayElement(array, i + index, elements[i]);
+        env->SetObjectArrayElement(array, static_cast<jsize>(i) + index, elements[i]);
     }
 }
 
@@ -1931,7 +1875,7 @@ void RemoteVM::process_command(ImageData* image_data) const noexcept
             jobject loader = Remote_VM_Read<jobject>(image_data);
             jbyte* buf = Remote_VM_Read<jbyte*>(image_data);
             jsize len = Remote_VM_Read<jsize>(image_data);
-            jclass result = this->DefineClass(name.c_str(), loader, buf == nullptr ? static_cast<jbyte*>(image_data->data_buffer(
+            jclass result = this->DefineClass(name, loader, buf == nullptr ? static_cast<jbyte*>(image_data->data_buffer(
                     std::ios::in)) : buf, len);
             image_data->data_stream().write(result);
         }
@@ -2063,6 +2007,9 @@ void RemoteVM::process_command(ImageData* image_data) const noexcept
 
         case RemoteVMCommand::CALL_OBJECT_METHOD:
         {
+            fprintf(stdout, "CALL_OBJECT_METHOD\n");
+            fflush(stdout);
+
             jobject result = this->ExecuteCommand(image_data, &RemoteVM::CallObjectMethod);
             image_data->data_stream().write(result);
         }
