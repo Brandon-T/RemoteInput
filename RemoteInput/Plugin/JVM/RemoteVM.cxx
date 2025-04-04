@@ -2007,9 +2007,6 @@ void RemoteVM::process_command(ImageData* image_data) const noexcept
 
         case RemoteVMCommand::CALL_OBJECT_METHOD:
         {
-            fprintf(stdout, "CALL_OBJECT_METHOD\n");
-            fflush(stdout);
-
             jobject result = this->ExecuteCommand(image_data, &RemoteVM::CallObjectMethod);
             image_data->data_stream().write(result);
         }

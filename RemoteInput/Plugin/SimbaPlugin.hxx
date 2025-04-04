@@ -185,7 +185,7 @@ static const char* PascalExports[] =
     "Pascal_RemoteVM_GetStringChars", "Function RemoteVM.GetStringChars(str: jstring): widestring; native;",
     "Pascal_RemoteVM_NewStringUTF", "Function RemoteVM.NewStringUTF(utf_string: string): jstring; native;",
     "Pascal_RemoteVM_GetStringUTFLength", "Function RemoteVM.GetStringUTFLength(str: jstring): jsize; native;",
-    "Pascal_RemoteVM_GetStringUTFChars", "Function RemoteVM_GetStringUTFChars(str: jstring): string; native;",
+    "Pascal_RemoteVM_GetStringUTFChars", "Function RemoteVM.GetStringUTFChars(str: jstring): string; native;",
     "Pascal_RemoteVM_GetArrayLength", "Function RemoteVM.GetArrayLength(arr: jarray): jsize; native;",
     "Pascal_RemoteVM_NewObjectArray", "Function RemoteVM.NewObjectArray(len: jsize; clazz: jclass; init: jobject): jobjectArray; native;",
     "Pascal_RemoteVM_NewBooleanArray", "Function RemoteVM.NewBooleanArray(len: jsize): jbooleanArray; native;",
