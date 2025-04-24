@@ -10,6 +10,7 @@
 
 static const char* PascalExports[] =
 {
+    //"Pascal_Reflect_ClassLoader", "Function RIGetClassLoader(eios: Pointer; instance: Pointer): jobject; native;",
     "Pascal_Reflect_Equal", "Function RIObjectsEqual(eios: Pointer; A, B: Pointer): Boolean; native;",
     "Pascal_Reflect_InstanceOf", "Function RIObjectIsInstanceOf(eios: Pointer; instance: Pointer; cls: String): Boolean; native;",
     "Pascal_Reflect_Object", "Function RIGetObject(eios: Pointer; instance: Pointer; constref field: ^const RIField): Pointer; native;",
@@ -308,6 +309,7 @@ extern "C"
 {
 #endif
 
+EXPORT void Pascal_Reflect_ClassLoader(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Equal(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_InstanceOf(void** Params, void** Result) noexcept;
 EXPORT void Pascal_Reflect_Object(void** Params, void** Result) noexcept;

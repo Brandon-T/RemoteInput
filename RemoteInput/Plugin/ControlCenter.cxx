@@ -652,6 +652,25 @@ void ControlCenter::process_command() noexcept
         }
         break;
 
+        case EIOSCommand::REFLECT_CLASS_LOADER:
+        {
+            jobject object = stream.read<jobject>();
+            std::string result = main_reflector->GetClassType(object);
+
+            // auto cls = make_safe_local<jclass>(env, env->GetObjectClass(reflection->applet));
+            // jmethodID mid = env->GetMethodID(cls.get(), "getClass", "()Ljava/lang/Class;");
+            // auto clsObj = make_safe_local<jobject>(env, env->CallObjectMethod(reflection->applet, mid));
+            // cls.reset(env->GetObjectClass(clsObj.get()));
+            //
+            // //Get Canvas's ClassLoader.
+            // mid = env->GetMethodID(cls.get(), "getClassLoader", "()Ljava/lang/ClassLoader;");
+            // reflection->classLoader = env->NewGlobalRef(make_safe_local<jobject>(env, env->CallObjectMethod(clsObj.get(), mid)).get());
+            // reflection->cache = std::make_shared<JVMCache>(env, reflection->classLoader);
+
+            stream.write(result);
+        }
+        break;
+
         case EIOSCommand::REMOTE_VM_INSTRUCTION:
         {
             this->remote_vm->process_command(&image_data);
@@ -1879,6 +1898,21 @@ std::string ControlCenter::reflect_class_type(const jobject object) const noexce
         return stream.read<std::string>();
     }
     return std::string();
+}
+
+jobject ControlCenter::reflect_class_loader(const jobject object) const noexcept
+{
+    bool result = send_command([&](Stream &stream, ImageData* image_data) {
+        image_data->set_command(EIOSCommand::REFLECT_CLASS_LOADER);
+        stream.write(object);
+    });
+
+    if (result)
+    {
+        Stream& stream = get_image_data()->data_stream();
+        return stream.read<jobject>();
+    }
+    return nullptr;
 }
 
 std::size_t ControlCenter::reflect_size_for_type(ReflectionType type) noexcept

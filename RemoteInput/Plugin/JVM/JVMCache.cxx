@@ -19,7 +19,7 @@ JVMCache::JVMCache(JNIEnv* env, jobject class_loader) : class_loader(class_loade
 
 JVMCache::~JVMCache()
 {
-    class_cache.clear();
+    clear();
 }
 
 JVMCache::JVMCache(JVMCache&& other) : class_loader(other.class_loader), load_class_method(other.load_class_method), class_cache(std::move(other.class_cache)), field_cache(std::move(other.field_cache))
@@ -91,8 +91,12 @@ jfieldID JVMCache::GetFieldID(JNIEnv* env, jclass clazz, std::string_view name, 
 
 void JVMCache::clear()
 {
-    class_cache.clear();
     field_cache.clear();
+
+    for (auto &pair : class_cache)
+    {
+        pair.second.release();
+    }
 }
 
 std::size_t JVMCache::field_hash(jclass clazz, std::string_view field_name, std::string_view signature) noexcept

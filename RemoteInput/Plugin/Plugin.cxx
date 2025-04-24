@@ -66,8 +66,8 @@ std::unique_ptr<Hook> exit_process;
             StartHook();
         }
 
-        exit_process = std::make_unique<Hook>((void *) GetProcAddress(GetModuleHandleA("kernel32.dll"), "ExitProcess"), (void *) __exit_process);
-        exit_process->apply();
+        //exit_process = std::make_unique<Hook>((void *) GetProcAddress(GetModuleHandleA("kernel32.dll"), "ExitProcess"), (void *) __exit_process);
+        //exit_process->apply();
 
         //Decrease our reference count by 1..
         //So if `FreeLibrary` was called previous, our count reaches 0 and we'll be freed.

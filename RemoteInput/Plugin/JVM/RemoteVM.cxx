@@ -565,7 +565,7 @@ jboolean RemoteVM::CallBooleanMethod(jobject obj, jmethodID methodID, const std:
     return env->CallBooleanMethodA(obj, methodID, args.data());
 }
 
-jbyte RemoteVM::CallByteMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jbyte RemoteVM::CallByteMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -574,7 +574,7 @@ jbyte RemoteVM::CallByteMethod(jobject obj, jmethodID methodID, const std::vecto
     return env->CallByteMethodA(obj, methodID, args.data());
 }
 
-jchar RemoteVM::CallCharMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jchar RemoteVM::CallCharMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -583,7 +583,7 @@ jchar RemoteVM::CallCharMethod(jobject obj, jmethodID methodID, const std::vecto
     return env->CallCharMethodA(obj, methodID, args.data());
 }
 
-jshort RemoteVM::CallShortMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jshort RemoteVM::CallShortMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -592,7 +592,7 @@ jshort RemoteVM::CallShortMethod(jobject obj, jmethodID methodID, const std::vec
     return env->CallShortMethodA(obj, methodID, args.data());
 }
 
-jint RemoteVM::CallIntMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jint RemoteVM::CallIntMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -601,7 +601,7 @@ jint RemoteVM::CallIntMethod(jobject obj, jmethodID methodID, const std::vector<
     return env->CallIntMethodA(obj, methodID, args.data());
 }
 
-jlong RemoteVM::CallLongMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jlong RemoteVM::CallLongMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -610,7 +610,7 @@ jlong RemoteVM::CallLongMethod(jobject obj, jmethodID methodID, const std::vecto
     return env->CallLongMethodA(obj, methodID, args.data());
 }
 
-jfloat RemoteVM::CallFloatMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jfloat RemoteVM::CallFloatMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -619,7 +619,7 @@ jfloat RemoteVM::CallFloatMethod(jobject obj, jmethodID methodID, const std::vec
     return env->CallFloatMethodA(obj, methodID, args.data());
 }
 
-jdouble RemoteVM::CallDoubleMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jdouble RemoteVM::CallDoubleMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -628,7 +628,7 @@ jdouble RemoteVM::CallDoubleMethod(jobject obj, jmethodID methodID, const std::v
     return env->CallDoubleMethodA(obj, methodID, args.data());
 }
 
-void RemoteVM::CallVoidMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+void RemoteVM::CallVoidMethod(jobject obj, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -637,7 +637,7 @@ void RemoteVM::CallVoidMethod(jobject obj, jmethodID methodID, const std::vector
     return env->CallVoidMethodA(obj, methodID, args.data());
 }
 
-jobject RemoteVM::CallNonvirtualObjectMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jobject RemoteVM::CallNonvirtualObjectMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -646,7 +646,7 @@ jobject RemoteVM::CallNonvirtualObjectMethod(jobject obj, jclass clazz, jmethodI
     return local_to_global(env->CallNonvirtualObjectMethodA(obj, clazz, methodID, args.data()));
 }
 
-jboolean RemoteVM::CallNonvirtualBooleanMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jboolean RemoteVM::CallNonvirtualBooleanMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -655,7 +655,7 @@ jboolean RemoteVM::CallNonvirtualBooleanMethod(jobject obj, jclass clazz, jmetho
     return env->CallNonvirtualBooleanMethodA(obj, clazz, methodID, args.data());
 }
 
-jbyte RemoteVM::CallNonvirtualByteMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jbyte RemoteVM::CallNonvirtualByteMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -664,7 +664,7 @@ jbyte RemoteVM::CallNonvirtualByteMethod(jobject obj, jclass clazz, jmethodID me
     return env->CallNonvirtualByteMethodA(obj, clazz, methodID, args.data());
 }
 
-jchar RemoteVM::CallNonvirtualCharMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jchar RemoteVM::CallNonvirtualCharMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -673,7 +673,7 @@ jchar RemoteVM::CallNonvirtualCharMethod(jobject obj, jclass clazz, jmethodID me
     return env->CallNonvirtualCharMethodA(obj, clazz, methodID, args.data());
 }
 
-jshort RemoteVM::CallNonvirtualShortMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jshort RemoteVM::CallNonvirtualShortMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -682,7 +682,7 @@ jshort RemoteVM::CallNonvirtualShortMethod(jobject obj, jclass clazz, jmethodID 
     return env->CallNonvirtualShortMethodA(obj, clazz, methodID, args.data());
 }
 
-jint RemoteVM::CallNonvirtualIntMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jint RemoteVM::CallNonvirtualIntMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -691,7 +691,7 @@ jint RemoteVM::CallNonvirtualIntMethod(jobject obj, jclass clazz, jmethodID meth
     return env->CallNonvirtualIntMethodA(obj, clazz, methodID, args.data());
 }
 
-jlong RemoteVM::CallNonvirtualLongMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jlong RemoteVM::CallNonvirtualLongMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -700,7 +700,7 @@ jlong RemoteVM::CallNonvirtualLongMethod(jobject obj, jclass clazz, jmethodID me
     return env->CallNonvirtualLongMethodA(obj, clazz, methodID, args.data());
 }
 
-jfloat RemoteVM::CallNonvirtualFloatMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jfloat RemoteVM::CallNonvirtualFloatMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -709,7 +709,7 @@ jfloat RemoteVM::CallNonvirtualFloatMethod(jobject obj, jclass clazz, jmethodID 
     return env->CallNonvirtualFloatMethodA(obj, clazz, methodID, args.data());
 }
 
-jdouble RemoteVM::CallNonvirtualDoubleMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+jdouble RemoteVM::CallNonvirtualDoubleMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -718,7 +718,7 @@ jdouble RemoteVM::CallNonvirtualDoubleMethod(jobject obj, jclass clazz, jmethodI
     return env->CallNonvirtualDoubleMethodA(obj, clazz, methodID, args.data());
 }
 
-void RemoteVM::CallNonvirtualVoidMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept 
+void RemoteVM::CallNonvirtualVoidMethod(jobject obj, jclass clazz, jmethodID methodID, const std::vector<jvalue> &args) const noexcept
 {
     if (this->send_command)
     {
@@ -745,7 +745,7 @@ jobject RemoteVM::GetObjectField(jobject obj, jfieldID fieldID) const noexcept
     return local_to_global(env->GetObjectField(obj, fieldID));
 }
 
-jboolean RemoteVM::GetBooleanField(jobject obj, jfieldID fieldID) const noexcept 
+jboolean RemoteVM::GetBooleanField(jobject obj, jfieldID fieldID) const noexcept
 {
     if (this->send_command)
     {
@@ -958,6 +958,7 @@ jint RemoteVM::CallStaticIntMethod(jclass clazz, jmethodID methodID, const std::
     {
         return SendCommand<jint>(RemoteVMCommand::CALL_STATIC_INT_METHOD, clazz, methodID, args);
     }
+
     return env->CallStaticIntMethodA(clazz, methodID, args.data());
 }
 

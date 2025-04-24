@@ -144,6 +144,7 @@ public:
 
     std::string reflect_class_name(const jobject object) const noexcept;
     std::string reflect_class_type(const jobject object) const noexcept;
+    jobject reflect_class_loader(const jobject object) const noexcept;
 
     static std::size_t reflect_size_for_type(ReflectionType type) noexcept;
 

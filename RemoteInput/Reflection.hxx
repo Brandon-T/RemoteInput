@@ -76,12 +76,12 @@ private:
     jfieldID GetFieldID(jclass cls, std::string_view name, std::string_view desc, bool is_static) noexcept;
 
     Reflection() noexcept;
-    Reflection(const Reflection& other) = delete;
 
     bool Detach() noexcept;
 
 public:
     Reflection(Reflection&& other) noexcept;
+    Reflection(const Reflection& other) = delete;
     ~Reflection() noexcept;
 
     Reflection& operator = (const Reflection& other) = delete;
@@ -155,11 +155,9 @@ Reflection::getField(jstring string) noexcept
 {
     if (string)
     {
-        jsize length = env->GetStringUTFLength(string);
-        if (length > 0)
+        if (jsize length = env->GetStringUTFLength(string); length > 0)
         {
-            const char* chars = env->GetStringUTFChars(string, nullptr);
-            if (chars)
+            if (const char* chars = env->GetStringUTFChars(string, nullptr))
             {
                 std::string result = std::string(chars, length);
                 env->ReleaseStringUTFChars(string, chars);

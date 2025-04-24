@@ -256,6 +256,17 @@ void call_pascal_function(void** Params, void** Result, F&& fn, Extras... extras
 
 // MARK: Single Functions
 
+void Pascal_Reflect_ClassLoader(void** Params, void** Result) noexcept
+{
+    EIOS* eios = PascalRead<EIOS*>(Params[0]);
+    if (eios)
+    {
+        jobject object = PascalRead<jobject>(Params[1]);
+
+        PascalWrite(Result, eios->control_center->reflect_class_loader(object));
+    }
+}
+
 void Pascal_Reflect_Equal(void** Params, void** Result) noexcept
 {
     EIOS* eios = PascalRead<EIOS*>(Params[0]);
@@ -1293,9 +1304,8 @@ void Pascal_RemoteVM_CallLongMethod(void** Params, void** Result)
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallLongMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallLongMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallFloatMethod(void** Params, void** Result)
@@ -1304,9 +1314,8 @@ void Pascal_RemoteVM_CallFloatMethod(void** Params, void** Result)
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallFloatMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallFloatMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallDoubleMethod(void** Params, void** Result)
@@ -1315,9 +1324,8 @@ void Pascal_RemoteVM_CallDoubleMethod(void** Params, void** Result)
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallDoubleMethod(obj, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallDoubleMethod(obj, methodID, args));
 }
 
 void Pascal_RemoteVM_CallVoidMethod(void** Params, void** Result)
@@ -1326,9 +1334,8 @@ void Pascal_RemoteVM_CallVoidMethod(void** Params, void** Result)
     jobject obj = PascalRead<jobject>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    remote_vm->CallVoidMethod(obj, methodID, std::vector<jvalue>(args, args + length));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    remote_vm->CallVoidMethod(obj, methodID, args);
 }
 
 void Pascal_RemoteVM_CallNonvirtualObjectMethod(void** Params, void** Result)
@@ -1338,9 +1345,8 @@ void Pascal_RemoteVM_CallNonvirtualObjectMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualObjectMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualObjectMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualBooleanMethod(void** Params, void** Result)
@@ -1350,9 +1356,8 @@ void Pascal_RemoteVM_CallNonvirtualBooleanMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualBooleanMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualBooleanMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualByteMethod(void** Params, void** Result)
@@ -1362,9 +1367,8 @@ void Pascal_RemoteVM_CallNonvirtualByteMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualByteMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualByteMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualCharMethod(void** Params, void** Result)
@@ -1374,9 +1378,8 @@ void Pascal_RemoteVM_CallNonvirtualCharMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualCharMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualCharMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualShortMethod(void** Params, void** Result)
@@ -1386,9 +1389,8 @@ void Pascal_RemoteVM_CallNonvirtualShortMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualShortMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualShortMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualIntMethod(void** Params, void** Result)
@@ -1398,9 +1400,8 @@ void Pascal_RemoteVM_CallNonvirtualIntMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualIntMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualIntMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualLongMethod(void** Params, void** Result)
@@ -1410,9 +1411,8 @@ void Pascal_RemoteVM_CallNonvirtualLongMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualLongMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualLongMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualFloatMethod(void** Params, void** Result)
@@ -1422,9 +1422,8 @@ void Pascal_RemoteVM_CallNonvirtualFloatMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualFloatMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualFloatMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualDoubleMethod(void** Params, void** Result)
@@ -1434,9 +1433,8 @@ void Pascal_RemoteVM_CallNonvirtualDoubleMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    PascalWrite(Result, remote_vm->CallNonvirtualDoubleMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    PascalWrite(Result, remote_vm->CallNonvirtualDoubleMethod(obj, clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallNonvirtualVoidMethod(void** Params, void** Result)
@@ -1446,9 +1444,8 @@ void Pascal_RemoteVM_CallNonvirtualVoidMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[2]);
     jmethodID methodID = PascalRead<jmethodID>(Params[3]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[4]), &length);
-    remote_vm->CallNonvirtualVoidMethod(obj, clazz, methodID, std::vector<jvalue>(args, args + length));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[4]));
+    remote_vm->CallNonvirtualVoidMethod(obj, clazz, methodID, args);
 }
 
 void Pascal_RemoteVM_GetFieldID(void** Params, void** Result)
@@ -1628,9 +1625,8 @@ void Pascal_RemoteVM_CallStaticObjectMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticObjectMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticObjectMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticBooleanMethod(void** Params, void** Result)
@@ -1639,9 +1635,8 @@ void Pascal_RemoteVM_CallStaticBooleanMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticBooleanMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticBooleanMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticByteMethod(void** Params, void** Result)
@@ -1650,9 +1645,8 @@ void Pascal_RemoteVM_CallStaticByteMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticByteMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticByteMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticCharMethod(void** Params, void** Result)
@@ -1661,9 +1655,8 @@ void Pascal_RemoteVM_CallStaticCharMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticCharMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticCharMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticShortMethod(void** Params, void** Result)
@@ -1672,9 +1665,8 @@ void Pascal_RemoteVM_CallStaticShortMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticShortMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticShortMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticIntMethod(void** Params, void** Result)
@@ -1683,9 +1675,8 @@ void Pascal_RemoteVM_CallStaticIntMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticIntMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticIntMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticLongMethod(void** Params, void** Result)
@@ -1694,9 +1685,8 @@ void Pascal_RemoteVM_CallStaticLongMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticLongMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticLongMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticFloatMethod(void** Params, void** Result)
@@ -1705,9 +1695,8 @@ void Pascal_RemoteVM_CallStaticFloatMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticFloatMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticFloatMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticDoubleMethod(void** Params, void** Result)
@@ -1716,9 +1705,8 @@ void Pascal_RemoteVM_CallStaticDoubleMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    PascalWrite(Result, remote_vm->CallStaticDoubleMethod(clazz, methodID, std::vector<jvalue>(args, args + length)));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    PascalWrite(Result, remote_vm->CallStaticDoubleMethod(clazz, methodID, args));
 }
 
 void Pascal_RemoteVM_CallStaticVoidMethod(void** Params, void** Result)
@@ -1727,9 +1715,8 @@ void Pascal_RemoteVM_CallStaticVoidMethod(void** Params, void** Result)
     jclass clazz = PascalRead<jclass>(Params[1]);
     jmethodID methodID = PascalRead<jmethodID>(Params[2]);
 
-    std::size_t length = 0;
-    jvalue* args = GetArray<jvalue>(PascalRead<void*>(Params[3]), &length);
-    remote_vm->CallStaticVoidMethod(clazz, methodID, std::vector<jvalue>(args, args + length));
+    std::vector<jvalue> args = GetArrayAsVector<jvalue>(PascalRead<void*>(Params[3]));
+    remote_vm->CallStaticVoidMethod(clazz, methodID, args);
 }
 
 void Pascal_RemoteVM_GetStaticFieldID(void** Params, void** Result)
@@ -2434,6 +2421,11 @@ T* AllocateString(std::size_t size, std::size_t element_size) noexcept
 template<typename T>
 T* GetArray(void* ptr, std::size_t* size) noexcept
 {
+    if (!ptr)
+    {
+        return nullptr;
+    }
+
     PascalArray* mem = static_cast<PascalArray*>(ptr) - 1;
     *size = mem->length + 1;
     return reinterpret_cast<T*>(mem->data);
