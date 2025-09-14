@@ -272,7 +272,7 @@ void* GetModuleHandle(const char* module_name) noexcept
 - (jobject)awtComponent:(JNIEnv*)env;
 @end
 
-std::unique_ptr<Reflection> GetNativeReflector() noexcept
+std::unique_ptr<Reflection> GetJavaReflector() noexcept
 {
 //	auto ModuleLoaded = [](std::string name) -> bool {
 //		void* lib = dlopen(name.c_str(), RTLD_GLOBAL | RTLD_NOLOAD);

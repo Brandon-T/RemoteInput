@@ -527,7 +527,7 @@ bool EnumWindowsProc(Display* display, Window window, void* other) noexcept
     return true;
 }
 
-std::unique_ptr<Reflection> GetNativeReflector() noexcept
+std::unique_ptr<Reflection> GetJavaReflector() noexcept
 {
     auto ModuleLoaded = [](std::string name) -> bool {
         void* lib = dlopen(name.c_str(), RTLD_LAZY | RTLD_NOLOAD);

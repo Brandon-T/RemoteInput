@@ -15,10 +15,10 @@
 		5E0F52AF23AE8EAD002518AF /* Plugin.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E0F52AB23AE8EAD002518AF /* Plugin.hxx */; };
 		5E1236A423946AA900D8AE33 /* ReflectionHook.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */; };
 		5E1236A523946AA900D8AE33 /* ReflectionHook.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */; };
-		5E27B24423B829C60091232F /* InputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* InputOutput.cxx */; };
-		5E27B24523B829C60091232F /* InputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* InputOutput.cxx */; };
-		5E27B24623B829C60091232F /* InputOutput.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24323B829C60091232F /* InputOutput.hxx */; };
-		5E27B24723B829C60091232F /* InputOutput.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24323B829C60091232F /* InputOutput.hxx */; };
+		5E27B24423B829C60091232F /* JavaInputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* JavaInputOutput.cxx */; };
+		5E27B24523B829C60091232F /* JavaInputOutput.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24223B829C60091232F /* JavaInputOutput.cxx */; };
+		5E27B24623B829C60091232F /* JavaInputOutput.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24323B829C60091232F /* JavaInputOutput.hxx */; };
+		5E27B24723B829C60091232F /* JavaInputOutput.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24323B829C60091232F /* JavaInputOutput.hxx */; };
 		5E27B24A23B9A0430091232F /* Random.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24823B9A0430091232F /* Random.cxx */; };
 		5E27B24B23B9A0430091232F /* Random.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 5E27B24823B9A0430091232F /* Random.cxx */; };
 		5E27B24C23B9A0430091232F /* Random.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 5E27B24923B9A0430091232F /* Random.hxx */; };
@@ -191,8 +191,8 @@
 		5E0F52AB23AE8EAD002518AF /* Plugin.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Plugin.hxx; sourceTree = "<group>"; };
 		5E1236A223946AA900D8AE33 /* ReflectionHook.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ReflectionHook.cxx; sourceTree = "<group>"; };
 		5E1236A323946AA900D8AE33 /* ReflectionHook.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ReflectionHook.hxx; sourceTree = "<group>"; };
-		5E27B24223B829C60091232F /* InputOutput.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InputOutput.cxx; sourceTree = "<group>"; };
-		5E27B24323B829C60091232F /* InputOutput.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = InputOutput.hxx; sourceTree = "<group>"; };
+		5E27B24223B829C60091232F /* JavaInputOutput.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = JavaInputOutput.cxx; sourceTree = "<group>"; };
+		5E27B24323B829C60091232F /* JavaInputOutput.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = JavaInputOutput.hxx; sourceTree = "<group>"; };
 		5E27B24823B9A0430091232F /* Random.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Random.cxx; sourceTree = "<group>"; };
 		5E27B24923B9A0430091232F /* Random.hxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Random.hxx; sourceTree = "<group>"; };
 		5E31A8B123C83E3F00E751F6 /* MouseWheelEvent.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MouseWheelEvent.cxx; sourceTree = "<group>"; };
@@ -392,8 +392,8 @@
 				5E07A6BE2378B1B100EB4CDF /* Graphics.cxx */,
 				5E07A6BF2378B1B100EB4CDF /* Graphics.hxx */,
 				5EFF49C123A704DF00DC83D1 /* Signal.hxx */,
-				5E27B24223B829C60091232F /* InputOutput.cxx */,
-				5E27B24323B829C60091232F /* InputOutput.hxx */,
+				5E27B24223B829C60091232F /* JavaInputOutput.cxx */,
+				5E27B24323B829C60091232F /* JavaInputOutput.hxx */,
 			);
 			path = Plugin;
 			sourceTree = "<group>";
@@ -564,7 +564,7 @@
 				5E5B3F8D239D39F700F07DD1 /* ModelRendering.hpp in Headers */,
 				5EBE1AC623C7C84800B99E32 /* EventQueue.hxx in Headers */,
 				5EBE1AAC23C7C84800B99E32 /* Toolkit.hxx in Headers */,
-				5E27B24723B829C60091232F /* InputOutput.hxx in Headers */,
+				5E27B24723B829C60091232F /* JavaInputOutput.hxx in Headers */,
 				5EFF49BC23A7039C00DC83D1 /* SpinLock.hxx in Headers */,
 				5E6B9A032394C57600E6720C /* Module.hxx in Headers */,
 				5EBE1ABE23C7C84800B99E32 /* InputEvent.hxx in Headers */,
@@ -612,7 +612,7 @@
 				5E5B3F8B239D36A400F07DD1 /* ModelRendering.hpp in Headers */,
 				5EBE1AC523C7C84800B99E32 /* EventQueue.hxx in Headers */,
 				5EBE1AAB23C7C84800B99E32 /* Toolkit.hxx in Headers */,
-				5E27B24623B829C60091232F /* InputOutput.hxx in Headers */,
+				5E27B24623B829C60091232F /* JavaInputOutput.hxx in Headers */,
 				5EFF49BA23A7037C00DC83D1 /* SpinLock.hxx in Headers */,
 				5EBD66D8235CF15400D183B1 /* ThreadPool.hxx in Headers */,
 				5EBE1ABD23C7C84800B99E32 /* InputEvent.hxx in Headers */,
@@ -774,7 +774,7 @@
 				5E6B9A162394C58500E6720C /* SimbaPlugin.cxx in Sources */,
 				5E6B9A1F2394C59700E6720C /* ThreadPool.cxx in Sources */,
 				5EBE1AC223C7C84800B99E32 /* KeyEvent.cxx in Sources */,
-				5E27B24523B829C60091232F /* InputOutput.cxx in Sources */,
+				5E27B24523B829C60091232F /* JavaInputOutput.cxx in Sources */,
 				5E31A8B523C840F500E751F6 /* MouseWheelEvent.cxx in Sources */,
 				5E27B24B23B9A0430091232F /* Random.cxx in Sources */,
 				5E6B9A002394C57600E6720C /* Time.cxx in Sources */,
@@ -823,7 +823,7 @@
 				5E5B3F8A239D36A400F07DD1 /* ModelRendering.cpp in Sources */,
 				5EBD66CE235CF15400D183B1 /* EIOS.cxx in Sources */,
 				5EBE1AC123C7C84800B99E32 /* KeyEvent.cxx in Sources */,
-				5E27B24423B829C60091232F /* InputOutput.cxx in Sources */,
+				5E27B24423B829C60091232F /* JavaInputOutput.cxx in Sources */,
 				5E27B24A23B9A0430091232F /* Random.cxx in Sources */,
 				5E4D644B241F424D0010EDBE /* PointerInfo.cxx in Sources */,
 				5EBD66BA235CF15400D183B1 /* Platform_Linux.cxx in Sources */,

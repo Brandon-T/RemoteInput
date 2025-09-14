@@ -221,8 +221,11 @@ set(SRC_LIST
         RemoteInput/Plugin/Graphics.hxx
         RemoteInput/Plugin/ImageData.cxx
         RemoteInput/Plugin/ImageData.hxx
-        RemoteInput/Plugin/InputOutput.cxx
         RemoteInput/Plugin/InputOutput.hxx
+        RemoteInput/Plugin/JavaInputOutput.cxx
+        RemoteInput/Plugin/JavaInputOutput.hxx
+        RemoteInput/Plugin/NativeInputOutput.cxx
+        RemoteInput/Plugin/NativeInputOutput.hxx
         RemoteInput/Plugin/NativePlugin.cxx
         RemoteInput/Plugin/NativePlugin.hxx
         RemoteInput/Plugin/Plugin.cxx
@@ -245,6 +248,8 @@ set(SRC_LIST
         RemoteInput/Random.hxx
         RemoteInput/Reflection.cxx
         RemoteInput/Reflection.hxx
+        RemoteInput/NativeClient.cxx
+        RemoteInput/NativeClient.hxx
         RemoteInput/ReflectionHook.cxx
         RemoteInput/ReflectionHook.hxx
         RemoteInput/RemoteInput.h
@@ -313,14 +318,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRECTORIES})
 
 IF(PYTHON_BINDINGS)
     IF (USE_PYBIND11)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 HOOK_OPENGL_SWAP=1  USE_PYBIND11=1 Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE NATIVE_CLIENT=1 USE_DETOURS=1 HOOK_OPENGL_BLIT=1 HOOK_OPENGL_SWAP=1  USE_PYBIND11=1 Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
     ELSEIF(Py_LIMITED_API)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 HOOK_OPENGL_SWAP=1 Py_LIMITED_API=${Py_LIMITED_API} Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE NATIVE_CLIENT=1 USE_DETOURS=1 HOOK_OPENGL_BLIT=1 HOOK_OPENGL_SWAP=1 Py_LIMITED_API=${Py_LIMITED_API} Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
     ELSE()
-        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1 HOOK_OPENGL_SWAP=1 Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE NATIVE_CLIENT=1 USE_DETOURS=1 HOOK_OPENGL_BLIT=1 HOOK_OPENGL_SWAP=1 Py_BUILD_CORE=1 Py_NO_ENABLE_SHARED=1)
     ENDIF()
 ELSE()
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DETOURS=1 HOOK_OPENGL_BLIT=1)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE NATIVE_CLIENT=1 USE_DETOURS=1 HOOK_OPENGL_BLIT=1)
 ENDIF()
 
 IF(WIN32)

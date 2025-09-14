@@ -55,14 +55,22 @@ std::unique_ptr<Hook> exit_process;
     GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(module), &this_module);
 
     std::thread([](HMODULE module){
-        auto main_reflector = GetNativeReflector();
-        if (main_reflector)
+        if (auto main_reflector = GetJavaReflector())
         {
             #if defined(DEBUG)
             console = std::make_unique<DebugConsole>();
             #endif
 
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(main_reflector));
+            StartHook();
+        }
+        else if (auto client = GetNativeClient())
+        {
+            #if defined(DEBUG)
+            console = std::make_unique<DebugConsole>();
+            #endif
+
+            control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(client));
             StartHook();
         }
 
@@ -105,7 +113,7 @@ void __exit_process(int exit_code)
 
         disable_app_nap();
 
-        auto reflector = GetNativeReflector();
+        auto reflector = GetJavaReflector();
         if (reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(reflector));
@@ -142,7 +150,7 @@ void __exit_process(int exit_code)
     void* this_module = dlopen(this_info.dli_fname, RTLD_LAZY);*/
 
     std::thread([&] {
-        auto main_reflector = GetNativeReflector();
+        auto main_reflector = GetJavaReflector();
         if (main_reflector)
         {
             control_center = std::make_unique<ControlCenter>(getpid(), false, std::move(main_reflector));

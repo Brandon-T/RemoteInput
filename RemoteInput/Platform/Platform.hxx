@@ -7,9 +7,12 @@
 #include <cstdint>
 #include <vector>
 #include "Reflection.hxx"
+#include "NativeClient.hxx"
 
 void GetDesktopResolution(int &width, int &height) noexcept;
-std::unique_ptr<Reflection> GetNativeReflector() noexcept;
+
+std::unique_ptr<Reflection> GetJavaReflector() noexcept;
+std::unique_ptr<NativeClient> GetNativeClient() noexcept;
 
 std::int32_t GetCurrentThreadID() noexcept;
 

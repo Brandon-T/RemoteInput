@@ -65,7 +65,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
             create_command_processor([this]{
                 if (this->main_reflector->Attach())
                 {
-                    this->io_controller = std::make_unique<InputOutput>(this->main_reflector.get());
+                    this->io_controller = std::make_unique<JavaInputOutput>(this->main_reflector.get());
                     this->remote_vm = std::make_unique<RemoteVM>(this->main_reflector->getEnv(), this);
 
                     while(!stopped)
@@ -89,7 +89,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 
                         JNIEnv* env = this->main_reflector->getEnv();
                         env->PushLocalFrame(150'000);
-                        process_command();
+                        process_reflection_command();
                         response_signal->signal();
                         env->PopLocalFrame(nullptr);
                     }
@@ -107,6 +107,80 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
                     if (this->main_reflector)
                     {
                         this->main_reflector.reset();
+                    }
+
+                    response_signal->signal();
+                }
+            });
+        }
+    }
+}
+
+ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<NativeClient> client) : pid(pid), is_controller(is_controller), stopped(is_controller), command_signal(), response_signal(), sync_signal(), main_client(std::move(client)), io_controller(), remote_vm()
+{
+    if (pid <= 0)
+    {
+        throw std::runtime_error("Invalid Process ID");
+    }
+
+    if (!init_maps())
+    {
+        throw std::runtime_error("Cannot Initialize Maps");
+    }
+
+    if (!init_signals())
+    {
+        throw std::runtime_error("Cannot Initialize Signals");
+    }
+
+    if (!init_wait())
+    {
+        throw std::runtime_error("Cannot Initialize Wait Signal");
+    }
+
+    if (!is_controller)
+    {
+        this->set_parent_process_id(-1);
+        this->set_parent_thread_id(-1);
+
+        if (this->main_client)
+        {
+            create_command_processor([this]{
+                if (this->main_reflector->Attach())
+                {
+                    this->io_controller = std::make_unique<JavaInputOutput>(this->main_client.get());
+
+                    while(!stopped)
+                    {
+                        if (!command_signal || !response_signal || !memory_map)
+                        {
+                            break;
+                        }
+
+                        command_signal->wait();
+
+                        /*while(!command_signal->try_wait())
+                        {
+                            std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+                        }*/
+
+                        if (stopped)
+                        {
+                            break;
+                        }
+
+                        process_native_command();
+                        response_signal->signal();
+                    }
+
+                    if (this->io_controller)
+                    {
+                        this->io_controller.reset();
+                    }
+
+                    if (this->main_client)
+                    {
+                        this->main_client.reset();
                     }
 
                     response_signal->signal();
@@ -166,7 +240,7 @@ void ControlCenter::terminate() noexcept
     }
 }
 
-void ControlCenter::process_command() noexcept
+void ControlCenter::process_native_command() noexcept
 {
     ImageData& image_data = memory_map->data();
     Stream& stream = image_data.data_stream();
@@ -191,6 +265,277 @@ void ControlCenter::process_command() noexcept
             if (this->main_reflector)
             {
                 this->main_reflector.reset();
+            }
+
+            if (this->main_client)
+            {
+                this->main_client.reset();
+            }
+
+            std::exit(0);
+        }
+            break;
+
+        case EIOSCommand::GET_IMAGE_DIMENSIONS:
+        {
+            image_data.set_image_width(get_image_width());
+            image_data.set_image_height(get_image_height());
+        }
+            break;
+
+        case EIOSCommand::GET_TARGET_DIMENSIONS:
+        {
+            image_data.set_target_width(get_target_width());
+            image_data.set_target_height(get_target_height());
+        }
+            break;
+
+        case EIOSCommand::HAS_FOCUS:
+        {
+            bool result = io_controller->has_focus();
+            stream.write(result);
+        }
+            break;
+
+        case EIOSCommand::GAIN_FOCUS:
+        {
+            io_controller->gain_focus();
+        }
+            break;
+
+        case EIOSCommand::LOSE_FOCUS:
+        {
+            io_controller->lose_focus();
+        }
+            break;
+
+        case EIOSCommand::IS_KEYBOARD_INPUT_ENABLED:
+        {
+            bool result = io_controller->is_keyboard_input_enabled();
+            stream.write(result);
+        }
+            break;
+
+        case EIOSCommand::SET_KEYBOARD_INPUT_ENABLED:
+        {
+            bool enabled = stream.read<bool>();
+            io_controller->set_keyboard_input_enabled(enabled);
+        }
+            break;
+
+        case EIOSCommand::IS_MOUSE_INPUT_ENABLED:
+        {
+            bool result = io_controller->is_mouse_input_enabled();
+            stream.write(result);
+        }
+            break;
+
+        case EIOSCommand::SET_MOUSE_INPUT_ENABLED:
+        {
+            bool enabled = stream.read<bool>();
+            io_controller->set_mouse_input_enabled(enabled);
+        }
+            break;
+
+        case EIOSCommand::GET_MOUSE:
+        {
+            std::int32_t x = -1;
+            std::int32_t y = -1;
+
+            io_controller->get_mouse_position(&x, &y);
+            stream.write(x);
+            stream.write(y);
+        }
+            break;
+
+        case EIOSCommand::GET_REAL_MOUSE:
+        {
+            std::int32_t x = -1;
+            std::int32_t y = -1;
+
+            io_controller->get_real_mouse_position(&x, &y);
+            stream.write(x);
+            stream.write(y);
+        }
+            break;
+
+        case EIOSCommand::MOVE_MOUSE:
+        {
+            std::int32_t x = stream.read<std::int32_t>();
+            std::int32_t y = stream.read<std::int32_t>();
+            io_controller->move_mouse(x, y);
+        }
+            break;
+
+        case EIOSCommand::HOLD_MOUSE:
+        {
+            std::int32_t button = stream.read<std::int32_t>();
+            io_controller->hold_mouse(button);
+        }
+            break;
+
+        case EIOSCommand::RELEASE_MOUSE:
+        {
+            std::int32_t button = stream.read<std::int32_t>();
+            io_controller->release_mouse(button);
+        }
+            break;
+
+        case EIOSCommand::SCROLL_MOUSE:
+        {
+            std::int32_t lines = stream.read<std::int32_t>();
+            io_controller->scroll_mouse(lines);
+        }
+            break;
+
+        case EIOSCommand::IS_MOUSE_HELD:
+        {
+            std::int32_t button = stream.read<std::int32_t>();
+            bool result = io_controller->is_mouse_held(button);
+            stream.write(result);
+        }
+            break;
+
+        case EIOSCommand::SEND_STRING:
+        {
+            std::string string = stream.read<std::string>();
+            std::int32_t keywait = stream.read<std::int32_t>();
+            std::int32_t keymodwait = stream.read<std::int32_t>();
+            io_controller->send_string(string, keywait, keymodwait);
+        }
+            break;
+
+        case EIOSCommand::SEND_KEY:
+        {
+            char key = stream.read<char>();
+            std::int32_t key_down_time = stream.read<std::int32_t>();
+            std::int32_t key_up_time = stream.read<std::int32_t>();
+            std::int32_t modifier_down_time = stream.read<std::int32_t>();
+            std::int32_t modifier_up_time = stream.read<std::int32_t>();
+            io_controller->send_key(key, key_down_time, key_up_time, modifier_down_time, modifier_up_time);
+        }
+            break;
+
+        case EIOSCommand::KEY_SEND:
+        {
+            std::string string = stream.read<std::string>();
+            std::vector<std::int32_t> sleeps;
+
+            // Simba sends string.length * 4 of sleep times to control the speed of typing
+            sleeps.resize(string.length() * 4);
+            stream.read(sleeps.data(), (string.length() * 4) * sizeof(int32_t));
+
+            io_controller->key_send(string, sleeps);
+        }
+            break;
+
+        case EIOSCommand::HOLD_KEY:
+        {
+            std::int32_t keycode = stream.read<std::int32_t>();
+            io_controller->hold_key(keycode);
+        }
+            break;
+
+        case EIOSCommand::RELEASE_KEY:
+        {
+            std::int32_t keycode = stream.read<std::int32_t>();
+            io_controller->release_key(keycode);
+        }
+            break;
+
+        case EIOSCommand::IS_KEY_HELD:
+        {
+            std::int32_t keycode = stream.read<std::int32_t>();
+            bool result = io_controller->is_key_held(keycode);
+            stream.write(result);
+        }
+            break;
+
+        case EIOSCommand::GET_KEYBOARD_SPEED:
+        {
+            std::int32_t speed = io_controller->get_keyboard_speed();
+            stream.write(speed);
+        }
+            break;
+
+        case EIOSCommand::SET_KEYBOARD_SPEED:
+        {
+            std::int32_t speed = stream.read<std::int32_t>();
+            io_controller->set_keyboard_speed(speed);
+        }
+            break;
+
+        case EIOSCommand::GET_KEYBOARD_REPEAT_DELAY:
+        {
+            std::int32_t delay = io_controller->get_keyboard_repeat_delay();
+            stream.write(delay);
+        }
+            break;
+
+        case EIOSCommand::SET_KEYBOARD_REPEAT_DELAY:
+        {
+            std::int32_t delay = stream.read<std::int32_t>();
+            io_controller->set_keyboard_repeat_delay(delay);
+        }
+            break;
+
+        case EIOSCommand::STOP_ALL_PROCESSING:
+        {
+            io_controller->stop_all_processing();
+        }
+            break;
+
+        case EIOSCommand::GET_UI_SCALING:
+        {
+            fprintf(stderr, "WHY ARE YOU REMOTELY CALLING THIS FUNCTION?!\n");
+            std::exit(0);
+        }
+            break;
+
+        case EIOSCommand::SET_UI_SCALING:
+        {
+            fprintf(stderr, "WHY ARE YOU REMOTELY CALLING THIS FUNCTION?!\n");
+            std::exit(0);
+        }
+            break;
+
+        default:
+            fprintf(stderr, "WHY ARE YOU CALLING JAVA REFLECTION FUNCTIONS?!\n");
+            std::exit(0);
+            break;
+    }
+}
+
+void ControlCenter::process_reflection_command() noexcept
+{
+    ImageData& image_data = memory_map->data();
+    Stream& stream = image_data.data_stream();
+    image_data.prepare_for_read();
+    image_data.prepare_for_write();
+
+    switch(image_data.command())
+    {
+        case EIOSCommand::COMMAND_NONE:
+            break;
+
+        case EIOSCommand::KILL_APPLICATION:
+        {
+            stopped = true;
+            response_signal->signal();
+
+            if (this->io_controller)
+            {
+                this->io_controller.reset();
+            }
+
+            if (this->main_reflector)
+            {
+                this->main_reflector.reset();
+            }
+
+            if (this->main_client)
+            {
+                this->main_client.reset();
             }
 
             std::exit(0);
@@ -342,7 +687,7 @@ void ControlCenter::process_command() noexcept
             std::string string = stream.read<std::string>();
             std::vector<std::int32_t> sleeps;
             
-            // Simba sends string.length*4 of sleep times to control the speed of typing
+            // Simba sends string.length * 4 of sleep times to control the speed of typing
             sleeps.resize(string.length() * 4);
             stream.read(sleeps.data(), (string.length() * 4) * sizeof(int32_t));
 

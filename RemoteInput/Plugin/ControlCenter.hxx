@@ -10,7 +10,7 @@
 #include "Reflection.hxx"
 #include "Applet.hxx"
 #include "MemoryMapStream.hxx"
-#include "InputOutput.hxx"
+#include "JavaInputOutput.hxx"
 #include "TypeTraits.hxx"
 #include "EIOSTypes.hxx"
 #include "ImageData.hxx"
@@ -32,6 +32,7 @@ private:
     std::unique_ptr<Signal> response_signal;
     std::unique_ptr<Event> sync_signal;
     std::unique_ptr<Reflection> main_reflector;
+    std::unique_ptr<NativeClient> main_client;
     std::unique_ptr<MemoryMapStream<ImageData>> memory_map;
     std::unique_ptr<InputOutput> io_controller;
     std::unique_ptr<RemoteVM> remote_vm;
@@ -39,7 +40,8 @@ private:
     bool init_maps() noexcept;
     bool init_signals() noexcept;
     bool init_wait() noexcept;
-    void process_command() noexcept;
+    void process_native_command() noexcept;
+    void process_reflection_command() noexcept;
 
     ImageData* get_image_data() const noexcept;
 
@@ -54,6 +56,7 @@ private:
 
 public:
     ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<Reflection> reflector);
+    ControlCenter(std::int32_t pid, bool is_controller, std::unique_ptr<NativeClient> client);
     ~ControlCenter();
 
     void terminate() noexcept;

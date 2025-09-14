@@ -62,7 +62,7 @@
 			<Cursor1 position="1805" topLine="31" />
 		</Cursor>
 	</File>
-	<File name="RemoteInput\Plugin\InputOutput.hxx" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="RemoteInput\Plugin\JavaInputOutput.hxx" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1383" topLine="38" />
 		</Cursor>
@@ -72,7 +72,7 @@
 			<Cursor1 position="147" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="RemoteInput\Plugin\InputOutput.cxx" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="RemoteInput\Plugin\JavaInputOutput.cxx" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="7100" topLine="234" />
 		</Cursor>

@@ -1,12 +1,12 @@
 //
-//  InputOutput.cxx
+//  JavaInputOutput.cxx
 //  RemoteInput
 //
 //  Created by Brandon on 2019-12-28.
 //  Copyright © 2019 XIO. All rights reserved.
 //
 
-#include "InputOutput.hxx"
+#include "JavaInputOutput.hxx"
 #include "ControlCenter.hxx"
 #include "Platform.hxx"
 #include "Random.hxx"
@@ -97,7 +97,7 @@ static java::KeyEvent::KeyCodes control_keys_locations[] = {
     java::KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflection) noexcept : vm(nullptr), applet(reflection->getApplet()), mutex(), input_thread(2), event_queue(nullptr), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
+JavaInputOutput::JavaInputOutput(Reflection* reflection) noexcept : vm(nullptr), applet(reflection->getApplet()), mutex(), input_thread(2), event_queue(nullptr), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
 {
     reflection->getEnv()->GetJavaVM(&vm);
 
@@ -156,7 +156,7 @@ InputOutput::InputOutput(Reflection* reflection) noexcept : vm(nullptr), applet(
     queue.push(this->event_queue.get());
 }
 
-InputOutput::~InputOutput() noexcept
+JavaInputOutput::~JavaInputOutput() noexcept
 {
     this->input_thread.terminate();
     this->event_queue.reset();
@@ -164,7 +164,7 @@ InputOutput::~InputOutput() noexcept
     this->applet = nullptr;
 }
 
-void InputOutput::handle_resize(java::Component* component) noexcept
+void JavaInputOutput::handle_resize(java::Component* component) noexcept
 {
     component->getSize(this->w, this->h);
 
@@ -194,7 +194,7 @@ void InputOutput::handle_resize(java::Component* component) noexcept
     }*/
 }
 
-void InputOutput::hold_key(std::int32_t code) noexcept
+void JavaInputOutput::hold_key(std::int32_t code) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -378,7 +378,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
     }
 }
 
-void InputOutput::release_key(std::int32_t code) noexcept
+void JavaInputOutput::release_key(std::int32_t code) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -452,19 +452,19 @@ void InputOutput::release_key(std::int32_t code) noexcept
     }
 }
 
-bool InputOutput::is_key_held(std::int32_t code) const noexcept
+bool JavaInputOutput::is_key_held(std::int32_t code) const noexcept
 {
     return std::find(std::begin(held_keys), std::end(held_keys), code) != std::end(held_keys);
 }
 
-bool InputOutput::any_key_held(std::array<std::int32_t, 4>&& keys) const noexcept
+bool JavaInputOutput::any_key_held(std::array<std::int32_t, 4>&& keys) const noexcept
 {
     return std::any_of(std::cbegin(held_keys), std::cend(held_keys), [&](std::int32_t key){
         return std::find(std::cbegin(keys), std::cend(keys), key) != std::cend(keys);
     });
 }
 
-void InputOutput::send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait) const noexcept
+void JavaInputOutput::send_string(std::string string, std::int32_t keywait, std::int32_t keymodwait) const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -577,7 +577,7 @@ void InputOutput::send_string(std::string string, std::int32_t keywait, std::int
     }
 }
 
-void InputOutput::send_key(char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) const noexcept
+void JavaInputOutput::send_key(char key, std::int32_t key_down_time, std::int32_t key_up_time, std::int32_t modifier_down_time, std::int32_t modifier_up_time) const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -679,7 +679,7 @@ void InputOutput::send_key(char key, std::int32_t key_down_time, std::int32_t ke
     }
 }
 
-void InputOutput::key_send(std::string string, std::vector<std::int32_t> sleeptimes) const noexcept
+void JavaInputOutput::key_send(std::string string, std::vector<std::int32_t> sleeptimes) const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -793,7 +793,7 @@ void InputOutput::key_send(std::string string, std::vector<std::int32_t> sleepti
     }
 }
 
-bool InputOutput::has_focus() const noexcept
+bool JavaInputOutput::has_focus() const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -805,12 +805,12 @@ bool InputOutput::has_focus() const noexcept
     return component.hasFocus();
 }
 
-bool InputOutput::has_focus(java::Component* component) const noexcept
+bool JavaInputOutput::has_focus(java::Component* component) const noexcept
 {
     return component->hasFocus();
 }
 
-void InputOutput::gain_focus() const noexcept
+void JavaInputOutput::gain_focus() const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -822,7 +822,7 @@ void InputOutput::gain_focus() const noexcept
     this->gain_focus(&component);
 }
 
-void InputOutput::gain_focus(java::Component* component) const noexcept
+void JavaInputOutput::gain_focus(java::Component* component) const noexcept
 {
     JNIEnv* env = component->getEnv();
     java::Window window = java::SunToolkit::getContainingWindow(component);
@@ -844,7 +844,7 @@ void InputOutput::gain_focus(java::Component* component) const noexcept
     }
 }
 
-void InputOutput::lose_focus() const noexcept
+void JavaInputOutput::lose_focus() const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -856,7 +856,7 @@ void InputOutput::lose_focus() const noexcept
     this->lose_focus(&component);
 }
 
-void InputOutput::lose_focus(java::Component* component) const noexcept
+void JavaInputOutput::lose_focus(java::Component* component) const noexcept
 {
     JNIEnv* env = component->getEnv();
     java::Window window = java::SunToolkit::getContainingWindow(component);
@@ -876,12 +876,12 @@ void InputOutput::lose_focus(java::Component* component) const noexcept
     }
 }
 
-bool InputOutput::is_keyboard_input_enabled() const noexcept
+bool JavaInputOutput::is_keyboard_input_enabled() const noexcept
 {
     return event_queue->is_keyboard_input_enabled();
 }
 
-void InputOutput::set_keyboard_input_enabled(bool enabled) const noexcept
+void JavaInputOutput::set_keyboard_input_enabled(bool enabled) const noexcept
 {
     event_queue->set_keyboard_input_enabled(enabled);
 
@@ -894,12 +894,12 @@ void InputOutput::set_keyboard_input_enabled(bool enabled) const noexcept
     }
 }
 
-bool InputOutput::is_mouse_input_enabled() const noexcept
+bool JavaInputOutput::is_mouse_input_enabled() const noexcept
 {
     return event_queue->is_mouse_input_enabled();
 }
 
-void InputOutput::set_mouse_input_enabled(bool enabled) const noexcept
+void JavaInputOutput::set_mouse_input_enabled(bool enabled) const noexcept
 {
     event_queue->set_mouse_input_enabled(enabled);
 
@@ -912,27 +912,27 @@ void InputOutput::set_mouse_input_enabled(bool enabled) const noexcept
     }
 }
 
-std::int32_t InputOutput::get_keyboard_speed() const noexcept
+std::int32_t JavaInputOutput::get_keyboard_speed() const noexcept
 {
     return this->keyboard_speed;
 }
 
-void InputOutput::set_keyboard_speed(std::int32_t speed) noexcept
+void JavaInputOutput::set_keyboard_speed(std::int32_t speed) noexcept
 {
     this->keyboard_speed = speed;
 }
 
-std::int32_t InputOutput::get_keyboard_repeat_delay() const noexcept
+std::int32_t JavaInputOutput::get_keyboard_repeat_delay() const noexcept
 {
     return this->keyboard_repeat_delay;
 }
 
-void InputOutput::set_keyboard_repeat_delay(std::int32_t delay) noexcept
+void JavaInputOutput::set_keyboard_repeat_delay(std::int32_t delay) noexcept
 {
     this->keyboard_repeat_delay = delay;
 }
 
-void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept
+void JavaInputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -972,7 +972,7 @@ void InputOutput::get_mouse_position(std::int32_t* x, std::int32_t* y) noexcept
     *y = this->y;
 }
 
-void InputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept
+void JavaInputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -988,7 +988,7 @@ void InputOutput::get_real_mouse_position(std::int32_t* x, std::int32_t* y) cons
     info.PointToScreen(env, *x, *y, &receiver);
 }
 
-void InputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
+void JavaInputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -1053,7 +1053,7 @@ void InputOutput::move_mouse(std::int32_t x, std::int32_t y) noexcept
     }
 }
 
-void InputOutput::hold_mouse(std::int32_t button) noexcept
+void JavaInputOutput::hold_mouse(std::int32_t button) noexcept
 {
     if (!this->is_mouse_held(button))
     {
@@ -1100,7 +1100,7 @@ void InputOutput::hold_mouse(std::int32_t button) noexcept
     }
 }
 
-void InputOutput::release_mouse(std::int32_t button) noexcept
+void JavaInputOutput::release_mouse(std::int32_t button) noexcept
 {
     if (this->is_mouse_held(button))
     {
@@ -1142,7 +1142,7 @@ void InputOutput::release_mouse(std::int32_t button) noexcept
     }
 }
 
-void InputOutput::scroll_mouse(std::int32_t lines) noexcept
+void JavaInputOutput::scroll_mouse(std::int32_t lines) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
     if (!control_center)
@@ -1221,7 +1221,7 @@ void InputOutput::scroll_mouse(std::int32_t lines) noexcept
     }
 }
 
-bool InputOutput::is_mouse_held(std::int32_t button) const noexcept
+bool JavaInputOutput::is_mouse_held(std::int32_t button) const noexcept
 {
     switch (button)
     {
@@ -1232,7 +1232,7 @@ bool InputOutput::is_mouse_held(std::int32_t button) const noexcept
     }
 }
 
-void InputOutput::stop_all_processing() noexcept
+void JavaInputOutput::stop_all_processing() noexcept
 {
     std::int32_t x = 0;
     std::int32_t y = 0;
@@ -1251,7 +1251,7 @@ void InputOutput::stop_all_processing() noexcept
     this->set_mouse_input_enabled(true);
 }
 
-jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers) const noexcept
+jchar JavaInputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifiers) const noexcept
 {
     static const std::int32_t mapping[256] = { //char16_t
         0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -1300,7 +1300,7 @@ jchar InputOutput::NativeKeyCodeToChar(std::int32_t keycode, std::int32_t modifi
     return static_cast<jchar>(mapping[keycode]);
 }
 
-std::int32_t InputOutput::CharToJavaKeyCode(char c) const noexcept
+std::int32_t JavaInputOutput::CharToJavaKeyCode(char c) const noexcept
 {
     //Convert char to Java VK-Codes
     //0x00 and 0xFF are not type-able characters..
@@ -1341,7 +1341,7 @@ std::int32_t InputOutput::CharToJavaKeyCode(char c) const noexcept
     return mapping[static_cast<std::int32_t>(c)];
 }
 
-std::int32_t InputOutput::GetJavaKeyCode(std::int32_t native_key_code) const noexcept
+std::int32_t JavaInputOutput::GetJavaKeyCode(std::int32_t native_key_code) const noexcept
 {
     //Convert WinAPI VK-Codes to Java VK-Codes
     //0x00 and 0xFF are not type-able characters..
@@ -1382,7 +1382,7 @@ std::int32_t InputOutput::GetJavaKeyCode(std::int32_t native_key_code) const noe
     return windows_mapping[native_key_code];
 }
 
-std::int32_t InputOutput::GetKeyLocation(std::int32_t keycode) const noexcept
+std::int32_t JavaInputOutput::GetKeyLocation(std::int32_t keycode) const noexcept
 {
     if (std::find(std::begin(control_keys), std::end(control_keys), keycode) != std::end(control_keys))
     {
@@ -1391,7 +1391,7 @@ std::int32_t InputOutput::GetKeyLocation(std::int32_t keycode) const noexcept
     return java::KeyEvent::KeyCodes::KEY_LOCATION_STANDARD;
 }
 
-std::int32_t InputOutput::GetActiveKeyModifiers() const noexcept
+std::int32_t JavaInputOutput::GetActiveKeyModifiers() const noexcept
 {
     std::int32_t modifiers = 0;
 
@@ -1423,7 +1423,7 @@ std::int32_t InputOutput::GetActiveKeyModifiers() const noexcept
     return modifiers;
 }
 
-std::int32_t InputOutput::ModifiersForChar(char c) const noexcept
+std::int32_t JavaInputOutput::ModifiersForChar(char c) const noexcept
 {
     std::int32_t modifiers = 0;
     static const std::string shift_chars = "~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?";
@@ -1434,14 +1434,14 @@ std::int32_t InputOutput::ModifiersForChar(char c) const noexcept
     return modifiers;
 }
 
-std::int32_t InputOutput::SimbaMouseButtonToJava(std::int32_t button) const noexcept
+std::int32_t JavaInputOutput::SimbaMouseButtonToJava(std::int32_t button) const noexcept
 {
     //Java Button priority is 1 (left), 3 (right), 2 (middle)
     //Simba Button priority is 1 (left), 0 (right), 2 (middle)
     return button == 1 ? 1 : button == 0 ? 3 : button == 2 ? 2 : button;
 }
 
-void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::size_t &width, std::size_t &height) const noexcept
+void JavaInputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::size_t &width, std::size_t &height) const noexcept
 {
     JNIEnv* env = nullptr;
     if (this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr) == JNI_OK)
@@ -1461,7 +1461,7 @@ void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::s
     }
 }
 
-void InputOutput::get_applet_mouse_position(std::int32_t &x, std::int32_t &y) const noexcept
+void JavaInputOutput::get_applet_mouse_position(std::int32_t &x, std::int32_t &y) const noexcept
 {
     x = this->x;
     y = this->y;

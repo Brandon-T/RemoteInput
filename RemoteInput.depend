@@ -197,7 +197,7 @@
 	"Reflection.hxx"
 	"Applet.hxx"
 	"MemoryMap.hxx"
-	"InputOutput.hxx"
+	"JavaInputOutput.hxx"
 	"ControlCenter.hxx"
 	<thread>
 	<unordered_map>
@@ -221,7 +221,7 @@
 	"AWTEvent.hxx"
 	"Component.hxx"
 	<utility>
-	"InputOutput.hxx"
+	"JavaInputOutput.hxx"
 	"ControlCenter.hxx"
 	"Platform.hxx"
 	"Random.hxx"
@@ -313,7 +313,7 @@
 	"Reflection.hxx"
 	"Applet.hxx"
 	"MemoryMap.hxx"
-	"InputOutput.hxx"
+	"JavaInputOutput.hxx"
 
 1573527112 source:c:\users\brandon\desktop\remoteinput\remoteinput\platform\nativehooks.cxx
 	"NativeHooks.hxx"
@@ -536,7 +536,7 @@
 	"EventQueue.hxx"
 
 1585447356 source:c:\users\brandon\desktop\remoteinput\remoteinput\plugin\inputoutput.cxx
-	"InputOutput.hxx"
+	"JavaInputOutput.hxx"
 	"ControlCenter.hxx"
 	"Platform.hxx"
 	"Random.hxx"

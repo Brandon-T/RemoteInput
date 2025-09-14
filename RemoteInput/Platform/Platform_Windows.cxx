@@ -405,24 +405,32 @@ std::int32_t PIDFromWindow(void* window) noexcept
 #endif // defined
 
 #if defined(_WIN32) || defined(_WIN64)
+struct WindowInfo
+{
+    HWND window;
+    std::string class_name;
+};
+
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) noexcept
 {
+    auto* window_info = reinterpret_cast<WindowInfo*>(lParam);
+
     DWORD pid = 0;
     GetWindowThreadProcessId(hwnd, &pid);
     if (pid == GetCurrentProcessId() && lParam)
     {
         char className[MAX_PATH] = {0};
         int result = GetClassName(hwnd, className, sizeof(className));
-        if (result != 0 && std::string(className) == "SunAwtFrame")
+        if (result != 0 && std::string(className) == window_info->class_name)
         {
-            *reinterpret_cast<HWND*>(lParam) = hwnd;
+            window_info->window = hwnd;
             return FALSE;
         }
     }
     return TRUE;
 }
 
-std::unique_ptr<Reflection> GetNativeReflector() noexcept
+std::unique_ptr<Reflection> GetJavaReflector() noexcept
 {
     auto TimeOut = [&](std::uint32_t time, std::function<bool()> &&run) -> bool {
         auto start = std::chrono::high_resolution_clock::now();
@@ -446,9 +454,9 @@ std::unique_ptr<Reflection> GetNativeReflector() noexcept
     };
 
     auto GetMainWindow = [&] {
-        HWND windowFrame = nullptr;
-        EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&windowFrame));
-        return windowFrame;
+        WindowInfo info = { nullptr, "SunAwtFrame" };
+        EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&info));
+        return info.window;
     };
 
     HMODULE awt = nullptr;
@@ -565,4 +573,25 @@ std::unique_ptr<Reflection> GetNativeReflector() noexcept
     vm.DetachCurrentThread();
     return nullptr;
 }
+
+std::unique_ptr<NativeClient> GetNativeClient() noexcept
+{
+    auto GetMainWindow = [&] {
+        WindowInfo info = { nullptr, "JagWindows" };
+        EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&info));
+        return info.window;
+    };
+
+    HWND main_window = GetMainWindow();
+    if (main_window)
+    {
+        HWND renderer_window = FindWindowExA(main_window, nullptr, "JagRenderView", nullptr);
+        if (renderer_window)
+        {
+            return std::make_unique<NativeClient>(main_window, renderer_window);
+        }
+    }
+    return nullptr;
+}
+
 #endif // defined

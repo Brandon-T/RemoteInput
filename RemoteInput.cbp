@@ -119,8 +119,8 @@
 		<Unit filename="RemoteInput/Plugin/ControlCenter.hxx" />
 		<Unit filename="RemoteInput/Plugin/Graphics.cxx" />
 		<Unit filename="RemoteInput/Plugin/Graphics.hxx" />
-		<Unit filename="RemoteInput/Plugin/InputOutput.cxx" />
-		<Unit filename="RemoteInput/Plugin/InputOutput.hxx" />
+		<Unit filename="RemoteInput/Plugin/JavaInputOutput.cxx" />
+		<Unit filename="RemoteInput/Plugin/JavaInputOutput.hxx" />
 		<Unit filename="RemoteInput/Plugin/Plugin.cxx" />
 		<Unit filename="RemoteInput/Plugin/Plugin.hxx" />
 		<Unit filename="RemoteInput/Plugin/Signal.hxx" />
