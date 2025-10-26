@@ -27,7 +27,7 @@ private:
     JavaVM* vm;
     jobject applet;
     std::mutex mutex;
-    ThreadPool input_thread;
+    std::unique_ptr<ThreadPool> input_thread;
     std::unique_ptr<java::RIEventQueue> event_queue;
 
     // MARK: - Input Variables

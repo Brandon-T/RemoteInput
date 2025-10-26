@@ -15,6 +15,7 @@ private:
     void* original;
     void* detour;
     void* trampoline;
+    bool valid;
     std::uint8_t data[32];
 
 public:
@@ -28,6 +29,8 @@ public:
 
     void apply();
     void remove();
+
+    bool is_enabled() const;
 
     template<typename R, typename FuncPtr, typename... Args>
     R call(Args... args);

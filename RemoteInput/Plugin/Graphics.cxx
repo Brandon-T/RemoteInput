@@ -27,6 +27,22 @@
 #include <GL/glext.h>
 #endif
 
+
+#if !defined(GL_TEXTURE_RECTANGLE)
+#define GL_TEXTURE_RECTANGLE              0x84F5
+#endif
+
+#if !defined(GL_PROGRAM_POINT_SIZE)
+#define GL_PROGRAM_POINT_SIZE             0x8642
+#endif
+
+#if defined(__APPLE__)
+#define GL_VERTEX_ARRAY_BINDING           GL_VERTEX_ARRAY_BINDING_APPLE
+#define glGenVertexArrays                 glGenVertexArraysAPPLE
+#define glBindVertexArray                 glBindVertexArrayAPPLE
+#endif
+
+
 // ARGB To Format
 
 std::uint32_t argb_to_abgr(std::uint32_t argb_colour)
@@ -354,15 +370,270 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
     }
 }
 
-void gl_draw_point(void* ctx, float x, float y, float z, float radius) noexcept
-{
-    #define GL_TEXTURE_RECTANGLE              0x84F5
+// OpenGL 3.1+ function pointers
+#if defined(_WIN32) || defined(_WIN64)
+static void (__stdcall *glGenVertexArrays)(GLsizei n, GLuint *arrays) = nullptr;
+static void (__stdcall *glBindVertexArray)(GLuint array) = nullptr;
+static void (__stdcall *glDeleteVertexArrays)(GLsizei n, const GLuint *arrays) = nullptr;
+static void (__stdcall *glGenBuffers)(GLsizei n, GLuint *buffers) = nullptr;
+static void (__stdcall *glBindBuffer)(GLenum target, GLuint buffer) = nullptr;
+static void (__stdcall *glDeleteBuffers)(GLsizei n, const GLuint *buffers) = nullptr;
+static void (__stdcall *glBufferData)(GLenum target, GLsizeiptr size, const void *data, GLenum usage) = nullptr;
+static GLuint (__stdcall *glCreateShader)(GLenum type) = nullptr;
+static void (__stdcall *glShaderSource)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length) = nullptr;
+static void (__stdcall *glCompileShader)(GLuint shader) = nullptr;
+static void (__stdcall *glGetShaderiv)(GLuint shader, GLenum pname, GLint *params) = nullptr;
+static GLuint (__stdcall *glCreateProgram)(void) = nullptr;
+static void (__stdcall *glAttachShader)(GLuint program, GLuint shader) = nullptr;
+static void (__stdcall *glLinkProgram)(GLuint program) = nullptr;
+static void (__stdcall *glUseProgram)(GLuint program) = nullptr;
+static void (__stdcall *glDeleteProgram)(GLuint program) = nullptr;
+static void (__stdcall *glDeleteShader)(GLuint shader) = nullptr;
+static GLint (__stdcall *glGetUniformLocation)(GLuint program, const GLchar *name) = nullptr;
+static void (__stdcall *glUniform1i)(GLint location, GLint v0) = nullptr;
+static void (__stdcall *glUniform1f)(GLint location, GLfloat v0) = nullptr;
+static void (__stdcall *glUniform4fv)(GLint location, GLsizei count, const GLfloat *value) = nullptr;
+static void (__stdcall *glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) = nullptr;
+static GLint (__stdcall *glGetAttribLocation)(GLuint program, const GLchar *name) = nullptr;
+static void (__stdcall *glEnableVertexAttribArray)(GLuint index) = nullptr;
+static void (__stdcall *glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer) = nullptr;
+static void (__stdcall *glDisableVertexAttribArray)(GLuint index) = nullptr;
 
+bool LoadModernGLFunctions() noexcept
+{
+    if (glGenVertexArrays)
+    {
+        return true;
+    }
+
+    glGenVertexArrays = reinterpret_cast<decltype(glGenVertexArrays)>(wglGetProcAddress("glGenVertexArrays"));
+    glBindVertexArray = reinterpret_cast<decltype(glBindVertexArray)>(wglGetProcAddress("glBindVertexArray"));
+    glDeleteVertexArrays = reinterpret_cast<decltype(glDeleteVertexArrays)>(wglGetProcAddress("glDeleteVertexArrays"));
+    glGenBuffers = reinterpret_cast<decltype(glGenBuffers)>(wglGetProcAddress("glGenBuffers"));
+    glBindBuffer = reinterpret_cast<decltype(glBindBuffer)>(wglGetProcAddress("glBindBuffer"));
+    glDeleteBuffers = reinterpret_cast<decltype(glDeleteBuffers)>(wglGetProcAddress("glDeleteBuffers"));
+    glBufferData = reinterpret_cast<decltype(glBufferData)>(wglGetProcAddress("glBufferData"));
+    glCreateShader = reinterpret_cast<decltype(glCreateShader)>(wglGetProcAddress("glCreateShader"));
+    glShaderSource = reinterpret_cast<decltype(glShaderSource)>(wglGetProcAddress("glShaderSource"));
+    glCompileShader = reinterpret_cast<decltype(glCompileShader)>(wglGetProcAddress("glCompileShader"));
+    glGetShaderiv = reinterpret_cast<decltype(glGetShaderiv)>(wglGetProcAddress("glGetShaderiv"));
+    glCreateProgram = reinterpret_cast<decltype(glCreateProgram)>(wglGetProcAddress("glCreateProgram"));
+    glAttachShader = reinterpret_cast<decltype(glAttachShader)>(wglGetProcAddress("glAttachShader"));
+    glLinkProgram = reinterpret_cast<decltype(glLinkProgram)>(wglGetProcAddress("glLinkProgram"));
+    glUseProgram = reinterpret_cast<decltype(glUseProgram)>(wglGetProcAddress("glUseProgram"));
+    glDeleteProgram = reinterpret_cast<decltype(glDeleteProgram)>(wglGetProcAddress("glDeleteProgram"));
+    glDeleteShader = reinterpret_cast<decltype(glDeleteShader)>(wglGetProcAddress("glDeleteShader"));
+    glGetUniformLocation = reinterpret_cast<decltype(glGetUniformLocation)>(wglGetProcAddress("glGetUniformLocation"));
+    glUniform1i = reinterpret_cast<decltype(glUniform1i)>(wglGetProcAddress("glUniform1i"));
+    glUniform1f = reinterpret_cast<decltype(glUniform1f)>(wglGetProcAddress("glUniform1f"));
+    glUniform4fv = reinterpret_cast<decltype(glUniform4fv)>(wglGetProcAddress("glUniform4fv"));
+    glUniformMatrix4fv = reinterpret_cast<decltype(glUniformMatrix4fv)>(wglGetProcAddress("glUniformMatrix4fv"));
+    glGetAttribLocation = reinterpret_cast<decltype(glGetAttribLocation)>(wglGetProcAddress("glGetAttribLocation"));
+    glEnableVertexAttribArray = reinterpret_cast<decltype(glEnableVertexAttribArray)>(wglGetProcAddress("glEnableVertexAttribArray"));
+    glVertexAttribPointer = reinterpret_cast<decltype(glVertexAttribPointer)>(wglGetProcAddress("glVertexAttribPointer"));
+    glDisableVertexAttribArray = reinterpret_cast<decltype(glDisableVertexAttribArray)>(wglGetProcAddress("glDisableVertexAttribArray"));
+
+    return glGenVertexArrays && glBindVertexArray && glGenBuffers && glBindBuffer && glBufferData && glCreateShader && glCreateProgram && glUseProgram && glUniform4fv;
+}
+#else
+bool LoadModernGLFunctions() noexcept
+{
+    return true;
+}
+#endif
+
+GLuint CompileGLShader(void* ctx, const char* vertex_src, const char* fragment_src) noexcept
+{
     #if defined(__APPLE__)
     CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
     #endif
 
-    //Backup
+    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex_shader, 1, &vertex_src, nullptr);
+    glCompileShader(vertex_shader);
+
+    GLint success = 0;
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glDeleteShader(vertex_shader);
+        return 0;
+    }
+
+    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &fragment_src, nullptr);
+    glCompileShader(fragment_shader);
+
+    glGetShaderiv(fragment_shader, GL_OBJECT_COMPILE_STATUS_ARB, &success);
+    if (!success)
+    {
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
+        return 0;
+    }
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertex_shader);
+    glAttachShader(program, fragment_shader);
+    glLinkProgram(program);
+
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+
+    return program;
+}
+
+void gl_draw_point_modern(void* ctx, float x, float y, float z, float radius, GLint viewport_width, GLint viewport_height) noexcept
+{
+    #if defined(__APPLE__)
+    CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+    #endif
+
+    static const char* vertex_shader_src = R"(
+        #version 150 core
+        in vec2 position;
+        uniform mat4 projection;
+        void main() {
+            gl_Position = projection * vec4(position, 0.0, 1.0);
+        }
+    )";
+
+    static const char* fragment_shader_src = R"(
+        #version 150 core
+        in vec2 position;
+        uniform mat4 projection;
+        uniform float pointSize;
+        void main() {
+            gl_Position = projection * vec4(position, 0.0, 1.0);
+            gl_PointSize = pointSize;
+        }
+    )";
+
+    // Create shader program once
+    static GLuint shader_program = 0;
+    static GLuint vao = 0;
+    static GLuint vbo = 0;
+
+    if (shader_program == 0)
+    {
+        shader_program = CompileGLShader(ctx, vertex_shader_src, fragment_shader_src);
+        if (shader_program == 0)
+        {
+            return;
+        }
+
+        // Create VAO and VBO
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+    }
+
+    // Orthographic projection matrix
+    float projection[16] = {
+        2.0f / viewport_width, 0.0f, 0.0f, 0.0f,
+        0.0f, 2.0f / viewport_height, 0.0f, 0.0f,
+        0.0f, 0.0f, -1.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f, 1.0f
+    };
+
+    // Save current GL state
+    GLint last_program, last_array_buffer, last_vertex_array;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
+
+    GLboolean last_blend = glIsEnabled(GL_BLEND);
+    GLboolean last_depth = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean last_program_point_size = glIsEnabled(GL_PROGRAM_POINT_SIZE);
+    GLint last_blend_src, last_blend_dst;
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &last_blend_src);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &last_blend_dst);
+
+    // Set up rendering state
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_PROGRAM_POINT_SIZE);
+
+    glUseProgram(shader_program);
+
+    // Set uniforms
+    GLint proj_loc = glGetUniformLocation(shader_program, "projection");
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, projection);
+
+    GLint size_loc = glGetUniformLocation(shader_program, "pointSize");
+    glUniform1f(size_loc, radius);
+
+    GLint color_loc = glGetUniformLocation(shader_program, "color");
+    GLfloat current_color[4];
+    glGetFloatv(GL_CURRENT_COLOR, current_color);
+    glUniform4fv(color_loc, 1, current_color);
+
+    // Point position
+    float vertices[] = {x, y};
+
+    // Bind VAO and upload vertex data
+    glBindVertexArray(vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+    // Set vertex attributes
+    GLint pos_attrib = glGetAttribLocation(shader_program, "position");
+    glEnableVertexAttribArray(pos_attrib);
+    glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    // Draw point
+    glDrawArrays(GL_POINTS, 0, 1);
+
+    // Restore GL state
+    glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
+    glBindVertexArray(last_vertex_array);
+
+    glUseProgram(last_program);
+
+    if (!last_blend)
+    {
+        glDisable(GL_BLEND);
+    }
+
+    if (last_depth)
+    {
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    if (!last_program_point_size)
+    {
+        glDisable(GL_PROGRAM_POINT_SIZE);
+    }
+
+    glBlendFunc(last_blend_src, last_blend_dst);
+}
+
+void gl_draw_point(void* ctx, float x, float y, float z, float radius) noexcept
+{
+    #if defined(__APPLE__)
+    CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+    #endif
+
+    // Try modern OpenGL first (all platforms)
+    static bool modern_gl_attempted = false;
+    static bool modern_gl_available = false;
+
+    if (!modern_gl_attempted)
+    {
+        modern_gl_available = LoadModernGLFunctions();
+        modern_gl_attempted = true;
+    }
+
+    if (modern_gl_available)
+    {
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        gl_draw_point_modern(ctx, x, y, z, radius, viewport[2], viewport[3]);
+        return;
+    }
+
+    // Fall back to legacy OpenGL
     GLfloat point_size = 0.0;
     bool GLBlend = glIsEnabled(GL_BLEND);
     bool GLTexture2D = glIsEnabled(GL_TEXTURE_2D);
@@ -414,14 +685,240 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius) noexcept
     glPointSize(point_size);
 }
 
-void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept
+void gl_draw_image_modern(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format, GLint viewport_width, GLint viewport_height) noexcept
 {
-    #define GL_TEXTURE_RECTANGLE              0x84F5
-
     #if defined(__APPLE__)
     CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
     #endif
 
+    static const char* vertex_shader_src = R"(
+        #version 150 core
+        in vec2 position;
+        in vec2 texCoord;
+        out vec2 fragTexCoord;
+        uniform mat4 projection;
+        void main() {
+            fragTexCoord = texCoord;
+            gl_Position = projection * vec4(position, 0.0, 1.0);
+        }
+    )";
+
+    static const char* fragment_shader_src = R"(
+        #version 150 core
+        in vec2 fragTexCoord;
+        out vec4 fragColor;
+        uniform sampler2D textureSampler;
+        void main() {
+            fragColor = texture(textureSampler, fragTexCoord);
+        }
+    )";
+
+    GLenum gl_format = [](ImageFormat format) -> GLenum {
+        switch(format)
+        {
+            case ImageFormat::BGR_BGRA: return GL_BGRA;
+            case ImageFormat::BGRA: return GL_BGRA;
+            case ImageFormat::RGBA: return GL_RGBA;
+            case ImageFormat::ARGB: return 0;
+            case ImageFormat::ABGR: return 0;
+            default: return GL_BGRA;
+        }
+    }(format);
+
+    auto convert = []<typename S>(S source, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) {
+        if constexpr(std::is_same<S, bgr_bgra_t>::value)
+        {
+            for (std::int32_t i = 0; i < width * height * stride; i += stride)
+            {
+                source->a = *reinterpret_cast<std::uint32_t*>(source) == 0x00 ? 0x00 : 0xFF;
+                ++source;
+            }
+        }
+    };
+
+    switch (format)
+    {
+        case ImageFormat::BGR_BGRA:
+            convert(static_cast<bgr_bgra_t*>(source_buffer), width, height, stride, format);
+            break;
+        case ImageFormat::BGRA:
+            convert(static_cast<bgra_t*>(source_buffer), width, height, stride, format);
+            break;
+        case ImageFormat::RGBA:
+            convert(static_cast<rgba_t*>(source_buffer), width, height, stride, format);
+            break;
+        case ImageFormat::ARGB:
+            convert(static_cast<argb_t*>(source_buffer), width, height, stride, format);
+            break;
+        case ImageFormat::ABGR:
+            convert(static_cast<abgr_t*>(source_buffer), width, height, stride, format);
+            break;
+        default:
+            convert(static_cast<bgra_t*>(source_buffer), width, height, stride, format);
+            break;
+    }
+
+    // Create resources once
+    static GLuint shader_program = 0;
+    static GLuint vao = 0;
+    static GLuint vbo = 0;
+    static GLuint texture_id = 0;
+    static std::int32_t tex_width = 0;
+    static std::int32_t tex_height = 0;
+
+    if (shader_program == 0)
+    {
+        shader_program = CompileGLShader(ctx, vertex_shader_src, fragment_shader_src);
+        if (shader_program == 0)
+        {
+            return;
+        }
+
+        // Create VAO and VBO
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+    }
+
+    if (texture_id == 0 || tex_width != width || tex_height != height)
+    {
+        if (texture_id != 0)
+        {
+            glDeleteTextures(1, &texture_id);
+        }
+
+        tex_width = width;
+        tex_height = height;
+
+        glGenTextures(1, &texture_id);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, gl_format, GL_UNSIGNED_BYTE, source_buffer);
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, source_buffer);
+    }
+
+    // Rendering
+    float x1 = x;
+    float y1 = y;
+    float x2 = x + width;
+    float y2 = y + height;
+
+    float vertices[] = {
+            // Position      // TexCoord
+            x1, y1,          0.0f, 1.0f,  // Bottom-left
+            x2, y1,          1.0f, 1.0f,  // Bottom-right
+            x1, y2,          0.0f, 0.0f,  // Top-left
+
+            x2, y1,          1.0f, 1.0f,  // Bottom-right
+            x2, y2,          1.0f, 0.0f,  // Top-right
+            x1, y2,          0.0f, 0.0f   // Top-left
+    };
+
+    // Orthographic projection matrix (maps screen coords to NDC)
+    // Bottom-left origin (OpenGL default): Y increases upward
+    float projection[16] = {
+            2.0f / viewport_width, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f / viewport_height, 0.0f, 0.0f,
+            0.0f, 0.0f, -1.0f, 0.0f,
+            -1.0f, -1.0f, 0.0f, 1.0f
+    };
+
+    // Save current GL state
+    GLint last_program, last_texture, last_array_buffer, last_vertex_array;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
+
+    GLboolean last_blend = glIsEnabled(GL_BLEND);
+    GLboolean last_depth = glIsEnabled(GL_DEPTH_TEST);
+    GLint last_blend_src, last_blend_dst;
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &last_blend_src);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &last_blend_dst);
+
+    // Set up rendering state
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+
+    glUseProgram(shader_program);
+
+    // Set Shaders
+    GLint proj_loc = glGetUniformLocation(shader_program, "projection");
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, projection);
+
+    GLint tex_loc = glGetUniformLocation(shader_program, "textureSampler");
+    glUniform1i(tex_loc, 0);
+
+    // Bind VAO and upload vertex data
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+    // Set vertex attributes
+    GLint pos_attrib = glGetAttribLocation(shader_program, "position");
+    GLint tex_attrib = glGetAttribLocation(shader_program, "texCoord");
+
+    glEnableVertexAttribArray(pos_attrib);
+    glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+    glEnableVertexAttribArray(tex_attrib);
+    glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+    // Draw
+    glDrawArrays(0x0004, 0, 6);  // glTRIANGLES
+
+    // Restore GL state
+    glBindTexture(GL_TEXTURE_2D, last_texture);
+    glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
+    glBindVertexArray(last_vertex_array);
+
+    glUseProgram(last_program);
+
+    if (!last_blend)
+    {
+        glDisable(GL_BLEND);
+    }
+
+    if (last_depth)
+    {
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    glBlendFunc(last_blend_src, last_blend_dst);
+}
+
+void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept
+{
+    #if defined(__APPLE__)
+    CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
+    #endif
+
+    // Try modern OpenGL first (all platforms)
+    static bool modern_gl_attempted = false;
+    static bool modern_gl_available = false;
+
+    if (!modern_gl_attempted)
+    {
+        modern_gl_available = LoadModernGLFunctions();
+        modern_gl_attempted = true;
+    }
+
+    if (modern_gl_available)
+    {
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        gl_draw_image_modern(ctx, source_buffer, x, y, width, height, stride, format, viewport[2], viewport[3]);
+        return;
+    }
+
+    // Fall back to legacy OpenGL
     GLenum gl_format = [](ImageFormat format) -> GLenum {
         switch(format)
         {
@@ -605,7 +1102,7 @@ HMODULE dx_get_d3dx9_module() noexcept
     return module;
 }
 
-IDirect3DPixelShader9* dx_texture_render_shader(IDirect3DDevice9* device, ID3DXConstantTable** table)
+IDirect3DPixelShader9* dx_texture_render_shader(IDirect3DDevice9* device, ID3DXConstantTable* &table)
 {
     static const char* shader_code = R"(
         sampler2D tex;
@@ -644,15 +1141,11 @@ IDirect3DPixelShader9* dx_texture_render_shader(IDirect3DDevice9* device, ID3DXC
         }
     )";
 
-    static ID3DXConstantTable* constant_table = nullptr;
-    static IDirect3DPixelShader9* shader = dx_compile_shader(device, constant_table, shader_code);
-
-    if (table)
+    if (!table)
     {
-        *table = constant_table;
+        return dx_compile_shader(device, table, shader_code);
     }
-
-    return shader;
+    return nullptr;
 }
 
 IDirect3DPixelShader9* dx_read_backbuffer_shader(IDirect3DDevice9* device, ID3DXConstantTable** table)
@@ -729,7 +1222,11 @@ IDirect3DPixelShader9* dx_compile_shader(IDirect3DDevice9* device, ID3DXConstant
             nullptr,
             "PS_Main",
             "ps_2_0",
+            #if DEBUG
             D3DXSHADER_DEBUG,
+            #else
+            D3DXSHADER_OPTIMIZATION_LEVEL3,
+            #endif
             &shader_buffer,
             &error_buffer,
             &constant_table
@@ -794,7 +1291,7 @@ void dx_apply_shader(IDirect3DDevice9* device, IDirect3DPixelShader9* shader, ID
     device->SetPixelShader(shader);
 }
 
-void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, ImageFormat image_format, std::uint8_t* buffer, std::int32_t width, std::int32_t height) noexcept
+void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, IDirect3DPixelShader9* &shader, ID3DXConstantTable* &constants_table, ImageFormat image_format, std::uint8_t* buffer, std::int32_t width, std::int32_t height) noexcept
 {
     static std::int32_t Width = 0;
     static std::int32_t Height = 0;
@@ -823,6 +1320,9 @@ void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, Imag
             }
             return;
         }
+
+        Width = width;
+        Height = height;
     }
 
     D3DLOCKED_RECT rect;
@@ -836,7 +1336,11 @@ void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, Imag
         return;
     }
 
-    IDirect3DPixelShader9* shader = dx_texture_render_shader(device, nullptr);
+    if (!shader && !constants_table)
+    {
+        shader = dx_texture_render_shader(device, constants_table);
+    }
+
     std::uint8_t* dest = static_cast<std::uint8_t*>(rect.pBits);
     int pitch = rect.Pitch;
 
@@ -858,15 +1362,17 @@ void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, Imag
     texture->UnlockRect(0);
 }
 
-void dx_draw_texture(IDirect3DDevice9* device, IDirect3DTexture9* texture, ImageFormat image_format, float X1, float Y1, float X2, float Y2) noexcept
+void dx_draw_texture(IDirect3DDevice9* device, IDirect3DTexture9* texture, ID3DXConstantTable* &constant_table, IDirect3DPixelShader9* &shader, IDirect3DVertexBuffer9* &vertex_buffer, ImageFormat image_format, float X1, float Y1, float X2, float Y2) noexcept
 {
     static std::int32_t Width = static_cast<std::int32_t>(X2 - X1);
     static std::int32_t Height = static_cast<std::int32_t>(Y2 - Y1);
-    static IDirect3DVertexBuffer9* vertex_buffer = nullptr;
 
     // Compile the shader just once
-    static ID3DXConstantTable* constant_table = nullptr;
-    static IDirect3DPixelShader9* shader = dx_texture_render_shader(device, &constant_table);
+    if (!constant_table && !shader)
+    {
+        constant_table = nullptr;
+        shader = dx_texture_render_shader(device, constant_table);
+    }
 
     float UOffset = 0.5f / (X2 - X1);
     float VOffset = 0.5f / (Y2 - Y1);
@@ -1064,9 +1570,11 @@ void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t &width,
         }
 
         D3DLOCKED_RECT rect;
-        dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY);
-        std::memcpy(buffer, rect.pBits, width * height * 4);
-        dest_target->UnlockRect();
+        if (SUCCEEDED(dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY)))
+        {
+            std::memcpy(buffer, rect.pBits, width * height * 4);
+            dest_target->UnlockRect();
+        }
 
         SAFE_RELEASE(final_texture_surface);
         SAFE_RELEASE(final_texture);
@@ -1086,10 +1594,12 @@ void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t &width,
         }
 
         D3DLOCKED_RECT rect;
-        dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY);
-        //std::memcpy(buffer, rect.pBits, width * height * 4);
-        copy_image(buffer, rect.pBits, width, height, 4, image_format);
-        dest_target->UnlockRect();
+        if (SUCCEEDED(dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY)))
+        {
+            //std::memcpy(buffer, rect.pBits, width * height * 4);
+            copy_image(buffer, rect.pBits, width, height, 4, image_format);
+            dest_target->UnlockRect();
+        }
     }
 
     SAFE_RELEASE(dest_target);

@@ -97,7 +97,7 @@ static java::KeyEvent::KeyCodes control_keys_locations[] = {
     java::KeyEvent::KeyCodes::KEY_LOCATION_STANDARD
 };
 
-InputOutput::InputOutput(Reflection* reflection) noexcept : vm(nullptr), applet(reflection->getApplet()), mutex(), input_thread(2), event_queue(nullptr), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
+InputOutput::InputOutput(Reflection* reflection) noexcept : vm(nullptr), applet(reflection->getApplet()), mutex(), input_thread(new ThreadPool(2)), event_queue(nullptr), currently_held_key(-1), held_keys(), x(-1), y(-1), w(-1), h(-1), click_count(0), keyboard_speed(0), keyboard_repeat_delay(0), mouse_buttons()
 {
     reflection->getEnv()->GetJavaVM(&vm);
 
@@ -158,7 +158,10 @@ InputOutput::InputOutput(Reflection* reflection) noexcept : vm(nullptr), applet(
 
 InputOutput::~InputOutput() noexcept
 {
-    this->input_thread.terminate();
+    // Purposely do NOT join the thread or reset! This will hang upon dll unload.
+    // We `release` it instead to prevent this.
+    //this->input_thread->terminate();
+    this->input_thread.release();
     this->event_queue.reset();
     this->vm = nullptr;
     this->applet = nullptr;
@@ -316,7 +319,7 @@ void InputOutput::hold_key(std::int32_t code) noexcept
 
                 if (this->keyboard_speed >= 0 && this->keyboard_repeat_delay >= 0)
                 {
-                    input_thread.add_task([&](std::atomic_bool &stopped) {
+                    input_thread->add_task([&](std::atomic_bool &stopped) {
                         if (this->keyboard_repeat_delay > 0)
                         {
                             yield_thread(std::chrono::milliseconds(this->keyboard_repeat_delay));

@@ -46,9 +46,33 @@ std::unique_ptr<Hook> directx_device9_endscene_hook{nullptr};
 std::unique_ptr<Hook> directx_device9_reset_hook{nullptr};
 std::unique_ptr<Hook> directx_device11_swapchain_present_hook{nullptr};
 
-bool is_dx_hooked = false;
+IDirect3DPixelShader9* debug_px_shader = nullptr;
+ID3DXConstantTable* debug_px_shader_constants_table = nullptr;
+
+IDirect3DTexture9* debug_texture = nullptr;
+ID3DXConstantTable* debug_constant_table = nullptr;
+IDirect3DPixelShader9* debug_shader = nullptr;
+IDirect3DVertexBuffer9* debug_vertex_buffer = nullptr;
 IDirect3DDevice9* current_dx_device = nullptr;
+#define SAFE_RELEASE(ptr) if (ptr) { ptr->Release(); ptr = nullptr; }
 void HookD3D9Device(IDirect3DDevice9* pDevice, bool force = false) noexcept;
+
+#define EXTRA_SAFE_RELEASE(com_ptr)                         \
+    if (com_ptr)                                            \
+    {                                                       \
+        IDirect3DDevice9* device = nullptr;                 \
+        HRESULT result = debug_texture->GetDevice(&device); \
+        if (SUCCEEDED(result) && device)                    \
+        {                                                   \
+            device->Release();                              \
+            com_ptr->Release();                             \
+            com_ptr = nullptr;                              \
+        }                                                   \
+        else                                                \
+        {                                                   \
+            com_ptr = nullptr;                              \
+        }                                                   \
+    }
 
 bool can_render(jint srctype, jint width, jint height)
 {
@@ -615,7 +639,6 @@ HRESULT __cdecl JavaDirectXCopyImageToIntArgbSurface(IDirect3DSurface9 *pSurface
     {
         HookD3D9Device(pDevice);
         pDevice->Release();
-        is_dx_hooked = true;
     }
 
     return directx_xrgb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntArgbSurface)>(pSurface, pDstInfo, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
@@ -641,15 +664,17 @@ HRESULT __cdecl JavaDirectXCopyImageToIntXrgbSurface(SurfaceDataRasInfo *pSrcInf
         return *reinterpret_cast<void**>(reinterpret_cast<char*>(data_ptr) + (sizeof(void*) * index));
     };
 
-    void* base_ptr = get_data_pointer(pDstSurfaceRes);
-    IDirect3DSurface9* pSurface = reinterpret_cast<IDirect3DSurface9*>(get_offset(base_ptr, 2));
-
-    IDirect3DDevice9* pDevice = nullptr;
-    if (SUCCEEDED(pSurface->GetDevice(&pDevice)) && pDevice)
+    if (pDstSurfaceRes)
     {
-        HookD3D9Device(pDevice);
-        pDevice->Release();
-        is_dx_hooked = true;
+        void* base_ptr = get_data_pointer(pDstSurfaceRes);
+        IDirect3DSurface9* pSurface = reinterpret_cast<IDirect3DSurface9*>(get_offset(base_ptr, 2));
+
+        IDirect3DDevice9* pDevice = nullptr;
+        if (pSurface && SUCCEEDED(pSurface->GetDevice(&pDevice)) && pDevice)
+        {
+            HookD3D9Device(pDevice);
+            pDevice->Release();
+        }
     }
 
     return directx_xrgb_hook->call<HRESULT, decltype(JavaDirectXCopyImageToIntXrgbSurface)>(pSrcInfo, srctype, pDstSurfaceRes, srcx, srcy, srcWidth, srcHeight, dstx, dsty);
@@ -939,12 +964,8 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
             }
 
             //Push Rendering Context
-            HGLRC old_ctx = nullptr;
-            if (!hasGLExtension)
-            {
-                old_ctx = wglGetCurrentContext();
-                PushGLContext(hdc, width, height);
-            }
+            HGLRC old_ctx = wglGetCurrentContext();
+            PushGLContext(hdc, width, height);
 
             //Render Debug Graphics
             if (control_center->get_debug_graphics())
@@ -968,7 +989,7 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
             }
 
             //Pop Rendering Context
-            if (!hasGLExtension)
+            if (old_ctx)
             {
                 PopGLContext(hdc, old_ctx);
             }
@@ -1001,10 +1022,7 @@ HRESULT __stdcall D3D9_CreateDevice(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE D
         HRESULT result = directx_d3d9_createdevice_hook->call<HRESULT, decltype(D3D9_CreateDevice)>(pD3D, Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
         if (ppReturnedDeviceInterface && *ppReturnedDeviceInterface)
         {
-            if (!is_dx_hooked)
-            {
-                HookD3D9Device(*ppReturnedDeviceInterface);
-            }
+            HookD3D9Device(*ppReturnedDeviceInterface);
         }
         return result;
     }
@@ -1016,91 +1034,94 @@ HRESULT __stdcall D3D9Device_EndScene(IDirect3DDevice9* device) noexcept
 {
     extern std::unique_ptr<ControlCenter> control_center;
 
-    if (directx_device9_endscene_hook)
+    if (control_center)
     {
-        if (control_center)
+        D3DVIEWPORT9 viewport;
+        if (SUCCEEDED(device->GetViewport(&viewport)))
         {
-            D3DVIEWPORT9 viewport;
-            if (SUCCEEDED(device->GetViewport(&viewport)))
+            std::int32_t x = 0;
+            std::int32_t y = 0;
+            std::int32_t width = static_cast<std::int32_t>(viewport.Width);
+            std::int32_t height = static_cast<std::int32_t>(viewport.Height);
+
+            std::int32_t applet_x = 0;
+            std::int32_t applet_y = 0;
+            std::size_t applet_width = 0;
+            std::size_t applet_height = 0;
+
+            control_center->get_applet_dimensions(&applet_x, &applet_y, &applet_width, &applet_height);
+
+            // Terrible. RuneLite's UI flickers with icons because it draws like trash
+            // So we need to feed the client the Applet's Width/Height and not the Viewport's Width/Height
+            // Even though the ViewPort is what's being drawn on. RL draws outside that.
+            control_center->set_target_dimensions(applet_width, applet_height);
+
+            bool minimized = false;
+            ImageFormat image_format = control_center->get_image_format();
+
+            if (width <= applet_width && height == applet_height)
             {
-                std::int32_t width = static_cast<std::int32_t>(viewport.Width);
-                std::int32_t height = static_cast<std::int32_t>(viewport.Height);
-
-                std::int32_t x = 0;
-                std::int32_t y = 0;
-                std::size_t applet_width = 0;
-                std::size_t applet_height = 0;
-
-                control_center->get_applet_dimensions(&x, &y, &applet_width, &applet_height);
-                control_center->set_target_dimensions(static_cast<std::int32_t>(applet_width), static_cast<std::int32_t>(applet_height));
-
-                /*if (width != applet_width || height != applet_height)
-                {
-                    // Possibly menu open, render normally
-                    return directx_device9_endscene_hook->call<HRESULT, decltype(D3D9Device_EndScene)>(device);
-                }*/
-
-                control_center->set_target_dimensions(static_cast<std::int32_t>(width), static_cast<std::int32_t>(height));
-
-                bool minimized = false;
-                ImageFormat image_format = control_center->get_image_format();
                 dx_read_pixels(device, control_center->get_image(), width, height, minimized, image_format);
+            }
 
-                IDirect3DStateBlock9* block;
-                device->CreateStateBlock(D3DSBT_ALL, &block);
-                block->Capture();
+            IDirect3DStateBlock9* block;
+            device->CreateStateBlock(D3DSBT_ALL, &block);
+            block->Capture();
 
-                device->SetRenderState(D3DRS_LIGHTING, FALSE);
-                device->SetRenderState(D3DRS_FOGENABLE, FALSE);
-                device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-                device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-                device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE); //DISABLED
-                device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-                device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-                device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+            device->SetRenderState(D3DRS_LIGHTING, FALSE);
+            device->SetRenderState(D3DRS_FOGENABLE, FALSE);
+            device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+            device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+            device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+            device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+            device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
+            if (width <= applet_width && height == applet_height)
+            {
                 if (control_center->get_debug_graphics() && !minimized)
                 {
-                    static IDirect3DTexture9* texture = nullptr;
-                    dx_load_texture(device, texture, image_format, control_center->get_debug_image(), width, height);
+                    dx_load_texture(device, debug_texture, debug_px_shader, debug_px_shader_constants_table, image_format, control_center->get_debug_image(), width, height);
 
-                    if (texture)
+                    if (debug_texture)
                     {
-                        dx_draw_texture(device, texture, image_format, 0.0, 0.0, static_cast<float>(width), static_cast<float>(height));
+                        dx_draw_texture(device, debug_texture, debug_constant_table, debug_shader, debug_vertex_buffer, image_format, 0.0, 0.0, static_cast<float>(width), static_cast<float>(height));
                     }
                 }
-
-                //Render Cursor
-                if (!minimized)
-                {
-                    x = -1;
-                    y = -1;
-                    control_center->get_applet_mouse_position(&x, &y);
-
-                    if (x > -1 && y > -1 && x <= width && y <= height)
-                    {
-                        device->SetTexture(0, nullptr);
-                        dx_draw_point(device, static_cast<float>(x), static_cast<float>(y), 2.5f, D3DCOLOR_RGBA(0xFF, 0x00, 0x00, 0xFF));
-                    }
-                }
-
-                device->SetRenderState(D3DRS_ZFUNC,D3DCMP_NEVER);
-                device->SetTexture(0, nullptr);
-                device->SetPixelShader(nullptr);
-                device->SetVertexShader(nullptr);
-                block->Apply();
-                block->Release();
             }
-        }
 
+            //Render Cursor
+            if (!minimized)
+            {
+                x = -1;
+                y = -1;
+                control_center->get_applet_mouse_position(&x, &y);
+
+                if (x > -1 && y > -1 && x <= width && y <= height)
+                {
+                    device->SetTexture(0, nullptr);
+                    dx_draw_point(device, static_cast<float>(x), static_cast<float>(y), 2.5f, D3DCOLOR_RGBA(0xFF, 0x00, 0x00, 0xFF));
+                }
+            }
+
+            device->SetRenderState(D3DRS_ZFUNC,D3DCMP_NEVER);
+            device->SetTexture(0, nullptr);
+            device->SetPixelShader(nullptr);
+            device->SetVertexShader(nullptr);
+            block->Apply();
+            block->Release();
+        }
+    }
+
+    if (directx_device9_endscene_hook)
+    {
         return directx_device9_endscene_hook->call<HRESULT, decltype(D3D9Device_EndScene)>(device);
     }
 
     return E_FAIL;
 }
 
-HRESULT __stdcall D3D9Device_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pPresentationParameters) noexcept
-{
+HRESULT __stdcall D3D9Device_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pPresentationParameters) noexcept {
     if (directx_device9_reset_hook)
     {
         HRESULT result = directx_device9_reset_hook->call<HRESULT, decltype(D3D9Device_Reset)>(device, pPresentationParameters);
@@ -1123,8 +1144,31 @@ void HookD3D9Device(IDirect3DDevice9* pDevice, bool force) noexcept
         return;
     }
 
+    bool device_lost = false;
+    if (current_dx_device)
+    {
+        HRESULT result = current_dx_device->TestCooperativeLevel();
+        device_lost = (result == D3DERR_DEVICELOST || result == D3DERR_DEVICENOTRESET);
+
+        if (device_lost)
+        {
+            fprintf(stderr, "DEVICE LOST\b");
+        }
+    }
+
+    SAFE_RELEASE(current_dx_device);
     current_dx_device = pDevice;
+    current_dx_device->AddRef();
+
     auto* vTable = *reinterpret_cast<DWORD_PTR**>(pDevice);
+
+    // Release the debug interfaces
+    EXTRA_SAFE_RELEASE(debug_px_shader);
+    EXTRA_SAFE_RELEASE(debug_px_shader_constants_table);
+    EXTRA_SAFE_RELEASE(debug_vertex_buffer);
+    EXTRA_SAFE_RELEASE(debug_shader);
+    EXTRA_SAFE_RELEASE(debug_constant_table);
+    EXTRA_SAFE_RELEASE(debug_texture);
 
     // Hook EndScene
     auto* endscene = reinterpret_cast<decltype(D3D9Device_EndScene)*>(vTable[42]);
@@ -1135,6 +1179,19 @@ void HookD3D9Device(IDirect3DDevice9* pDevice, bool force) noexcept
     auto* reset = reinterpret_cast<decltype(D3D9Device_Reset)*>(vTable[16]);
     directx_device9_reset_hook = std::make_unique<Hook>(reinterpret_cast<void*>(reset), reinterpret_cast<void*>(D3D9Device_Reset));
     directx_device9_reset_hook->apply();
+
+    // Validate that functions were actually hooked
+    if (!directx_device9_endscene_hook->is_enabled())
+    {
+        current_dx_device = nullptr;
+        directx_device9_endscene_hook.reset();
+    }
+
+    if (!directx_device9_reset_hook->is_enabled())
+    {
+        current_dx_device = nullptr;
+        directx_device9_reset_hook.reset();
+    }
 }
 #endif // defined
 
@@ -1347,7 +1404,6 @@ void InitialiseHooks() noexcept
 
         if (hook_d3d11)
         {
-            #define SAFE_RELEASE(ptr) if (ptr) ptr->Release()
             HMODULE d3d11_module = GetModuleHandle("d3d11.dll");
             auto pD3D11CreateDeviceAndSwapChain = reinterpret_cast<decltype(D3D11CreateDeviceAndSwapChain)*>(::GetProcAddress(d3d11_module, "D3D11CreateDeviceAndSwapChain"));
 
@@ -1383,7 +1439,6 @@ void InitialiseHooks() noexcept
         }
         else
         {
-            #define SAFE_RELEASE(ptr) if (ptr) ptr->Release()
             HMODULE d3d9_module = GetModuleHandle("d3d9.dll");
             auto pDirect3DCreate9 = reinterpret_cast<decltype(Direct3DCreate9)*>(::GetProcAddress(d3d9_module, "Direct3DCreate9"));
 

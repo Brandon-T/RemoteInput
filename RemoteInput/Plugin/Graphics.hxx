@@ -81,8 +81,8 @@ void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_
 #if defined(_WIN32) || defined(_WIN64)
 IDirect3DPixelShader9* dx_compile_shader(IDirect3DDevice9* device, ID3DXConstantTable* &constant_table, const std::string &shader_string) noexcept;
 void dx_apply_shader(IDirect3DDevice9* device, IDirect3DPixelShader9* shader, ID3DXConstantTable* constant_table, ImageFormat format) noexcept;
-void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, ImageFormat image_format, std::uint8_t* buffer, std::int32_t width, std::int32_t height) noexcept;
-void dx_draw_texture(IDirect3DDevice9* device, IDirect3DTexture9* texture, ImageFormat image_format, float X1, float Y1, float X2, float Y2) noexcept;
+void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, IDirect3DPixelShader9* &shader, ID3DXConstantTable* &constants_table, ImageFormat image_format, std::uint8_t* buffer, std::int32_t width, std::int32_t height) noexcept;
+void dx_draw_texture(IDirect3DDevice9* device, IDirect3DTexture9* texture, ID3DXConstantTable* &constant_table, IDirect3DPixelShader9* &shader, IDirect3DVertexBuffer9* &vertex_buffer, ImageFormat image_format, float X1, float Y1, float X2, float Y2) noexcept;
 void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t &width, std::int32_t &height, bool& minimized, ImageFormat image_format) noexcept;
 void dx_draw_point(IDirect3DDevice9* device, float cx, float cy, float radius, D3DCOLOR colour);
 #endif

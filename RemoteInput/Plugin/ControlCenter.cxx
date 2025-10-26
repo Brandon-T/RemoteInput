@@ -118,7 +118,12 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 
 ControlCenter::~ControlCenter()
 {
-    terminate();
+    //terminate();
+
+    if (io_controller)
+    {
+        io_controller.reset();
+    }
 
     if (sync_signal)
     {
