@@ -1464,6 +1464,26 @@ void InputOutput::get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::s
     }
 }
 
+void InputOutput::get_canvas_dimensions(std::int32_t &x, std::int32_t &y, std::size_t &width, std::size_t &height) const noexcept
+{
+    JNIEnv* env = nullptr;
+    if (this->vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr) == JNI_OK)
+    {
+        java::Applet receiver{env, this->applet, false};
+        java::Component canvas = receiver.getComponent(0);
+
+        canvas.getLocation(x, y);
+        canvas.getSize(width, height);
+    }
+    else
+    {
+        x = -1;
+        y = -1;
+        width = static_cast<std::int32_t>(this->w);
+        height = static_cast<std::int32_t>(this->h);
+    }
+}
+
 void InputOutput::get_applet_mouse_position(std::int32_t &x, std::int32_t &y) const noexcept
 {
     x = this->x;

@@ -149,11 +149,14 @@ public:
     static std::size_t reflect_size_for_type(ReflectionType type) noexcept;
 
     jlong reflect_frame_native_handle() const noexcept;
+    jlong reflect_applet_native_handle() const noexcept;
+    jlong reflect_canvas_native_handle() const noexcept;
     java::Applet reflect_applet() const noexcept;
     java::Component reflect_canvas() const noexcept;
     std::unique_ptr<RemoteVM> create_remote_vm() noexcept;
 
     void get_applet_dimensions(std::int32_t* x, std::int32_t* y, std::size_t* width, std::size_t* height) const noexcept;
+    void get_canvas_dimensions(std::int32_t* x, std::int32_t* y, std::size_t* width, std::size_t* height) const noexcept;
     void get_applet_mouse_position(std::int32_t* x, std::int32_t* y) const noexcept;
 };
 

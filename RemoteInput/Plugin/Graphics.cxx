@@ -25,6 +25,7 @@
 #else
 #include <GL/gl.h>
 #include <GL/glext.h>
+#include <GL/glx.h>
 #endif
 
 
@@ -371,33 +372,38 @@ void draw_image(void* dest_buffer, void* source_buffer, std::int32_t width, std:
 }
 
 // OpenGL 3.1+ function pointers
-#if defined(_WIN32) || defined(_WIN64)
-static void (__stdcall *glGenVertexArrays)(GLsizei n, GLuint *arrays) = nullptr;
-static void (__stdcall *glBindVertexArray)(GLuint array) = nullptr;
-static void (__stdcall *glDeleteVertexArrays)(GLsizei n, const GLuint *arrays) = nullptr;
-static void (__stdcall *glGenBuffers)(GLsizei n, GLuint *buffers) = nullptr;
-static void (__stdcall *glBindBuffer)(GLenum target, GLuint buffer) = nullptr;
-static void (__stdcall *glDeleteBuffers)(GLsizei n, const GLuint *buffers) = nullptr;
-static void (__stdcall *glBufferData)(GLenum target, GLsizeiptr size, const void *data, GLenum usage) = nullptr;
-static GLuint (__stdcall *glCreateShader)(GLenum type) = nullptr;
-static void (__stdcall *glShaderSource)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length) = nullptr;
-static void (__stdcall *glCompileShader)(GLuint shader) = nullptr;
-static void (__stdcall *glGetShaderiv)(GLuint shader, GLenum pname, GLint *params) = nullptr;
-static GLuint (__stdcall *glCreateProgram)(void) = nullptr;
-static void (__stdcall *glAttachShader)(GLuint program, GLuint shader) = nullptr;
-static void (__stdcall *glLinkProgram)(GLuint program) = nullptr;
-static void (__stdcall *glUseProgram)(GLuint program) = nullptr;
-static void (__stdcall *glDeleteProgram)(GLuint program) = nullptr;
-static void (__stdcall *glDeleteShader)(GLuint shader) = nullptr;
-static GLint (__stdcall *glGetUniformLocation)(GLuint program, const GLchar *name) = nullptr;
-static void (__stdcall *glUniform1i)(GLint location, GLint v0) = nullptr;
-static void (__stdcall *glUniform1f)(GLint location, GLfloat v0) = nullptr;
-static void (__stdcall *glUniform4fv)(GLint location, GLsizei count, const GLfloat *value) = nullptr;
-static void (__stdcall *glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) = nullptr;
-static GLint (__stdcall *glGetAttribLocation)(GLuint program, const GLchar *name) = nullptr;
-static void (__stdcall *glEnableVertexAttribArray)(GLuint index) = nullptr;
-static void (__stdcall *glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer) = nullptr;
-static void (__stdcall *glDisableVertexAttribArray)(GLuint index) = nullptr;
+#if !defined(__APPLE__)
+    #if defined(_WIN32) || defined(_WIN64)
+    #define STDCALL __stdcall
+    #else
+    #define STDCALL
+    #endif
+static void (STDCALL *glGenVertexArrays)(GLsizei n, GLuint *arrays) = nullptr;
+static void (STDCALL *glBindVertexArray)(GLuint array) = nullptr;
+static void (STDCALL *glDeleteVertexArrays)(GLsizei n, const GLuint *arrays) = nullptr;
+static void (STDCALL *glGenBuffers)(GLsizei n, GLuint *buffers) = nullptr;
+static void (STDCALL *glBindBuffer)(GLenum target, GLuint buffer) = nullptr;
+static void (STDCALL *glDeleteBuffers)(GLsizei n, const GLuint *buffers) = nullptr;
+static void (STDCALL *glBufferData)(GLenum target, GLsizeiptr size, const void *data, GLenum usage) = nullptr;
+static GLuint (STDCALL *glCreateShader)(GLenum type) = nullptr;
+static void (STDCALL *glShaderSource)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length) = nullptr;
+static void (STDCALL *glCompileShader)(GLuint shader) = nullptr;
+static void (STDCALL *glGetShaderiv)(GLuint shader, GLenum pname, GLint *params) = nullptr;
+static GLuint (STDCALL *glCreateProgram)(void) = nullptr;
+static void (STDCALL *glAttachShader)(GLuint program, GLuint shader) = nullptr;
+static void (STDCALL *glLinkProgram)(GLuint program) = nullptr;
+static void (STDCALL *glUseProgram)(GLuint program) = nullptr;
+static void (STDCALL *glDeleteProgram)(GLuint program) = nullptr;
+static void (STDCALL *glDeleteShader)(GLuint shader) = nullptr;
+static GLint (STDCALL *glGetUniformLocation)(GLuint program, const GLchar *name) = nullptr;
+static void (STDCALL *glUniform1i)(GLint location, GLint v0) = nullptr;
+static void (STDCALL *glUniform1f)(GLint location, GLfloat v0) = nullptr;
+static void (STDCALL *glUniform4fv)(GLint location, GLsizei count, const GLfloat *value) = nullptr;
+static void (STDCALL *glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) = nullptr;
+static GLint (STDCALL *glGetAttribLocation)(GLuint program, const GLchar *name) = nullptr;
+static void (STDCALL *glEnableVertexAttribArray)(GLuint index) = nullptr;
+static void (STDCALL *glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer) = nullptr;
+static void (STDCALL *glDisableVertexAttribArray)(GLuint index) = nullptr;
 
 bool LoadModernGLFunctions() noexcept
 {
@@ -406,32 +412,38 @@ bool LoadModernGLFunctions() noexcept
         return true;
     }
 
-    glGenVertexArrays = reinterpret_cast<decltype(glGenVertexArrays)>(wglGetProcAddress("glGenVertexArrays"));
-    glBindVertexArray = reinterpret_cast<decltype(glBindVertexArray)>(wglGetProcAddress("glBindVertexArray"));
-    glDeleteVertexArrays = reinterpret_cast<decltype(glDeleteVertexArrays)>(wglGetProcAddress("glDeleteVertexArrays"));
-    glGenBuffers = reinterpret_cast<decltype(glGenBuffers)>(wglGetProcAddress("glGenBuffers"));
-    glBindBuffer = reinterpret_cast<decltype(glBindBuffer)>(wglGetProcAddress("glBindBuffer"));
-    glDeleteBuffers = reinterpret_cast<decltype(glDeleteBuffers)>(wglGetProcAddress("glDeleteBuffers"));
-    glBufferData = reinterpret_cast<decltype(glBufferData)>(wglGetProcAddress("glBufferData"));
-    glCreateShader = reinterpret_cast<decltype(glCreateShader)>(wglGetProcAddress("glCreateShader"));
-    glShaderSource = reinterpret_cast<decltype(glShaderSource)>(wglGetProcAddress("glShaderSource"));
-    glCompileShader = reinterpret_cast<decltype(glCompileShader)>(wglGetProcAddress("glCompileShader"));
-    glGetShaderiv = reinterpret_cast<decltype(glGetShaderiv)>(wglGetProcAddress("glGetShaderiv"));
-    glCreateProgram = reinterpret_cast<decltype(glCreateProgram)>(wglGetProcAddress("glCreateProgram"));
-    glAttachShader = reinterpret_cast<decltype(glAttachShader)>(wglGetProcAddress("glAttachShader"));
-    glLinkProgram = reinterpret_cast<decltype(glLinkProgram)>(wglGetProcAddress("glLinkProgram"));
-    glUseProgram = reinterpret_cast<decltype(glUseProgram)>(wglGetProcAddress("glUseProgram"));
-    glDeleteProgram = reinterpret_cast<decltype(glDeleteProgram)>(wglGetProcAddress("glDeleteProgram"));
-    glDeleteShader = reinterpret_cast<decltype(glDeleteShader)>(wglGetProcAddress("glDeleteShader"));
-    glGetUniformLocation = reinterpret_cast<decltype(glGetUniformLocation)>(wglGetProcAddress("glGetUniformLocation"));
-    glUniform1i = reinterpret_cast<decltype(glUniform1i)>(wglGetProcAddress("glUniform1i"));
-    glUniform1f = reinterpret_cast<decltype(glUniform1f)>(wglGetProcAddress("glUniform1f"));
-    glUniform4fv = reinterpret_cast<decltype(glUniform4fv)>(wglGetProcAddress("glUniform4fv"));
-    glUniformMatrix4fv = reinterpret_cast<decltype(glUniformMatrix4fv)>(wglGetProcAddress("glUniformMatrix4fv"));
-    glGetAttribLocation = reinterpret_cast<decltype(glGetAttribLocation)>(wglGetProcAddress("glGetAttribLocation"));
-    glEnableVertexAttribArray = reinterpret_cast<decltype(glEnableVertexAttribArray)>(wglGetProcAddress("glEnableVertexAttribArray"));
-    glVertexAttribPointer = reinterpret_cast<decltype(glVertexAttribPointer)>(wglGetProcAddress("glVertexAttribPointer"));
-    glDisableVertexAttribArray = reinterpret_cast<decltype(glDisableVertexAttribArray)>(wglGetProcAddress("glDisableVertexAttribArray"));
+    #if defined(_WIN32) || defined(_WIN64)
+    #define xGetProcAddress wglGetProcAddress
+    #elif !defined(__APPLE__)
+    #define xGetProcAddress(procName) glXGetProcAddress(reinterpret_cast<const GLubyte*>(procName))
+    #endif
+
+    glGenVertexArrays = reinterpret_cast<decltype(glGenVertexArrays)>(xGetProcAddress("glGenVertexArrays"));
+    glBindVertexArray = reinterpret_cast<decltype(glBindVertexArray)>(xGetProcAddress("glBindVertexArray"));
+    glDeleteVertexArrays = reinterpret_cast<decltype(glDeleteVertexArrays)>(xGetProcAddress("glDeleteVertexArrays"));
+    glGenBuffers = reinterpret_cast<decltype(glGenBuffers)>(xGetProcAddress("glGenBuffers"));
+    glBindBuffer = reinterpret_cast<decltype(glBindBuffer)>(xGetProcAddress("glBindBuffer"));
+    glDeleteBuffers = reinterpret_cast<decltype(glDeleteBuffers)>(xGetProcAddress("glDeleteBuffers"));
+    glBufferData = reinterpret_cast<decltype(glBufferData)>(xGetProcAddress("glBufferData"));
+    glCreateShader = reinterpret_cast<decltype(glCreateShader)>(xGetProcAddress("glCreateShader"));
+    glShaderSource = reinterpret_cast<decltype(glShaderSource)>(xGetProcAddress("glShaderSource"));
+    glCompileShader = reinterpret_cast<decltype(glCompileShader)>(xGetProcAddress("glCompileShader"));
+    glGetShaderiv = reinterpret_cast<decltype(glGetShaderiv)>(xGetProcAddress("glGetShaderiv"));
+    glCreateProgram = reinterpret_cast<decltype(glCreateProgram)>(xGetProcAddress("glCreateProgram"));
+    glAttachShader = reinterpret_cast<decltype(glAttachShader)>(xGetProcAddress("glAttachShader"));
+    glLinkProgram = reinterpret_cast<decltype(glLinkProgram)>(xGetProcAddress("glLinkProgram"));
+    glUseProgram = reinterpret_cast<decltype(glUseProgram)>(xGetProcAddress("glUseProgram"));
+    glDeleteProgram = reinterpret_cast<decltype(glDeleteProgram)>(xGetProcAddress("glDeleteProgram"));
+    glDeleteShader = reinterpret_cast<decltype(glDeleteShader)>(xGetProcAddress("glDeleteShader"));
+    glGetUniformLocation = reinterpret_cast<decltype(glGetUniformLocation)>(xGetProcAddress("glGetUniformLocation"));
+    glUniform1i = reinterpret_cast<decltype(glUniform1i)>(xGetProcAddress("glUniform1i"));
+    glUniform1f = reinterpret_cast<decltype(glUniform1f)>(xGetProcAddress("glUniform1f"));
+    glUniform4fv = reinterpret_cast<decltype(glUniform4fv)>(xGetProcAddress("glUniform4fv"));
+    glUniformMatrix4fv = reinterpret_cast<decltype(glUniformMatrix4fv)>(xGetProcAddress("glUniformMatrix4fv"));
+    glGetAttribLocation = reinterpret_cast<decltype(glGetAttribLocation)>(xGetProcAddress("glGetAttribLocation"));
+    glEnableVertexAttribArray = reinterpret_cast<decltype(glEnableVertexAttribArray)>(xGetProcAddress("glEnableVertexAttribArray"));
+    glVertexAttribPointer = reinterpret_cast<decltype(glVertexAttribPointer)>(xGetProcAddress("glVertexAttribPointer"));
+    glDisableVertexAttribArray = reinterpret_cast<decltype(glDisableVertexAttribArray)>(xGetProcAddress("glDisableVertexAttribArray"));
 
     return glGenVertexArrays && glBindVertexArray && glGenBuffers && glBindBuffer && glBufferData && glCreateShader && glCreateProgram && glUseProgram && glUniform4fv;
 }
@@ -493,19 +505,19 @@ void gl_draw_point_modern(void* ctx, float x, float y, float z, float radius, GL
         #version 150 core
         in vec2 position;
         uniform mat4 projection;
+        uniform float pointSize;
         void main() {
             gl_Position = projection * vec4(position, 0.0, 1.0);
+            gl_PointSize = pointSize;
         }
     )";
 
     static const char* fragment_shader_src = R"(
         #version 150 core
-        in vec2 position;
-        uniform mat4 projection;
-        uniform float pointSize;
+        uniform vec4 color;
+        out vec4 fragColor;
         void main() {
-            gl_Position = projection * vec4(position, 0.0, 1.0);
-            gl_PointSize = pointSize;
+            fragColor = color;
         }
     )";
 
@@ -530,9 +542,9 @@ void gl_draw_point_modern(void* ctx, float x, float y, float z, float radius, GL
     // Orthographic projection matrix
     float projection[16] = {
         2.0f / viewport_width, 0.0f, 0.0f, 0.0f,
-        0.0f, 2.0f / viewport_height, 0.0f, 0.0f,
+        0.0f, -2.0f / viewport_height, 0.0f, 0.0f,
         0.0f, 0.0f, -1.0f, 0.0f,
-        -1.0f, -1.0f, 0.0f, 1.0f
+        -1.0f, 1.0f, 0.0f, 1.0f
     };
 
     // Save current GL state
@@ -615,7 +627,7 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius) noexcept
     CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
     #endif
 
-    // Try modern OpenGL first (all platforms)
+    // Check for Modern OpenGL 3.1+
     static bool modern_gl_attempted = false;
     static bool modern_gl_available = false;
 
@@ -634,55 +646,69 @@ void gl_draw_point(void* ctx, float x, float y, float z, float radius) noexcept
     }
 
     // Fall back to legacy OpenGL
-    GLfloat point_size = 0.0;
-    bool GLBlend = glIsEnabled(GL_BLEND);
-    bool GLTexture2D = glIsEnabled(GL_TEXTURE_2D);
-    bool GLRectangle = glIsEnabled(GL_TEXTURE_RECTANGLE);
-    bool PointSmooth = glIsEnabled(GL_POINT_SMOOTH);
-    glGetFloatv(GL_POINT_SIZE, &point_size);
+    GLfloat prev_point_size = 1.0f;
+    glGetFloatv(GL_POINT_SIZE, &prev_point_size);
 
+    GLboolean is_blend = glIsEnabled(GL_BLEND);
+    GLboolean is_texture_2d = glIsEnabled(GL_TEXTURE_2D);
+    GLboolean is_texture_rectangle = glIsEnabled(GL_TEXTURE_RECTANGLE);
+    GLboolean is_point_smooth = glIsEnabled(GL_POINT_SMOOTH);
+
+    // Set up fixed-function state
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_RECTANGLE);
     glEnable(GL_POINT_SMOOTH);
     glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 
+    // Save current matrices
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, viewport[2], viewport[3], 0, -1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
 
-    //Draw Point
-    glRasterPos2f(x, y);
+    // Draw point in pixel coordinates
     glPointSize(radius);
     glBegin(GL_POINTS);
         glVertex3f(x, y, z);
     glEnd();
-    glFlush();
 
-    //Restore
+    // Restore matrices
     glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 
-    if (!GLBlend)
+    // Restore state
+    glPointSize(prev_point_size);
+
+    if (!is_blend)
     {
         glDisable(GL_BLEND);
     }
 
-    if (GLTexture2D)
+    if (is_texture_2d)
     {
         glEnable(GL_TEXTURE_2D);
     }
 
-    if (GLRectangle)
+    if (is_texture_rectangle)
     {
         glEnable(GL_TEXTURE_RECTANGLE);
     }
 
-    if (!PointSmooth)
+    if (!is_point_smooth)
     {
         glDisable(GL_POINT_SMOOTH);
     }
-
-    glPointSize(point_size);
 }
 
 void gl_draw_image_modern(void* ctx, void* source_buffer, float x, float y, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format, GLint viewport_width, GLint viewport_height) noexcept
@@ -900,7 +926,7 @@ void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_
     CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
     #endif
 
-    // Try modern OpenGL first (all platforms)
+    // Check for Modern OpenGL 3.1+
     static bool modern_gl_attempted = false;
     static bool modern_gl_available = false;
 
@@ -1448,7 +1474,214 @@ void dx_draw_texture(IDirect3DDevice9* device, IDirect3DTexture9* texture, ID3DX
     }
 }
 
-void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t &width, std::int32_t &height, bool& minimized, ImageFormat image_format) noexcept
+#if defined(DX_CLAMP_IMAGE_SUPPORT)
+void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t x, std::int32_t y, std::int32_t w, std::int32_t h, std::int32_t width, std::int32_t height, bool& minimized, ImageFormat image_format) noexcept
+{
+    // Compile the shader just once
+    static ID3DXConstantTable* constant_table = nullptr;
+    static IDirect3DPixelShader9* shader = nullptr; //dx_read_backbuffer_shader(device, &constant_table);
+
+    IDirect3DSurface9* render_target = nullptr;
+    IDirect3DSurface9* dest_target = nullptr;
+    IDirect3DSurface9* sub_region_surface = nullptr;
+
+    #define SAFE_RELEASE(ptr) if (ptr) ptr->Release()
+
+    HRESULT result = device->GetRenderTarget(0, &render_target);
+    if (FAILED(result))
+    {
+        SAFE_RELEASE(render_target);
+        return;
+    }
+
+    D3DSURFACE_DESC descriptor = {};
+    render_target->GetDesc(&descriptor);
+    width = static_cast<std::int32_t>(descriptor.Width);
+    height = static_cast<std::int32_t>(descriptor.Height);
+
+    D3DFORMAT format = descriptor.Format;
+
+    HDC DC = nullptr;
+    render_target->GetDC(&DC);
+    minimized = IsIconic(WindowFromDC(DC));
+    render_target->ReleaseDC(DC);
+
+    #ifdef CLAMP_SUB_REGION
+    // Clamp sub-region within the back-buffer
+    x = std::max(0, std::min(x, width));
+    y = std::max(0, std::min(y, height));
+    w = std::min(w, width - x);
+    h = std::min(h, height - y);
+    if (w <= 0 || h <= 0)
+    {
+        SAFE_RELEASE(render_target);
+        return;
+    }
+
+    // Sub-Region bounds
+    RECT src_rect = {x, y, x + w, y + h};
+    #else
+    RECT src_rect = {x, y, w, h};
+    #endif
+
+    result = device->CreateOffscreenPlainSurface(w, h, format, D3DPOOL_SYSTEMMEM, &dest_target, nullptr);
+    if (FAILED(result))
+    {
+        SAFE_RELEASE(dest_target);
+        SAFE_RELEASE(render_target);
+        return;
+    }
+
+    if (shader)
+    {
+        // Create a sub-region rendering target
+        result = device->CreateRenderTarget(w, h, format, D3DMULTISAMPLE_NONE, 0, FALSE, &sub_region_surface, nullptr);
+        if (FAILED(result))
+        {
+            SAFE_RELEASE(sub_region_surface);
+            SAFE_RELEASE(dest_target);
+            SAFE_RELEASE(render_target);
+            return;
+        }
+
+        // Copy the pixels into the sub-region rendering target
+        result = device->StretchRect(render_target, &src_rect, sub_region_surface, nullptr, D3DTEXF_NONE);
+        if (FAILED(result))
+        {
+            SAFE_RELEASE(sub_region_surface);
+            SAFE_RELEASE(dest_target);
+            SAFE_RELEASE(render_target);
+            return;
+        }
+
+        // Create intermediate input texture for shader processing
+        IDirect3DTexture9* input_texture = nullptr;
+        result = device->CreateTexture(w, h, 1, D3DUSAGE_RENDERTARGET, format, D3DPOOL_DEFAULT, &input_texture, nullptr);
+        if (FAILED(result))
+        {
+            SAFE_RELEASE(sub_region_surface);
+            SAFE_RELEASE(dest_target);
+            SAFE_RELEASE(render_target);
+            return;
+        }
+
+        // Render the Sub-Region's Surface to the Texture
+        IDirect3DSurface9* input_surface = nullptr;
+        input_texture->GetSurfaceLevel(0, &input_surface);
+        result = device->StretchRect(sub_region_surface, nullptr, input_surface, nullptr, D3DTEXF_NONE);
+        if (FAILED(result))
+        {
+            SAFE_RELEASE(input_surface);
+            SAFE_RELEASE(input_texture);
+            SAFE_RELEASE(sub_region_surface);
+            SAFE_RELEASE(dest_target);
+            SAFE_RELEASE(render_target);
+            return;
+        }
+
+        // Create intermediate output texture for shader processing
+        IDirect3DTexture9* output_texture = nullptr;
+        result = device->CreateTexture(w, h, 1, D3DUSAGE_RENDERTARGET, format, D3DPOOL_DEFAULT, &output_texture, nullptr);
+        if (FAILED(result))
+        {
+            SAFE_RELEASE(input_surface);
+            SAFE_RELEASE(input_texture);
+            SAFE_RELEASE(sub_region_surface);
+            SAFE_RELEASE(dest_target);
+            SAFE_RELEASE(render_target);
+            return;
+        }
+
+        IDirect3DSurface9* output_surface = nullptr;
+        output_texture->GetSurfaceLevel(0, &output_surface);
+
+        // Set the render target to the output texture
+        device->SetRenderTarget(0, output_surface);
+
+        // Apply the pixel format shader
+        dx_apply_shader(device, shader, constant_table, image_format);
+
+        // Draw the input texture to the output texture with the shader applied
+        float UOffset = 0.5f / static_cast<float>(w);
+        float VOffset = 0.5f / static_cast<float>(h);
+
+        D3DVertex vertices[] = {
+            {0.0f, 0.0f, 1.0f, 1.0f, D3DCOLOR_RGBA(255, 255, 255, 255), 0.0f + UOffset, 0.0f + VOffset},
+            {static_cast<float>(w), 0.0f, 1.0f, 1.0f, D3DCOLOR_RGBA(255, 255, 255, 255), 1.0f + UOffset, 0.0f + VOffset},
+            {0.0f, static_cast<float>(h), 1.0f, 1.0f, D3DCOLOR_RGBA(255, 255, 255, 255), 0.0f + UOffset, 1.0f + VOffset},
+            {static_cast<float>(w), static_cast<float>(h), 1.0f, 1.0f, D3DCOLOR_RGBA(255, 255, 255, 255), 1.0f + UOffset, 1.0f + VOffset}
+        };
+
+        device->SetFVF(VERTEX_FVF_TEX);
+        device->SetTexture(0, input_texture);
+
+        // Render the input texture to the output texture
+        device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(D3DVertex));   // NO IDEA WHY. THIS LINE STOPS RENDERING ENTIRELY
+
+        // Reset render target and shader
+        device->SetRenderTarget(0, render_target);
+        device->SetPixelShader(nullptr);
+
+        // Copy the final result to destination
+        result = device->GetRenderTargetData(output_surface, dest_target);
+        if (SUCCEEDED(result))
+        {
+            D3DLOCKED_RECT rect;
+            if (SUCCEEDED(dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY)))
+            {
+                std::memcpy(buffer, rect.pBits, w * h * 4);
+                dest_target->UnlockRect();
+            }
+        }
+
+        SAFE_RELEASE(output_surface);
+        SAFE_RELEASE(output_texture);
+        SAFE_RELEASE(input_surface);
+        SAFE_RELEASE(input_texture);
+        SAFE_RELEASE(sub_region_surface);
+    }
+    else
+    {
+        // Create a sub-region rendering target
+        result = device->CreateRenderTarget(w, h, format, D3DMULTISAMPLE_NONE, 0, FALSE, &sub_region_surface, nullptr);
+        if (FAILED(result))
+        {
+            SAFE_RELEASE(dest_target);
+            SAFE_RELEASE(render_target);
+            return;
+        }
+
+        // Copy the pixels into the sub-region rendering target
+        result = device->StretchRect(render_target, &src_rect, sub_region_surface, nullptr, D3DTEXF_NONE);
+        if (FAILED(result))
+        {
+            SAFE_RELEASE(sub_region_surface);
+            SAFE_RELEASE(dest_target);
+            SAFE_RELEASE(render_target);
+            return;
+        }
+
+        // Copy the final result to destination
+        result = device->GetRenderTargetData(sub_region_surface, dest_target);
+        if (SUCCEEDED(result))
+        {
+            D3DLOCKED_RECT rect;
+            if (SUCCEEDED(dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY)))
+            {
+                //std::memcpy(buffer, rect.pBits, width * height * 4);
+                copy_image(buffer, rect.pBits, w, h, 4, image_format);
+                dest_target->UnlockRect();
+            }
+        }
+
+        SAFE_RELEASE(sub_region_surface);
+    }
+
+    SAFE_RELEASE(dest_target);
+    SAFE_RELEASE(render_target);
+}
+#else
+void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t width, std::int32_t height, bool& minimized, ImageFormat image_format) noexcept
 {
     // Compile the shader just once
     static ID3DXConstantTable* constant_table = nullptr;
@@ -1605,6 +1838,7 @@ void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t &width,
     SAFE_RELEASE(dest_target);
     SAFE_RELEASE(render_target);
 }
+#endif
 
 void dx_draw_point(IDirect3DDevice9* device, float cx, float cy, float radius, D3DCOLOR colour)
 {

@@ -94,6 +94,7 @@ public:
 private:
     friend class ControlCenter;
     void get_applet_dimensions(std::int32_t &x, std::int32_t &y, std::size_t &width, std::size_t &height) const noexcept;
+    void get_canvas_dimensions(std::int32_t &x, std::int32_t &y, std::size_t &width, std::size_t &height) const noexcept;
     void get_applet_mouse_position(std::int32_t &x, std::int32_t &y) const noexcept;
 };
 

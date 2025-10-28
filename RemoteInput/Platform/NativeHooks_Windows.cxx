@@ -76,14 +76,21 @@ void HookD3D9Device(IDirect3DDevice9* pDevice, bool force = false) noexcept;
 
 bool can_render(jint srctype, jint width, jint height)
 {
-    /* SRC_TYPE = OpenGLSurfaceData.PF_INT_RGBX = 3; //GL_RGBA, GL_UNSIGNED_INT_8_8_8_8
-     * OGLPixelFormat pf = PixelFormats[srctype];
-     *
-     * It's used to render java.awt.canvas..
-     * */
-    if (srctype == 3 /* OpenGLSurfaceData.PF_INT_RGBX -- D3DSurfaceData.ST_INT_RGB*/)
+    extern std::unique_ptr<ControlCenter> control_center;
+    if (!control_center)
     {
-        return true;
+        return false;
+    }
+
+    std::int32_t canvas_x = 0;
+    std::int32_t canvas_y = 0;
+    std::size_t canvas_width = 0;
+    std::size_t canvas_height = 0;
+
+    control_center->get_canvas_dimensions(&canvas_x, &canvas_y, &canvas_width, &canvas_height);
+    if (width > canvas_width || height > canvas_height)
+    {
+        return false;
     }
 
     //Arbitrarily chosen because the java.awt.canvas should never be smaller than this value.
@@ -920,79 +927,95 @@ BOOL __stdcall mSwapBuffers(HDC hdc) noexcept
         GLint width = ViewPort[2] - ViewPort[0];
         GLint height = ViewPort[3] - ViewPort[1];
 
-        if (can_render(-1, width, height))
+        std::int32_t canvas_x = 0;
+        std::int32_t canvas_y = 0;
+        std::size_t canvas_width = 0;
+        std::size_t canvas_height = 0;
+
+        control_center->get_canvas_dimensions(&canvas_x, &canvas_y, &canvas_width, &canvas_height);
+        control_center->set_target_dimensions(canvas_width, canvas_height);
+
+        // Do not render on an invalid canvas
+        if (width != canvas_width || height != canvas_height)
         {
-            control_center->set_target_dimensions(width, height);
-
-            //Check if extensions are supported
-            //This check is needed for renderers that do not support pixel buffer objects or vertex buffer objects
-            //static bool hasGLExtension = IsGLExtensionsSupported(hdc, "GL_ARB_vertex_buffer_object") || IsGLExtensionsSupported(hdc, "GL_ARB_pixel_buffer_object");
-
-            // The above extension check is unreliable!
-            // It's best to attempt to load the extensions and see if they exist.
-            static bool hasGLExtension = LoadOpenGLExtensions();
-
-            //Render to Shared Memory
-            std::uint8_t* dest = control_center->get_image();
-            ImageFormat format = control_center->get_image_format();
-            if (dest)
+            if (opengl_swap_hook)
             {
-                if (hasGLExtension)
-                {
-                    //Performance Boost! :D
-                    GeneratePixelBuffers(hdc, pbo, width, height, 4);
-                    ReadPixelBuffers(hdc, dest, pbo, width, height, 4, format);
-                }
-                else
-                {
-                    GLenum gl_format = [](ImageFormat format) -> GLenum {
-                        switch(format)
-                        {
-                            case ImageFormat::BGR_BGRA: return GL_BGRA;
-                            case ImageFormat::BGRA: return GL_BGRA;
-                            case ImageFormat::RGBA: return GL_RGBA;
-                            case ImageFormat::ARGB: return 0;  // Not Supported
-                            case ImageFormat::ABGR: return 0;  // Not Supported
-                            default: return GL_BGRA;
-                        }
-                    }(format);
-
-                    //Sad rendering implementation
-                    glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, dest);
-                    FlipImageVertically(width, height, dest);
-                }
+                return opengl_swap_hook->call<BOOL, decltype(mSwapBuffers)>(hdc);
             }
+            return false;
+        }
 
-            //Push Rendering Context
-            HGLRC old_ctx = wglGetCurrentContext();
+        //Check if extensions are supported
+        //This check is needed for renderers that do not support pixel buffer objects or vertex buffer objects
+        //static bool hasGLExtension = IsGLExtensionsSupported(hdc, "GL_ARB_vertex_buffer_object") || IsGLExtensionsSupported(hdc, "GL_ARB_pixel_buffer_object");
+
+        // The above extension check is unreliable!
+        // It's best to attempt to load the extensions and see if they exist.
+        static bool hasGLExtension = LoadOpenGLExtensions();
+
+        //Render to Shared Memory
+        std::uint8_t* dest = control_center->get_image();
+        ImageFormat format = control_center->get_image_format();
+        if (dest)
+        {
+            if (hasGLExtension)
+            {
+                //Performance Boost! :D
+                GeneratePixelBuffers(hdc, pbo, width, height, 4);
+                ReadPixelBuffers(hdc, dest, pbo, width, height, 4, format);
+            }
+            else
+            {
+                GLenum gl_format = [](ImageFormat format) -> GLenum {
+                    switch(format)
+                    {
+                        case ImageFormat::BGR_BGRA: return GL_BGRA;
+                        case ImageFormat::BGRA: return GL_BGRA;
+                        case ImageFormat::RGBA: return GL_RGBA;
+                        case ImageFormat::ARGB: return 0;  // Not Supported
+                        case ImageFormat::ABGR: return 0;  // Not Supported
+                        default: return GL_BGRA;
+                    }
+                }(format);
+
+                //Sad rendering implementation
+                glReadPixels(0, 0, width, height, gl_format, GL_UNSIGNED_BYTE, dest);
+                FlipImageVertically(width, height, dest);
+            }
+        }
+
+        //Push Rendering Context
+        HGLRC old_ctx = wglGetCurrentContext();
+        if (old_ctx)
+        {
             PushGLContext(hdc, width, height);
+        }
 
-            //Render Debug Graphics
-            if (control_center->get_debug_graphics())
+        //Render Debug Graphics
+        if (control_center->get_debug_graphics())
+        {
+            std::uint8_t* src = control_center->get_debug_image();
+            if (src)
             {
-                std::uint8_t* src = control_center->get_debug_image();
-                if (src)
-                {
-                    gl_draw_image(hdc, src, 0, 0, width, height, 4, format);
-                }
+                gl_draw_image(hdc, src, 0, 0, width, height, 4, format);
             }
+        }
 
-            //Render Cursor
-            std::int32_t x = -1;
-            std::int32_t y = -1;
-            control_center->get_applet_mouse_position(&x, &y);
+        //Render Cursor
+        std::int32_t x = -1;
+        std::int32_t y = -1;
+        control_center->get_applet_mouse_position(&x, &y);
 
-            if (x > -1 && y > -1)
-            {
-                glColor4ub(0xFF, 0x00, 0x00, 0xFF);
-                gl_draw_point(hdc, x, y, 0, 4);
-            }
+        if (x > -1 && y > -1)
+        {
+            glColor4ub(0xFF, 0x00, 0x00, 0xFF);
+            gl_draw_point(hdc, x, y, 0, 4);
+        }
 
-            //Pop Rendering Context
-            if (old_ctx)
-            {
-                PopGLContext(hdc, old_ctx);
-            }
+        //Pop Rendering Context
+        if (old_ctx)
+        {
+            PopGLContext(hdc, old_ctx);
         }
     }
 
@@ -1044,25 +1067,28 @@ HRESULT __stdcall D3D9Device_EndScene(IDirect3DDevice9* device) noexcept
             std::int32_t width = static_cast<std::int32_t>(viewport.Width);
             std::int32_t height = static_cast<std::int32_t>(viewport.Height);
 
-            std::int32_t applet_x = 0;
-            std::int32_t applet_y = 0;
-            std::size_t applet_width = 0;
-            std::size_t applet_height = 0;
+            std::int32_t canvas_x = 0;
+            std::int32_t canvas_y = 0;
+            std::size_t canvas_width = 0;
+            std::size_t canvas_height = 0;
 
-            control_center->get_applet_dimensions(&applet_x, &applet_y, &applet_width, &applet_height);
+            control_center->get_canvas_dimensions(&canvas_x, &canvas_y, &canvas_width, &canvas_height);
+            control_center->set_target_dimensions(canvas_width, canvas_height);
 
-            // Terrible. RuneLite's UI flickers with icons because it draws like trash
-            // So we need to feed the client the Applet's Width/Height and not the Viewport's Width/Height
-            // Even though the ViewPort is what's being drawn on. RL draws outside that.
-            control_center->set_target_dimensions(applet_width, applet_height);
+            // Do not render on an invalid canvas
+            if (width != canvas_width || height != canvas_height)
+            {
+                if (directx_device9_endscene_hook)
+                {
+                    return directx_device9_endscene_hook->call<HRESULT, decltype(D3D9Device_EndScene)>(device);
+                }
+
+                return E_FAIL;
+            }
 
             bool minimized = false;
             ImageFormat image_format = control_center->get_image_format();
-
-            if (width <= applet_width && height == applet_height)
-            {
-                dx_read_pixels(device, control_center->get_image(), width, height, minimized, image_format);
-            }
+            dx_read_pixels(device, control_center->get_image(), canvas_width, canvas_height, minimized, image_format);
 
             IDirect3DStateBlock9* block;
             device->CreateStateBlock(D3DSBT_ALL, &block);
@@ -1077,16 +1103,13 @@ HRESULT __stdcall D3D9Device_EndScene(IDirect3DDevice9* device) noexcept
             device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
             device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
-            if (width <= applet_width && height == applet_height)
+            if (control_center->get_debug_graphics() && !minimized)
             {
-                if (control_center->get_debug_graphics() && !minimized)
-                {
-                    dx_load_texture(device, debug_texture, debug_px_shader, debug_px_shader_constants_table, image_format, control_center->get_debug_image(), width, height);
+                dx_load_texture(device, debug_texture, debug_px_shader, debug_px_shader_constants_table, image_format, control_center->get_debug_image(), canvas_width, canvas_height);
 
-                    if (debug_texture)
-                    {
-                        dx_draw_texture(device, debug_texture, debug_constant_table, debug_shader, debug_vertex_buffer, image_format, 0.0, 0.0, static_cast<float>(width), static_cast<float>(height));
-                    }
+                if (debug_texture)
+                {
+                    dx_draw_texture(device, debug_texture, debug_constant_table, debug_shader, debug_vertex_buffer, image_format, 0.0, 0.0, static_cast<float>(canvas_width), static_cast<float>(canvas_height));
                 }
             }
 

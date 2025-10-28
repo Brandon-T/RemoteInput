@@ -1956,6 +1956,16 @@ jlong ControlCenter::reflect_frame_native_handle() const noexcept
     return main_reflector->getFrameHandle();
 }
 
+jlong ControlCenter::reflect_applet_native_handle() const noexcept
+{
+    return main_reflector->getNativeHandle(reflect_applet().get());
+}
+
+jlong ControlCenter::reflect_canvas_native_handle() const noexcept
+{
+    return main_reflector->getNativeHandle(reflect_canvas().get());
+}
+
 java::Applet ControlCenter::reflect_applet() const noexcept
 {
     return {main_reflector->getEnv(), main_reflector->getApplet(), false};
@@ -1982,6 +1992,14 @@ void ControlCenter::get_applet_dimensions(std::int32_t* x, std::int32_t* y, std:
     if (io_controller)
     {
         io_controller->get_applet_dimensions(*x, *y, *width, *height);
+    }
+}
+
+void ControlCenter::get_canvas_dimensions(std::int32_t* x, std::int32_t* y, std::size_t* width, std::size_t* height) const noexcept
+{
+    if (io_controller)
+    {
+        io_controller->get_canvas_dimensions(*x, *y, *width, *height);
     }
 }
 
