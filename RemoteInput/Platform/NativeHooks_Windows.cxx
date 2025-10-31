@@ -752,16 +752,18 @@ void GeneratePixelBuffers(void* ctx, GLuint (&pbo)[2], GLint width, GLint height
 {
     static int w = 0;
     static int h = 0;
+    static void* current_ctx = nullptr;
 
     #if defined(__APPLE__)
     CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
     #endif
 
     //Buffer size changed
-    if (w != width || h != height)
+    if (w != width || h != height || current_ctx != ctx)
     {
         w = width;
         h = height;
+        current_ctx = ctx;
 
         //If buffers already exist, clean them up
         if (pbo[1] != 0)
@@ -787,10 +789,18 @@ void ReadPixelBuffers(void* ctx, GLubyte* dest, GLuint (&pbo)[2], GLint width, G
 {
     static int index = 0;
     static int nextIndex = 0;
+    static void* last_ctx = nullptr;
 
     #if defined(__APPLE__)
     CGLContextObj CGL_MACRO_CONTEXT = static_cast<CGLContextObj>(ctx);
     #endif
+
+    if (last_ctx != ctx)
+    {
+        last_ctx = ctx;
+        index = 0;
+        nextIndex = 0;
+    }
 
     GLenum gl_format = [](ImageFormat format) -> GLenum {
         switch(format)
