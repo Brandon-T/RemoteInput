@@ -751,7 +751,7 @@ void gl_draw_image_modern(void* ctx, void* source_buffer, float x, float y, std:
         }
     }(format);
 
-    auto convert = []<typename S>(S source, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) {
+    auto convert = []<typename S>(S* source, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) {
         if constexpr(std::is_same<S, bgr_bgra_t>::value)
         {
             for (std::int32_t i = 0; i < width * height * stride; i += stride)
@@ -957,7 +957,7 @@ void gl_draw_image(void* ctx, void* source_buffer, float x, float y, std::int32_
         }
     }(format);
 
-    auto convert = []<typename S>(S source, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) {
+    auto convert = []<typename S>(S* source, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) {
         if constexpr(std::is_same<S, bgr_bgra_t>::value)
         {
             for (std::int32_t i = 0; i < width * height * stride; i += stride)

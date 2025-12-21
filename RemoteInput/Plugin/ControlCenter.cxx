@@ -84,6 +84,7 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
 
                         if (stopped)
                         {
+                            response_signal->signal();
                             break;
                         }
 
@@ -108,8 +109,6 @@ ControlCenter::ControlCenter(std::int32_t pid, bool is_controller, std::unique_p
                     {
                         this->main_reflector.reset();
                     }
-
-                    response_signal->signal();
                 }
             });
         }
