@@ -182,6 +182,21 @@ void convert_pixels(S source, D dest, std::int32_t width, std::int32_t height, s
     {
         std::memcpy(dest, source, width * height * stride);
     }
+    else if constexpr(std::is_same<S, bgr_bgra_t*>::value)
+    {
+        for (std::int32_t i = 0; i < width * height * stride; i += stride)
+        {
+            dest->a = *reinterpret_cast<std::uint32_t *>(source) == 0x00 ? 0x00 : 0xFF;
+            if (dest->a != 0x00)
+            {
+                dest->r = source->r;
+                dest->g = source->g;
+                dest->b = source->b;
+            }
+            ++source;
+            ++dest;
+        }
+    }
     else
     {
         for (std::int32_t i = 0; i < width * height * stride; i += stride)
@@ -189,7 +204,7 @@ void convert_pixels(S source, D dest, std::int32_t width, std::int32_t height, s
             dest->r = source->r;
             dest->g = source->g;
             dest->b = source->b;
-            dest->a = 0xFF; // source->a;
+            dest->a = source->a;
             ++source;
             ++dest;
         }
@@ -319,12 +334,38 @@ void draw_circle(std::int32_t x, std::int32_t y, std::int32_t radius, void* buff
     }
 }
 
-void copy_image(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat format) noexcept
+void copy_image_to_bgra(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat source_format) noexcept
 {
-    switch (format)
+    switch (source_format)
     {
         case ImageFormat::BGR_BGRA:
-            convert_pixels(static_cast<bgr_bgra_t*>(source_buffer), static_cast<bgr_bgra_t*>(dest_buffer), width, height, stride);
+            convert_pixels(static_cast<bgr_bgra_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            break;
+
+        case ImageFormat::BGRA:
+            convert_pixels(static_cast<bgra_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            break;
+
+        case ImageFormat::RGBA:
+            convert_pixels(static_cast<rgba_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            break;
+
+        case ImageFormat::ARGB:
+            convert_pixels(static_cast<argb_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            break;
+
+        case ImageFormat::ABGR:
+            convert_pixels(static_cast<abgr_t*>(source_buffer), static_cast<bgra_t*>(dest_buffer), width, height, stride);
+            break;
+    }
+}
+
+void copy_image_from_bgra(void* dest_buffer, void* source_buffer, std::int32_t width, std::int32_t height, std::int32_t stride, ImageFormat destination_format) noexcept
+{
+    switch (destination_format)
+    {
+        case ImageFormat::BGR_BGRA:
+            convert_pixels(static_cast<bgra_t*>(source_buffer), static_cast<bgr_bgra_t*>(dest_buffer), width, height, stride);
             break;
 
         case ImageFormat::BGRA:
@@ -1117,15 +1158,20 @@ HMODULE dx_get_d3dx9_module() noexcept
     for (int i = 43; i > 23; --i)
     {
         sprintf(d3dx9_version, "d3dx9_%d.dll", i);
+
+        HMODULE module = GetModuleHandle(d3dx9_version);
+        if (!module)
+        {
+            module = LoadLibrary(d3dx9_version);
+        }
+
+        if (module)
+        {
+            return module;
+        }
     }
 
-    HMODULE module = GetModuleHandle(d3dx9_version);
-    if (!module)
-    {
-        module = LoadLibrary(d3dx9_version);
-    }
-
-    return module;
+    return nullptr;
 }
 
 IDirect3DPixelShader9* dx_texture_render_shader(IDirect3DDevice9* device, ID3DXConstantTable* &table)
@@ -1157,10 +1203,10 @@ IDirect3DPixelShader9* dx_texture_render_shader(IDirect3DDevice9* device, ID3DXC
                 output = float4(color.b, color.g, color.r, color.a);
             }
             else if (format_id == 3) {
-                output = float4(color.a, color.r, color.g, color.b);
+                output = float4(color.g, color.r, color.a, color.b);
             }
             else if (format_id == 4) {
-                output = float4(color.a, color.b, color.g, color.r);
+                output = float4(color.a, color.r, color.g, color.b);
             }
 
             return output;
@@ -1381,7 +1427,7 @@ void dx_load_texture(IDirect3DDevice9* device, IDirect3DTexture9* &texture, IDir
     {
         for (int i = 0; i < height; ++i)
         {
-            copy_image(dest + i * pitch, buffer + i * width * 4, width, 1, 4, image_format);
+            copy_image_to_bgra(dest + i * pitch, buffer + i * width * 4, width, 1, 4, image_format);
         }
     }
 
@@ -1669,7 +1715,7 @@ void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t x, std:
             if (SUCCEEDED(dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY)))
             {
                 //std::memcpy(buffer, rect.pBits, width * height * 4);
-                copy_image(buffer, rect.pBits, w, h, 4, image_format);
+                copy_image_from_bgra(buffer, rect.pBits, w, h, 4, image_format);
                 dest_target->UnlockRect();
             }
         }
@@ -1830,7 +1876,7 @@ void dx_read_pixels(IDirect3DDevice9* device, void* buffer, std::int32_t width, 
         if (SUCCEEDED(dest_target->LockRect(&rect, nullptr, D3DLOCK_READONLY)))
         {
             //std::memcpy(buffer, rect.pBits, width * height * 4);
-            copy_image(buffer, rect.pBits, width, height, 4, image_format);
+            copy_image_from_bgra(buffer, rect.pBits, width, height, 4, image_format);
             dest_target->UnlockRect();
         }
     }
