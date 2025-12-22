@@ -41,10 +41,10 @@ int sem_timedwait(sem_t* sem, const struct timespec* timeout)
 #if defined(_WIN32) || defined(_WIN64)
 Semaphore::Semaphore(std::int32_t count)
 {
-    hSemaphore = OpenSemaphore(0, false, nullptr);
+    hSemaphore = OpenSemaphore(SEMAPHORE_ALL_ACCESS, false, nullptr);
     if (!hSemaphore)
     {
-        hSemaphore = CreateSemaphore(nullptr, count, count + 1, nullptr);
+        hSemaphore = CreateSemaphore(nullptr, count, LONG_MAX, nullptr);
     }
 
     if (!hSemaphore)
@@ -55,10 +55,10 @@ Semaphore::Semaphore(std::int32_t count)
 
 Semaphore::Semaphore(const std::string &name, std::int32_t count)
 {
-    hSemaphore = OpenSemaphore(0, false, name.c_str());
+    hSemaphore = OpenSemaphore(SEMAPHORE_ALL_ACCESS, false, name.c_str());
     if (!hSemaphore)
     {
-        hSemaphore = CreateSemaphore(nullptr, count, count + 1, name.c_str());
+        hSemaphore = CreateSemaphore(nullptr, count, LONG_MAX, name.c_str());
     }
 
     if (!hSemaphore)
