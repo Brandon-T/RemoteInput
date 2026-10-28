@@ -68,3 +68,7 @@ injector_shellcode_size:
 	// distance from injector_shellcode to current.
 	.int	. - injector_shellcode
 #endif
+
+#if defined(__ELF__)
+.section .note.GNU-stack,"",@progbits
+#endif
