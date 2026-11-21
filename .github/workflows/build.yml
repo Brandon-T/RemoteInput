@@ -211,6 +211,7 @@ jobs:
         path: '${{ github.workspace }}/cmake-build-release/${{ matrix.config.release }}'
 
   Release:
+    if: github.event_name == 'push'
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: true
